@@ -1,7 +1,6 @@
 import pandas as pd
 import pytest
 from src.data.historical import fetch_historical_data
-from src.data import hist
 from unittest.mock import MagicMock
 
 class DummyBar:
@@ -22,7 +21,7 @@ def patch_polygon_client(monkeypatch):
         DummyBar(1633209600000, 110, 120, 100, 115, 2000),
     ])
     monkeypatch.setattr(
-      hist.client,
+      client,
       "get_aggs",
       lambda *args, **kwargs: dummy_response
     )
@@ -35,3 +34,7 @@ def test_fetch_historical_data():
     assert df.index.dtype == "datetime64[ns]"
     assert df.iloc[0]["open"] == 10
     assert df.iloc[1]["volume"] == 2000
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

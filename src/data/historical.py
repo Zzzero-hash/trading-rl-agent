@@ -2,9 +2,6 @@ import os
 import pandas as pd
 from polygon import RESTClient
 
-API_KEY = os.getenv("POLYGON_API_KEY")
-client = RESTClient(API_KEY)
-
 def fetch_historical_data(symbol: str,
                           start: str,
                           end: str,
@@ -22,6 +19,8 @@ def fetch_historical_data(symbol: str,
     all_records = []
     limit = 50000
     current_from = start
+    API_KEY = os.getenv("POLYGON_API_KEY")
+    client = RESTClient(API_KEY)
     while True:
         resp = client.get_aggs(
             symbol.upper(),

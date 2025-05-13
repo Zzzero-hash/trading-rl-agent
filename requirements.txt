@@ -1,0 +1,16 @@
+# Core RL and ML libraries
+stable-baselines3[extra]==2.1.0
+ray[all]==2.6.0
+hydra-core==1.4.0
+
+# Experiment tracking and logging
+mlflow==2.7.0
+wandb==0.15.11
+
+# Technical analysis and data utilities
+TA-Lib==0.4.28
+ta==0.10.2
+
+# ONNX for model export and inference
+onnx==1.13.0
+onnxruntime==1.15.1
