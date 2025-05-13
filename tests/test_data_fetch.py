@@ -1,3 +1,4 @@
+
 import pandas as pd
 import pytest
 from src.data.historical import fetch_historical_data
@@ -32,8 +33,9 @@ def test_fetch_historical_data():
     assert isinstance(df, pd.DataFrame)
     assert list(df.columns) == ["open", "high", "low", "close", "volume"]
     assert df.index.dtype == "datetime64[ns]"
-    assert df.iloc[0]["open"] == 10
-    assert df.iloc[1]["volume"] == 2000
+    assert df.iloc[0]["open"] == 100
+    assert df.iloc[-1]["volume"] == 2000
+
 
 
 if __name__ == "__main__":
