@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 from src.data.historical import fetch_historical_data
+from src.data import hist
 from unittest.mock import MagicMock
 
 class DummyBar:
@@ -14,6 +15,7 @@ class DummyBar:
     
 @pytest.fixture(autouse=True)
 def patch_polygon_client(monkeypatch):
+
     dummy_response = MagicMock(results=[
         DummyBar(1633036800000, 100, 110, 90, 105, 1000),
         DummyBar(1633123200000, 105, 115, 95, 110, 1500),
