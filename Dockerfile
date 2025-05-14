@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04
-FROM ${BASE_IMAGE} AS base
+FROM ${BASE_IMAGE} AS base 
 
 # Create non-root user
 RUN groupadd -g 1000 rluser && useradd -m -u 1000 -g rluser rluser
@@ -12,25 +12,38 @@ RUN apt-get update && \
       libssl-dev libgl1 libglib2.0-0 && \
     rm -rf /var/lib/apt/lists/*
 
-# Build & install TA‑Lib C library
+# Build & install TA-Lib C library
 RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
     tar -xzf ta-lib-0.4.0-src.tar.gz && \
-    cd ta-lib && \
-    ./configure && make && make install && \
+    cd ta-lib && ./configure && make && make install && \
     cd .. && rm -rf ta-lib ta-lib-0.4.0-src.tar.gz
 
-# Symlink to satisfy '-lta-lib' linker flag
+# Symlink to satisfy '-lta-lib'
 RUN ln -s /usr/local/lib/libta_lib.so /usr/local/lib/libta-lib.so && \
-    ln -s /usr/local/lib/libta_lib.a  /usr/local/lib/libta-lib.a && \
+    ln -s /usr/local/lib/libta_lib.a /usr/local/lib/libta-lib.a && \
     ldconfig
 
-# Install Python dependencies
+# Stage 2: install Python dependencies
+FROM base AS deps
 WORKDIR /workspace
 COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir numpy==1.23.5 && \
     pip install --no-cache-dir -r requirements.txt --ignore-installed blinker
-COPY . .
 
+# Stage 3: run tests
+FROM deps AS tests
+COPY . .
+RUN pip install pytest && \
+    pytest --maxfail=1 --disable-warnings -q
+
+# Stage 4: final runtime image
+FROM base AS runtime
+WORKDIR /workspace
+# copy Python dependencies from deps stage (Debian installs to dist-packages)
+COPY --from=deps /usr/local/lib/python3.10/dist-packages /usr/local/lib/python3.10/dist-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+# copy application code
+COPY . .
 USER rluser
-CMD ["bash"]
+ENTRYPOINT ["python3", "src/main.py"]

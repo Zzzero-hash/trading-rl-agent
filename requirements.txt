@@ -9,3 +9,4 @@ ta-lib
 ta==0.10.2
 onnx==1.13.0
 onnxruntime==1.15.1
+pytest==7.4.0
