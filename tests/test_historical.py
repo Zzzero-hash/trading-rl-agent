@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import pandas as pd
 import pytest
 from src.data.historical import fetch_historical_data, client
@@ -54,3 +55,5 @@ def test_fetch_historical_data_format():
     # Spot-check values
     assert df.iloc[1]["high"] == 115
     assert df.iloc[2]["low"] == 100
+=======
+>>>>>>> 9f95ee16710d6129d616337acf854aafde17ea08
