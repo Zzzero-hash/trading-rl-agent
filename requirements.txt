@@ -7,7 +7,7 @@ mlflow==2.7.0
 wandb==0.15.11
 ta-lib
 ta==0.10.2
-onnx==1.13.0
+onnx==1.17.0
 onnxruntime==1.15.1
 pytest==7.4.0
 yfinance==0.2.61
