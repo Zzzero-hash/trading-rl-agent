@@ -1,1 +1,6 @@
 .env
+.devcontainer
+.vscode
+.pytest_cache
+.github
+__pycache__

@@ -1,51 +1,32 @@
-import os
 import pandas as pd
-from polygon import RESTClient
+import yfinance as yf
 
-def fetch_historical_data(symbol: str,
-                          start: str,
-                          end: str,
-                          timestep: str = "day"
-                          ) -> pd.DataFrame:
+# use yfinance for free historical data
+client = yf
+
+def fetch_historical_data(symbol: str, start: str, end: str, timestep: str = "day") -> pd.DataFrame:
     """
-    Pulls aggregated bars from polygon.io
-    :param symbol: The stock symbol to fetch data for
-    :param start: The start date for the data in YYYY-MM-DD format
-    :param end: The end date for the data in YYYY-MM-DD format
-    :param timestep: The time step for the data (e.g. "day", "hour", "minute")
-    :return: A pandas DataFrame containing the historical data
+    Fetch historical data using yfinance.
+    :param symbol: Stock ticker symbol
+    :param start: Start date (YYYY-MM-DD)
+    :param end: End date (YYYY-MM-DD)
+    :param timestep: Interval (e.g. 'day', '1m', '1h')
+    :return: DataFrame with open/high/low/close/volume indexed by timestamp
     """
-    # batch pagination for large datasets
-    all_records = []
-    limit = 50000
-    current_from = start
-    API_KEY = os.getenv("POLYGON_API_KEY")
-    client = RESTClient(API_KEY)
-    while True:
-        resp = client.get_aggs(
-            symbol.upper(),
-            1,                # multiplier
-            timestep,         # "day", "minute", etc.
-            _from=current_from,
-            to=end,
-            limit=limit
-        )
-        bars = resp.results
-        if not bars:
-            break
-        for bar in bars:
-            all_records.append({
-                "timestamp": pd.to_datetime(bar.timestamp, unit="ms"),
-                "open": bar.open,
-                "high": bar.high,
-                "low": bar.low,
-                "close": bar.close,
-                "volume": bar.volume,
-            })
-        if len(bars) < limit:
-            break
-        # advance start just after last timestamp
-        last_ts = bars[-1].timestamp
-        current_from = (pd.to_datetime(last_ts, unit="ms") + pd.Timedelta(milliseconds=1)).strftime("%Y-%m-%d")
-    df = pd.DataFrame(all_records).set_index("timestamp")
+    # map human-friendly timestep to yfinance interval
+    interval_map = {
+        "day": "1d",
+        "hour": "1h",
+        "minute": "1m"
+    }
+    interval = interval_map.get(timestep, timestep)
+    # download data
+    df = client.Ticker(symbol).history(start=start, end=end, interval=interval)
+    if df.empty:
+        return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
+    # select and rename columns
+    df = df[["Open", "High", "Low", "Close", "Volume"]].copy()
+    df.columns = ["open", "high", "low", "close", "volume"]
+    # ensure timestamp index
+    df.index.name = "timestamp"
     return df

@@ -10,3 +10,6 @@ ta==0.10.2
 onnx==1.13.0
 onnxruntime==1.15.1
 pytest==7.4.0
+yfinance==0.2.61
+polygon-api-client==1.14.5
+python-dotenv==0.20.0

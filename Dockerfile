@@ -33,8 +33,10 @@ RUN pip install --upgrade pip setuptools wheel && \
 
 # Stage 3: run tests
 FROM deps AS tests
+ENV PYTHONPATH=/workspace
 COPY . .
-RUN pip install pytest && \
+RUN pip install -e . && \
+    pip install pytest && \
     pytest --maxfail=1 --disable-warnings -q
 
 # Stage 4: final runtime image
