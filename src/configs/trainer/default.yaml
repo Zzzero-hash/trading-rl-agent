@@ -1,8 +1,0 @@
-# Default trainer configuration
-# Put parameters for your training loop here
-epochs: 10
-batch_size: 32
-learning_rate: 0.001
-
-# You can override this in the command line, e.g.:
-# python src/main.py trainer.epochs=20

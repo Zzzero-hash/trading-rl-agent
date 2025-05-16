@@ -1,5 +1,0 @@
-# Configuration for CNN-LSTM model architecture
-hidden_size: 128
-num_layers: 2
-dropout: 0.3
-activation: relu

@@ -1,7 +1,0 @@
-# Root Hydra configuration
-defaults:
-  - agent: ddqn
-  - env: trader_env
-  - model: cnn_lstm
-  - data: historical
-  - trainer: default

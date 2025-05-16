@@ -1,5 +1,0 @@
-# Configuration for the historical data source
-symbol: "AAPL"
-start: "2020-01-01"
-end: "2020-12-31"
-timestep: "day"
