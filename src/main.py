@@ -2,7 +2,7 @@ import pytest
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-@hydra.main(config_path="configs", config_name="default")
+@hydra.main(version_base="1.1", config_path="configs", config_name="default")
 def main(cfg: DictConfig):
     # print the full configuration
     print(OmegaConf.to_yaml(cfg))

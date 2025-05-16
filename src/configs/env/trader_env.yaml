@@ -1,0 +1,18 @@
+# Configuration for the trading environment (env/trader_env)
+# This file defines parameters for your custom Gym-like environment
+
+# Starting capital for the trader
+environment:
+  initial_balance: 100000.0
+
+# Transaction cost per trade (percentage)
+transaction_cost: 0.001
+
+# Maximum position size (as fraction of balance)
+max_position_fraction: 0.1
+
+# Observation window length (number of time steps)
+lookback_window_size: 50
+
+# Whether to enable position scaling (True/False)
+scale_positions: true
