@@ -11,6 +11,7 @@ def main():
     parser.add_argument('--save-dir', type=str, default='outputs', help='Directory to save models and logs')
     parser.add_argument('--train', action='store_true', help='Run training loop')
     parser.add_argument('--eval', action='store_true', help='Run evaluation')
+    parser.add_argument('--test', action='store_true', help='Run tests')
     args = parser.parse_args()
 
     # Load configurations
@@ -26,6 +27,9 @@ def main():
         trainer.train()
     if args.eval:
         trainer.evaluate()
+    if args.test:
+        print("Running tests...")
+        trainer.test()
 
 
 if __name__ == '__main__':

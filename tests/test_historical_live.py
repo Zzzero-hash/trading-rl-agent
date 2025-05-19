@@ -19,12 +19,12 @@ def test_fetch_historical_live_data():
     assert isinstance(df, pd.DataFrame)
     assert not df.empty, "Expected non-empty DataFrame from live data"
     # expected columns
-    expected_cols = {'open', 'high', 'low', 'close', 'volume'}
+    expected_cols = {'open', 'high', 'low', 'close', 'volume', 'timestamp'}
     assert set(df.columns) == expected_cols
     # index type and range
-    assert df.index.dtype == 'datetime64[ns]'
-    assert df.index.min() >= pd.to_datetime(start_date)
-    assert df.index.max() <= pd.to_datetime(end_date)
+    assert df.index.dtype == 'int64'
+    assert df['timestamp'].min() >= pd.to_datetime(start_date)
+    assert df['timestamp'].max() <= pd.to_datetime(end_date)
     # values should be positive numbers
     assert (df['open'] > 0).all()
     assert (df['close'] > 0).all()

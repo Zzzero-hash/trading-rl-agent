@@ -1,5 +1,5 @@
 ARG CUDA_VARIANT=nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04
-FROM ${CUDA_VARIANT}
+FROM ${CUDA_VARIANT} AS base
 
 # Create non-root user
 RUN groupadd -g 1000 rluser && useradd -m -u 1000 -g rluser rluser
@@ -32,7 +32,7 @@ RUN pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt --ignore-installed blinker
 
 # Stage 3: run tests
-FROM deps AS tests
+FROM base
 ENV PYTHONPATH=/workspace
 COPY . .
 RUN pip install -e . && \
@@ -40,12 +40,13 @@ RUN pip install -e . && \
     pytest --maxfail=1 --disable-warnings -q
 
 # Stage 4: final runtime image
-FROM base AS final
+FROM base
 WORKDIR /workspace
 # copy Python dependencies from deps stage (Debian installs to dist-packages)
 COPY --from=deps /usr/local/lib/python3.10/dist-packages /usr/local/lib/python3.10/dist-packages
 COPY --from=deps /usr/local/bin /usr/local/bin
 # copy application code
 COPY . .
+COPY src/configs /cfg
 USER rluser
-ENTRYPOINT ["python3", "src/main.py"]
+ENTRYPOINT ["pytest", "--maxfail=1", "--disable-warnings", "-q"]
