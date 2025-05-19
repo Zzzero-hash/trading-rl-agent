@@ -1,10 +1,5 @@
 .env
-<<<<<<< HEAD
-.devcontainer
-.vscode
-.pytest_cache
-.github
-__pycache__
-=======
 rl-trader
->>>>>>> 9f95ee16710d6129d616337acf854aafde17ea08
+.vscode
+__pycache__/
+*.pyc
