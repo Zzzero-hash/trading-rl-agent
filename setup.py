@@ -8,7 +8,7 @@ setup(
     install_requires=open('requirements.txt').read().splitlines(),
     entry_points={
         'console_scripts': [
-            'trade-agent=trading_rl_agent.main:main',
+            'trade-agent=src.main:main',
         ],
     },
 )

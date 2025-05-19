@@ -1,7 +1,7 @@
 import pandas as pd
 import yaml
 import pytest
-from trading_rl_agent.data.pipeline import run_pipeline
+from src.data.pipeline import run_pipeline
 
 @pytest.fixture(autouse=True)
 def dummy_fetch(monkeypatch):
@@ -19,7 +19,7 @@ def dummy_fetch(monkeypatch):
         index=[pd.Timestamp("2021-01-01")],
     )
     monkeypatch.setattr(
-        "trading_rl_agent.data.pipeline.fetch_historical_data", lambda symbol, start, end, timestep: dummy_df
+        "src.data.pipeline.fetch_historical_data", lambda symbol, start, end, timestep: dummy_df
     )
     return dummy_df
 
@@ -29,7 +29,7 @@ def test_run_pipeline(tmp_path, dummy_fetch):
     cfg = {
         "start": "2021-01-01",
         "end": "2021-01-02",
-        "timestep": "day",
+        "timestep": "minute",
         "coinbase_perp_symbols": ["SYM"],
         "oanda_fx_symbols": ["SYM"],
         "to_csv": False,

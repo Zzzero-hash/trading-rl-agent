@@ -29,4 +29,12 @@ def fetch_historical_data(symbol: str, start: str, end: str, timestep: str = "da
     df.columns = ["open", "high", "low", "close", "volume"]
     # ensure timestamp index
     df.index.name = "timestamp"
+    # drop timezone so datetime is naive, then store timestamp as a column
+    try:
+        df.index = df.index.tz_localize(None)
+    except AttributeError:
+        pass
+    df['timestamp'] = df.index  # preserve datetime for time-based features
+    # reset to simple integer index (0,1,2...) for RL/SB3 steps
+    df.reset_index(drop=True, inplace=True)
     return df
