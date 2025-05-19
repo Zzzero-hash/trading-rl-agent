@@ -1,8 +1,14 @@
 import argparse
 import yaml
 from agents.trainer import Trainer
+import psutil
+import platform
+from datetime import datetime
 
 def main():
+
+    
+
     parser = argparse.ArgumentParser(description='Train or evaluate an RL trading agent')
     parser.add_argument('--env-config', type=str, required=True, help='Path to environment config YAML')
     parser.add_argument('--model-config', type=str, required=True, help='Path to model config YAML')
