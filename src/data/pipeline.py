@@ -4,6 +4,9 @@ from pathlib import Path
 import pandas as pd
 
 from .historical import fetch_historical_data
+from .features import generate_features
+from .synthetic import fetch_synthetic_data
+from .live import fetch_live_data
 
 
 def run_pipeline(config_path: str):
@@ -39,6 +42,28 @@ def run_pipeline(config_path: str):
     for symbol in oanda_symbols:
         key = f"oanda_{symbol}"
         df = fetch_historical_data(symbol, start, end, timestep)
+        results[key] = df
+        if to_csv:
+            csv_path = Path(output_dir) / f"{key}.csv"
+            df.to_csv(csv_path)
+
+    # Generate Synthetic data sources
+    for symbol in cfg.get('synthetic_symbols', []):
+        key = f"synthetic_{symbol}"
+        df = fetch_synthetic_data(symbol, start, end, timestep)
+        # Only apply feature generation to OHLCV-style data
+        if 'close' in df.columns:
+            df = generate_features(df)
+        results[key] = df
+        if to_csv:
+            csv_path = Path(output_dir) / f"{key}.csv"
+            df.to_csv(csv_path)
+
+    # Fetch Live data sources
+    for symbol in cfg.get('live_symbols', []):
+        key = f"live_{symbol}"
+        df = fetch_live_data(symbol, start, end, timestep)
+        df = generate_features(df)
         results[key] = df
         if to_csv:
             csv_path = Path(output_dir) / f"{key}.csv"
