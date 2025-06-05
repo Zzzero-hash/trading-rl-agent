@@ -29,6 +29,7 @@ WORKDIR /workspace
 COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir numpy==1.23.5 && \
+    # Install all Python deps including Ray with Tune extras
     pip install --no-cache-dir -r requirements.txt --ignore-installed blinker
 
 # Stage 3: run tests

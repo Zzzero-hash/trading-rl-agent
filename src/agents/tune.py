@@ -26,10 +26,14 @@ def _convert_value(value):
 def _load_search_space(path):
     with open(path) as f:
         cfg = yaml.safe_load(f) or {}
-    search_space = {}
-    for key, val in cfg.items():
-        search_space[key] = _convert_value(val)
-    return search_space
+    def _recurse_convert(obj):
+        if isinstance(obj, dict):
+            return {k: _recurse_convert(_convert_value(v)) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [_recurse_convert(v) for v in obj]
+        return obj
+
+    return _recurse_convert(cfg)
 
 
 def run_tune(config_paths):
@@ -51,7 +55,6 @@ def run_tune(config_paths):
     env_cfg = search_space.pop("env_config", {})
 
     search_space.setdefault("env", "TraderEnv")
-    search_space.setdefault("env_config", env_cfg)
 
     if not ray.is_initialized():
         ray.init()
