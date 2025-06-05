@@ -1,0 +1,4 @@
+# Default configuration for the trading environment
+initial_balance: 10000    # Starting cash for each episode
+window_size: 50           # Number of past timesteps used for observations
+transaction_cost: 0.001   # Proportional cost charged per trade
