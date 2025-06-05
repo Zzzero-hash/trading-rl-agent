@@ -5,21 +5,27 @@ from src.data.pipeline import run_pipeline
 
 @pytest.fixture(autouse=True)
 def dummy_fetch(monkeypatch):
-    """
-    Monkey-patch fetch_historical_data to return a dummy DataFrame for any symbol.
-    """
+    """Monkey-patch all data fetchers to return a simple DataFrame."""
     dummy_df = pd.DataFrame(
         {
-            "open": [1],
-            "high": [2],
-            "low": [3],
-            "close": [4],
-            "volume": [5],
-        },
-        index=[pd.Timestamp("2021-01-01")],
+            "open": [1] * 30,
+            "high": [2] * 30,
+            "low": [3] * 30,
+            "close": [4] * 30,
+            "volume": [5] * 30,
+        }
     )
     monkeypatch.setattr(
-        "src.data.pipeline.fetch_historical_data", lambda symbol, start, end, timestep: dummy_df
+        "src.data.pipeline.fetch_historical_data",
+        lambda symbol, start, end, timestep: dummy_df,
+    )
+    monkeypatch.setattr(
+        "src.data.pipeline.fetch_synthetic_data",
+        lambda symbol, start, end, timestep: dummy_df,
+    )
+    monkeypatch.setattr(
+        "src.data.pipeline.fetch_live_data",
+        lambda symbol, start, end, timestep: dummy_df,
     )
     return dummy_df
 
@@ -32,6 +38,8 @@ def test_run_pipeline(tmp_path, dummy_fetch):
         "timestep": "minute",
         "coinbase_perp_symbols": ["SYM"],
         "oanda_fx_symbols": ["SYM"],
+        "synthetic_symbols": ["SYN"],
+        "live_symbols": ["LIV"],
         "to_csv": False,
         "output_dir": str(tmp_path / "raw"),
     }
@@ -40,9 +48,11 @@ def test_run_pipeline(tmp_path, dummy_fetch):
 
     results = run_pipeline(str(cfg_path))
 
-    # Check that both coinbase and oanda keys are present
+    # Check that all expected keys are present
     assert "coinbase_SYM" in results
     assert "oanda_SYM" in results
+    assert "synthetic_SYN" in results
+    assert "live_LIV" in results
 
     # Verify the returned DataFrames match the dummy
     assert results["coinbase_SYM"].equals(dummy_fetch)
