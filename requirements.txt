@@ -1,5 +1,5 @@
 # filepath: d:/trading-rl-agent/requirements.txt
-numpy==1.23.5
+numpy
 TA-Lib
 stable-baselines3[extra]==2.1.0
 ray[tune]==2.43.0
@@ -12,7 +12,6 @@ onnx==1.17.0
 onnxruntime==1.15.1
 pytest==7.4.0
 yfinance==0.2.61
-polygon-api-client==1.14.5
 python-dotenv==0.20.0
 pyyaml>=6.0
 scikit-learn>=1.0.0
