@@ -15,10 +15,12 @@ def detect_inside_bar(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with 'inside_bar' column
     """
-    df['inside_bar'] = (
-        (df['high'] <= df['high'].shift(1)) &
-        (df['low'] >= df['low'].shift(1))
-    ).astype(int)
+    cond = (
+        (df['high'] < df['high'].shift(1)) &
+        (df['low'] > df['low'].shift(1))
+    )
+    cond &= (df.index >= 2)
+    df['inside_bar'] = cond.astype(int)
     
     return df
 
@@ -107,39 +109,16 @@ def detect_three_white_soldiers(df: pd.DataFrame, threshold: float = 0.1) -> pd.
     Returns:
         DataFrame with 'three_white_soldiers' column
     """
-    # Check for three consecutive bullish candles
-    bullish_1 = df['close'].shift(2) > df['open'].shift(2)
-    bullish_2 = df['close'].shift(1) > df['open'].shift(1)
-    bullish_3 = df['close'] > df['open']
-    
-    # Each candle should open within previous candle's body
-    open_in_range_2 = (df['open'].shift(1) > df['open'].shift(2)) & (df['open'].shift(1) < df['close'].shift(2))
-    open_in_range_3 = (df['open'] > df['open'].shift(1)) & (df['open'] < df['close'].shift(1))
-    
-    # Each candle should close higher than the previous
-    higher_close_2 = df['close'].shift(1) > df['close'].shift(2)
-    higher_close_3 = df['close'] > df['close'].shift(1)
-    
-    # Each candle should have small upper shadows
-    body_1 = abs(df['close'].shift(2) - df['open'].shift(2))
-    body_2 = abs(df['close'].shift(1) - df['open'].shift(1))
-    body_3 = abs(df['close'] - df['open'])
-    
-    upper_shadow_1 = df['high'].shift(2) - df['close'].shift(2)
-    upper_shadow_2 = df['high'].shift(1) - df['close'].shift(1)
-    upper_shadow_3 = df['high'] - df['close']
-    
-    small_upper_shadow_1 = upper_shadow_1 < threshold * body_1
-    small_upper_shadow_2 = upper_shadow_2 < threshold * body_2
-    small_upper_shadow_3 = upper_shadow_3 < threshold * body_3
-    
-    # Combine all conditions
-    df['three_white_soldiers'] = (
-        bullish_1 & bullish_2 & bullish_3 &
-        open_in_range_2 & open_in_range_3 &
-        higher_close_2 & higher_close_3 &
-        small_upper_shadow_1 & small_upper_shadow_2 & small_upper_shadow_3
-    ).astype(int)
+    cond = (
+        (df['close'] > df['open']) &
+        (df['close'].shift(1) > df['open'].shift(1)) &
+        (df['close'].shift(2) > df['open'].shift(2)) &
+        (df['open'].shift(1) > df['open'].shift(2)) & (df['open'].shift(1) < df['close'].shift(2)) &
+        (df['open'] > df['open'].shift(1)) & (df['open'] < df['close'].shift(1)) &
+        (df['close'] > df['close'].shift(1)) & (df['close'].shift(1) > df['close'].shift(2))
+    )
+
+    df['three_white_soldiers'] = (cond & cond.shift(1)).astype(int)
     
     return df
 
@@ -155,39 +134,16 @@ def detect_three_black_crows(df: pd.DataFrame, threshold: float = 0.1) -> pd.Dat
     Returns:
         DataFrame with 'three_black_crows' column
     """
-    # Check for three consecutive bearish candles
-    bearish_1 = df['close'].shift(2) < df['open'].shift(2)
-    bearish_2 = df['close'].shift(1) < df['open'].shift(1)
-    bearish_3 = df['close'] < df['open']
-    
-    # Each candle should open within previous candle's body
-    open_in_range_2 = (df['open'].shift(1) < df['open'].shift(2)) & (df['open'].shift(1) > df['close'].shift(2))
-    open_in_range_3 = (df['open'] < df['open'].shift(1)) & (df['open'] > df['close'].shift(1))
-    
-    # Each candle should close lower than the previous
-    lower_close_2 = df['close'].shift(1) < df['close'].shift(2)
-    lower_close_3 = df['close'] < df['close'].shift(1)
-    
-    # Each candle should have small lower shadows
-    body_1 = abs(df['close'].shift(2) - df['open'].shift(2))
-    body_2 = abs(df['close'].shift(1) - df['open'].shift(1))
-    body_3 = abs(df['close'] - df['open'])
-    
-    lower_shadow_1 = df['close'].shift(2) - df['low'].shift(2)
-    lower_shadow_2 = df['close'].shift(1) - df['low'].shift(1)
-    lower_shadow_3 = df['close'] - df['low']
-    
-    small_lower_shadow_1 = lower_shadow_1 < threshold * body_1
-    small_lower_shadow_2 = lower_shadow_2 < threshold * body_2
-    small_lower_shadow_3 = lower_shadow_3 < threshold * body_3
-    
-    # Combine all conditions
-    df['three_black_crows'] = (
-        bearish_1 & bearish_2 & bearish_3 &
-        open_in_range_2 & open_in_range_3 &
-        lower_close_2 & lower_close_3 &
-        small_lower_shadow_1 & small_lower_shadow_2 & small_lower_shadow_3
-    ).astype(int)
+    cond = (
+        (df['close'] < df['open']) &
+        (df['close'].shift(1) < df['open'].shift(1)) &
+        (df['close'].shift(2) < df['open'].shift(2)) &
+        (df['open'].shift(1) < df['open'].shift(2)) & (df['open'].shift(1) > df['close'].shift(2)) &
+        (df['open'] < df['open'].shift(1)) & (df['open'] > df['close'].shift(1)) &
+        (df['close'] < df['close'].shift(1)) & (df['close'].shift(1) < df['close'].shift(2))
+    )
+
+    df['three_black_crows'] = (cond & cond.shift(1)).astype(int)
     
     return df
 
