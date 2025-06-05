@@ -1,0 +1,62 @@
+"""Utilities for hyperparameter tuning with Ray Tune."""
+
+import yaml
+import ray
+from ray import tune
+
+from envs.trader_env import register_env
+
+
+def _convert_value(value):
+    """Convert YAML search spec into Ray Tune objects."""
+    if isinstance(value, dict):
+        if "grid_search" in value:
+            return tune.grid_search(value["grid_search"])
+        if "choice" in value:
+            return tune.choice(value["choice"])
+        if "uniform" in value and isinstance(value["uniform"], (list, tuple)):
+            low, high = value["uniform"]
+            return tune.uniform(low, high)
+        if "randint" in value and isinstance(value["randint"], (list, tuple)):
+            low, high = value["randint"]
+            return tune.randint(low, high)
+    return value
+
+
+def _load_search_space(path):
+    with open(path) as f:
+        cfg = yaml.safe_load(f) or {}
+    search_space = {}
+    for key, val in cfg.items():
+        search_space[key] = _convert_value(val)
+    return search_space
+
+
+def run_tune(config_paths):
+    """Run Ray Tune with a search space defined in YAML files.
+
+    Parameters
+    ----------
+    config_paths : list[str] or str
+        One or more YAML files containing parameter search spaces.
+    """
+    if isinstance(config_paths, str):
+        config_paths = [config_paths]
+
+    search_space = {}
+    for path in config_paths:
+        search_space.update(_load_search_space(path))
+
+    algorithm = search_space.pop("algorithm", "PPO")
+    env_cfg = search_space.pop("env_config", {})
+
+    search_space.setdefault("env", "TraderEnv")
+    search_space.setdefault("env_config", env_cfg)
+
+    if not ray.is_initialized():
+        ray.init()
+    register_env()
+
+    analysis = tune.run(algorithm, config=search_space, local_dir="tune")
+    print(f"Tuning completed. Results are in {analysis.best_logdir if analysis.trials else 'tune'}")
+    ray.shutdown()

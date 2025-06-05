@@ -18,7 +18,13 @@ def main():
     parser.add_argument('--train', action='store_true', help='Run training loop')
     parser.add_argument('--eval', action='store_true', help='Run evaluation')
     parser.add_argument('--test', action='store_true', help='Run tests')
+    parser.add_argument('--tune', action='store_true', help='Run Ray Tune hyperparameter search')
     args = parser.parse_args()
+
+    if args.tune:
+        from agents.tune import run_tune
+        run_tune([args.env_config, args.model_config, args.trainer_config])
+        return
 
     # Load configurations
     with open(args.env_config) as f:
