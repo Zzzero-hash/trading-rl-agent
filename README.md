@@ -20,8 +20,8 @@ A reinforcement learning framework for algorithmic trading, providing customizab
  git clone https://github.com/yourusername/trading-rl-agent.git
 cd trading-rl-agent
 
-# Install dependencies (Ray with Tune extras included)
-pip install -r requirements.txt
+# Set up a virtual environment and install dependencies
+./setup_env.sh
 
 # Build Docker image (CPU)
 docker build -t trading-rl-agent .
