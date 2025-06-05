@@ -396,8 +396,7 @@ def compute_all_candle_patterns(df: pd.DataFrame) -> pd.DataFrame:
     df = detect_harami(df)
     df = detect_dark_cloud_cover(df)
     df = detect_piercing_line(df)
-    
-    # Statistical features
+      # Statistical features
     df = compute_candle_stats(df)
     
     return df
