@@ -75,6 +75,7 @@ All hyperparameters and environment settings are defined in YAML files under `sr
 - **env/**: Environment parameters (window size, transaction costs)
 - **model/**: Model architecture and hyperparameters
 - **trainer/**: Training parameters (learning rates, batch sizes)
+- **ray/**: RLlib and Ray Tune configurations
 
 ## Usage
 
@@ -94,6 +95,16 @@ env "PYTHONPATH=src" python -m trading_rl_agent.main \
   --model-config src/configs/model/cnn_lstm.yaml \
   --trainer-config src/configs/trainer/default.yaml \
   --eval
+```
+
+Run a Ray Tune hyperparameter search using the provided search space:
+
+```bash
+trade-agent \
+  --env-config src/configs/ray/tune_search.yaml \
+  --model-config src/configs/ray/tune_search.yaml \
+  --trainer-config src/configs/ray/tune_search.yaml \
+  --tune
 ```
 
 ## Testing
