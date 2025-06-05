@@ -4,8 +4,15 @@ import glob
 import ray
 
 from envs.trader_env import register_env
-from ray.rllib.algorithms.ppo import PPOTrainer
-from ray.rllib.algorithms.dqn import DQNTrainer
+try:
+    from ray.rllib.algorithms.ppo import PPOTrainer
+except ImportError:  # Ray >=2.3 renames Trainer classes
+    from ray.rllib.algorithms.ppo import PPO as PPOTrainer
+
+try:
+    from ray.rllib.algorithms.dqn import DQNTrainer
+except ImportError:
+    from ray.rllib.algorithms.dqn import DQN as DQNTrainer
 
 class Trainer:
     def __init__(self, env_cfg, model_cfg, trainer_cfg, seed=42, save_dir='outputs'):
