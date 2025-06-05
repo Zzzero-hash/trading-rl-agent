@@ -232,7 +232,7 @@ class TestSentimentModuleError:
             # Test overwriting with correct structure
             sentiment.sentiment['TEST'] = {'score': 0.5}
             assert isinstance(sentiment.sentiment['TEST'], dict)
-              finally:
+        finally:
             # Restore original state
             sentiment.sentiment.clear()
             sentiment.sentiment.update(original_sentiment)
