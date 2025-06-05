@@ -209,41 +209,24 @@ def detect_hammer(df: pd.DataFrame, threshold: float = 0.3) -> pd.DataFrame:
     Returns:
         DataFrame with 'hammer' and 'hanging_man' columns
     """
-    body = abs(df['close'] - df['open'])
-    upper_shadow = df['high'] - df[['open', 'close']].max(axis=1)
+    body = (df['close'] - df['open']).abs()
     lower_shadow = df[['open', 'close']].min(axis=1) - df['low']
     total_range = df['high'] - df['low']
-    
+
     # Avoid division by zero
     total_range = total_range.replace(0, np.nan)
-    
-    # Calculate ratios
+
     body_ratio = body / total_range
     lower_shadow_ratio = lower_shadow / total_range
-    upper_shadow_ratio = upper_shadow / total_range
-    
-    # Hammer criteria:
-    # 1. Small body (less than threshold of total range)
-    # 2. Long lower shadow (at least 2x the body)
-    # 3. Very small upper shadow
-    is_hammer_shape = (
-        (body_ratio < threshold) & 
-        (lower_shadow_ratio > 0.6) & 
-        (upper_shadow_ratio < 0.1) &
-        (lower_shadow > 2 * body)
-    )
-      # Hammer appears in downtrend
+
+    hammer_shape = (body_ratio < threshold) & (lower_shadow_ratio > 0.6)
+
     df['hammer'] = (
-        is_hammer_shape & 
-        ((df['close'].shift(1) < df['open'].shift(1)) |  # Previous candle was bearish or
-         (df['close'].shift(2) > df['close'].shift(1)))   # Prior trend was downward
+        hammer_shape & (df['close'].shift(1) < df['open'].shift(1))
     ).astype(int)
-    
-    # Hanging Man appears in uptrend (same shape as hammer)
+
     df['hanging_man'] = (
-        is_hammer_shape & 
-        (df['close'].shift(1) < df['open'].shift(1)) &  # Previous candle was bullish
-        (df['close'].shift(2) < df['close'].shift(1))    # Prior trend was upward
+        hammer_shape & (df['close'].shift(1) > df['open'].shift(1))
     ).astype(int)
     
     return df
