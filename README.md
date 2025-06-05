@@ -84,11 +84,15 @@ All hyperparameters and environment settings are defined in YAML files under `sr
 
 Train or evaluate an agent:
 
+Running `./setup_env.sh` sets up the virtual environment, installs all
+dependencies, and installs this package in editable mode.
+
 ```bash
 # Start a local Ray cluster
 ray start --head
 
-# Using console script (after `pip install -e .` which installs Ray[tune])
+# Using console script (after running `./setup_env.sh` which installs
+# Ray[tune] and this package in editable mode)
 trade-agent \
   --env-config src/configs/env/trader_env.yaml \
   --model-config src/configs/model/cnn_lstm.yaml \
