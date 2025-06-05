@@ -1,0 +1,34 @@
+# Default configuration for the data pipeline
+
+# Time range for data fetching
+start: 2021-01-01
+end: 2021-12-31
+timestep: day  # day, hour or minute
+
+# Coinbase perpetual futures symbols for historical data
+coinbase_perp_symbols:
+  - BTC-USD
+  - ETH-USD
+
+# OANDA FX pairs for historical data
+oanda_fx_symbols:
+  - EUR_USD
+  - GBP_USD
+
+# Synthetic data generators used for testing
+synthetic_symbols:
+  - TEST1
+  - TEST2
+
+# Symbols to fetch from live data APIs (stubbed)
+live_symbols:
+  - BTC-USD
+  - EUR_USD
+
+# Feature generation options
+generate_features: true        # Compute technical indicators
+advanced_candles: true         # Include advanced candlestick patterns
+
+# Output settings
+to_csv: true                   # Write datasets to CSV
+output_dir: data/raw           # Directory where CSV files are stored
