@@ -1,6 +1,8 @@
 import pandas as pd
 import yaml
 import pytest
+import ray
+
 from src.data.pipeline import run_pipeline
 
 @pytest.fixture(autouse=True)
@@ -46,7 +48,9 @@ def test_run_pipeline(tmp_path, dummy_fetch):
     cfg_path = tmp_path / "cfg.yaml"
     cfg_path.write_text(yaml.safe_dump(cfg))
 
+    ray.init(local_mode=True, log_to_driver=False)
     results = run_pipeline(str(cfg_path))
+    ray.shutdown()
 
     # Check that all expected keys are present
     assert "coinbase_SYM" in results
