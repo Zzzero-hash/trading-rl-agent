@@ -2,6 +2,8 @@
 import os
 import ray
 
+from envs.trader_env import register_env
+
 class Trainer:
     def __init__(self, env_cfg, model_cfg, trainer_cfg, seed=42, save_dir='outputs'):
         self.env_cfg = env_cfg
@@ -16,6 +18,7 @@ class Trainer:
                 ray.init(address=self.ray_address)
             else:
                 ray.init()
+        register_env()
 
         os.makedirs(self.save_dir, exist_ok=True)
         print(
