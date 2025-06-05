@@ -1,6 +1,6 @@
 import argparse
 import yaml
-from agents.trainer import Trainer
+from src.agents.trainer import Trainer
 import psutil
 import platform
 from datetime import datetime
