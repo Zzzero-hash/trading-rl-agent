@@ -82,6 +82,9 @@ All hyperparameters and environment settings are defined in YAML files under `sr
 Train or evaluate an agent:
 
 ```bash
+# Start a local Ray cluster
+ray start --head
+
 # Using console script (after `pip install -e .`)
 trade-agent \
   --env-config src/configs/env/trader_env.yaml \
@@ -97,6 +100,16 @@ env "PYTHONPATH=src" python -m trading_rl_agent.main \
   --eval
 ```
 
+Train using the Ray RLlib configuration files:
+
+```bash
+trade-agent \
+  --env-config src/configs/env/trader_env.yaml \
+  --model-config src/configs/model/cnn_lstm.yaml \
+  --trainer-config src/configs/ray/ppo_ray.yaml \
+  --train
+```
+
 Run a Ray Tune hyperparameter search using the provided search space:
 
 ```bash
@@ -105,6 +118,10 @@ trade-agent \
   --model-config src/configs/ray/tune_search.yaml \
   --trainer-config src/configs/ray/tune_search.yaml \
   --tune
+```
+
+```bash
+ray stop
 ```
 
 ## Testing
