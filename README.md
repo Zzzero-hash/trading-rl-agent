@@ -18,10 +18,13 @@ A reinforcement learning framework for algorithmic trading, providing customizab
 ```bash
 # Clone repository
  git clone https://github.com/yourusername/trading-rl-agent.git
- cd trading-rl-agent
+cd trading-rl-agent
+
+# Install dependencies (Ray with Tune extras included)
+pip install -r requirements.txt
 
 # Build Docker image (CPU)
- docker build -t trading-rl-agent .
+docker build -t trading-rl-agent .
 
 # (Optional) Build GPU/ROCm image
  docker build -f Dockerfile.rocm -t trading-rl-agent:rocm .
@@ -85,7 +88,7 @@ Train or evaluate an agent:
 # Start a local Ray cluster
 ray start --head
 
-# Using console script (after `pip install -e .`)
+# Using console script (after `pip install -e .` which installs Ray[tune])
 trade-agent \
   --env-config src/configs/env/trader_env.yaml \
   --model-config src/configs/model/cnn_lstm.yaml \
