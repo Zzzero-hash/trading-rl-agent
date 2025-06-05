@@ -1,0 +1,5 @@
+# Default training configuration
+algorithm: ppo          # Reinforcement learning algorithm to use
+learning_rate: 0.0003   # Optimizer learning rate
+batch_size: 64          # Number of samples per training batch
+total_episodes: 1000    # Number of episodes to train
