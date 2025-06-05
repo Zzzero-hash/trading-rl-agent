@@ -9,6 +9,40 @@ from .synthetic import fetch_synthetic_data
 from .live import fetch_live_data
 
 
+def load_cached_csvs(directory: str) -> pd.DataFrame:
+    """Load all CSV files from a directory and concatenate them.
+
+    Each resulting row gains a ``source`` column derived from the file name.
+
+    Parameters
+    ----------
+    directory : str
+        Folder containing CSV files previously produced by :func:`run_pipeline`.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Single DataFrame with data from all CSVs combined. If the directory
+        contains no CSV files an empty DataFrame is returned.
+    """
+
+    path = Path(directory)
+    if not path.exists():
+        raise FileNotFoundError(f"Directory not found: {directory}")
+
+    csv_files = sorted(path.glob("*.csv"))
+    frames = []
+    for csv in csv_files:
+        df = pd.read_csv(csv, index_col=0)
+        df["source"] = csv.stem
+        frames.append(df)
+
+    if not frames:
+        return pd.DataFrame()
+
+    return pd.concat(frames, ignore_index=True)
+
+
 def run_pipeline(config_path: str):
     """
     Run data pipeline to fetch historical OHLCV data for configured symbols.
