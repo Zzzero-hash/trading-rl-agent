@@ -7,21 +7,27 @@ from src.data.pipeline import run_pipeline
 
 @pytest.fixture(autouse=True)
 def dummy_fetch(monkeypatch):
-    """
-    Monkey-patch fetch_historical_data to return a dummy DataFrame.
-    """
+    """Monkey-patch all data fetch functions to return a dummy DataFrame."""
     dummy_df = pd.DataFrame(
         {
-            "open": [10, 20],
-            "high": [15, 25],
-            "low": [5, 15],
-            "close": [12, 22],
-            "volume": [100, 200],
+            "open": [10] * 30,
+            "high": [15] * 30,
+            "low": [5] * 30,
+            "close": [12] * 30,
+            "volume": [100] * 30,
         }
     )
     monkeypatch.setattr(
         "src.data.pipeline.fetch_historical_data",
-        lambda symbol, start, end, timestep: dummy_df
+        lambda symbol, start, end, timestep: dummy_df,
+    )
+    monkeypatch.setattr(
+        "src.data.pipeline.fetch_synthetic_data",
+        lambda symbol, start, end, timestep: dummy_df,
+    )
+    monkeypatch.setattr(
+        "src.data.pipeline.fetch_live_data",
+        lambda symbol, start, end, timestep: dummy_df,
     )
     return dummy_df
 
@@ -31,6 +37,8 @@ def test_no_symbols(tmp_path, dummy_fetch):
     cfg = {
         "start": "2021-01-01",
         "end": "2021-01-02",
+        "synthetic_symbols": [],
+        "live_symbols": [],
         "to_csv": False,
         "output_dir": str(tmp_path / "raw"),
     }
@@ -52,6 +60,8 @@ def test_to_csv_creates_files(tmp_path, dummy_fetch):
         "end": "2021-01-02",
         "coinbase_perp_symbols": ["ABC"],
         "oanda_fx_symbols": [],
+        "synthetic_symbols": ["SYN"],
+        "live_symbols": ["LIV"],
         "to_csv": True,
         "output_dir": str(tmp_path / "out"),
     }
@@ -62,6 +72,8 @@ def test_to_csv_creates_files(tmp_path, dummy_fetch):
     key = "coinbase_ABC"
     assert key in results, f"Results should contain key '{key}'"
     assert results[key].equals(dummy_fetch), "Returned DataFrame should match dummy"
+    assert "synthetic_SYN" in results
+    assert "live_LIV" in results
 
     out_dir = Path(cfg["output_dir"])
     csv_file = out_dir / f"{key}.csv"
