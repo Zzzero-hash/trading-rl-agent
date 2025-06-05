@@ -131,6 +131,18 @@ trade-agent \
 ray stop
 ```
 
+## Data Pipeline with Ray
+
+`run_pipeline` now uses Ray to parallelize data ingestion. By default it
+connects to a local Ray instance, or you can specify a cluster address with the
+`RAY_ADDRESS` environment variable or `ray_address` field in the pipeline
+configuration. Example:
+
+```bash
+export RAY_ADDRESS="ray://head-node:10001"
+python -m src.data.pipeline --config src/configs/data/pipeline.yaml
+```
+
 ## Testing
 
 ```pwsh
