@@ -40,7 +40,7 @@ class TestEmptyModules:
 
 
 class TestCNNLSTMModule:
-    """Test class for the empty CNN-LSTM model module."""
+    """Test class for the CNN-LSTM model module."""
     
     def test_module_import(self):
         """Test that the CNN-LSTM module can be imported without errors."""
@@ -49,25 +49,12 @@ class TestCNNLSTMModule:
             assert True, "Module imported successfully"
         except ImportError as e:
             pytest.fail(f"Failed to import CNN-LSTM module: {e}")
-    
-    def test_module_is_empty(self):
-        """Test that the CNN-LSTM module is currently empty."""
-        from src.models import cnn_lstm
-        
-        # Get all attributes that don't start with underscore
-        public_attrs = [attr for attr in dir(cnn_lstm) if not attr.startswith('_')]
-        
-        # Should only have built-in module attributes
-        assert len(public_attrs) == 0, f"Expected empty module, but found: {public_attrs}"
-    
-    def test_module_file_size(self):
-        """Test that the CNN-LSTM module file is empty or very small."""
-        current_file = Path(__file__).resolve()
-        project_root = current_file.parent.parent
-        module_path = project_root / "src" / "models" / "cnn_lstm.py"
-        
-        file_size = module_path.stat().st_size
-        assert file_size <= 100, f"Expected small/empty file, but size is {file_size} bytes"
+
+    def test_contains_model_class(self):
+        """Verify that the CNNLSTMModel class is defined."""
+        from src.models.cnn_lstm import CNNLSTMModel
+
+        assert callable(CNNLSTMModel)
 
 
 class TestMetricsModule:
