@@ -1,0 +1,25 @@
+# Configuration focusing on historical data retrieval
+
+# Date range for the download
+start: 2020-01-01
+end: 2020-12-31
+timestep: day
+
+# Historical markets to pull
+coinbase_perp_symbols:
+  - BTC-USD
+
+oanda_fx_symbols:
+  - EUR_USD
+
+# Optional synthetic and live sources (empty by default)
+synthetic_symbols: []
+live_symbols: []
+
+# Feature processing controls
+generate_features: false  # Skip feature generation
+advanced_candles: false   # Only basic candlestick patterns
+
+# Output configuration
+to_csv: true              # Save data to CSV files
+output_dir: data/historical  # Directory for historical CSVs
