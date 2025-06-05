@@ -1,12 +1,21 @@
 import os
-import yaml
 from pathlib import Path
+
 import pandas as pd
+import yaml
+import ray
+import ray.data as rdata
 
 from .historical import fetch_historical_data
 from .features import generate_features
 from .synthetic import fetch_synthetic_data
 from .live import fetch_live_data
+
+
+@ray.remote
+def _fetch_data_remote(fetch_fn, symbol: str, start: str, end: str, timestep: str):
+    """Execute a data fetch function as a Ray remote task."""
+    return fetch_fn(symbol, start, end, timestep)
 
 
 def load_cached_csvs(directory: str) -> pd.DataFrame:
@@ -44,64 +53,72 @@ def load_cached_csvs(directory: str) -> pd.DataFrame:
 
 
 def run_pipeline(config_path: str):
-    """
-    Run data pipeline to fetch historical OHLCV data for configured symbols.
+    """Run the data ingestion pipeline using Ray for parallelism.
 
-    Returns a dict mapping symbol keys to DataFrames.
+    Parameters
+    ----------
+    config_path : str
+        Path to a YAML configuration file defining symbols and output options.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Mapping of ``source`` keys to DataFrames containing OHLCV data.
     """
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
 
-    start = cfg.get('start')
-    end = cfg.get('end')
-    timestep = cfg.get('timestep', 'day')
-    coinbase_symbols = cfg.get('coinbase_perp_symbols', [])
-    oanda_symbols = cfg.get('oanda_fx_symbols', [])
-    output_dir = cfg.get('output_dir', 'data/raw')
-    to_csv = cfg.get('to_csv', True)
+    start = cfg.get("start")
+    end = cfg.get("end")
+    timestep = cfg.get("timestep", "day")
+    coinbase_symbols = cfg.get("coinbase_perp_symbols", [])
+    oanda_symbols = cfg.get("oanda_fx_symbols", [])
+    output_dir = cfg.get("output_dir", "data/raw")
+    to_csv = cfg.get("to_csv", True)
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    results = {}
 
-    # Fetch Coinbase perpetual futures data
+    started_ray = False
+    if not ray.is_initialized():
+        ray.init(address=cfg.get("ray_address", os.getenv("RAY_ADDRESS")),
+                 log_to_driver=False)
+        started_ray = True
+
+    tasks = {}
+
     for symbol in coinbase_symbols:
         key = f"coinbase_{symbol}"
-        df = fetch_historical_data(symbol, start, end, timestep)
-        results[key] = df
-        if to_csv:
-            csv_path = Path(output_dir) / f"{key}.csv"
-            df.to_csv(csv_path)
+        tasks[key] = _fetch_data_remote.remote(fetch_historical_data, symbol, start, end, timestep)
 
-    # Fetch OANDA FX data
     for symbol in oanda_symbols:
         key = f"oanda_{symbol}"
-        df = fetch_historical_data(symbol, start, end, timestep)
-        results[key] = df
-        if to_csv:
-            csv_path = Path(output_dir) / f"{key}.csv"
-            df.to_csv(csv_path)
+        tasks[key] = _fetch_data_remote.remote(fetch_historical_data, symbol, start, end, timestep)
 
-    # Generate Synthetic data sources
-    for symbol in cfg.get('synthetic_symbols', []):
+    for symbol in cfg.get("synthetic_symbols", []):
         key = f"synthetic_{symbol}"
-        df = fetch_synthetic_data(symbol, start, end, timestep)
-        # Only apply feature generation to OHLCV-style data
-        if 'close' in df.columns:
+        tasks[key] = _fetch_data_remote.remote(fetch_synthetic_data, symbol, start, end, timestep)
+
+    for symbol in cfg.get("live_symbols", []):
+        key = f"live_{symbol}"
+        tasks[key] = _fetch_data_remote.remote(fetch_live_data, symbol, start, end, timestep)
+
+    fetched = ray.get(list(tasks.values())) if tasks else []
+
+    results = {}
+    for key, df in zip(tasks.keys(), fetched):
+        if key.startswith("synthetic_"):
+            if "close" in df.columns:
+                df = generate_features(df)
+        if key.startswith("live_"):
             df = generate_features(df)
+
         results[key] = df
         if to_csv:
             csv_path = Path(output_dir) / f"{key}.csv"
             df.to_csv(csv_path)
 
-    # Fetch Live data sources
-    for symbol in cfg.get('live_symbols', []):
-        key = f"live_{symbol}"
-        df = fetch_live_data(symbol, start, end, timestep)
-        df = generate_features(df)
-        results[key] = df
-        if to_csv:
-            csv_path = Path(output_dir) / f"{key}.csv"
-            df.to_csv(csv_path)
+    if started_ray:
+        ray.shutdown()
 
     return results
 
