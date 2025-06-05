@@ -2,6 +2,7 @@
 import yaml
 import pytest
 import pandas as pd
+import ray
 from pathlib import Path
 from src.data.pipeline import run_pipeline
 
@@ -45,7 +46,9 @@ def test_no_symbols(tmp_path, dummy_fetch):
     cfg_path = tmp_path / "cfg.yaml"
     cfg_path.write_text(yaml.safe_dump(cfg))
 
+    ray.init(local_mode=True, log_to_driver=False)
     results = run_pipeline(str(cfg_path))
+    ray.shutdown()
     assert results == {}, "Expected empty results when no symbols are configured"
 
     raw_dir = Path(cfg["output_dir"])
@@ -68,7 +71,9 @@ def test_to_csv_creates_files(tmp_path, dummy_fetch):
     cfg_path = tmp_path / "cfg.yaml"
     cfg_path.write_text(yaml.safe_dump(cfg))
 
+    ray.init(local_mode=True, log_to_driver=False)
     results = run_pipeline(str(cfg_path))
+    ray.shutdown()
     key = "coinbase_ABC"
     assert key in results, f"Results should contain key '{key}'"
     assert results[key].equals(dummy_fetch), "Returned DataFrame should match dummy"
