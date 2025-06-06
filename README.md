@@ -143,6 +143,22 @@ export RAY_ADDRESS="ray://head-node:10001"
 python -m src.data.pipeline --config src/configs/data/pipeline.yaml
 ```
 
+## Distributed Training with Ray Cluster
+
+The repository provides a small configuration file `ray_cluster_setup.yaml`
+describing the addresses and resources of the Proxmox cluster. `train_rl.py`
+will read this file if passed via `--cluster-config` and connect with
+`ray.init(address="auto")` automatically. Example:
+
+```bash
+python -m src.train_rl --data data.csv --model-path model.pt \
+  --cluster-config ray_cluster_setup.yaml
+```
+
+CPU-intensive tasks such as data ingestion run on the four CPU nodes while the
+GPU nodes train the neural networks. Resource allocation is determined at run
+time using `get_available_devices()`.
+
 ## Trading Environment
 
 The `TradingEnv` module implements a Gym-compatible environment used for RL
