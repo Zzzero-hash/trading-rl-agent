@@ -14,6 +14,8 @@ from src.supervised_model import (
     select_best_model,
 )
 
+from src.supervised_model import TrendPredictor, ModelConfig, TrainingConfig, train_supervised
+
 
 def test_model_output_shape():
     cfg = ModelConfig(cnn_filters=[4], cnn_kernel_sizes=[2], lstm_units=8)
