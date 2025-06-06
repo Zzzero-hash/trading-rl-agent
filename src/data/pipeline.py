@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 import ray
+import ray.data as rdata
 
 from .historical import fetch_historical_data
 from .features import generate_features
