@@ -17,20 +17,17 @@ FROM base AS deps
 WORKDIR /workspace
 COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir numpy==1.23.5 && \
-    # Install all Python deps including Ray with Tune extras
+    # Install all Python deps from requirements.txt
+    # This includes NumPy, Ray with all extras, onnxruntime, etc.
+    # The --ignore-installed blinker is kept from the original file.
     pip install --no-cache-dir -r requirements.txt --ignore-installed blinker
 
-# Add missing dependencies
-RUN pip install --no-cache-dir pyyaml==6.0 yfinance==0.2.61
-
-# Add missing Ray dependency for RLlib
-RUN pip install "ray[rllib]" --no-cache-dir
-
 # Stage 2: run tests
-FROM base
+FROM base AS test
 ENV PYTHONPATH=/workspace
 COPY . .
+# Copy sitecustomize for numpy 2.0 compatibility
+COPY sitecustomize.py /usr/local/lib/python3.10/dist-packages/sitecustomize.py
 RUN pip install -e . && \
     pip install pytest && \
     pytest --maxfail=1 --disable-warnings -q
@@ -43,6 +40,8 @@ COPY --from=deps /usr/local/lib/python3.10/dist-packages /usr/local/lib/python3.
 COPY --from=deps /usr/local/bin /usr/local/bin
 # copy application code
 COPY . .
+# Copy sitecustomize for numpy 2.0 compatibility
+COPY sitecustomize.py /usr/local/lib/python3.10/dist-packages/sitecustomize.py
 COPY src/configs /cfg
 USER rluser
 ENTRYPOINT ["pytest", "--maxfail=1", "--disable-warnings", "-q"]
