@@ -21,6 +21,12 @@ RUN pip install --upgrade pip setuptools wheel && \
     # Install all Python deps including Ray with Tune extras
     pip install --no-cache-dir -r requirements.txt --ignore-installed blinker
 
+# Add missing dependencies
+RUN pip install --no-cache-dir pyyaml==6.0 yfinance==0.2.61
+
+# Add missing Ray dependency for RLlib
+RUN pip install "ray[rllib]" --no-cache-dir
+
 # Stage 2: run tests
 FROM base
 ENV PYTHONPATH=/workspace
