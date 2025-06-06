@@ -143,7 +143,6 @@ export RAY_ADDRESS="ray://head-node:10001"
 python -m src.data.pipeline --config src/configs/data/pipeline.yaml
 ```
 
-
 ## Trading Environment
 
 The `TradingEnv` module implements a Gym-compatible environment used for RL
@@ -156,6 +155,25 @@ env = TradingEnv({"dataset_paths": ["data.csv"], "window_size": 10})
 obs, _ = env.reset()
 ```
 
+## RLlib Training
+
+Use the `Trainer` class to run training with Ray RLlib and Tune. Checkpoints and
+logs are written to `save_dir` (default `outputs/`).
+
+```python
+from src.agents.trainer import Trainer
+
+env_cfg = {"dataset_paths": ["data.csv"], "window_size": 10}
+model_cfg = {}
+trainer_cfg = {"algorithm": "ppo", "num_iterations": 10,
+               "ray_config": {"framework": "torch"}}
+
+trainer = Trainer(env_cfg, model_cfg, trainer_cfg)
+trainer.train()
+```
+
+Specify `ray_address` in `trainer_cfg` or the `RAY_ADDRESS` environment variable
+to connect to a remote Ray cluster.
 
 ## Testing
 
