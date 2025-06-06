@@ -326,3 +326,4 @@ __all__ = [
     "predict_features",
     "select_best_model",
 ]
+__all__ = ["TrendPredictor", "ModelConfig", "TrainingConfig", "train_supervised"]
