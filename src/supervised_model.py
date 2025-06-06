@@ -67,6 +67,8 @@ class TrendPredictor(nn.Module):
         super().__init__()
         cfg = config or ModelConfig()
         self.task = cfg.task
+        self.config = cfg
+        self.input_dim = input_dim
         filters = list(cfg.cnn_filters)
         kernels = list(cfg.cnn_kernel_sizes)
         if len(filters) != len(kernels):
@@ -213,4 +215,115 @@ def tune_example():
     pass
 
 
+def save_model(model: TrendPredictor, path: str) -> None:
+    """Save ``model`` to ``path`` using :func:`torch.save`."""
+    torch.save(
+        {
+            "state_dict": model.state_dict(),
+            "config": model.config.__dict__,
+            "input_dim": model.input_dim,
+        },
+        path,
+    )
+
+
+def load_model(path: str, device: str | torch.device | None = None) -> TrendPredictor:
+    """Load a :class:`TrendPredictor` from ``path``."""
+    device = torch.device(device or "cpu")
+    checkpoint = torch.load(path, map_location=device)
+    cfg = ModelConfig(**checkpoint["config"])
+    model = TrendPredictor(checkpoint["input_dim"], cfg).to(device)
+    model.load_state_dict(checkpoint["state_dict"])
+    return model
+
+
+def evaluate_model(
+    model_or_path: TrendPredictor | str,
+    features: Any,
+    targets: Any,
+) -> Dict[str, float]:
+    """Evaluate a trained model on ``features`` and ``targets``."""
+    if isinstance(model_or_path, (str, bytes)):
+        model = load_model(model_or_path)
+    else:
+        model = model_or_path
+
+    device = next(model.parameters()).device
+    x = _to_tensor(features).to(device)
+    y = _to_tensor(targets).reshape(len(features), -1).to(device)
+
+    model.eval()
+    with torch.no_grad():
+        pred = model(x)
+
+    if model.task == "classification":
+        predicted = (pred > 0.5).float()
+        correct = (predicted == y).all(dim=1).float().mean().item()
+        tp = ((predicted == 1) & (y == 1)).sum().item()
+        fp = ((predicted == 1) & (y == 0)).sum().item()
+        fn = ((predicted == 0) & (y == 1)).sum().item()
+        precision = tp / (tp + fp + 1e-8)
+        recall = tp / (tp + fn + 1e-8)
+        return {"accuracy": correct, "precision": precision, "recall": recall}
+    else:
+        mse = torch.mean((pred - y) ** 2).item()
+        mae = torch.mean(torch.abs(pred - y)).item()
+        return {"mse": mse, "mae": mae}
+
+
+def predict_features(
+    model_or_path: TrendPredictor | str,
+    recent_data: Any,
+    device: str | torch.device | None = None,
+) -> torch.Tensor:
+    """Return model prediction for ``recent_data``."""
+    if isinstance(model_or_path, (str, bytes)):
+        model = load_model(model_or_path, device)
+    else:
+        model = model_or_path
+        if device is not None:
+            model = model.to(device)
+    device = next(model.parameters()).device
+    x = _to_tensor(recent_data)
+    if x.ndim == 2:
+        x = x.unsqueeze(0)
+    model.eval()
+    with torch.no_grad():
+        out = model(x.to(device))
+    return out.squeeze().cpu()
+
+
+def select_best_model(log_dir: str) -> str:
+    """Return path to the best model checkpoint inside ``log_dir``."""
+    import json
+    import os
+
+    best_path = ""
+    best_loss = float("inf")
+    for root, _, files in os.walk(log_dir):
+        if "metrics.json" in files:
+            mpath = os.path.join(root, "metrics.json")
+            with open(mpath) as f:
+                metrics = json.load(f)
+            loss = metrics.get("val_loss")
+            if loss is not None and loss < best_loss:
+                best_loss = loss
+                ck_rel = metrics.get("checkpoint", "model.pt")
+                best_path = os.path.join(root, ck_rel)
+    if not best_path:
+        raise FileNotFoundError("No metrics.json found in log_dir")
+    return best_path
+
+
+__all__ = [
+    "TrendPredictor",
+    "ModelConfig",
+    "TrainingConfig",
+    "train_supervised",
+    "save_model",
+    "load_model",
+    "evaluate_model",
+    "predict_features",
+    "select_best_model",
+]
 __all__ = ["TrendPredictor", "ModelConfig", "TrainingConfig", "train_supervised"]
