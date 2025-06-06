@@ -4,7 +4,7 @@ import yaml
 import ray
 from ray import tune
 
-from src.envs.trader_env import register_env
+from src.envs.trading_env import register_env
 
 
 def _convert_value(value):

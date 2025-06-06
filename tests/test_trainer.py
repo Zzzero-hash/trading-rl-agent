@@ -176,21 +176,19 @@ class TestTrainerTraining:
         with patch('ray.init'), \
              patch('ray.is_initialized', return_value=False), \
              patch('src.agents.trainer.register_env'), \
-             patch('ray.shutdown') as mock_shutdown:
-            
-            # Mock PPO trainer
-            mock_trainer = Mock()
-            mock_trainer.train.return_value = {"episode_reward_mean": 100.5}
-            mock_trainer.save.return_value = f"{temp_dir}/checkpoint_001"
-            
-            with patch('src.agents.trainer.PPOTrainer', return_value=mock_trainer):
-                trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
-                trainer.train()
-                
-                # Check that training was called correct number of times
-                assert mock_trainer.train.call_count == 2
-                assert mock_trainer.save.call_count == 2
-                mock_shutdown.assert_called_once()
+             patch('ray.shutdown') as mock_shutdown, \
+             patch('src.agents.trainer.tune.Tuner') as mock_tuner_cls:
+
+            mock_tuner = Mock()
+            mock_tuner.fit.return_value = Mock()
+            mock_tuner_cls.return_value = mock_tuner
+
+            trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
+            trainer.train()
+
+            mock_tuner_cls.assert_called_once()
+            mock_tuner.fit.assert_called_once()
+            mock_shutdown.assert_called_once()
     
     def test_trainer_train_dqn(self, sample_configs, temp_dir):
         """Test training with DQN algorithm."""
@@ -201,19 +199,18 @@ class TestTrainerTraining:
         with patch('ray.init'), \
              patch('ray.is_initialized', return_value=False), \
              patch('src.agents.trainer.register_env'), \
-             patch('ray.shutdown'):
-            
-            # Mock DQN trainer
-            mock_trainer = Mock()
-            mock_trainer.train.return_value = {"episode_reward_mean": 150.0}
-            mock_trainer.save.return_value = f"{temp_dir}/checkpoint_001"
-            
-            with patch('src.agents.trainer.DQNTrainer', return_value=mock_trainer):
-                trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
-                trainer.train()
-                
-                assert mock_trainer.train.call_count == 1
-                assert mock_trainer.save.call_count == 1
+             patch('ray.shutdown'), \
+             patch('src.agents.trainer.tune.Tuner') as mock_tuner_cls:
+
+            mock_tuner = Mock()
+            mock_tuner.fit.return_value = Mock()
+            mock_tuner_cls.return_value = mock_tuner
+
+            trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
+            trainer.train()
+
+            mock_tuner_cls.assert_called_once()
+            mock_tuner.fit.assert_called_once()
     
     def test_trainer_train_saves_checkpoints(self, sample_configs, temp_dir):
         """Test that training saves checkpoints to correct directory."""
@@ -223,18 +220,18 @@ class TestTrainerTraining:
         with patch('ray.init'), \
              patch('ray.is_initialized', return_value=False), \
              patch('src.agents.trainer.register_env'), \
-             patch('ray.shutdown'):
-            
-            mock_trainer = Mock()
-            mock_trainer.train.return_value = {"episode_reward_mean": 75.0}
-            expected_checkpoint = f"{temp_dir}/checkpoint_001"
-            mock_trainer.save.return_value = expected_checkpoint
-            
-            with patch('src.agents.trainer.PPOTrainer', return_value=mock_trainer):
-                trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
-                trainer.train()
-                
-                mock_trainer.save.assert_called_with(temp_dir)
+             patch('ray.shutdown'), \
+             patch('src.agents.trainer.tune.Tuner') as mock_tuner_cls:
+
+            mock_tuner = Mock()
+            mock_tuner.fit.return_value = Mock()
+            mock_tuner_cls.return_value = mock_tuner
+
+            trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
+            trainer.train()
+
+            args, kwargs = mock_tuner_cls.call_args
+            assert kwargs["run_config"].storage_path == f"file://{temp_dir}"
 
 
 class TestTrainerEvaluation:

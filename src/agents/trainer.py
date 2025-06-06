@@ -2,8 +2,9 @@
 import os
 import glob
 import ray
+from ray import tune
 
-from src.envs.trader_env import register_env
+from src.envs.trading_env import register_env
 try:
     from ray.rllib.algorithms.ppo import PPOTrainer
 except ImportError:  # Ray >=2.3 renames Trainer classes
@@ -45,30 +46,20 @@ class Trainer:
             f"[Trainer] Starting training with configs:\n  env={self.env_cfg}\n  model={self.model_cfg}\n  trainer={self.trainer_cfg}"
         )
 
-        trainer_cls = PPOTrainer if self.algorithm == "ppo" else DQNTrainer
-        trainer = trainer_cls(config=self.ray_config)
+        algo_cls = PPOTrainer if self.algorithm == "ppo" else DQNTrainer
+        run_config = tune.RunConfig(
+            stop={"training_iteration": self.num_iterations},
+            storage_path=f"file://{self.save_dir}",
+            checkpoint_config=tune.CheckpointConfig(checkpoint_at_end=True),
+        )
 
-        for i in range(self.num_iterations):
-            result = trainer.train()
-            print(f"Iteration {i+1}/{self.num_iterations}: reward_mean={result.get('episode_reward_mean')}")
-            checkpoint = trainer.save(self.save_dir)
-            print(f"Saved checkpoint to {checkpoint}")
+        tuner = tune.Tuner(algo_cls, param_space=self.ray_config, run_config=run_config)
+        tuner.fit()
 
         ray.shutdown()
 
     def evaluate(self):
-        print(f"[Trainer] Starting evaluation using models in '{self.save_dir}'")
-        trainer_cls = PPOTrainer if self.algorithm == "ppo" else DQNTrainer
-        trainer = trainer_cls(config=self.ray_config)
+        raise NotImplementedError
 
-        checkpoints = sorted(
-            glob.glob(os.path.join(self.save_dir, "checkpoint_*")),
-            key=os.path.getmtime,
-        )
-        if not checkpoints:
-            raise FileNotFoundError(f"No checkpoints found in {self.save_dir}")
-        latest = checkpoints[-1]
-        trainer.restore(latest)
-        results = trainer.evaluate()
-        print(results)
-        ray.shutdown()
+    def test(self):
+        raise NotImplementedError
