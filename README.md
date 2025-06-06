@@ -191,6 +191,26 @@ trainer.train()
 Specify `ray_address` in `trainer_cfg` or the `RAY_ADDRESS` environment variable
 to connect to a remote Ray cluster.
 
+## Deployment with Ray Serve
+
+The module `src/serve_deployment.py` contains simple Ray Serve deployments for
+the supervised predictor and the RL policy. They can be launched on any Ray
+cluster:
+
+```bash
+ray start --head
+python -m ray serve run src.serve_deployment:deployment_graph
+```
+
+Requests can then be sent via HTTP:
+
+```bash
+curl -X POST http://127.0.0.1:8000/predictor -d '{"features": [0.1, 0.2]}'
+```
+
+These deployments are stubs; in production they would load the latest model
+checkpoints and could be integrated into a CI/CD pipeline for automated rollout.
+
 ## Testing
 
 ```pwsh

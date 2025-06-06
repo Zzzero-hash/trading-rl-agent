@@ -146,7 +146,7 @@ def train_supervised(
         device = torch.device(f"cuda:{int(gpu_ids[0])}")
     else:
         device = torch.device("cpu")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
     logger.info("Using device %s", device)
 
     x = _to_tensor(features)
@@ -331,4 +331,3 @@ __all__ = [
     "predict_features",
     "select_best_model",
 ]
-__all__ = ["TrendPredictor", "ModelConfig", "TrainingConfig", "train_supervised"]

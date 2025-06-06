@@ -42,7 +42,6 @@ def main():
         args.num_workers = max(1, int(resources["CPU"] - 1))
     if args.num_gpus == 0 and resources.get("GPU", 0) > 0:
         args.num_gpus = int(resources["GPU"])
-    args = parser.parse_args()
 
     env_config = {
         "dataset_paths": [args.data],
