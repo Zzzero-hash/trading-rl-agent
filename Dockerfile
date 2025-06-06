@@ -12,18 +12,7 @@ RUN apt-get update && \
       libssl-dev libgl1 libglib2.0-0 && \
     rm -rf /var/lib/apt/lists/*
 
-# Build & install TA-Lib C library
-RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
-    tar -xzf ta-lib-0.4.0-src.tar.gz && \
-    cd ta-lib && ./configure && make && make install && \
-    cd .. && rm -rf ta-lib ta-lib-0.4.0-src.tar.gz
-
-# Symlink to satisfy '-lta-lib'
-RUN ln -s /usr/local/lib/libta_lib.so /usr/local/lib/libta-lib.so && \
-    ln -s /usr/local/lib/libta_lib.a /usr/local/lib/libta-lib.a && \
-    ldconfig
-
-# Stage 2: install Python dependencies
+# Stage 1: install Python dependencies
 FROM base AS deps
 WORKDIR /workspace
 COPY requirements.txt .
@@ -32,7 +21,7 @@ RUN pip install --upgrade pip setuptools wheel && \
     # Install all Python deps including Ray with Tune extras
     pip install --no-cache-dir -r requirements.txt --ignore-installed blinker
 
-# Stage 3: run tests
+# Stage 2: run tests
 FROM base
 ENV PYTHONPATH=/workspace
 COPY . .
@@ -40,7 +29,7 @@ RUN pip install -e . && \
     pip install pytest && \
     pytest --maxfail=1 --disable-warnings -q
 
-# Stage 4: final runtime image
+# Stage 3: final runtime image
 FROM base
 WORKDIR /workspace
 # copy Python dependencies from deps stage (Debian installs to dist-packages)

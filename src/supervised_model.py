@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import Iterable, Tuple, Dict, List, Any
 
 import numpy as np
+import ray
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
