@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import pandas as pd
-import yfinance as yf
+try:
+    import yfinance as yf
+except ModuleNotFoundError:  # Allow import when yfinance not installed
+    yf = None
 
 
 def fetch_live_data(symbol: str, start: str, end: str, timestep: str = "day") -> pd.DataFrame:

@@ -10,7 +10,7 @@ sys.modules["gym"] = gym
 import ray
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.tune.registry import register_env
-from src.envs.trader_env import env_creator
+from src.envs.trading_env import env_creator
 
 class FlattenWrapper(gym.ObservationWrapper):
     """Flatten observations so RLlib can handle 2D arrays."""
