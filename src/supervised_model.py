@@ -111,10 +111,6 @@ def _split_data(x: torch.Tensor, y: torch.Tensor, val_split: float) -> Tuple[Tup
     split = int(n * (1 - val_split))
     return (x[:split], y[:split]), (x[split:], y[split:])
 
-
-import ray
-
-
 @ray.remote(num_gpus=1, num_cpus=4)
 def train_supervised(
     features: Any,
@@ -150,6 +146,7 @@ def train_supervised(
         device = torch.device(f"cuda:{int(gpu_ids[0])}")
     else:
         device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info("Using device %s", device)
 
     x = _to_tensor(features)
@@ -334,3 +331,4 @@ __all__ = [
     "predict_features",
     "select_best_model",
 ]
+__all__ = ["TrendPredictor", "ModelConfig", "TrainingConfig", "train_supervised"]
