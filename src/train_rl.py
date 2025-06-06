@@ -8,9 +8,7 @@ from pathlib import Path
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.models import ModelCatalog
 from ray.tune.registry import register_env
-
 from src.utils.cluster import init_ray, get_available_devices
-
 from src.envs.trading_env import TradingEnv
 from src.models.concat_model import ConcatModel
 
@@ -44,6 +42,7 @@ def main():
         args.num_workers = max(1, int(resources["CPU"] - 1))
     if args.num_gpus == 0 and resources.get("GPU", 0) > 0:
         args.num_gpus = int(resources["GPU"])
+    args = parser.parse_args()
 
     env_config = {
         "dataset_paths": [args.data],
