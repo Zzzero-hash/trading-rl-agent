@@ -8,6 +8,7 @@ import gymnasium as gym
 from pathlib import Path
 
 from src.data.features import generate_features
+from src.supervised_model import load_model, predict_features
 
 
 class TradingEnv(gym.Env):
@@ -25,6 +26,13 @@ class TradingEnv(gym.Env):
         self.initial_balance = float(cfg.get("initial_balance", 1_0000))
         self.transaction_cost = float(cfg.get("transaction_cost", 0.001))
         self.include_features = bool(cfg.get("include_features", False))
+        self.model_path = cfg.get("model_path")
+        self.model = None
+        if self.model_path:
+            self.model = load_model(self.model_path)
+            self.model_output_size = self.model.config.output_size
+        else:
+            self.model_output_size = 0
 
         self.data = self._load_data()
         if len(self.data) <= self.window_size:
@@ -32,9 +40,19 @@ class TradingEnv(gym.Env):
 
         self.action_space = gym.spaces.Discrete(3)  # hold/buy/sell
         obs_shape = (self.window_size, self.data.shape[1])
-        self.observation_space = gym.spaces.Box(
-            low=-np.inf, high=np.inf, shape=obs_shape, dtype=np.float32
-        )
+        base_box = gym.spaces.Box(low=-np.inf, high=np.inf, shape=obs_shape, dtype=np.float32)
+        if self.model:
+            pred_box = gym.spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.model_output_size,),
+                dtype=np.float32,
+            )
+            self.observation_space = gym.spaces.Dict(
+                {"market_features": base_box, "model_pred": pred_box}
+            )
+        else:
+            self.observation_space = base_box
 
         self.reset()
 
@@ -49,9 +67,12 @@ class TradingEnv(gym.Env):
             data = generate_features(data)
         return data.astype(np.float32)
 
-    def _get_observation(self) -> np.ndarray:
-        obs = self.data.iloc[self.current_step - self.window_size : self.current_step].values
-        return obs.astype(np.float32)
+    def _get_observation(self):
+        obs = self.data.iloc[self.current_step - self.window_size : self.current_step].values.astype(np.float32)
+        if self.model:
+            pred = predict_features(self.model, obs).numpy().astype(np.float32)
+            return {"market_features": obs, "model_pred": pred}
+        return obs
 
     # Gym API -----------------------------------------------------------
     def reset(self, *, seed=None, options=None):
@@ -78,7 +99,18 @@ class TradingEnv(gym.Env):
         reward = float(self.position * price_diff - cost)
         self.balance += reward
 
-        obs = self._get_observation() if not done else np.zeros_like(self.observation_space.sample())
+        if done:
+            if isinstance(self.observation_space, gym.spaces.Dict):
+                obs = {
+                    "market_features": np.zeros(
+                        (self.window_size, self.data.shape[1]), dtype=np.float32
+                    ),
+                    "model_pred": np.zeros(self.model_output_size, dtype=np.float32),
+                }
+            else:
+                obs = np.zeros_like(self.observation_space.sample())
+        else:
+            obs = self._get_observation()
         info = {"balance": self.balance}
         return obs, reward, done, False, info
 
