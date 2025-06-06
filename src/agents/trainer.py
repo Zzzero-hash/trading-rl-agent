@@ -3,7 +3,7 @@ import os
 import glob
 import ray
 
-from src.envs.trader_env import register_env
+from src.envs.trading_env import register_env
 try:
     from ray.rllib.algorithms.ppo import PPOTrainer
 except ImportError:  # Ray >=2.3 renames Trainer classes
