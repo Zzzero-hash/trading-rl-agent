@@ -143,6 +143,22 @@ export RAY_ADDRESS="ray://head-node:10001"
 python -m src.data.pipeline --config src/configs/data/pipeline.yaml
 ```
 
+## Distributed Training with Ray Cluster
+
+The repository provides a small configuration file `ray_cluster_setup.yaml`
+describing the addresses and resources of the Proxmox cluster. `train_rl.py`
+will read this file if passed via `--cluster-config` and connect with
+`ray.init(address="auto")` automatically. Example:
+
+```bash
+python -m src.train_rl --data data.csv --model-path model.pt \
+  --cluster-config ray_cluster_setup.yaml
+```
+
+CPU-intensive tasks such as data ingestion run on the four CPU nodes while the
+GPU nodes train the neural networks. Resource allocation is determined at run
+time using `get_available_devices()`.
+
 ## Trading Environment
 
 The `TradingEnv` module implements a Gym-compatible environment used for RL
@@ -174,6 +190,26 @@ trainer.train()
 
 Specify `ray_address` in `trainer_cfg` or the `RAY_ADDRESS` environment variable
 to connect to a remote Ray cluster.
+
+## Deployment with Ray Serve
+
+The module `src/serve_deployment.py` contains simple Ray Serve deployments for
+the supervised predictor and the RL policy. They can be launched on any Ray
+cluster:
+
+```bash
+ray start --head
+python -m ray serve run src.serve_deployment:deployment_graph
+```
+
+Requests can then be sent via HTTP:
+
+```bash
+curl -X POST http://127.0.0.1:8000/predictor -d '{"features": [0.1, 0.2]}'
+```
+
+These deployments are stubs; in production they would load the latest model
+checkpoints and could be integrated into a CI/CD pipeline for automated rollout.
 
 ## Testing
 
