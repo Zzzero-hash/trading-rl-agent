@@ -143,6 +143,20 @@ export RAY_ADDRESS="ray://head-node:10001"
 python -m src.data.pipeline --config src/configs/data/pipeline.yaml
 ```
 
+
+## Trading Environment
+
+The `TradingEnv` module implements a Gym-compatible environment used for RL
+training. Configure it with paths to CSV datasets and parameters like
+`window_size`, `initial_balance` and `transaction_cost`. Example:
+
+```python
+from src.envs.trading_env import TradingEnv
+env = TradingEnv({"dataset_paths": ["data.csv"], "window_size": 10})
+obs, _ = env.reset()
+```
+
+
 ## Testing
 
 ```pwsh

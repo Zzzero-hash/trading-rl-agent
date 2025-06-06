@@ -1,5 +1,8 @@
 import pandas as pd
-import yfinance as yf
+try:
+    import yfinance as yf
+except ModuleNotFoundError:  # Allow import when yfinance not installed
+    yf = None
 
 # use yfinance for free historical data
 client = yf
