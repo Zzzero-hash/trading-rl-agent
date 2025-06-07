@@ -1,0 +1,39 @@
+# SAC Agent Configuration for Trading RL
+# Soft Actor-Critic hyperparameters optimized for trading environments
+
+# Learning parameters
+learning_rate: 3e-4
+gamma: 0.99              # Discount factor for future rewards
+tau: 0.005               # Soft update rate for target networks
+
+# Training parameters
+batch_size: 256          # Replay buffer batch size
+buffer_capacity: 1000000 # Replay buffer capacity
+update_frequency: 1      # Update networks every N steps
+
+# Network architecture
+hidden_dims: [256, 256]  # Hidden layer dimensions for actor/critic
+
+# Entropy regularization
+automatic_entropy_tuning: true  # Auto-tune temperature parameter
+target_entropy: -1.0           # Target entropy for auto-tuning
+alpha: 0.2                     # Fixed temperature (if not auto-tuning)
+
+# Trading-specific parameters
+position_scaling: 1.0    # Scale factor for position sizes
+risk_penalty: 0.01      # Penalty for large position changes
+
+# Training schedule
+warmup_steps: 1000      # Steps before training begins
+eval_frequency: 5000    # Evaluate agent every N steps
+save_frequency: 10000   # Save checkpoint every N steps
+
+# Environment integration
+action_space: "continuous"    # Action space type
+action_bounds: [-1.0, 1.0]   # Position size bounds
+state_preprocessing: "normalize"  # State preprocessing method
+
+# Advanced features
+prioritized_replay: false     # Use prioritized experience replay
+gradient_clipping: 1.0       # Gradient clipping value
+layer_normalization: false   # Use layer normalization in networks

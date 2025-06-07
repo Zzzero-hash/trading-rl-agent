@@ -1,0 +1,57 @@
+# Ensemble Agent Configuration for Trading RL
+# Combines multiple RL agents for robust trading decisions
+
+# Agent composition
+agents:
+  sac:
+    enabled: true
+    config:
+      learning_rate: 3e-4
+      gamma: 0.99
+      tau: 0.005
+      batch_size: 256
+      hidden_dims: [256, 256]
+      automatic_entropy_tuning: true
+      target_entropy: -1.0
+  
+  td3:
+    enabled: true
+    config:
+      learning_rate: 3e-4
+      gamma: 0.99
+      tau: 0.005
+      batch_size: 256
+      hidden_dims: [256, 256]
+      policy_delay: 2
+      target_noise: 0.2
+      exploration_noise: 0.1
+
+# Ensemble combination methods
+ensemble_method: "weighted_average"  # Options: weighted_average, voting, risk_parity
+
+# Weight management
+weight_update_frequency: 1000    # Update weights every N steps
+diversity_penalty: 0.1          # Penalty for highly correlated agents
+min_weight: 0.1                 # Minimum weight per agent
+performance_window: 100         # Window for performance evaluation
+
+# Risk management
+risk_adjustment: true           # Enable risk-adjusted weighting
+correlation_threshold: 0.8     # High correlation threshold for penalty
+diversity_bonus: 0.05          # Bonus for diverse predictions
+
+# Training parameters
+warmup_steps: 2000             # Steps before ensemble training begins
+eval_frequency: 5000           # Evaluate ensemble every N steps
+save_frequency: 10000          # Save ensemble every N steps
+
+# Performance tracking
+track_individual_performance: true    # Track each agent separately
+track_ensemble_metrics: true         # Track ensemble-level metrics
+performance_history_length: 1000     # Length of performance history
+
+# Advanced features
+adaptive_weights: true               # Enable adaptive weight adjustment
+temperature_scaling: 1.0            # Temperature for softmax weight updates
+weight_momentum: 0.9                # Momentum for weight updates
+min_diversity_threshold: 0.1        # Minimum required diversity
