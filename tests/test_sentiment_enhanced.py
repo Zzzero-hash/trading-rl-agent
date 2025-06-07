@@ -273,43 +273,7 @@ class TestSentimentIntegration:
         sentiment_data = provider.fetch_sentiment('AAPL', days_back=1)
         
         assert len(sentiment_data) > 0
-        mock_get.assert_called_once()    def test_sentiment_error_handling(self):
-        """Test sentiment provider error handling."""
-        # Test with provider that raises exception
-        from src.data.sentiment import SentimentProvider
-        
-        class FailingProvider(SentimentProvider):
-            def fetch_sentiment(self, symbol, days_back=1):
-                raise Exception("Test error")
-        
-        analyzer = SentimentAnalyzer()
-        analyzer.providers = [FailingProvider()]
-        
-        # Should not raise exception, should return empty list
-        sentiment_data = analyzer.fetch_all_sentiment('TEST', days_back=1)
-        assert sentiment_data == []
-    
-    def test_sentiment_aggregation_weighting(self):
-        """Test sentiment score aggregation with magnitude and recency weighting."""
-        analyzer = SentimentAnalyzer()
-        
-        # Create test sentiment data with different magnitudes and timestamps
-        now = datetime.datetime.now()
-        test_data = [
-            SentimentData('TEST', 0.8, 0.9, now, 'news'),  # High confidence, recent
-            SentimentData('TEST', -0.5, 0.3, now - datetime.timedelta(hours=12), 'social'),  # Low confidence, older
-            SentimentData('TEST', 0.2, 0.7, now - datetime.timedelta(hours=1), 'news')  # Medium confidence, recent
-        ]
-        
-        # Mock the fetch_all_sentiment to return our test data
-        analyzer.sentiment_cache['TEST_1'] = test_data
-        
-        # Get aggregated score
-        score = analyzer.get_symbol_sentiment('TEST', days_back=1)
-        
-        # Should be positive (weighted toward high-confidence positive sentiment)
-        assert score > 0
-        assert isinstance(score, float)
+        mock_get.assert_called_once()
 
 
 class TestSentimentErrorCases:

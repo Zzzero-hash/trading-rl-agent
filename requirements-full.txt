@@ -1,0 +1,14 @@
+# Trading RL Agent - Full Dependencies
+# Production-ready installation with all features
+
+# Include ML dependencies (which includes core)
+-r requirements-ml.txt
+
+# Distributed computing and RL
+ray[rllib]>=2.31.0,<2.47.0  # 500MB - Distributed RL training
+
+# Market data and analysis
+yfinance>=0.2.0,<0.3.0       # 10MB - Financial data
+ta>=0.10.0,<0.11.0           # 5MB - Technical analysis indicators
+
+# Total: ~2.6GB - Full production deployment

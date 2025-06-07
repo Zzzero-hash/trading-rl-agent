@@ -1,0 +1,92 @@
+# CNN-LSTM Training Configuration for Production
+# Optimized for performance with larger models and longer training
+
+# Model Architecture (Larger for better performance)
+model:
+  name: "cnn_lstm_prod"
+  input_dim: 25  # More comprehensive features
+  hidden_dim: 256
+  num_layers: 3
+  dropout: 0.3
+  output_dim: 3
+  
+# Data Configuration (Full datasets)
+data:
+  sequence_length: 120  # Longer historical context
+  prediction_horizon: 1
+  train_split: 0.7
+  val_split: 0.2
+  test_split: 0.1
+  batch_size: 64  # Larger batches for stability
+  shuffle: true
+  
+  # Feature engineering (All features)
+  features:
+    technical_indicators: true
+    sentiment_analysis: true
+    price_changes: true
+    volume_features: true
+    
+  # Sentiment configuration (All sources)
+  sentiment:
+    sources: ["news", "social"]
+    cache_enabled: true
+    cache_ttl: 7200  # 2 hours
+    aggregation_window: "4h"
+    
+# Training Configuration (Thorough training)
+training:
+  epochs: 200
+  learning_rate: 0.0005  # Conservative learning rate
+  weight_decay: 0.00005
+  early_stopping:
+    patience: 20
+    min_delta: 0.0001
+    monitor: "val_loss"
+    
+  # Optimization
+  optimizer: "adamw"  # Better optimizer for production
+  scheduler:
+    type: "cosine_annealing"
+    T_max: 50
+    eta_min: 0.000001
+    
+  # Loss function
+  loss_function: "cross_entropy"
+  class_weights: "auto"  # Auto-balance classes
+  
+# Validation & Metrics
+validation:
+  frequency: 1
+  metrics: ["accuracy", "precision", "recall", "f1", "auc"]
+  save_best_model: true
+  
+# Model Persistence
+persistence:
+  save_dir: "models/cnn_lstm_prod"
+  checkpoint_frequency: 25
+  save_optimizer_state: true
+  
+# Ray Configuration (Distributed training)
+ray:
+  enabled: true
+  num_workers: 4
+  resources_per_worker:
+    cpu: 2
+    gpu: 0.5
+    
+# Logging & Monitoring
+logging:
+  level: "INFO"
+  log_dir: "logs/training_prod"
+  tensorboard: true
+  wandb:
+    enabled: true
+    project: "trading-rl-agent-prod"
+    entity: null
+    tags: ["cnn-lstm", "production", "sentiment"]
+    
+# Random Seeds
+random_seed: 2024
+torch_seed: 2024
+numpy_seed: 2024
