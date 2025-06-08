@@ -19,6 +19,8 @@ import random
 from typing import Dict, List, Tuple, Optional, Union
 import yaml
 import copy
+from dataclasses import asdict, is_dataclass
+from .configs import TD3Config
 
 
 class Actor(nn.Module):
@@ -121,7 +123,7 @@ class TD3Agent:
     def __init__(self,
                  state_dim: int,
                  action_dim: int = 1,
-                 config: Optional[Union[str, Dict]] = None,
+                 config: Optional[Union[str, Dict, TD3Config]] = None,
                  device: str = "cpu"):
         
         self.device = torch.device(device)
@@ -163,8 +165,8 @@ class TD3Agent:
         self.training_step = 0
         self.total_iterations = 0
         
-    def _load_config(self, config: Optional[Union[str, Dict]]) -> Dict:
-        """Load configuration from file or dict."""
+    def _load_config(self, config: Optional[Union[str, Dict, TD3Config]]) -> Dict:
+        """Load configuration from dataclass, file, or dict."""
         if config is None:
             return {
                 "learning_rate": 3e-4,
@@ -181,6 +183,8 @@ class TD3Agent:
         elif isinstance(config, str):
             with open(config, 'r') as f:
                 return yaml.safe_load(f) or {}
+        elif is_dataclass(config):
+            return asdict(config)
         else:
             return config
     
