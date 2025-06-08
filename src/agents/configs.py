@@ -1,5 +1,35 @@
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+
+@dataclass
+class EnsembleConfig:
+    """Configuration options for :class:`EnsembleAgent`."""
+    agents: Dict[str, Dict[str, Any]] = field(default_factory=lambda: {
+        "sac": {"enabled": True, "config": None},
+        "td3": {"enabled": True, "config": None},
+    })
+    ensemble_method: str = "weighted_average"
+    weight_update_frequency: int = 1000
+    diversity_penalty: float = 0.1
+    min_weight: float = 0.1
+    performance_window: int = 100
+    risk_adjustment: bool = True
+    combination_method: str = "weighted_average"
+    # Optional dimension parameters for compatibility
+    state_dim: Optional[int] = None
+    action_dim: Optional[int] = None
+    # Support agent_configs as parameter name
+    agent_configs: Optional[Dict[str, Dict[str, Any]]] = None
+    
+    def __post_init__(self):
+        """Handle agent_configs alias and validation after initialization."""
+        # If agent_configs was passed, use it instead of agents
+        if self.agent_configs is not None:
+            self.agents = self.agent_configs
+        
+        # Validate that at least one agent is specified
+        if not self.agents:
+            raise ValueError("At least one agent must be specified")
 
 @dataclass
 class SACConfig:
@@ -27,17 +57,3 @@ class TD3Config:
     target_noise: float = 0.2
     noise_clip: float = 0.5
     exploration_noise: float = 0.1
-
-@dataclass
-class EnsembleConfig:
-    """Configuration options for :class:`EnsembleAgent`."""
-    agents: Dict[str, Dict[str, Any]] = field(default_factory=lambda: {
-        "sac": {"enabled": True, "config": None},
-        "td3": {"enabled": True, "config": None},
-    })
-    ensemble_method: str = "weighted_average"
-    weight_update_frequency: int = 1000
-    diversity_penalty: float = 0.1
-    min_weight: float = 0.1
-    performance_window: int = 100
-    risk_adjustment: bool = True

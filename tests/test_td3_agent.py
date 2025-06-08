@@ -13,7 +13,7 @@ import os
 
 from src.agents.td3_agent import TD3Agent
 from src.agents.configs import TD3Config
-from src.envs.trading_env import TradingEnvironment
+from src.envs.trading_env import TradingEnv
 
 
 class TestTD3Agent:
@@ -81,10 +81,9 @@ class TestTD3Agent:
         assert hasattr(agent, 'actor_optimizer')
         assert hasattr(agent, 'critic_1_optimizer')
         assert hasattr(agent, 'critic_2_optimizer')
-        
-        # Check replay buffer
+          # Check replay buffer
         assert hasattr(agent, 'replay_buffer')
-        assert agent.replay_buffer.capacity == td3_config.buffer_size
+        assert agent.replay_buffer.capacity == td3_config.buffer_capacity
         
         # Check configuration
         assert agent.config == td3_config
@@ -200,9 +199,8 @@ class TestTD3Agent:
         
         # Get initial actor parameters
         initial_actor_params = [p.clone() for p in td3_agent.actor.parameters()]
-        
-        # Train for policy_freq - 1 steps (policy should not update)
-        for _ in range(td3_agent.config.policy_freq - 1):
+          # Train for policy_delay - 1 steps (policy should not update)
+        for _ in range(td3_agent.config.policy_delay - 1):
             td3_agent.train()
         
         # Check actor parameters haven't changed
