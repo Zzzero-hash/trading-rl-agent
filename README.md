@@ -230,3 +230,30 @@ Contributions are welcome! Please fork the repo, create a feature branch, add te
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+## Roadmap & Planned Features
+
+The project continues to evolve with a focus on modularity and advanced RL techniques.
+Key initiatives include:
+
+- **Codebase Refactor & Quality**: unify the `src/` layout around `data`, `envs`,
+  `agents`, `training`, and `eval`; extend the `TradingEnv` to support transaction
+  costs and slippage; externalize configuration via YAML/CLI and expand unit test
+  coverage with GitHub Actions.
+- **Advanced RL Algorithms**: add PPO and SAC baselines through Ray RLlib,
+  explore distributional methods like C51/QR‑DQN/IQN, prototype multi‑agent
+  training, and integrate Ray Tune sweeps for hyperparameter search.
+- **NLP & LLM Signal Pipeline**: incorporate FinGPT/FinBERT sentiment scoring and
+  an asynchronous news ingestion service, then merge those features into the RL
+  state representation.
+- **Hybrid & Ensemble Strategies**: combine CNN/LSTM price forecasts, implement
+  regime classification, and experiment with ensemble voting across multiple RL
+  seeds and algorithms for stability.
+- **Backtesting & Evaluation**: migrate to an event‑driven engine, simulate
+  latency/slippage, automate walk‑forward testing, and log metrics on
+  challenging periods such as 2008 and 2020.
+- **Infrastructure & Deployment**: containerize the stack, define Ray cluster
+  configs, enable GPU vectorization, expose policies via Ray Serve, and monitor
+  performance with Prometheus/Grafana and fail‑safe rules.
+- **Documentation & Community**: maintain architecture diagrams, publish
+  experiment notebooks, and label newcomer issues to encourage contributions.

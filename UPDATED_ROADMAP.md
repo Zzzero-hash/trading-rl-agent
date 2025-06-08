@@ -120,3 +120,49 @@
 ---
 **Current Status**: Phase 1 COMPLETE ✅ | Ready to begin Phase 2 Deep RL Ensemble
 **Next Priority**: Implement SAC agent and begin ensemble framework development
+
+## 🔭 Extended Roadmap
+
+The following initiatives represent longer‑term goals for the project:
+
+### Codebase Refactor & Quality
+- Modularize around `src/data`, `src/envs`, `src/agents`, `src/training`, and `src/eval`.
+- Convert the environment to a fully Gym‑compatible `TradingEnv` with transaction
+  costs and slippage support.
+- Externalize all configuration via YAML/CLI options.
+- Expand CI with unit tests for reward calculation, data loaders, and environment resets.
+
+### Advanced RL Algorithms
+- Provide PPO and SAC baselines using Ray RLlib and PyTorch.
+- Explore distributional RL approaches (C51, QR‑DQN, IQN) with risk‑adjusted rewards.
+- Prototype multi‑agent training in a realistic market simulator (e.g., ABIDES).
+- Use Ray Tune to sweep learning rates, entropy coefficients, and network widths.
+
+### NLP & LLM Signal Pipeline
+- Integrate FinGPT/FinBERT sentiment scoring with an asynchronous news feed.
+- Cache sentiment signals and merge them into the RL observation space.
+- Investigate LLM agent roles (fundamental, sentiment, risk) and aggregate their outputs.
+
+### Hybrid / Ensemble Strategies
+- Train CNN/LSTM price‑forecasting models and feed predictions to the RL state.
+- Implement a regime classifier to condition or switch policies.
+- Experiment with ensemble voting across multiple algorithms and random seeds.
+
+### Backtesting & Evaluation
+- Migrate to an event‑driven engine such as Backtrader or VectorBT.
+- Simulate latency and order‑book slippage for realistic backtests.
+- Automate walk‑forward tests in parallel with Ray.
+- Log metrics including PnL, Sharpe, drawdown, and turnover on historical crash periods.
+
+### Infrastructure & Scalability
+- Provide Docker Compose files and Ray cluster configurations (local and k8s).
+- Prototype GPU environment vectorization for large‑scale simulations.
+
+### Deployment & Monitoring
+- Package trained policies with Ray Serve for low‑latency inference.
+- Add adapters for paper trading (Alpaca/Binance) with a shared interface.
+- Export Prometheus/Grafana metrics and define fail‑safe rules for live trading.
+
+### Documentation & Community
+- Update the README with architecture diagrams and publish experiment notebooks.
+- Mark good first issues to attract new contributors and track research papers.

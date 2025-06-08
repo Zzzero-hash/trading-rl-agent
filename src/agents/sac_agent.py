@@ -6,6 +6,8 @@ SAC is particularly well-suited for trading applications because:
 2. Maximum entropy framework - encourages exploration
 3. Off-policy learning - sample efficient
 4. Stable training - less prone to catastrophic forgetting
+
+TODO: provide an RLlib-based baseline version of SAC for comparison.
 """
 
 import torch
