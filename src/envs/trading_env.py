@@ -25,6 +25,7 @@ class TradingEnv(gym.Env):
         self.window_size = int(cfg.get("window_size", 50))
         self.initial_balance = float(cfg.get("initial_balance", 1_0000))
         self.transaction_cost = float(cfg.get("transaction_cost", 0.001))
+        # TODO: incorporate a configurable slippage model for realistic fills
         self.include_features = bool(cfg.get("include_features", False))
         self.model_path = cfg.get("model_path")
         self.model = None
