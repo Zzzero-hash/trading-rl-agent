@@ -20,6 +20,8 @@ import random
 from typing import Dict, List, Tuple, Optional, Union
 import yaml
 from pathlib import Path
+from dataclasses import asdict, is_dataclass
+from .configs import SACConfig
 
 
 class Actor(nn.Module):
@@ -147,10 +149,10 @@ class SACAgent:
     - Automatic temperature tuning
     """
     
-    def __init__(self, 
+    def __init__(self,
                  state_dim: int,
                  action_dim: int = 1,  # Position size
-                 config: Optional[Union[str, Dict]] = None,
+                 config: Optional[Union[str, Dict, SACConfig]] = None,
                  device: str = "cpu"):
         
         self.device = torch.device(device)
@@ -197,8 +199,8 @@ class SACAgent:
         # Training metrics
         self.training_step = 0
         
-    def _load_config(self, config: Optional[Union[str, Dict]]) -> Dict:
-        """Load configuration from file or dict."""
+    def _load_config(self, config: Optional[Union[str, Dict, SACConfig]]) -> Dict:
+        """Load configuration from dataclass, file, or dict."""
         if config is None:
             # Default configuration
             return {
@@ -214,6 +216,8 @@ class SACAgent:
         elif isinstance(config, str):
             with open(config, 'r') as f:
                 return yaml.safe_load(f) or {}
+        elif is_dataclass(config):
+            return asdict(config)
         else:
             return config
             

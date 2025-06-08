@@ -11,7 +11,8 @@ from unittest.mock import patch, MagicMock
 import tempfile
 import os
 
-from src.agents.td3_agent import TD3Agent, TD3Config
+from src.agents.td3_agent import TD3Agent
+from src.agents.configs import TD3Config
 from src.envs.trading_env import TradingEnvironment
 
 
@@ -22,26 +23,27 @@ class TestTD3Agent:
     def td3_config(self):
         """Create test configuration for TD3 agent."""
         return TD3Config(
-            state_dim=10,
-            action_dim=3,
-            max_action=1.0,
-            discount=0.99,
+            learning_rate=3e-4,
+            gamma=0.99,
             tau=0.005,
-            policy_noise=0.2,
-            noise_clip=0.5,
-            policy_freq=2,
-            actor_lr=3e-4,
-            critic_lr=3e-4,
-            hidden_dim=64,
-            buffer_size=10000,
             batch_size=32,
-            exploration_noise=0.1
+            buffer_capacity=10000,
+            hidden_dims=[64, 64],
+            policy_delay=2,
+            target_noise=0.2,
+            noise_clip=0.5,
+            exploration_noise=0.1,
         )
     
     @pytest.fixture
     def td3_agent(self, td3_config):
         """Create TD3 agent instance."""
-        return TD3Agent(td3_config)
+        return TD3Agent(
+            state_dim=10,
+            action_dim=3,
+            config=td3_config,
+            device="cpu",
+        )
     
     @pytest.fixture
     def sample_state(self):
@@ -388,41 +390,46 @@ class TestTD3Agent:
 
 class TestTD3Config:
     """Test cases for TD3 configuration."""
-    
+
     def test_default_config(self):
         """Test default configuration values."""
-        config = TD3Config(state_dim=10, action_dim=3)
-        
-        assert config.state_dim == 10
-        assert config.action_dim == 3
-        assert config.max_action == 1.0
-        assert config.discount == 0.99
+        config = TD3Config()
+
+        assert config.learning_rate == 3e-4
+        assert config.gamma == 0.99
         assert config.tau == 0.005
-        assert config.policy_noise == 0.2
+        assert config.batch_size == 256
+        assert config.buffer_capacity == 1000000
+        assert config.policy_delay == 2
+        assert config.target_noise == 0.2
         assert config.noise_clip == 0.5
-        assert config.policy_freq == 2
-    
+        assert config.exploration_noise == 0.1
+
     def test_custom_config(self):
         """Test custom configuration values."""
         config = TD3Config(
-            state_dim=20,
-            action_dim=5,
-            max_action=2.0,
-            discount=0.95,
+            learning_rate=1e-3,
+            gamma=0.95,
             tau=0.01,
-            policy_noise=0.1,
+            batch_size=64,
+            buffer_capacity=5000,
+            hidden_dims=[128, 128],
+            policy_delay=3,
+            target_noise=0.1,
             noise_clip=0.3,
-            policy_freq=3
+            exploration_noise=0.2,
         )
-        
-        assert config.state_dim == 20
-        assert config.action_dim == 5
-        assert config.max_action == 2.0
-        assert config.discount == 0.95
+
+        assert config.learning_rate == 1e-3
+        assert config.gamma == 0.95
         assert config.tau == 0.01
-        assert config.policy_noise == 0.1
+        assert config.batch_size == 64
+        assert config.buffer_capacity == 5000
+        assert config.hidden_dims == [128, 128]
+        assert config.policy_delay == 3
+        assert config.target_noise == 0.1
         assert config.noise_clip == 0.3
-        assert config.policy_freq == 3
+        assert config.exploration_noise == 0.2
 
 
 if __name__ == "__main__":
