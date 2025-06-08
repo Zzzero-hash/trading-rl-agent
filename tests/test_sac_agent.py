@@ -9,7 +9,8 @@ from unittest.mock import Mock, patch
 import tempfile
 import os
 
-from src.agents.sac_agent import SACAgent, Actor, Critic, ReplayBuffer, EXAMPLE_CONFIG
+from src.agents.sac_agent import SACAgent, Actor, Critic, ReplayBuffer
+from src.agents.configs import SACConfig
 
 
 class TestSACAgent:
@@ -18,16 +19,16 @@ class TestSACAgent:
     @pytest.fixture
     def agent_config(self):
         """Test configuration for SAC agent."""
-        return {
-            "learning_rate": 1e-3,
-            "gamma": 0.99,
-            "tau": 0.01,
-            "batch_size": 32,
-            "buffer_capacity": 1000,
-            "hidden_dims": [64, 64],
-            "automatic_entropy_tuning": True,
-            "target_entropy": -1.0
-        }
+        return SACConfig(
+            learning_rate=1e-3,
+            gamma=0.99,
+            tau=0.01,
+            batch_size=32,
+            buffer_capacity=1000,
+            hidden_dims=[64, 64],
+            automatic_entropy_tuning=True,
+            target_entropy=-1.0,
+        )
     
     @pytest.fixture
     def sac_agent(self, agent_config):

@@ -9,9 +9,10 @@ from unittest.mock import Mock, patch, MagicMock
 import tempfile
 import os
 
-from src.agents.ensemble_agent import EnsembleAgent, EnsembleConfig
-from src.agents.sac_agent import SACAgent, SACConfig
-from src.agents.td3_agent import TD3Agent, TD3Config
+from src.agents.ensemble_agent import EnsembleAgent
+from src.agents.sac_agent import SACAgent
+from src.agents.td3_agent import TD3Agent
+from src.agents.configs import EnsembleConfig, SACConfig, TD3Config
 
 
 class TestEnsembleAgent:
@@ -21,65 +22,45 @@ class TestEnsembleAgent:
     def sac_config(self):
         """Create SAC configuration."""
         return SACConfig(
-            state_dim=10,
-            action_dim=3,
-            hidden_dim=64,
-            lr=3e-4,
-            alpha=0.2,
-            automatic_entropy_tuning=True,
+            learning_rate=3e-4,
             gamma=0.99,
             tau=0.005,
             batch_size=32,
-            buffer_size=1000
+            buffer_capacity=1000,
+            hidden_dims=[64, 64],
+            automatic_entropy_tuning=True,
+            target_entropy=-1.0,
         )
     
     @pytest.fixture
     def td3_config(self):
         """Create TD3 configuration."""
         return TD3Config(
-            state_dim=10,
-            action_dim=3,
-            max_action=1.0,
-            hidden_dim=64,
-            actor_lr=3e-4,
-            critic_lr=3e-4,
+            learning_rate=3e-4,
+            gamma=0.99,
+            tau=0.005,
             batch_size=32,
-            buffer_size=1000
+            buffer_capacity=1000,
+            hidden_dims=[64, 64],
+            policy_delay=2,
+            target_noise=0.2,
+            noise_clip=0.5,
+            exploration_noise=0.1,
         )
     
     @pytest.fixture
-    def ensemble_config(self):
+    def ensemble_config(self, sac_config, td3_config):
         """Create ensemble configuration."""
         return EnsembleConfig(
-            state_dim=10,
-            action_dim=3,
-            agent_configs={
-                'sac': {
-                    'type': 'sac',
-                    'hidden_dim': 64,
-                    'lr': 3e-4,
-                    'alpha': 0.2,
-                    'automatic_entropy_tuning': True,
-                    'gamma': 0.99,
-                    'tau': 0.005,
-                    'batch_size': 32,
-                    'buffer_size': 1000
-                },
-                'td3': {
-                    'type': 'td3',
-                    'max_action': 1.0,
-                    'hidden_dim': 64,
-                    'actor_lr': 3e-4,
-                    'critic_lr': 3e-4,
-                    'batch_size': 32,
-                    'buffer_size': 1000
-                }
+            agents={
+                'sac': {'enabled': True, 'config': sac_config},
+                'td3': {'enabled': True, 'config': td3_config},
             },
-            combination_method='weighted_average',
+            ensemble_method='weighted_average',
             performance_window=100,
-            update_weights_freq=50,
+            weight_update_frequency=50,
             min_weight=0.1,
-            diversity_bonus=0.1
+            diversity_penalty=0.1,
         )
     
     @pytest.fixture
@@ -367,7 +348,7 @@ class TestEnsembleAgent:
     def test_weight_update_frequency(self, ensemble_agent):
         """Test that weights are updated at specified frequency."""
         initial_weights = ensemble_agent.weights.copy()
-        update_freq = ensemble_agent.config.update_weights_freq
+        update_freq = ensemble_agent.config.weight_update_frequency
         
         # Add performance data but not enough to trigger update
         for i in range(update_freq - 1):
@@ -428,44 +409,34 @@ class TestEnsembleConfig:
     def test_default_config(self):
         """Test default configuration values."""
         config = EnsembleConfig(
-            state_dim=10,
-            action_dim=3,
-            agent_configs={
-                'test_agent': {'type': 'sac', 'lr': 3e-4}
-            }
+            agents={'test_agent': {'enabled': True, 'config': None}}
         )
-        
-        assert config.state_dim == 10
-        assert config.action_dim == 3
-        assert config.combination_method == 'weighted_average'
+
+        assert config.ensemble_method == 'weighted_average'
         assert config.performance_window == 100
-        assert config.update_weights_freq == 50
+        assert config.weight_update_frequency == 1000
         assert config.min_weight == 0.1
-        assert config.diversity_bonus == 0.1
+        assert config.diversity_penalty == 0.1
     
     def test_custom_config(self):
         """Test custom configuration values."""
         config = EnsembleConfig(
-            state_dim=20,
-            action_dim=5,
-            agent_configs={
-                'agent1': {'type': 'sac', 'lr': 1e-3},
-                'agent2': {'type': 'td3', 'lr': 2e-3}
+            agents={
+                'agent1': {'enabled': True, 'config': None},
+                'agent2': {'enabled': True, 'config': None},
             },
-            combination_method='voting',
+            ensemble_method='voting',
             performance_window=200,
-            update_weights_freq=25,
+            weight_update_frequency=25,
             min_weight=0.05,
-            diversity_bonus=0.2
+            diversity_penalty=0.2,
         )
-        
-        assert config.state_dim == 20
-        assert config.action_dim == 5
-        assert config.combination_method == 'voting'
+
+        assert config.ensemble_method == 'voting'
         assert config.performance_window == 200
-        assert config.update_weights_freq == 25
+        assert config.weight_update_frequency == 25
         assert config.min_weight == 0.05
-        assert config.diversity_bonus == 0.2
+        assert config.diversity_penalty == 0.2
 
 
 if __name__ == "__main__":

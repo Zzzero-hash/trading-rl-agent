@@ -16,6 +16,8 @@ import yaml
 from pathlib import Path
 import logging
 from collections import defaultdict, deque
+from dataclasses import asdict, is_dataclass
+from .configs import EnsembleConfig, SACConfig, TD3Config
 
 from .sac_agent import SACAgent
 from .td3_agent import TD3Agent
@@ -35,7 +37,7 @@ class EnsembleAgent:
     def __init__(self,
                  state_dim: int,
                  action_dim: int = 1,
-                 config: Optional[Union[str, Dict]] = None,
+                 config: Optional[Union[str, Dict, EnsembleConfig]] = None,
                  device: str = "cpu"):
         
         self.device = torch.device(device)
@@ -68,8 +70,8 @@ class EnsembleAgent:
         # Setup logging
         self.logger = logging.getLogger(__name__)
         
-    def _load_config(self, config: Optional[Union[str, Dict]]) -> Dict:
-        """Load configuration from file or dict."""
+    def _load_config(self, config: Optional[Union[str, Dict, EnsembleConfig]]) -> Dict:
+        """Load configuration from dataclass, file, or dict."""
         if config is None:
             return {
                 "agents": {
@@ -86,6 +88,8 @@ class EnsembleAgent:
         elif isinstance(config, str):
             with open(config, 'r') as f:
                 return yaml.safe_load(f) or {}
+        elif is_dataclass(config):
+            return asdict(config)
         else:
             return config
     
