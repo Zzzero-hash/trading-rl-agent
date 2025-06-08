@@ -5,15 +5,14 @@ from .configs import SACConfig, TD3Config, EnsembleConfig
 # Import agents
 from .trainer import Trainer
 from .td3_agent import TD3Agent
-# Temporarily comment out problematic imports
-# from .sac_agent import SACAgent
-# from .ensemble_agent import EnsembleAgent
+from .sac_agent import SACAgent
+from .ensemble_agent import EnsembleAgent
 
 __all__ = [
     'Trainer',
-    # 'SACAgent', 
+    'SACAgent', 
     'TD3Agent',
-    # 'EnsembleAgent',
+    'EnsembleAgent',
     'SACConfig',
     'TD3Config', 
     'EnsembleConfig'

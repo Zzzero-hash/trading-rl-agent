@@ -93,9 +93,17 @@ docker run --rm -it \
 - CNN-LSTM model (19,843 parameters)
 - Data preprocessing pipeline (3,817 sequences)
 - Basic training loop with loss calculation
+- TD3 agent implementation (21/21 tests passing)
 
 ### 🔧 **Critical TODOs Before Production**
 - **✅ COMPLETED**: Repository cleanup and optimization (June 8, 2025)
+- **🚨 HIGH PRIORITY**: **Fix circular import issue in agents module**
+  - **Issue**: `EnsembleAgent` cannot be imported due to circular dependency:
+    - `src.agents.__init__.py` → `ensemble_agent.py` → `configs.py` → back to `__init__.py`
+  - **Impact**: Blocks Phase 2 development and ensemble agent testing
+  - **Current workaround**: Direct imports work (`from src.agents.td3_agent import TD3Agent`)
+  - **Solution needed**: Restructure imports or implement lazy loading in ensemble_agent.py
+  - **Status**: Critical blocker preventing progress to Phase 2
 - **HIGH**: Fix sentiment timestamp comparison errors
 - **HIGH**: Address severe label imbalance (Class 0: 52, Class 1: 384, Class 2: 3391)
 - **HIGH**: Implement proper SentimentData return types
