@@ -26,20 +26,17 @@
 			"optimize": true,
 			"version": "os-provided"
 		}
-	}
-
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
-	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "cat /etc/os-release",
+	// Run commands after the container is created to ensure proper permissions
+	"postCreateCommand": "chmod -R u+w /workspace && find /workspace -name '*.sh' -exec chmod +x {} \\;",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
 
-	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "devcontainer"
+	// Connect as the rluser to maintain consistent permissions
+	"remoteUser": "rluser"
 }

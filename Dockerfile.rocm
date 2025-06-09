@@ -1,5 +1,5 @@
 ARG ROCM_VARIANT=rocm/pytorch:rocm6.3.1_ubuntu22.04
-FROM ${ROCM_VARIANT}
+FROM ${ROCM_VARIANT} AS base
 
 # Create non-root user
 RUN groupadd -g 1000 rluser && useradd -m -u 1000 -g rluser rluser
@@ -36,9 +36,17 @@ RUN pip install --upgrade pip setuptools wheel && \
 FROM deps AS tests
 ENV PYTHONPATH=/workspace
 COPY . .
-RUN pip install -e . && \
-    pip install pytest && \
-    pytest --maxfail=1 --disable-warnings -q
+# Change ownership and set comprehensive permissions before running tests
+RUN chown -R rluser:rluser /workspace && \
+    find /workspace -type d -exec chmod 755 {} \; && \
+    find /workspace -type f -name "*.sh" -exec chmod 755 {} \; && \
+    find /workspace -type f -name "*.py" -exec chmod 644 {} \; && \
+    find /workspace -type f ! -name "*.sh" ! -name "*.py" -exec chmod 644 {} \; && \
+    chmod -R u+w /workspace && \
+    pip install -e . && \
+    pip install pytest
+USER rluser
+RUN pytest --maxfail=1 --disable-warnings -q
 
 # Stage 4: final runtime image
 FROM base AS final
@@ -48,6 +56,13 @@ COPY --from=deps /usr/local/lib/python3.10/dist-packages /usr/local/lib/python3.
 COPY --from=deps /usr/local/bin /usr/local/bin
 # copy application code
 COPY . .
+# Change ownership of ALL files and directories to rluser with comprehensive permissions
+RUN chown -R rluser:rluser /workspace && \
+    find /workspace -type d -exec chmod 755 {} \; && \
+    find /workspace -type f -name "*.sh" -exec chmod 755 {} \; && \
+    find /workspace -type f -name "*.py" -exec chmod 644 {} \; && \
+    find /workspace -type f ! -name "*.sh" ! -name "*.py" -exec chmod 644 {} \; && \
+    chmod -R u+w /workspace
 USER rluser
 ENTRYPOINT ["python3", "src/main.py"]
 CMD ["--test"]

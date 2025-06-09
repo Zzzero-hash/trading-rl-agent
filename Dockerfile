@@ -41,5 +41,12 @@ COPY --from=deps /usr/local/lib/python3.10/dist-packages /usr/local/lib/python3.
 COPY --from=deps /usr/local/bin /usr/local/bin
 # copy application code
 COPY . .
+# Change ownership of ALL files and directories to rluser with comprehensive permissions
+RUN chown -R rluser:rluser /workspace && \
+    find /workspace -type d -exec chmod 755 {} \; && \
+    find /workspace -type f -name "*.sh" -exec chmod 755 {} \; && \
+    find /workspace -type f -name "*.py" -exec chmod 644 {} \; && \
+    find /workspace -type f ! -name "*.sh" ! -name "*.py" -exec chmod 644 {} \; && \
+    chmod -R u+w /workspace
 USER rluser
 ENTRYPOINT ["pytest", "--maxfail=1", "--disable-warnings", "-q"]
