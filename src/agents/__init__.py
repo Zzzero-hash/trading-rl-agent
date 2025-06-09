@@ -1,20 +1,15 @@
 # Agents package
-# Import configs first to avoid circular dependencies
-from .configs import SACConfig, TD3Config, EnsembleConfig
+# Configs are imported separately by each agent to avoid circular dependencies
 
-# Import agents
+# Import agents and trainer
 from .trainer import Trainer
 from .td3_agent import TD3Agent
-# Temporarily comment out problematic imports
-# from .sac_agent import SACAgent
-# from .ensemble_agent import EnsembleAgent
+from .sac_agent import SACAgent
+from .ensemble_agent import EnsembleAgent
 
 __all__ = [
     'Trainer',
-    # 'SACAgent', 
+    'SACAgent', 
     'TD3Agent',
-    # 'EnsembleAgent',
-    'SACConfig',
-    'TD3Config', 
-    'EnsembleConfig'
+    'EnsembleAgent'
 ]
