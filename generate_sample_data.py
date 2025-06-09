@@ -16,8 +16,7 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent / "src"))
 
-from data.sentiment import SentimentAnalyzer
-
+from src.data.sentiment import SentimentAnalyzer
 
 def generate_sample_price_data(
     symbol: str = "AAPL",
@@ -93,10 +92,10 @@ def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """Add technical indicators to the price data."""
     
     df = df.copy()
-    close = df['close']
-    high = df['high']
-    low = df['low']
-    volume = df['volume']
+    close = pd.to_numeric(df['close'], errors='coerce')
+    high = pd.to_numeric(df['high'], errors='coerce')
+    low = pd.to_numeric(df['low'], errors='coerce')
+    volume = pd.to_numeric(df['volume'], errors='coerce')
     
     # Moving averages
     df['sma_10'] = close.rolling(window=10).mean()
@@ -113,6 +112,7 @@ def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     
     # RSI
     delta = close.diff()
+    delta = pd.to_numeric(delta, errors='coerce')
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
     rs = gain / loss
@@ -160,14 +160,25 @@ def add_sentiment_features(df: pd.DataFrame) -> pd.DataFrame:
                 # Get sentiment data (will use mock data)
                 sentiment = sentiment_analyzer.get_symbol_sentiment(symbol)
                 
-                sentiment_data.append({
-                    'timestamp': timestamp,
-                    'symbol': symbol,
-                    'news_sentiment': sentiment.news_sentiment,
-                    'social_sentiment': sentiment.social_sentiment,
-                    'composite_sentiment': sentiment.composite_sentiment,
-                    'sentiment_volume': len(sentiment.raw_data) if sentiment.raw_data else 1
-                })
+                # If sentiment is a float, treat it as composite_sentiment and set others to 0.0
+                if isinstance(sentiment, float) or isinstance(sentiment, int):
+                    sentiment_data.append({
+                        'timestamp': timestamp,
+                        'symbol': symbol,
+                        'news_sentiment': 0.0,
+                        'social_sentiment': 0.0,
+                        'composite_sentiment': float(sentiment),
+                        'sentiment_volume': 1
+                    })
+                else:
+                    sentiment_data.append({
+                        'timestamp': timestamp,
+                        'symbol': symbol,
+                        'news_sentiment': getattr(sentiment, 'news_sentiment', 0.0),
+                        'social_sentiment': getattr(sentiment, 'social_sentiment', 0.0),
+                        'composite_sentiment': getattr(sentiment, 'composite_sentiment', 0.0),
+                        'sentiment_volume': len(getattr(sentiment, 'raw_data', [])) if hasattr(sentiment, 'raw_data') and getattr(sentiment, 'raw_data') else 1
+                    })
             except Exception as e:
                 print(f"Warning: Could not get sentiment for {symbol} at {timestamp}: {e}")
                 # Use neutral sentiment as fallback
