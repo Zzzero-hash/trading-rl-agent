@@ -9,9 +9,7 @@ from unittest.mock import Mock, patch
 import tempfile
 import os
 
-# Skip all tests in this file until SACAgent is fully implemented
-pytestmark = pytest.mark.skip(reason="SACAgent stub implementation - tests temporarily disabled")
-
+from src.agents.sac_agent import SACAgent, Actor, QNetwork, ReplayBuffer, Critic
 from src.agents.configs import SACConfig
 
 

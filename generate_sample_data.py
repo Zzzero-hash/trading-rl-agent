@@ -239,6 +239,12 @@ def save_sample_data(df: pd.DataFrame, data_dir: str = "data") -> str:
     return filepath
 
 
+def generate_sample_training_data(filepath: str):
+    """Generate sample training data for TD3 integration tests."""
+    data = generate_sample_price_data(symbol="TEST", days=30, start_price=100.0, volatility=0.01)
+    data.to_csv(filepath, index=False)
+
+
 def main():
     """Generate complete sample dataset for CNN-LSTM training."""
     
@@ -284,3 +290,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+    output_path = "data/sample_training_data_simple_20250607_192034.csv"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    generate_sample_training_data(output_path)
+    print(f"Sample training data saved to {output_path}")
