@@ -53,7 +53,7 @@ def test_training_step_reduces_loss():
         result = train_supervised.remote(x, y, model_config=model_cfg, train_config=train_cfg)
         model, history = get(result)
     else:
-        model, history = train_supervised._function(x, y, model_cfg, train_cfg)
+        model, history = train_supervised(x, y, model_config=model_cfg, train_config=train_cfg)
 
     logging.info("Training completed. Checking loss reduction...")
 
