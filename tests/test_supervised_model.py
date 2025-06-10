@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import pytest
 from ray import get
+import logging
 
 from src.supervised_model import (
     TrendPredictor,
@@ -15,6 +16,12 @@ from src.supervised_model import (
     select_best_model,
 )
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
 def test_model_output_shape():
     cfg = ModelConfig(cnn_filters=[4], cnn_kernel_sizes=[2], lstm_units=8)
     model = TrendPredictor(input_dim=3, config=cfg)
@@ -25,13 +32,17 @@ def test_model_output_shape():
 
 # Updated test_training_step_reduces_loss to use .remote()
 def test_training_step_reduces_loss():
+    logging.info("Starting test_training_step_reduces_loss...")
     x = np.random.randn(20, 4, 1).astype(np.float32)
     y = x.sum(axis=1).reshape(-1, 1)
     model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
     train_cfg = TrainingConfig(epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2)
+    logging.info("Model and training configuration initialized.")
     result = train_supervised.remote(x, y)
     model, history = get(result)
+    logging.info("Training completed. Checking loss reduction...")
     assert history["train_loss"][0] > history["train_loss"][-1]
+    logging.info("Loss reduction verified. Test passed.")
 
 
 # Update test_validation_accuracy_perfect_when_same_data to use .remote()

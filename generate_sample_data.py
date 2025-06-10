@@ -12,6 +12,13 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent / "src"))
@@ -151,7 +158,7 @@ def add_sentiment_features(df: pd.DataFrame) -> pd.DataFrame:
     symbols = df['symbol'].unique()
     
     # Generate sentiment data for each timestamp
-    print("Generating sentiment data...")
+    logging.info("Generating sentiment data...")
     
     sentiment_data = []
     for timestamp in df['timestamp'].unique():
@@ -180,7 +187,7 @@ def add_sentiment_features(df: pd.DataFrame) -> pd.DataFrame:
                         'sentiment_volume': len(getattr(sentiment, 'raw_data', [])) if hasattr(sentiment, 'raw_data') and getattr(sentiment, 'raw_data') else 1
                     })
             except Exception as e:
-                print(f"Warning: Could not get sentiment for {symbol} at {timestamp}: {e}")
+                logging.warning(f"Could not get sentiment for {symbol} at {timestamp}: {e}")
                 # Use neutral sentiment as fallback
                 sentiment_data.append({
                     'timestamp': timestamp,
@@ -242,10 +249,10 @@ def save_sample_data(df: pd.DataFrame, data_dir: str = "data") -> str:
     filepath = os.path.join(data_dir, filename)
     
     df.to_csv(filepath, index=False)
-    print(f"Sample data saved to: {filepath}")
-    print(f"Data shape: {df.shape}")
-    print(f"Columns: {list(df.columns)}")
-    print(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
+    logging.info(f"Sample data saved to: {filepath}")
+    logging.info(f"Data shape: {df.shape}")
+    logging.info(f"Columns: {list(df.columns)}")
+    logging.info(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
     
     return filepath
 
@@ -259,42 +266,42 @@ def generate_sample_training_data(filepath: str):
 def main():
     """Generate complete sample dataset for CNN-LSTM training."""
     
-    print("Generating sample data for CNN-LSTM training pipeline...")
+    logging.info("Generating sample data for CNN-LSTM training pipeline...")
     
     # Generate base price data
-    print("1. Generating synthetic price data...")
+    logging.info("1. Generating synthetic price data...")
     df = generate_sample_price_data(symbol="AAPL", days=180, start_price=150.0, volatility=0.025)
     
     # Add technical indicators
-    print("2. Adding technical indicators...")
+    logging.info("2. Adding technical indicators...")
     df = add_technical_indicators(df)
     
     # Add sentiment features
-    print("3. Adding sentiment features...")
+    logging.info("3. Adding sentiment features...")
     df = add_sentiment_features(df)
     
     # Generate labels
-    print("4. Generating trading labels...")
+    logging.info("4. Generating trading labels...")
     df = generate_labels(df, horizon=1)
     
     # Clean data (remove NaN values)
-    print("5. Cleaning data...")
+    logging.info("5. Cleaning data...")
     initial_rows = len(df)
     df = df.dropna()
     final_rows = len(df)
-    print(f"Removed {initial_rows - final_rows} rows with NaN values")
+    logging.info(f"Removed {initial_rows - final_rows} rows with NaN values")
     
     # Save data
-    print("6. Saving sample data...")
+    logging.info("6. Saving sample data...")
     filepath = save_sample_data(df)
     
     # Print summary statistics
-    print("\n=== DATA SUMMARY ===")
-    print(f"Total samples: {len(df)}")
-    print(f"Feature columns: {len([col for col in df.columns if col not in ['timestamp', 'symbol', 'label']])}")
-    print(f"Label distribution:")
-    print(df['label'].value_counts().sort_index())
-    print(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
+    logging.info("\n=== DATA SUMMARY ===")
+    logging.info(f"Total samples: {len(df)}")
+    logging.info(f"Feature columns: {len([col for col in df.columns if col not in ['timestamp', 'symbol', 'label']])}")
+    logging.info(f"Label distribution:")
+    logging.info(f"{df['label'].value_counts().sort_index()}")
+    logging.info(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
     
     return filepath
 
@@ -304,4 +311,4 @@ if __name__ == "__main__":
     output_path = "data/sample_training_data_simple_20250607_192034.csv"
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     generate_sample_training_data(output_path)
-    print(f"Sample training data saved to {output_path}")
+    logging.info(f"Sample training data saved to {output_path}")
