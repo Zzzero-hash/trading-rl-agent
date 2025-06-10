@@ -4,10 +4,16 @@ Integration tests for the data pipeline with advanced candle patterns.
 import pandas as pd
 import numpy as np
 import pytest
+import torch
 
 pytestmark = pytest.mark.integration
 
 from src.data.features import generate_features
+@pytest.fixture(autouse=True)
+def set_seed():
+    np.random.seed(42)
+    torch.manual_seed(42)
+
 from src.data.synthetic import generate_gbm_prices
 
 
