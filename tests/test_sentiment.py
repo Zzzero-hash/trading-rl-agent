@@ -265,7 +265,8 @@ class TestSentimentIntegration:
                     'description': 'Company beats expectations',
                     'publishedAt': '2024-01-01T10:00:00Z'
                 }
-            ]        }
+            ]
+        }
         mock_get.return_value = mock_response
         
         provider = NewsSentimentProvider(api_key='test_key')
