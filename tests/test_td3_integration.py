@@ -17,10 +17,10 @@ class TestTD3Integration:
     """Integration tests for TD3 agent with trading environment."""
     
     @pytest.fixture
-    def trading_env(self):
+    def trading_env(self, sample_csv_path):
         """Create a trading environment for testing."""
         env_cfg = {
-            "dataset_paths": ["data/sample_training_data_simple_20250607_192034.csv"],
+            "dataset_paths": [sample_csv_path],
             "window_size": 10,
             "initial_balance": 10000,
             "transaction_cost": 0.001,
