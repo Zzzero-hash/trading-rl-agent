@@ -7,6 +7,8 @@ import pytest
 import numpy as np
 import pandas as pd
 import torch
+
+pytestmark = pytest.mark.integration
 import tempfile
 import yaml
 from pathlib import Path

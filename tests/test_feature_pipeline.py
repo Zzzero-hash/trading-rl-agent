@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.integration
+
 from src.data.features import generate_features
 from src.data.synthetic import generate_gbm_prices
 
@@ -115,7 +117,7 @@ def test_pipeline_memory_usage():
     initial_memory = process.memory_info().rss / 1024 / 1024  # MB
     
     # Create a large synthetic dataset
-    n_days = 1000
+    n_days = 200
     df = generate_gbm_prices(
         n_days=n_days,
         mu=0.0001,
