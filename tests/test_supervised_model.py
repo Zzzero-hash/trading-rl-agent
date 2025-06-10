@@ -33,15 +33,38 @@ def test_model_output_shape():
 # Updated test_training_step_reduces_loss to use .remote()
 def test_training_step_reduces_loss():
     logging.info("Starting test_training_step_reduces_loss...")
+
+    # Set random seed for reproducibility
+    np.random.seed(42)
+    torch.manual_seed(42)
+
+    # Generate random input and target data
     x = np.random.randn(20, 4, 1).astype(np.float32)
     y = x.sum(axis=1).reshape(-1, 1)
+
+    # Define model and training configurations
     model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
     train_cfg = TrainingConfig(epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2)
+
     logging.info("Model and training configuration initialized.")
-    result = train_supervised.remote(x, y)
+
+    # Check for GPU availability
+    if not torch.cuda.is_available():
+        pytest.skip("Skipping test: GPU not available.")
+
+    # Train the model using Ray remote call
+    result = train_supervised.remote(x, y, model_config=model_cfg, train_config=train_cfg)
     model, history = get(result)
+
     logging.info("Training completed. Checking loss reduction...")
-    assert history["train_loss"][0] > history["train_loss"][-1]
+
+    # Verify loss reduction and magnitude of improvement
+    initial_loss = history["train_loss"][0]
+    final_loss = history["train_loss"][-1]
+    assert final_loss < initial_loss, "Final loss should be smaller than initial loss."
+    assert (initial_loss - final_loss) > 0.01, "Improvement in loss should be significant."
+
+    logging.info(f"Initial loss: {initial_loss:.6f}, Final loss: {final_loss:.6f}")
     logging.info("Loss reduction verified. Test passed.")
 
 
