@@ -5,6 +5,12 @@ import numpy as np
 import pandas as pd
 import gymnasium as gym
 from pathlib import Path
+import torch
+
+@pytest.fixture(autouse=True)
+def set_seed():
+    np.random.seed(42)
+    torch.manual_seed(42)
 
 from src.envs.trader_env import TraderEnv, env_creator, register_env
 
