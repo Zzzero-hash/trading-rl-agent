@@ -6,6 +6,8 @@ Tests the complete pipeline from config to training.
 import pytest
 import numpy as np
 import torch
+
+pytestmark = pytest.mark.integration
 from src.agents.td3_agent import TD3Agent
 from src.agents.configs import TD3Config
 from src.envs.trading_env import TradingEnv

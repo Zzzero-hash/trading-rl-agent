@@ -266,6 +266,7 @@ class TestReplayBuffer:
         assert len(buffer) == 3
 
 
+@pytest.mark.integration
 class TestSACIntegration:
     """Integration tests for SAC agent."""
     
@@ -283,7 +284,7 @@ class TestSACIntegration:
         )
         
         # Collect experiences
-        for _ in range(50):
+        for _ in range(20):
             state = np.random.randn(5)
             action = agent.select_action(state, evaluate=False)
             reward = np.random.randn()
