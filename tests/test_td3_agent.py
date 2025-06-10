@@ -14,6 +14,11 @@ import os
 from src.agents.td3_agent import TD3Agent
 from src.agents.configs import TD3Config
 from src.envs.trading_env import TradingEnv
+@pytest.fixture(autouse=True)
+def set_seed():
+    np.random.seed(42)
+    torch.manual_seed(42)
+
 
 
 class TestTD3Agent:
