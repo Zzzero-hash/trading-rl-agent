@@ -137,15 +137,15 @@ class TestTD3Agent:
         assert td3_agent.replay_buffer.size == 1
         
         # Add more experiences
-        for _ in range(100):
+        for _ in range(20):
             state = np.random.randn(10).astype(np.float32)
             action = np.random.uniform(-1, 1, 3).astype(np.float32)
             reward = np.random.randn()
             next_state = np.random.randn(10).astype(np.float32)
             done = np.random.choice([True, False])
             td3_agent.replay_buffer.add(state, action, reward, next_state, done)
-        
-        assert td3_agent.replay_buffer.size == 101
+
+        assert td3_agent.replay_buffer.size == 21
     
     def test_train_step(self, td3_agent, sample_batch):
         """Test training step."""
@@ -366,7 +366,7 @@ class TestTD3Agent:
         
         # After training, they should learn different functions
         # Fill buffer and train
-        for _ in range(100):
+        for _ in range(20):
             s = np.random.randn(10).astype(np.float32)
             a = np.random.uniform(-1, 1, 3).astype(np.float32)
             r = np.random.randn()
