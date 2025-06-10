@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import pytest
+import ray
 from ray import get
 import logging
 
@@ -48,9 +49,20 @@ def test_training_step_reduces_loss():
 
     logging.info("Model and training configuration initialized.")
 
-    # Corrected argument passing for train_supervised.remote
-    result = train_supervised.remote(features=x, targets=y, model_cfg=model_cfg, train_cfg=train_cfg)
-    model, history = get(result)
+    # If no GPU is present run training locally using the underlying function,
+    # otherwise run the Ray remote version. A Ray cluster is started only when
+    # needed to avoid unnecessary dependency on GPU availability.
+    if torch.cuda.is_available():
+        ray.init(log_to_driver=False)
+        result = train_supervised.remote(
+            x, y, model_config=model_cfg, train_config=train_cfg
+        )
+        model, history = get(result)
+        ray.shutdown()
+    else:
+        model, history = train_supervised._function(
+            x, y, model_cfg, train_cfg
+        )
 
     logging.info("Training completed. Checking loss reduction...")
 
@@ -61,8 +73,14 @@ def test_training_step_reduces_loss():
     assert (initial_loss - final_loss) > 0.01, "Improvement in loss should be significant."
 
     # Ensure configuration parameters were respected
+    assert model.config.task == model_cfg.task
     assert list(model.config.cnn_filters) == list(model_cfg.cnn_filters)
+    assert list(model.config.cnn_kernel_sizes) == list(model_cfg.cnn_kernel_sizes)
+    assert model.config.lstm_units == model_cfg.lstm_units
+
+    # Ensure training hyperparameters were applied
     assert len(history["train_loss"]) == train_cfg.epochs
+    assert len(history["val_loss"]) == train_cfg.epochs
 
     logging.info(f"Initial loss: {initial_loss:.6f}, Final loss: {final_loss:.6f}")
     logging.info("Loss reduction verified. Test passed.")
