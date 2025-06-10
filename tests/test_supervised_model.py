@@ -92,7 +92,7 @@ def test_validation_accuracy_perfect_when_same_data():
     y = (x.sum(axis=1) > 0).astype(np.float32).reshape(-1, 1)
     model_cfg = ModelConfig(task="classification", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
     train_cfg = TrainingConfig(epochs=2, batch_size=2, val_split=0.5)
-    result = train_supervised.remote(x, y)
+    result = train_supervised.remote(features=x, targets=y, model_cfg=model_cfg, train_cfg=train_cfg)
     model, history = get(result)
     assert 0.0 <= history["val_acc"][-1] <= 1.0
 
@@ -124,7 +124,7 @@ def test_evaluate_model_returns_metrics():
     y = (x.sum(axis=1) > 0).astype(np.float32)
     model_cfg = ModelConfig(task="classification", cnn_filters=[1], cnn_kernel_sizes=[1], lstm_units=2)
     train_cfg = TrainingConfig(epochs=1, batch_size=2, val_split=0.0)
-    result = train_supervised.remote(x, y)
+    result = train_supervised.remote(features=x, targets=y, model_cfg=model_cfg, train_cfg=train_cfg)
     model, _ = get(result)
     metrics = evaluate_model(model, x, y)
     assert "accuracy" in metrics
@@ -140,3 +140,80 @@ def test_select_best_model(tmp_path):
     (trial2 / "m.pt").write_text("dummy")
     best = select_best_model(tmp_path)
     assert "trial2" in str(best)
+
+def test_empty_input_data():
+    x = np.empty((0, 4, 1), dtype=np.float32)
+    y = np.empty((0, 1), dtype=np.float32)
+    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    train_cfg = TrainingConfig(epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2)
+    with pytest.raises(ValueError, match="Input data cannot be empty"):
+        result = train_supervised.remote(features=x, targets=y, model_cfg=model_cfg, train_cfg=train_cfg)
+        model, history = get(result)
+
+def test_large_input_data():
+    x = np.random.randn(10000, 4, 1).astype(np.float32)
+    y = x.sum(axis=1).reshape(-1, 1)
+    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    train_cfg = TrainingConfig(epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2)
+    result = train_supervised.remote(features=x, targets=y, model_cfg=model_cfg, train_cfg=train_cfg)
+    model, history = get(result)
+    assert len(history["train_loss"]) == train_cfg.epochs
+
+def test_mismatched_input_target_dimensions():
+    x = np.random.randn(20, 4, 1).astype(np.float32)
+    y = np.random.randn(10, 1).astype(np.float32)
+    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    train_cfg = TrainingConfig(epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2)
+    with pytest.raises(ValueError, match="Input and target dimensions must match"):
+        result = train_supervised.remote(features=x, targets=y, model_cfg=model_cfg, train_cfg=train_cfg)
+        model, history = get(result)
+
+def test_zero_epochs():
+    x = np.random.randn(20, 4, 1).astype(np.float32)
+    y = x.sum(axis=1).reshape(-1, 1)
+    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    train_cfg = TrainingConfig(epochs=0, batch_size=5, learning_rate=0.01, val_split=0.2)
+    with pytest.raises(ValueError, match="Number of epochs must be greater than zero"):
+        result = train_supervised.remote(features=x, targets=y, model_cfg=model_cfg, train_cfg=train_cfg)
+        model, history = get(result)
+
+def test_batch_size_larger_than_dataset():
+    x = np.random.randn(5, 4, 1).astype(np.float32)
+    y = x.sum(axis=1).reshape(-1, 1)
+    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    train_cfg = TrainingConfig(epochs=3, batch_size=10, learning_rate=0.01, val_split=0.2)
+    with pytest.raises(ValueError, match="Batch size cannot be larger than the dataset"):
+        result = train_supervised.remote(features=x, targets=y, model_cfg=model_cfg, train_cfg=train_cfg)
+        model, history = get(result)
+
+def test_evaluation_with_empty_features():
+    x = np.empty((0, 4, 1), dtype=np.float32)
+    y = np.empty((0, 1), dtype=np.float32)
+    model_cfg = ModelConfig(task="classification", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    model = TrendPredictor(input_dim=4, config=model_cfg)
+    with pytest.raises(ValueError, match="Features cannot be empty"):
+        evaluate_model(model, x, y)
+
+def test_evaluation_with_incorrect_dimensions():
+    x = np.random.randn(10, 4, 1).astype(np.float32)
+    y = np.random.randn(10, 2).astype(np.float32)
+    model_cfg = ModelConfig(task="classification", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    model = TrendPredictor(input_dim=4, config=model_cfg)
+    with pytest.raises(ValueError, match="Target dimensions must match model output"):
+        evaluate_model(model, x, y)
+
+def test_save_load_with_corrupted_file(tmp_path):
+    cfg = ModelConfig(cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    model = TrendPredictor(input_dim=1, config=cfg)
+    path = tmp_path / "model.pt"
+    path.write_text("corrupted data")
+    with pytest.raises(RuntimeError, match="Failed to load model"):
+        load_model(path)
+
+def test_save_load_with_unsupported_format(tmp_path):
+    cfg = ModelConfig(cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    model = TrendPredictor(input_dim=1, config=cfg)
+    path = tmp_path / "model.txt"
+    save_model(model, path)
+    with pytest.raises(ValueError, match="Unsupported file format"):
+        load_model(path)
