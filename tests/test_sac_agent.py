@@ -12,6 +12,11 @@ import os
 from src.agents.sac_agent import SACAgent, Actor, QNetwork, ReplayBuffer, Critic
 from src.agents.configs import SACConfig
 
+@pytest.fixture(autouse=True)
+def set_seed():
+    np.random.seed(42)
+    torch.manual_seed(42)
+
 
 class TestSACAgent:
     """Test cases for SAC Agent."""
