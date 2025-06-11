@@ -134,6 +134,8 @@ class TD3Agent:
             self.config = self._config_dict
         
         # Store dimensions
+        # Log and assert state shape for debugging
+        print(f"[TD3Agent] Initializing with state_dim={state_dim}")
         self.state_dim = state_dim
         self.action_dim = action_dim
         

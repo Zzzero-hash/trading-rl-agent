@@ -383,3 +383,8 @@ from src.agents.configs import SACConfig, TD3Config       # ✅ When needed
 **Current Focus**: Ensemble agent implementation - SAC agent complete, TD3 agent complete ✅
 **Next Milestone**: Phase 2 RL ensemble functional by end of Week 4
 **Long-term Goal**: Production deployment with proven track record by Week 10
+
+## June 2025 Progress
+- [x] Add shape assertion and error message for TD3/continuous action mode in TradingEnv
+- [x] Begin one-test-at-a-time debugging for integration tests
+- [ ] Continue with further integration and model compatibility improvements

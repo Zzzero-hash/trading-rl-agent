@@ -24,3 +24,4 @@ faker>=13.0.0,<25.0.0      # Test data generation
 
 # Utilities
 python-dotenv>=0.20.0,<1.1.0  # Environment variables
+scikit-learn>=1.0

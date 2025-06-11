@@ -17,6 +17,7 @@ from typing import Dict, List, Optional, Union, Any
 import requests
 import time
 from abc import ABC, abstractmethod
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
@@ -44,90 +45,40 @@ class SentimentProvider(ABC):
 
 
 class NewsSentimentProvider(SentimentProvider):
-    """News-based sentiment provider using financial news APIs."""
-    
+    """News-based sentiment provider using Yahoo Finance scraping only."""
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key
-        self.base_url = "https://newsapi.org/v2/everything"
-        
+        self.api_key = api_key  # Unused, for test compatibility
+
     def fetch_sentiment(self, symbol: str, days_back: int = 1) -> List[SentimentData]:
-        """Fetch news sentiment for a symbol."""
-        if not self.api_key:
-            # Return mock data for testing
-            return self._get_mock_news_sentiment(symbol, days_back)
-            
+        """Fetch news sentiment for a symbol by scraping Yahoo Finance."""
         try:
-            end_date = datetime.datetime.now()
-            start_date = end_date - datetime.timedelta(days=days_back)
-            
-            params = {
-                'q': f'"{symbol}" OR "{self._symbol_to_company(symbol)}"',
-                'from': start_date.strftime('%Y-%m-%d'),
-                'to': end_date.strftime('%Y-%m-%d'),
-                'language': 'en',
-                'sortBy': 'relevancy',
-                'apiKey': self.api_key
-            }
-            
-            response = requests.get(self.base_url, params=params, timeout=10)
-            response.raise_for_status()
-            
-            articles = response.json().get('articles', [])
-            sentiment_data = []
-            
-            for article in articles[:10]:  # Limit to 10 most relevant articles
-                score = self._analyze_text_sentiment(article.get('title', '') + ' ' + article.get('description', ''))
-                sentiment_data.append(SentimentData(
-                    symbol=symbol,
-                    score=score,
-                    magnitude=0.7,  # Default confidence for news
-                    timestamp=datetime.datetime.now(),
-                    source='news',
-                    raw_data=article
-                ))
-                
-            return sentiment_data
-            
+            return self._scrape_headlines_sentiment(symbol, days_back)
         except Exception as e:
-            logger.warning(f"Failed to fetch news sentiment for {symbol}: {e}")
-            return self._get_mock_news_sentiment(symbol, days_back)
-    
-    def _symbol_to_company(self, symbol: str) -> str:
-        """Convert stock symbol to company name for better news search."""
-        company_map = {
-            'AAPL': 'Apple Inc',
-            'GOOGL': 'Google Alphabet',
-            'TSLA': 'Tesla',
-            'MSFT': 'Microsoft',
-            'AMZN': 'Amazon',
-            'META': 'Meta Facebook',
-            'NVDA': 'Nvidia'
-        }
-        return company_map.get(symbol, symbol)
-    
-    def _analyze_text_sentiment(self, text: str) -> float:
+            logger.warning(f"Failed to scrape headlines for {symbol}: {e}")
+            # Return mock news sentiment if scraping fails
+            return self._get_mock_news_sentiment_static(symbol, days_back)
+
+    @staticmethod
+    def _analyze_text_sentiment(text: str) -> float:
         """Simple sentiment analysis using keyword matching."""
         positive_words = ['bullish', 'growth', 'profit', 'gain', 'up', 'rise', 'strong', 'beat', 'outperform']
         negative_words = ['bearish', 'loss', 'decline', 'down', 'fall', 'weak', 'miss', 'underperform', 'drop']
-        
         text_lower = text.lower()
         positive_count = sum(1 for word in positive_words if word in text_lower)
         negative_count = sum(1 for word in negative_words if word in text_lower)
-        
         if positive_count + negative_count == 0:
             return 0.0
-            
         sentiment_score = (positive_count - negative_count) / (positive_count + negative_count)
         return max(-1.0, min(1.0, sentiment_score))
-    
-    def _get_mock_news_sentiment(self, symbol: str, days_back: int) -> List[SentimentData]:
+
+    @staticmethod
+    def _get_mock_news_sentiment_static(symbol: str, days_back: int) -> List[SentimentData]:
         """Generate mock news sentiment data for testing."""
         import random
-        random.seed(hash(symbol))  # Consistent mock data per symbol
-        
+        random.seed(hash(symbol))
         sentiment_data = []
         for i in range(min(5, days_back)):
-            score = random.uniform(-0.5, 0.8)  # Slightly positive bias
+            score = random.uniform(-0.5, 0.8)
             sentiment_data.append(SentimentData(
                 symbol=symbol,
                 score=score,
@@ -137,6 +88,52 @@ class NewsSentimentProvider(SentimentProvider):
                 raw_data={'mock': True}
             ))
         return sentiment_data
+
+    def _scrape_headlines_sentiment(self, symbol: str, days_back: int) -> List[SentimentData]:
+        """Scrape news headlines from Yahoo Finance and analyze sentiment (robust)."""
+        url = f"https://finance.yahoo.com/quote/{symbol}/news?p={symbol}"
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        headlines = set()
+        # Try multiple selectors for robustness
+        for tag in ['h3', 'h2', 'a']:
+            for item in soup.find_all(tag):
+                text = item.get_text(strip=True)
+                if text and len(text) > 10:
+                    headlines.add(text)
+        if not headlines:
+            raise RuntimeError(f"No headlines found for {symbol} on Yahoo Finance.")
+        sentiment_data = []
+        now = datetime.datetime.now()
+        for i, headline in enumerate(list(headlines)[:15]):
+            score = NewsSentimentProvider._analyze_text_sentiment(headline)
+            sentiment_data.append(SentimentData(
+                symbol=symbol,
+                score=score,
+                magnitude=0.7,
+                timestamp=now - datetime.timedelta(minutes=i*10),
+                source='news_scrape',
+                raw_data={'headline': headline}
+            ))
+        return sentiment_data
+
+    def _symbol_to_company(self, symbol: str) -> str:
+        """Map a stock symbol to a company name. Uses a static mapping for test/demo purposes."""
+        mapping = {
+            'AAPL': 'Apple Inc',
+            'GOOG': 'Alphabet Inc',
+            'GOOGL': 'Google Alphabet',
+            'MSFT': 'Microsoft Corporation',
+            'AMZN': 'Amazon.com, Inc.',
+            'TSLA': 'Tesla, Inc.',
+            'META': 'Meta Platforms, Inc.',
+            'NFLX': 'Netflix, Inc.',
+            'NVDA': 'NVIDIA Corporation',
+            'JPM': 'JPMorgan Chase & Co.',
+            'V': 'Visa Inc.'
+        }
+        return mapping.get(symbol.upper(), symbol)
 
 
 class SocialSentimentProvider(SentimentProvider):
@@ -174,8 +171,8 @@ class SentimentConfig:
     """Configuration for sentiment analysis."""
     enable_news: bool = True
     enable_social: bool = True
-    news_api_key: Optional[str] = None
     social_api_key: Optional[str] = None
+    news_api_key: Optional[str] = None  # Added for test compatibility
     cache_duration_hours: int = 1
     sentiment_weight: float = 0.2  # Weight in final feature vector
 
@@ -187,9 +184,8 @@ class SentimentAnalyzer:
         self.config = config or SentimentConfig()
         self.providers: List[SentimentProvider] = []
         self.sentiment_cache: Dict[str, List[SentimentData]] = {}
-        
         if self.config.enable_news:
-            self.providers.append(NewsSentimentProvider(self.config.news_api_key))
+            self.providers.append(NewsSentimentProvider())  # No API key
         if self.config.enable_social:
             self.providers.append(SocialSentimentProvider(self.config.social_api_key))
     

@@ -47,12 +47,13 @@ class Trainer:
         )
 
         algo_cls = PPOTrainer if self.algorithm == "ppo" else DQNTrainer
-        run_config = tune.RunConfig(
+# Use RunConfig from ray.air.config for Ray >=2.0
+        from ray.air.config import RunConfig
+        run_config = RunConfig(
             stop={"training_iteration": self.num_iterations},
             storage_path=f"file://{self.save_dir}",
-            checkpoint_config=tune.CheckpointConfig(checkpoint_at_end=True),
+            verbose=1
         )
-
         tuner = tune.Tuner(algo_cls, param_space=self.ray_config, run_config=run_config)
         tuner.fit()
 
