@@ -44,6 +44,8 @@ class ConcatModel(nn.Module):
         market = self.market_net(input_dict["market_features"])
         pred = self.pred_net(input_dict["model_pred"])
         concat = torch.cat([market, pred], dim=-1)
+        # Store the combined features so value_function() can reuse them
+        self._features = concat
         logits = self.policy_net(concat)
         value = self.value_net(concat)
         return logits, value
