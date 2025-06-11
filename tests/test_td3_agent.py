@@ -314,15 +314,15 @@ class TestTD3Agent:
         # Should not update due to insufficient data
         assert td3_agent.total_it == initial_it
     
-    @pytest.mark.parametrize("policy_noise", [0.0, 0.1, 0.2, 0.5])
-    def test_different_policy_noise_levels(self, td3_config, policy_noise):
+    @pytest.mark.parametrize("target_noise", [0.0, 0.1, 0.2, 0.5])
+    def test_different_policy_noise_levels(self, td3_config, target_noise):
         """Test TD3 with different policy noise levels."""
-        td3_config.policy_noise = policy_noise
+        td3_config.target_noise = target_noise
         agent = TD3Agent(td3_config)
         
         # Should initialize without error
-        assert agent.config.policy_noise == policy_noise
-        
+        assert agent.config.target_noise == target_noise # type: ignore
+
         # Should be able to select actions
         state = np.random.randn(10).astype(np.float32)
         action = agent.select_action(state)
