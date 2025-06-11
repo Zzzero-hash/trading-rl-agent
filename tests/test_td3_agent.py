@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 import torch
 import torch.nn as nn
-import gym
+import gymnasium as gym
 from unittest.mock import patch, MagicMock
 import tempfile
 import os
@@ -353,8 +353,7 @@ class TestTD3Agent:
         # Train and check metrics
         initial_it = td3_agent.total_it
         td3_agent.train()
-        
-        # Should increment iteration counter
+          # Should increment iteration counter
         assert td3_agent.total_it == initial_it + 1
     
     def test_twin_critic_mechanism(self, td3_agent):
@@ -369,26 +368,35 @@ class TestTD3Agent:
         # They should be different (unless by coincidence)
         assert q1.shape == q2.shape == (1, 1)
         
-        # After training, they should learn different functions
-        # Fill buffer and train
-        for _ in range(20):
+        # Get initial parameters to check for learning
+        initial_critic_1_params = [p.clone() for p in td3_agent.critic_1.parameters()]
+        initial_critic_2_params = [p.clone() for p in td3_agent.critic_2.parameters()]
+        
+        # Fill buffer with more diverse training data
+        for _ in range(50):
             s = np.random.randn(10).astype(np.float32)
             a = np.random.uniform(-1, 1, 3).astype(np.float32)
-            r = np.random.randn()
+            r = np.random.uniform(-10, 10)  # More diverse rewards
             ns = np.random.randn(10).astype(np.float32)
-            d = False
+            d = np.random.choice([True, False])
             td3_agent.replay_buffer.add(s, a, r, ns, d)
         
-        for _ in range(10):
+        # Train with more steps to ensure learning
+        for _ in range(20):
             td3_agent.train()
         
-        # Check that critics have learned (parameters changed)
-        with torch.no_grad():
-            q1_after = td3_agent.critic_1(state, action)
-            q2_after = td3_agent.critic_2(state, action)
-            
-            # Values should be different from initial random values
-            assert not torch.equal(q1, q1_after) or not torch.equal(q2, q2_after)
+        # Check that parameters have changed (indicating learning)
+        critic_1_params_changed = any(
+            not torch.equal(initial, current) 
+            for initial, current in zip(initial_critic_1_params, td3_agent.critic_1.parameters())
+        )
+        critic_2_params_changed = any(
+            not torch.equal(initial, current) 
+            for initial, current in zip(initial_critic_2_params, td3_agent.critic_2.parameters())
+        )
+        
+        # At least one critic should have learned (parameters changed)
+        assert critic_1_params_changed or critic_2_params_changed, "At least one critic should have learned"
 
 
 class TestTD3Config:

@@ -7,6 +7,7 @@ import pytest
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.data import DataLoader, TensorDataset
 
 pytestmark = pytest.mark.integration
 import tempfile
@@ -211,9 +212,9 @@ class TestCNNLSTMTrainer:
         
         # Create dummy data loader
         features = torch.randn(20, self.config.sequence_length, input_dim)
-        targets = torch.randn(20)
-        dataset = torch.utils.data.TensorDataset(features, targets)
-        loader = torch.utils.data.DataLoader(dataset, batch_size=4)
+        targets = torch.randn(20)  # Define targets tensor
+        dataset = TensorDataset(features, targets)
+        loader = DataLoader(dataset, batch_size=4)
         
         # Train one epoch
         loss = self.trainer.train_epoch(loader)
