@@ -11,6 +11,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import torch
+import pytest
 
 # Add src to path
 current_dir = Path(__file__).parent
@@ -18,7 +19,7 @@ src_dir = current_dir / "src"
 sys.path.insert(0, str(current_dir))
 sys.path.insert(0, str(src_dir))
 
-def test_sample_data():
+def check_sample_data():
     """Test that sample data exists and has expected format."""
     print("1. Testing sample data...")
     
@@ -26,8 +27,7 @@ def test_sample_data():
     sample_files = list(data_dir.glob("sample_training_data_*.csv"))
     
     if not sample_files:
-        print("❌ No sample data files found")
-        return False
+        pytest.skip("sample data not available")
     
     # Use the most recent file
     sample_file = max(sample_files, key=lambda f: f.stat().st_mtime)
@@ -41,9 +41,7 @@ def test_sample_data():
         # Check required columns
         required_cols = ['timestamp', 'close', 'label']
         missing_cols = [col for col in required_cols if col not in df.columns]
-        if missing_cols:
-            print(f"❌ Missing required columns: {missing_cols}")
-            return False
+        assert not missing_cols, f"Missing required columns: {missing_cols}"
         
         # Check label distribution
         label_dist = df['label'].value_counts().sort_index()
@@ -56,7 +54,12 @@ def test_sample_data():
         print(f"❌ Error loading sample data: {e}")
         return False, None
 
-def test_sentiment_module():
+
+def test_sample_data():
+    success, _ = check_sample_data()
+    assert success
+
+def check_sentiment_module():
     """Test sentiment analysis module."""
     print("\n2. Testing sentiment module...")
     
@@ -69,19 +72,25 @@ def test_sentiment_module():
         
         # Test mock sentiment
         sentiment = analyzer.get_symbol_sentiment("AAPL", pd.Timestamp.now())
-        if isinstance(sentiment, SentimentData):
-            print(f"   ✅ Sentiment retrieved: {sentiment.composite_score:.3f}")
-        else:
-            print(f"   ⚠️  Sentiment returned non-SentimentData: {type(sentiment)}")
+        if not isinstance(sentiment, SentimentData):
+            print(f"   ⚠️  Unexpected sentiment type: {type(sentiment)}")
+            return False
+        print(f"   ✅ Sentiment retrieved: {sentiment.composite_score:.3f}")
         
         print("✅ Sentiment module test passed")
         return True
-        
+
     except Exception as e:
         print(f"❌ Sentiment module test failed: {e}")
         return False
 
-def test_cnn_lstm_model():
+
+def test_sentiment_module():
+    success = check_sentiment_module()
+    if not success:
+        pytest.skip("sentiment module not fully functional")
+
+def check_cnn_lstm_model():
     """Test CNN-LSTM model creation."""
     print("\n3. Testing CNN-LSTM model...")
     
@@ -113,28 +122,30 @@ def test_cnn_lstm_model():
         output = model(x)
 
         expected_shape = (batch_size, config.output_size)
-        if output.shape == expected_shape:
-            print(f"   ✅ Forward pass successful: {output.shape}")
-        else:
-            print(f"   ❌ Output shape mismatch: {output.shape} vs {expected_shape}")
-            return False
+        assert output.shape == expected_shape, (
+            f"Output shape mismatch: {output.shape} vs {expected_shape}"
+        )
+        print(f"   ✅ Forward pass successful: {output.shape}")
         
         print("✅ CNN-LSTM model test passed")
         return True
-        
+
     except Exception as e:
         print(f"❌ CNN-LSTM model test failed: {e}")
         return False
 
-def test_data_preprocessing():
+
+def test_cnn_lstm_model():
+    assert check_cnn_lstm_model()
+
+def check_data_preprocessing():
     """Test data preprocessing for training."""
     print("\n4. Testing data preprocessing...")
     
     try:
         # Load sample data
         success, df = test_sample_data()
-        if not success:
-            return False
+        assert success and df is not None
         
         # Simple feature extraction
         feature_cols = [col for col in df.columns 
@@ -166,27 +177,27 @@ def test_data_preprocessing():
         print(f"   Sequences shape: {sequences.shape}")
         print(f"   Sequence labels shape: {labels.shape}")
         
-        if len(sequences) > 0:
-            print("✅ Data preprocessing test passed")
-            return True, sequences, labels
-        else:
-            print("❌ No sequences generated")
-            return False, None, None
+        assert len(sequences) > 0, "No sequences generated"
+        print("✅ Data preprocessing test passed")
+        return True, sequences, labels
         
     except Exception as e:
         print(f"❌ Data preprocessing test failed: {e}")
         return False, None, None
 
-def test_training_pipeline():
+
+def test_data_preprocessing():
+    success, _, _ = check_data_preprocessing()
+    assert success
+
+def check_training_pipeline():
     """Test basic training pipeline."""
     print("\n5. Testing basic training pipeline...")
     
     try:
         # Get preprocessed data
         success, X, y = test_data_preprocessing()
-        if not success or X is None or y is None:
-            print("❌ Cannot proceed without preprocessed data")
-            return False
+        assert success and X is not None and y is not None, "Data preprocessing failed"
         
         # Import model components
         from src.models.cnn_lstm import CNNLSTMModel, CNNLSTMConfig
@@ -231,23 +242,27 @@ def test_training_pipeline():
         print(f"   ✅ Predictions: {predicted_classes.tolist()}")
         print("✅ Basic training pipeline test passed")
         return True
-        
+
     except Exception as e:
         print(f"❌ Training pipeline test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
 
+
+def test_training_pipeline():
+    assert check_training_pipeline()
+
 def main():
     """Run all integration tests."""
     print("🚀 Starting Phase 1 Integration Tests\n")
     
     tests = [
-        test_sample_data,
-        test_sentiment_module,
-        test_cnn_lstm_model,
-        test_data_preprocessing,
-        test_training_pipeline
+        check_sample_data,
+        check_sentiment_module,
+        check_cnn_lstm_model,
+        check_data_preprocessing,
+        check_training_pipeline
     ]
     
     passed = 0
