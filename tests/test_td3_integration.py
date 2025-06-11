@@ -119,7 +119,7 @@ class TestTD3Integration:
             action = agent.select_action(state, add_noise=False)
             next_obs, reward, done, *_ = trading_env.step(action)
             next_state = self._flatten_obs(next_obs)
-            agent.store_experience(state, action, reward, next_state, done)
+            agent.store_experience(state, action, reward, next_state, done)            
             state = next_state
             episode_length += 1
             if done:
@@ -127,7 +127,7 @@ class TestTD3Integration:
         assert episode_length > 0
         # Try a training step
         agent.train()
-    
+
     def test_td3_config_dataclass_integration(self, trading_env):
         """Test TD3 works with dataclass config in realistic scenario."""
         # Test various config scenarios
@@ -137,7 +137,10 @@ class TestTD3Integration:
             TD3Config(hidden_dims=[128, 128], policy_delay=3)  # Different architecture
         ]
         
-        state_dim = trading_env.observation_space.shape[0]
+        # Get actual flattened state dimension like other working tests
+        obs = trading_env.reset()
+        obs_flat = self._flatten_obs(obs)
+        state_dim = obs_flat.shape[0]
         action_dim = trading_env.action_space.shape[0]
         
         for config in configs_to_test:
@@ -146,8 +149,7 @@ class TestTD3Integration:
                 state_dim=state_dim,
                 action_dim=action_dim
             )
-            
-            # Verify config was applied correctly
+              # Verify config was applied correctly
             assert agent.lr == config.learning_rate
             assert agent.batch_size == config.batch_size
             assert agent.hidden_dims == config.hidden_dims
@@ -155,20 +157,17 @@ class TestTD3Integration:
             
             # Test basic functionality
             state = trading_env.reset()
-            # Always flatten the full observation window for TD3
-            if isinstance(state, tuple) and len(state) > 0:
-                state = state[0]
-            if isinstance(state, dict):
-                state = state.get("market_features", state)
-            state = np.asarray(state)
-            if state.ndim > 1:
-                state = state.flatten()
+            # Use the same flattening logic as other working tests
+            state = self._flatten_obs(state)
             action = agent.select_action(state)
             assert len(action) == action_dim
-    
+
     def test_td3_save_load_with_training_state(self, trading_env, td3_config, tmp_path):
         """Test TD3 agent save/load preserves training state."""
-        state_dim = trading_env.observation_space.shape[0]
+        # Get actual flattened state dimension like other working tests
+        obs = trading_env.reset()
+        obs_flat = self._flatten_obs(obs)
+        state_dim = obs_flat.shape[0]
         action_dim = trading_env.action_space.shape[0]
         
         # Create and train agent
@@ -199,8 +198,7 @@ class TestTD3Integration:
         
         # Create new agent and load
         agent2 = TD3Agent(
-            config=td3_config,
-            state_dim=state_dim,
+            config=td3_config,            state_dim=state_dim,
             action_dim=action_dim
         )
         agent2.load(str(save_path))
@@ -245,10 +243,11 @@ if __name__ == "__main__":
     
     print(f"✅ Environment: {state_dim} states, {action_dim} actions")
     print(f"✅ Agent initialized with {sum(p.numel() for p in agent.actor.parameters())} actor parameters")
-    
-    # Test interaction (simplified)
+      # Test interaction (simplified)
     state, info = env.reset()
-    if len(state.shape) > 1:
+    if isinstance(state, dict):
+        state = list(state.values())[0]  # Get first value if dict
+    if hasattr(state, 'shape') and len(state.shape) > 1:
         state = state.flatten()  # Flatten for TD3
         
     action_continuous = agent.select_action(state)
