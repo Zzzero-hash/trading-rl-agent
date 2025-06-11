@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import gymnasium as gym
@@ -29,6 +30,8 @@ def register_flat_env():
     register_env("FlatTraderEnv", lambda cfg: FlattenWrapper(env_creator(cfg)))
 
 def test_ray_trainer_checkpoint(tmp_path):
+    # Ensure previous Ray state is cleared to avoid reinit errors
+    ray.shutdown()
     sys.modules["gym"] = gym  # trader_env expects gym
     df = pd.DataFrame({
         "open": [1.0] * 60,
@@ -52,7 +55,13 @@ def test_ray_trainer_checkpoint(tmp_path):
     algo = config.build()
     algo.train()
     chk_dir = tmp_path / "chkpt"
-    algo.save("file://" + str(chk_dir))
+    save_result = algo.save(str(chk_dir))
     ray.shutdown()
 
-    assert chk_dir.is_dir()
+    # `save` may return a path string or an object with a checkpoint path
+    if hasattr(save_result, "checkpoint"):
+        save_path = Path(save_result.checkpoint.path)
+    else:
+        save_path = Path(str(save_result))
+
+    assert save_path.is_dir()

@@ -250,7 +250,7 @@ class TestMainTuneMode:
         ]
         
         with patch.object(sys, 'argv', test_args), \
-             patch('src.agents.tune.run_tune') as mock_run_tune, \
+             patch('agents.tune.run_tune') as mock_run_tune, \
              patch('src.main.Trainer') as mock_trainer_class:
             
             main()
@@ -273,7 +273,7 @@ class TestMainTuneMode:
         ]
         
         with patch.object(sys, 'argv', test_args), \
-             patch('src.agents.tune.run_tune') as mock_run_tune, \
+             patch('agents.tune.run_tune') as mock_run_tune, \
              patch('src.main.Trainer') as mock_trainer_class:
             
             mock_trainer = Mock()
@@ -471,7 +471,7 @@ class TestMainErrorHandling:
         ]
         
         with patch.object(sys, 'argv', test_args), \
-             patch('src.agents.tune.run_tune') as mock_run_tune:
+             patch('agents.tune.run_tune') as mock_run_tune:
             
             mock_run_tune.side_effect = Exception("Tuning failed")
             
