@@ -20,7 +20,7 @@ search (see the ``tune_example`` function at the bottom of this file).
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import Iterable, Tuple, Dict, List, Any
 
 import numpy as np
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 def _to_tensor(data: Any) -> torch.Tensor:
     """Convert numpy array or pandas DataFrame to float tensor."""
-    if hasattr(data, "values"):
+    if hasattr(data, "values") and not torch.is_tensor(data):
         data = data.values
     return torch.as_tensor(data, dtype=torch.float32)
 
@@ -49,6 +49,7 @@ class ModelConfig:
     dropout: float = 0.1
     output_size: int = 1
     task: str = "classification"  # or 'regression'
+    classification_threshold: float = 0.5  # Threshold for classification tasks
 
 
 @dataclass
@@ -142,17 +143,28 @@ def train_supervised(
     m_cfg = model_cfg or ModelConfig()
     t_cfg = train_cfg or TrainingConfig()
 
+    # Input validation
+    if features is None or targets is None:
+        raise ValueError("Input data cannot be empty")
+    x = _to_tensor(features)
+    y = _to_tensor(targets)
+    if x.numel() == 0 or y.numel() == 0:
+        raise ValueError("Input data cannot be empty")
+    if len(x) != len(y):
+        raise ValueError("Input and target dimensions must match")
+    if t_cfg.epochs <= 0:
+        raise ValueError("Number of epochs must be greater than zero")
+    if t_cfg.batch_size > len(x):
+        raise ValueError("Batch size cannot be larger than the dataset")
+
     gpu_ids = ray.get_gpu_ids()
-    if gpu_ids:
+    if gpu_ids and torch.cuda.is_available():
         device = torch.device(f"cuda:{int(gpu_ids[0])}")
     else:
         device = torch.device("cpu")
-        
     logger.info("Using device %s", device)
 
-    x = _to_tensor(features)
-    y = _to_tensor(targets).reshape(len(features), -1)
-
+    y = y.reshape(len(features), -1)
     (x_train, y_train), (x_val, y_val) = _split_data(x, y, t_cfg.val_split)
 
     train_ds = TensorDataset(x_train, y_train)
@@ -181,13 +193,13 @@ def train_supervised(
             loss.backward()
             optimizer.step()
             total_loss += loss.item() * xb.size(0)
-        avg_loss = total_loss / len(train_loader.dataset)
+        avg_loss = total_loss / len(x_train)
         history["train_loss"].append(avg_loss)
 
         model.eval()
         val_loss = 0.0
         correct = 0
-        count = 0
+        total_samples = 0
         with torch.no_grad():
             for xb, yb in val_loader:
                 xb, yb = xb.to(device), yb.to(device)
@@ -196,17 +208,29 @@ def train_supervised(
                 if m_cfg.task == "classification":
                     predicted = (pred > 0.5).float()
                     correct += (predicted == yb).all(dim=1).sum().item()
-                    count += xb.size(0)
-        val_loss /= max(1, len(val_loader.dataset))
+                    total_samples += xb.size(0)
+        if len(y_val) == 0:
+            logger.warning("Validation set is empty. Skipping validation for this epoch.")
+            continue
+        val_loss /= len(y_val)
         history["val_loss"].append(val_loss)
         if m_cfg.task == "classification":
-            acc = correct / max(1, count)
+            acc = correct / max(1, total_samples)
             history["val_acc"].append(acc)
             logger.info("Epoch %d: train_loss=%.4f val_loss=%.4f val_acc=%.3f", epoch + 1, avg_loss, val_loss, acc)
         else:
             logger.info("Epoch %d: train_loss=%.4f val_loss=%.4f", epoch + 1, avg_loss, val_loss)
 
     return model, history
+
+
+def train_supervised_local(
+    features: Any,
+    targets: Any,
+    model_cfg: ModelConfig | None = None,
+    train_cfg: TrainingConfig | None = None,
+) -> Tuple[TrendPredictor, Dict[str, List[float]]]:
+    raise NotImplementedError("train_supervised_local has been removed. Use train_supervised (Ray) instead.")
 
 
 def tune_example():
@@ -223,24 +247,33 @@ def tune_example():
 
 def save_model(model: TrendPredictor, path: str) -> None:
     """Save ``model`` to ``path`` using :func:`torch.save`."""
-    torch.save(
-        {
-            "state_dict": model.state_dict(),
-            "config": model.config.__dict__,
-            "input_dim": model.input_dim,
-        },
-        path,
-    )
+    try:
+        torch.save(
+            {
+                "state_dict": model.state_dict(),
+                "config": asdict(model.config),
+                "input_dim": model.input_dim,
+            },
+            path,
+        )
+    except Exception as e:
+        raise RuntimeError(f"Failed to save model: {e}")
 
 
 def load_model(path: str, device: str | torch.device | None = None) -> TrendPredictor:
     """Load a :class:`TrendPredictor` from ``path``."""
     device = torch.device(device or "cpu")
-    checkpoint = torch.load(path, map_location=device)
-    cfg = ModelConfig(**checkpoint["config"])
-    model = TrendPredictor(checkpoint["input_dim"], cfg).to(device)
-    model.load_state_dict(checkpoint["state_dict"])
-    return model
+    path_str = str(path)
+    if not path_str.endswith(".pt"):
+        raise ValueError("Unsupported file format")
+    try:
+        checkpoint = torch.load(path, map_location=device)
+        cfg = ModelConfig(**checkpoint["config"])
+        model = TrendPredictor(checkpoint["input_dim"], cfg).to(device)
+        model.load_state_dict(checkpoint["state_dict"])
+        return model
+    except Exception as e:
+        raise RuntimeError(f"Failed to load model: {e}")
 
 
 def evaluate_model(
@@ -249,19 +282,22 @@ def evaluate_model(
     targets: Any,
 ) -> Dict[str, float]:
     """Evaluate a trained model on ``features`` and ``targets``."""
+    if features is None or len(features) == 0:
+        raise ValueError("Features cannot be empty")
+    if targets is None or len(targets) == 0:
+        raise ValueError("Targets cannot be empty")
     if isinstance(model_or_path, (str, bytes)):
         model = load_model(model_or_path)
     else:
         model = model_or_path
-
     device = next(model.parameters()).device
     x = _to_tensor(features).to(device)
     y = _to_tensor(targets).reshape(len(features), -1).to(device)
-
+    if y.shape[0] != x.shape[0] or y.shape[1] != model.config.output_size:
+        raise ValueError("Target dimensions must match model output")
     model.eval()
     with torch.no_grad():
         pred = model(x)
-
     if model.task == "classification":
         predicted = (pred > 0.5).float()
         correct = (predicted == y).all(dim=1).float().mean().item()
@@ -283,6 +319,8 @@ def predict_features(
     device: str | torch.device | None = None,
 ) -> torch.Tensor:
     """Return model prediction for ``recent_data``."""
+    if callable(recent_data):
+        raise ValueError("recent_data must be an array or tensor, not a function or method")
     if isinstance(model_or_path, (str, bytes)):
         model = load_model(model_or_path, device)
     else:
@@ -293,6 +331,8 @@ def predict_features(
     x = _to_tensor(recent_data)
     if x.ndim == 2:
         x = x.unsqueeze(0)
+    if x.ndim != 3:
+        raise ValueError("Input to predict_features must be 2D or 3D array/tensor")
     model.eval()
     with torch.no_grad():
         out = model(x.to(device))
