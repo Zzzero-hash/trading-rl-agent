@@ -292,6 +292,12 @@ curl -X POST http://127.0.0.1:8000/predictor \
 - Update documentation for API changes
 - Use Docker for consistent testing environment
 
+## Known Test Issues
+
+- `EnsembleAgent` is currently a placeholder, so `test_ensemble_integration` is skipped.
+- The sentiment module may return raw values instead of `SentimentData`. The related unit test is skipped until the provider behavior is finalized.
+- Ray Tune still passes the deprecated `local_dir` argument internally, producing warnings during `TestMainTuneMode`.
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

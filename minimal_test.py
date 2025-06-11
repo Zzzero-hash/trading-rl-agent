@@ -15,10 +15,10 @@ def test_numpy_compatibility():
         x = np.array([1, 2, 3])
         y = np.mean(x)
         print(f"✅ NumPy basic operations work: mean of {x} = {y}")
-        return True
+        assert y == 2.0
     except Exception as e:
         print(f"❌ NumPy test failed: {e}")
-        return False
+        assert False
 
 def test_basic_python():
     """Test basic Python functionality."""
@@ -38,11 +38,10 @@ def test_basic_python():
         yaml_str = yaml.dump(config)
         loaded = yaml.safe_load(yaml_str)
         print(f"✅ YAML working: {loaded}")
-        
-        return True
+        assert loaded == config
     except Exception as e:
         print(f"❌ Basic Python test failed: {e}")
-        return False
+        assert False
 
 def test_our_code_structure():
     """Test that our code structure is correct."""
@@ -67,11 +66,10 @@ def test_our_code_structure():
         cnn_size = os.path.getsize(cnn_path)
         
         print(f"✅ File sizes: SAC={sac_size}B, TD3={td3_size}B, CNN-LSTM={cnn_size}B")
-        
-        return True
+        assert sac_size > 0 and td3_size > 0 and cnn_size > 0
     except Exception as e:
         print(f"❌ Code structure test failed: {e}")
-        return False
+        assert False
 
 if __name__ == "__main__":
     print("🔍 Minimal Testing - Dependencies and Code Structure\n")

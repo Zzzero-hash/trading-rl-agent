@@ -119,7 +119,6 @@ def test_td3_basic_functionality():
         os.unlink(save_path)
     
     print("🎉 All TD3 Integration Tests Passed!")
-    return True
 
 if __name__ == "__main__":
     try:
