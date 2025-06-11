@@ -23,6 +23,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import yaml
+from dotenv import load_dotenv
 
 try:
     # Try relative imports first (when used as module)
@@ -149,17 +150,15 @@ class CNNLSTMTrainer:
     """Main trainer class for CNN-LSTM models."""
     
     def __init__(self, config: Optional[TrainingConfig] = None):
+        load_dotenv()
         self.config = config or TrainingConfig()
         self.model = None
         self.optimizer = None
         self.criterion = None
         self.scaler = None
         self.sentiment_analyzer = None
-        
-        # Set up device
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         logger.info(f"Using device: {self.device}")
-        
         # Initialize sentiment analyzer if enabled
         if self.config.include_sentiment:
             sentiment_config = SentimentConfig()
@@ -167,59 +166,82 @@ class CNNLSTMTrainer:
     
     def prepare_data(self, df: pd.DataFrame, symbols: Optional[List[str]] = None) -> Tuple[np.ndarray, np.ndarray]:
         """Prepare data for training including sentiment features."""
-        
         # Generate technical features
         df_features = generate_features(df)
-        
         # Add sentiment features if enabled
         if self.config.include_sentiment and symbols and self.sentiment_analyzer:
             sentiment_features = self._add_sentiment_features(df_features, symbols)
             df_features = pd.concat([df_features, sentiment_features], axis=1)
-        
         # Create target variable (next period return)
         if 'close' not in df_features.columns:
             raise ValueError("DataFrame must contain 'close' column")
-        
         df_features['target'] = df_features['close'].pct_change().shift(-self.config.prediction_horizon)
-        
         # Remove rows with NaN values
         df_clean = df_features.dropna()
-        
         # Separate features and targets
         feature_columns = [col for col in df_clean.columns if col not in ['target', 'timestamp']]
         features = df_clean[feature_columns].values
         targets = df_clean['target'].values
-        
+        # Log feature columns and shape for debugging
+        logger.info(f"Feature columns used: {feature_columns}")
+        logger.info(f"Feature matrix shape: {features.shape}")
+        # Error handling for empty or mismatched features
+        if features.size == 0:
+            raise ValueError("No features available after preprocessing. Check feature engineering and NaN removal.")
+        if len(features.shape) != 2:
+            raise ValueError(f"Features must be 2D (samples, features), got shape {features.shape}")
+        # Robust error handling for missing/empty columns and insufficient data
+        required_cols = ['open', 'high', 'low', 'close', 'volume']
+        for col in required_cols:
+            if col not in df.columns:
+                raise KeyError(f"Missing required column: {col}")
+            if df[col].isnull().all() or len(df[col].dropna()) == 0:
+                raise ValueError(f"Column '{col}' is empty or all NaN")
+        if len(df) < self.config.sequence_length + self.config.prediction_horizon:
+            raise ValueError("Insufficient data for sequence generation (not enough rows)")
         # Normalize features if requested
         if self.config.normalize_features:
             from sklearn.preprocessing import StandardScaler
             self.scaler = StandardScaler()
             features = self.scaler.fit_transform(features)
-        
         logger.info(f"Prepared data shape: features={features.shape}, targets={targets.shape}")
         return features, targets
     
-    def _add_sentiment_features(self, df: pd.DataFrame, symbols: List[str]) -> pd.DataFrame:
-        """Add sentiment features to the dataframe."""
+    def _add_sentiment_features(self, df: pd.DataFrame, symbols: List[str], forex_pairs: Optional[List[str]] = None) -> pd.DataFrame:
+        """Add sentiment features to the dataframe, including forex pairs."""
+        import importlib
         sentiment_df = pd.DataFrame(index=df.index)
-        
+        # Stock/crypto symbols (existing logic)
         for symbol in symbols:
             try:
-                # Get sentiment score for each day
                 sentiment_scores = []
                 for _, row in df.iterrows():
                     score = self.sentiment_analyzer.get_symbol_sentiment(symbol, days_back=1)
                     sentiment_scores.append(score)
-                
                 sentiment_df[f'sentiment_{symbol}'] = sentiment_scores
                 sentiment_df[f'sentiment_{symbol}_abs'] = np.abs(sentiment_scores)
-                
             except Exception as e:
                 logger.warning(f"Failed to add sentiment for {symbol}: {e}")
-                # Add zero sentiment as fallback
                 sentiment_df[f'sentiment_{symbol}'] = 0.0
                 sentiment_df[f'sentiment_{symbol}_abs'] = 0.0
-        
+        # Forex pairs (new logic)
+        if forex_pairs:
+            try:
+                forex_mod = importlib.import_module('src.data.forex_sentiment')
+                get_forex_sentiment = getattr(forex_mod, 'get_forex_sentiment')
+                for pair in forex_pairs:
+                    sentiment_scores = []
+                    sentiment_data = get_forex_sentiment(pair)
+                    score = sentiment_data[0].score if sentiment_data else 0.0
+                    for _ in df.iterrows():
+                        sentiment_scores.append(score)
+                    sentiment_df[f'forex_sentiment_{pair}'] = sentiment_scores
+                    sentiment_df[f'forex_sentiment_{pair}_abs'] = np.abs(sentiment_scores)
+            except Exception as e:
+                logger.warning(f"Failed to add forex sentiment: {e}")
+                for pair in forex_pairs:
+                    sentiment_df[f'forex_sentiment_{pair}'] = 0.0
+                    sentiment_df[f'forex_sentiment_{pair}_abs'] = 0.0
         return sentiment_df
     
     def create_data_loaders(self, features: np.ndarray, targets: np.ndarray) -> Tuple[DataLoader, DataLoader, DataLoader]:
@@ -290,6 +312,10 @@ class CNNLSTMTrainer:
         # Initialize optimizer and loss function
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
         self.criterion = nn.MSELoss()  # Regression task
+        
+        # Log input_dim for debugging
+        logger.info(f"Initializing model with input_dim={input_dim}")
+        logger.info(f"Model configuration: {model_config}")
         
         logger.info(f"Initialized model with {sum(p.numel() for p in self.model.parameters())} parameters")
     

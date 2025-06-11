@@ -29,7 +29,7 @@
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	// "forwardPorts": [11434],
 
 	// Run commands after the container is created to ensure proper permissions
 	"postCreateCommand": "chmod -R u+w /workspace && find /workspace -name '*.sh' -exec chmod +x {} \\;",

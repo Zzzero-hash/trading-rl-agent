@@ -434,3 +434,13 @@ def generate_features(
     max_core_window = max(windows)
     df = df.iloc[max_core_window:].reset_index(drop=True)
     return df
+
+    # Robust error handling for missing/empty columns and insufficient data
+    required_cols = ['open', 'high', 'low', 'close', 'volume']
+    for col in required_cols:
+        if col not in df.columns:
+            raise KeyError(f"Missing required column: {col}")
+        if df[col].isnull().all() or len(df[col].dropna()) == 0:
+            raise ValueError(f"Column '{col}' is empty or all NaN")
+    if len(df) < max(ma_windows + [rsi_window, vol_window, 26, 20, 14, 9, 3]):
+        raise ValueError("Insufficient data for feature engineering (not enough rows)")

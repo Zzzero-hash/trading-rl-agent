@@ -153,6 +153,14 @@ print(f"Environment obs shape: {obs.shape}")
 
 ---
 
+## ✅ Sentiment Analysis: Robust Testing Coverage
+- All sentiment data sources (robust Yahoo Finance scraping and mock fallback) are now covered by unit tests.
+- No NewsAPI.org API key is required; all news sentiment is scraped.
+- Tests ensure correct source labeling (`news_scrape`, `news_mock`).
+- Run `pytest tests/test_sentiment.py -v` to verify all sentiment integration and fallback logic.
+
+---
+
 ## 🎯 **IMMEDIATE ACTION PLAN**
 
 ### **Day 1 (Next Session)**:

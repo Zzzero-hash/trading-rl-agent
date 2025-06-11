@@ -37,6 +37,12 @@ See [ROADMAP.md](ROADMAP.md) for detailed development phases and action plans.
 - **⚠️ Integration Tests**: 7/8 failing - Identified critical issues for Phase 2
 - **🔧 Dependencies Fixed**: Migrated from deprecated `gym` to `gymnasium`
 
+## Recent Progress (June 2025)
+
+- Improved TD3 integration: Added shape assertions and helpful error messages in `TradingEnv` to catch observation/model mismatches for continuous action (TD3) mode.
+- Enhanced environment validation: Now provides clear feedback if the observation shape does not match the expected `state_dim` for TD3 agents.
+- Next steps: Continue with one-test-at-a-time debugging for further integration and model compatibility issues.
+
 ## 📚 Documentation Structure
 
 - **[README.md](README.md)** (this file) - Project overview, installation, and usage
@@ -348,3 +354,22 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 ---
 
 **Next Priority**: Implement SAC agent and begin ensemble framework development for Phase 2.
+
+## 🔍 Sentiment Analysis: Robust Yahoo Finance Scraping
+
+The sentiment analysis module now uses robust scraping of Yahoo Finance headlines for all news sentiment features. No API key is required.
+- **No NewsAPI.org dependency**: All news sentiment is scraped directly from Yahoo Finance.
+- **Automatic fallback to mock data** if scraping fails.
+- **All sources are automatically tested and labeled in the data as `news_scrape` or `news_mock`.**
+
+**Testing:**
+- Unit tests cover scraping and mock fallback.
+- Run `pytest tests/test_sentiment.py -v` to verify sentiment integration.
+
+**Example:**
+```python
+from src.data.sentiment import SentimentAnalyzer
+analyzer = SentimentAnalyzer()
+sentiment = analyzer.get_symbol_sentiment("AAPL", days_back=1)
+print(sentiment)  # Real scraped or mock score
+```

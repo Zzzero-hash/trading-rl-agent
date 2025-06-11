@@ -25,7 +25,6 @@ class TradingEnv(gym.Env):
         self.window_size = int(cfg.get("window_size", 50))
         self.initial_balance = float(cfg.get("initial_balance", 1_0000))
         self.transaction_cost = float(cfg.get("transaction_cost", 0.001))
-        # TODO: incorporate a configurable slippage model for realistic fills
         self.include_features = bool(cfg.get("include_features", False))
         self.model_path = cfg.get("model_path")
         self.model = None
@@ -35,12 +34,23 @@ class TradingEnv(gym.Env):
         else:
             self.model_output_size = 0
 
+        # New: allow continuous action space for TD3
+        self.continuous_actions = bool(cfg.get("continuous_actions", False))
+
         self.data = self._load_data()
         if len(self.data) <= self.window_size:
             raise ValueError("Not enough data for the specified window_size")
 
-        self.action_space = gym.spaces.Discrete(3)  # hold/buy/sell
-        obs_shape = (self.window_size, self.data.shape[1])
+        # Dynamically determine feature count for observation/action spaces
+        self.numeric_cols = self.data.select_dtypes(include=[np.number]).columns
+        obs_shape = (self.window_size, len(self.numeric_cols))
+
+        if self.continuous_actions:
+            # For TD3: continuous action in range [-1, 1], shape (1,)
+            self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+        else:
+            self.action_space = gym.spaces.Discrete(3)  # hold/buy/sell
+
         base_box = gym.spaces.Box(low=-np.inf, high=np.inf, shape=obs_shape, dtype=np.float32)
         if self.model:
             pred_box = gym.spaces.Box(
@@ -55,6 +65,26 @@ class TradingEnv(gym.Env):
         else:
             self.observation_space = base_box
 
+        # Initialize step-dependent attributes before using them
+        self.current_step = self.window_size
+        self.balance = float(self.initial_balance)
+        self.position = 0
+
+        # Log and assert observation shape for debugging
+        obs = self._get_observation()
+        if isinstance(obs, dict):
+            obs_val = obs.get("market_features", obs)
+        else:
+            obs_val = obs
+        obs_arr = np.asarray(obs_val)
+        print(f"[TradingEnv] Initial observation shape: {obs_arr.shape}")
+        if self.continuous_actions:
+            assert obs_arr.ndim == 1, f"Continuous action env must return flat obs, got shape {obs_arr.shape}"
+            # TD3 expects obs shape to match state_dim; help debug mismatches
+            expected_state_dim = cfg.get("state_dim")
+            if expected_state_dim is not None and obs_arr.shape[0] != expected_state_dim:
+                raise ValueError(f"[TradingEnv] For TD3, observation shape {obs_arr.shape} does not match expected state_dim={expected_state_dim}. "
+                                 f"Set window_size * num_features = {expected_state_dim} in your config.")
         self.reset()
 
     # ------------------------------------------------------------------
@@ -66,13 +96,39 @@ class TradingEnv(gym.Env):
         data = pd.concat(frames, ignore_index=True)
         if self.include_features:
             data = generate_features(data)
-        return data.astype(np.float32)
+        # Explicitly cast price/volume columns to float32
+        price_cols = [
+            'open', 'high', 'low', 'close', 'volume'
+        ]
+        for col in price_cols:
+            if col in data.columns:
+                data[col] = pd.to_numeric(data[col], errors='coerce').astype(np.float32)
+        # Optionally cast other known numeric feature columns if present
+        numeric_feature_cols = [
+            'sma_10', 'sma_20', 'sma_50', 'ema_12', 'ema_26', 'macd', 'macd_signal', 'rsi',
+            'bb_middle', 'bb_upper', 'bb_lower', 'bb_position', 'volume_sma', 'volume_ratio',
+            'price_change', 'price_change_5', 'volatility', 'news_sentiment', 'social_sentiment',
+            'composite_sentiment', 'sentiment_volume', 'label'
+        ]
+        for col in numeric_feature_cols:
+            if col in data.columns:
+                data[col] = pd.to_numeric(data[col], errors='coerce').astype(np.float32)
+        return data
 
     def _get_observation(self):
-        obs = self.data.iloc[self.current_step - self.window_size : self.current_step].values.astype(np.float32)
+        # Only use numeric columns for the observation
+        obs = self.data.iloc[
+            self.current_step - self.window_size : self.current_step
+        ][self.numeric_cols].values.astype(np.float32)
         if self.model:
             pred = predict_features(self.model, obs).numpy().astype(np.float32)
-            return {"market_features": obs, "model_pred": pred}
+            obs_dict = {"market_features": obs, "model_pred": pred}
+            if self.continuous_actions:
+                # For TD3, flatten the market_features for agent compatibility
+                obs_dict["market_features"] = obs.flatten()
+            return obs_dict
+        if self.continuous_actions:
+            return obs.flatten()
         return obs
 
     # Gym API -----------------------------------------------------------
@@ -83,11 +139,28 @@ class TradingEnv(gym.Env):
         self.position = 0
         return self._get_observation(), {}
 
-    def step(self, action: int):
-        assert self.action_space.contains(action), "Invalid action"
+    def step(self, action):
+        # Accept both discrete and continuous actions
+        if self.continuous_actions:
+            # For continuous, clip and discretize for internal logic if needed
+            action = np.clip(action, -1.0, 1.0)
+            # Example: map [-1, 1] to sell/hold/buy for reward logic
+            if action <= -0.33:
+                action_idx = 2  # sell
+            elif action >= 0.33:
+                action_idx = 1  # buy
+            else:
+                action_idx = 0  # hold
+        else:
+            assert self.action_space.contains(action), "Invalid action"
+            action_idx = action
         prev_price = self.data.loc[self.current_step - 1, "close"]
+        try:
+            prev_price = float(np.asarray(prev_price).astype(np.float32))
+        except Exception:
+            prev_price = np.nan
 
-        new_position = {0: self.position, 1: 1, 2: -1}[action]
+        new_position = {0: self.position, 1: 1, 2: -1}[action_idx]
         cost = 0.0
         if new_position != self.position:
             cost = self.transaction_cost * abs(new_position - self.position)
@@ -96,7 +169,11 @@ class TradingEnv(gym.Env):
         self.current_step += 1
         done = self.current_step >= len(self.data)
         current_price = self.data.loc[self.current_step - 1, "close"]
-        price_diff = float(current_price - prev_price)
+        try:
+            current_price = float(np.asarray(current_price).astype(np.float32))
+        except Exception:
+            current_price = np.nan
+        price_diff = current_price - prev_price
         reward = float(self.position * price_diff - cost)
         self.balance += reward
 
@@ -104,7 +181,7 @@ class TradingEnv(gym.Env):
             if isinstance(self.observation_space, gym.spaces.Dict):
                 obs = {
                     "market_features": np.zeros(
-                        (self.window_size, self.data.shape[1]), dtype=np.float32
+                        (self.window_size, len(self.numeric_cols)), dtype=np.float32
                     ),
                     "model_pred": np.zeros(self.model_output_size, dtype=np.float32),
                 }

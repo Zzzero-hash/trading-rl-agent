@@ -13,6 +13,8 @@ def _load_config(config: Optional[Union[str, Dict]]) -> Dict:
     elif isinstance(config, str):
         with open(config) as f:
             config = yaml.safe_load(f) or {}
+    if not isinstance(config, dict):
+        raise ValueError("Config must be a dictionary after loading.")
     return config
 
 
@@ -31,7 +33,11 @@ class CNNLSTMModel(nn.Module):
 
         layers = []
         in_channels = input_dim
-        for out_c, k in zip(filters, kernels):
+        # Kernel size check: ensure kernel does not exceed input size
+        for i, (out_c, k) in enumerate(zip(filters, kernels)):
+            if k > input_dim:
+                print(f"[CNNLSTMModel] Reducing kernel size from {k} to {input_dim} for layer {i} (input_dim={input_dim})")
+                k = input_dim
             layers.append(nn.Conv1d(in_channels, out_c, kernel_size=k))
             layers.append(nn.ReLU())
             in_channels = out_c
@@ -45,6 +51,7 @@ class CNNLSTMModel(nn.Module):
                                                    batch_first=True)
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(lstm_units, output_size)
+        self.input_dim = input_dim  # Add input_dim attribute for test compatibility
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass.

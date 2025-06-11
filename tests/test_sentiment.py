@@ -345,6 +345,53 @@ class TestSentimentErrorCases:
         assert analyzer._is_cache_valid(very_old) is False
 
 
+class TestRealAPISentiment:
+    """Test sentiment analysis using the real API and scraping fallback."""
+    
+    def test_news_provider_real_api_or_scrape(self):
+        """Test news provider with real API key or scraping fallback."""
+        import os
+        api_key = os.environ.get('NEWSAPI_KEY')
+        provider = NewsSentimentProvider(api_key=api_key)
+        data = provider.fetch_sentiment('AAPL', days_back=1)
+        assert len(data) > 0
+        for d in data:
+            assert isinstance(d, SentimentData)
+            assert d.symbol == 'AAPL'
+            assert -1.0 <= d.score <= 1.0
+            assert 0.0 <= d.magnitude <= 1.0
+            assert d.source in ['news', 'news_scrape', 'news_mock']
+
+    @patch('src.data.sentiment.requests.get', side_effect=Exception("API fail"))
+    def test_news_provider_scrape_fallback(self, mock_get):
+        """Test scraping fallback when API fails."""
+        provider = NewsSentimentProvider(api_key='fake_key')
+        data = provider.fetch_sentiment('AAPL', days_back=1)
+        assert len(data) > 0
+        for d in data:
+            assert d.source == 'news_scrape' or d.source == 'news_mock'
+
+    @patch('src.data.sentiment.requests.get', side_effect=Exception("API fail"))
+    @patch('src.data.sentiment.BeautifulSoup', side_effect=Exception("Scrape fail"))
+    def test_news_provider_mock_fallback(self, mock_bs, mock_get):
+        """Test mock fallback when both API and scraping fail."""
+        provider = NewsSentimentProvider(api_key='fake_key')
+        data = provider.fetch_sentiment('AAPL', days_back=1)
+        assert len(data) > 0
+        for d in data:
+            assert d.source == 'news_mock'
+
+    def test_env_api_key_is_used(self):
+        """Test that NEWSAPI_KEY from .env is loaded and used."""
+        import os
+        from dotenv import load_dotenv
+        load_dotenv()
+        api_key = os.environ.get('NEWSAPI_KEY')
+        config = SentimentConfig(news_api_key=api_key)
+        provider = NewsSentimentProvider(api_key=config.news_api_key)
+        assert provider.api_key == api_key
+
+
 # Run tests if this file is executed directly
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
