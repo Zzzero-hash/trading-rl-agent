@@ -69,41 +69,75 @@ def load_data(config: Dict[str, Any]) -> pd.DataFrame:
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "configs" / "template_config.yaml"
+
+
+def load_template_config(path: Optional[Union[str, Path]] = None) -> Dict[str, Any]:
+    """Load the default template configuration file."""
+    template_path = Path(path or DEFAULT_TEMPLATE_PATH)
+    if not template_path.exists():
+        return {}
+    with open(template_path, "r") as f:
+        return yaml.safe_load(f) or {}
+
+
 @dataclass
 class TrainingConfig:
     """Configuration for CNN-LSTM training."""
-    
+
+    # Dataset paths
+    train_path: str = "data/train.csv"
+    val_path: str = "data/val.csv"
+    test_path: str = "data/test.csv"
+
     # Data configuration
     sequence_length: int = 60  # Number of timesteps to look back
     prediction_horizon: int = 1  # Steps ahead to predict
     train_split: float = 0.7
     val_split: float = 0.15
     # test_split is automatically 1 - train_split - val_split
-    
+
     # Model configuration
     model_config: Optional[Dict[str, Any]] = None
     use_attention: bool = True
-    
+
     # Training configuration
     learning_rate: float = 0.001
     batch_size: int = 32
     epochs: int = 100
     early_stopping_patience: int = 15
-    
+
     # Feature configuration
     include_sentiment: bool = True
     sentiment_weight: float = 0.2
     normalize_features: bool = True
-    
+
     # Output configuration
     save_model: bool = True
     model_save_path: str = "models/cnn_lstm_trained.pth"
     save_scaler: bool = True
     scaler_save_path: str = "models/feature_scaler.pkl"
-    
+
     # Logging
     log_interval: int = 10
     validate_interval: int = 5
+
+    @classmethod
+    def from_template(cls, path: Optional[Union[str, Path]] = None) -> "TrainingConfig":
+        """Create TrainingConfig using defaults from the template YAML."""
+        config_dict = load_template_config(path)
+        data_cfg = config_dict.get("data", {})
+        model_cfg = config_dict.get("model")
+        training_cfg = config_dict.get("training", {})
+
+        kwargs = {
+            "train_path": data_cfg.get("train_path", cls.__dataclass_fields__["train_path"].default),
+            "val_path": data_cfg.get("val_path", cls.__dataclass_fields__["val_path"].default),
+            "test_path": data_cfg.get("test_path", cls.__dataclass_fields__["test_path"].default),
+            "model_config": model_cfg,
+        }
+        kwargs.update(training_cfg)
+        return cls(**kwargs)
 
 
 class SequenceDataset:
@@ -152,7 +186,7 @@ class CNNLSTMTrainer:
     
     def __init__(self, config: Optional[TrainingConfig] = None):
         load_dotenv()
-        self.config = config or TrainingConfig()
+        self.config = config or TrainingConfig.from_template()
         self.model = None
         self.optimizer = None
         self.criterion = None
@@ -489,6 +523,12 @@ class CNNLSTMTrainer:
         for key, value in config_dict.get('training', {}).items():
             if hasattr(self.config, key):
                 setattr(self.config, key, value)
+
+        # Update dataset paths if provided
+        data_config = config_dict.get('data', {})
+        for field in ['train_path', 'val_path', 'test_path']:
+            if field in data_config:
+                setattr(self.config, field, data_config[field])
         
         # Load data
         data_config = config_dict.get('data', {})

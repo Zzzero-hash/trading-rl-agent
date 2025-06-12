@@ -1,2 +1,25 @@
 # Base configuration file
-# TODO: externalize hyper-parameters, symbols, and date ranges here
+
+# Dataset paths for training, validation, and testing
+data:
+  train_path: data/train.csv
+  val_path: data/val.csv
+  test_path: data/test.csv
+
+# Default model hyperparameters
+model:
+  cnn_filters: [32, 64]
+  cnn_kernel_sizes: [3, 3]
+  lstm_units: 128
+  dropout: 0.5
+  use_attention: false
+  output_size: 1
+
+# Training options
+training:
+  batch_size: 32
+  learning_rate: 0.001
+  epochs: 10
+  early_stopping_patience: 5
+  sequence_length: 60
+  prediction_horizon: 1
