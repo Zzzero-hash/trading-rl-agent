@@ -49,7 +49,44 @@ Build a production-ready trading system combining CNN-LSTM prediction models wit
 - **Trading Environment**: Comprehensive simulation with edge case handling
 - **Testing Framework**: 100% test coverage with robust error handling
 
-## 🚀 **PHASE 3 - READY TO BEGIN** - Portfolio & Risk Management
+## � **PHASE 2.5 IN PROGRESS** - Model Optimization & GPU Performance
+**Status: IMPLEMENTATION PHASE**
+
+### **Goals**
+- Detailed model summary and architecture visualization
+- Automatic GPU detection and optimization framework
+- Hyperparameter optimization for CNN-LSTM and RL models
+- Performance profiling and memory optimization
+- Comprehensive testing of optimization components
+
+### **Key Components**
+1. **Model Summarizer**: Detailed analysis of model architecture and memory usage
+   - Layer-by-layer parameter counting and visualization
+   - Memory usage estimation and optimization recommendations
+   - Model complexity analysis
+
+2. **GPU Optimization Framework**: Automatic resource detection and allocation
+   - Dynamic GPU detection and capability analysis
+   - Mixed precision training configuration
+   - Optimal batch size calculation based on available GPU memory
+
+3. **Hyperparameter Tuning**: Bayesian optimization for model parameters
+   - CNN-LSTM architecture optimization (filters, kernels, LSTM units)
+   - RL hyperparameter optimization (learning rates, neural net architecture)
+   - Ensemble agent configuration optimization
+
+4. **Integration Tests**: Comprehensive validation of optimization components
+   - Unit tests for optimizer, profiler, and GPU detection
+   - Integration tests for end-to-end model training with optimizers
+   - Benchmark tests for performance improvements
+
+### **Expected Outcomes**
+- 30-50% speedup in model training time with optimized GPU configuration
+- 15-25% improvement in model performance via hyperparameter optimization
+- Automated model architecture selection based on available hardware
+- Comprehensive documentation of model architecture and performance metrics
+
+## 🚀 **PHASE 3 - PLANNED** - Portfolio & Risk Management
 
 ### **Goals**
 - Multi-asset portfolio environment
