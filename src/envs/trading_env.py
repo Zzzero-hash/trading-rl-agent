@@ -122,6 +122,18 @@ class TradingEnv(gym.Env):
         ][self.numeric_cols].values.astype(np.float32)
         if self.model:
             pred = predict_features(self.model, obs).numpy().astype(np.float32)
+            # Ensure prediction has the expected shape for the observation space
+            if pred.ndim == 0:  # scalar
+                pred = pred.reshape(1)
+            elif pred.ndim > 1:  # multi-dimensional
+                pred = pred.flatten()
+            # Ensure it matches the expected model output size
+            if len(pred) != self.model_output_size:
+                # Pad or truncate to match expected size
+                if len(pred) < self.model_output_size:
+                    pred = np.pad(pred, (0, self.model_output_size - len(pred)))
+                else:
+                    pred = pred[:self.model_output_size]
             obs_dict = {"market_features": obs, "model_pred": pred}
             if self.continuous_actions:
                 # For TD3, flatten the market_features for agent compatibility

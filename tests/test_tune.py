@@ -198,7 +198,9 @@ class TestRunTune:
             yaml.dump(config, f)
         
         with patch('ray.init') as mock_ray_init, \
+             patch('ray.is_initialized', return_value=False) as mock_ray_initialized, \
              patch('ray.tune.run') as mock_tune_run, \
+             patch('ray.shutdown') as mock_ray_shutdown, \
              patch('src.agents.tune.register_env') as mock_register_env, \
              patch('src.agents.tune._convert_value', side_effect=lambda x: x):
             
@@ -238,15 +240,19 @@ class TestRunTune:
         config_paths = [str(config_path1), str(config_path2)]
         
         with patch('ray.init') as mock_ray_init, \
+             patch('ray.is_initialized', return_value=False) as mock_ray_is_initialized, \
              patch('ray.tune.run') as mock_tune_run, \
+             patch('ray.shutdown') as mock_ray_shutdown, \
              patch('src.agents.tune.register_env') as mock_register_env, \
              patch('src.agents.tune._convert_value', side_effect=lambda x: x):
             
             run_tune(config_paths)
             
+            mock_ray_is_initialized.assert_called_once()
             mock_ray_init.assert_called_once()
             mock_register_env.assert_called_once()
             mock_tune_run.assert_called_once()
+            mock_ray_shutdown.assert_called_once()
     
     def test_run_tune_string_input(self, tmp_path):
         """Test run_tune with string input (single config path)."""

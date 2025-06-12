@@ -49,7 +49,10 @@ def run_tune(config_paths):
 
     search_space = {}
     for path in config_paths:
-        search_space.update(_load_search_space(path))
+        loaded_space = _load_search_space(path)
+        if not isinstance(loaded_space, dict):
+            raise ValueError(f"Expected a dict from _load_search_space, got {type(loaded_space).__name__}")
+        search_space.update(loaded_space)
 
     algorithm = search_space.pop("algorithm", "PPO")
     env_cfg = search_space.pop("env_config", {})

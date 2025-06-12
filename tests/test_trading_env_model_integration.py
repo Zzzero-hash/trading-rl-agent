@@ -12,7 +12,8 @@ from src.supervised_model import TrendPredictor, ModelConfig, save_model
 @pytest.fixture
 def dummy_model(tmp_path):
     cfg = ModelConfig(cnn_filters=[1], cnn_kernel_sizes=[1], lstm_units=1)
-    model = TrendPredictor(input_dim=2, config=cfg)
+    # Use input_dim=5 to match CSV columns (open, high, low, close, volume)
+    model = TrendPredictor(input_dim=5, config=cfg)
     for p in model.parameters():
         torch.nn.init.constant_(p, 0.0)
     path = tmp_path / "model.pt"
