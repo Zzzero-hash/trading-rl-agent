@@ -187,8 +187,9 @@ def check_data_preprocessing():
 
 
 def test_data_preprocessing():
-    success, _, _ = check_data_preprocessing()
+    success, seqs, labels = check_data_preprocessing()
     assert success
+    return success, seqs, labels
 
 def check_training_pipeline():
     """Test basic training pipeline."""

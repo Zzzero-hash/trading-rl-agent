@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import pytest
-from src.train_cnn_lstm import CNNLSTMTrainer, TrainingConfig
+from src.training.train_cnn_lstm import CNNLSTMTrainer, TrainingConfig
 
 class DummySentimentAnalyzer:
     def get_symbol_sentiment(self, symbol, days_back=1):

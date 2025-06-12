@@ -36,11 +36,10 @@ cd trading-rl-agent
 python -m pytest tests/ -v
 
 # 3. Train CNN-LSTM model
-python src/train_cnn_lstm.py
+python -m src.training.cli cnn-lstm src/configs/training/cnn_lstm_default.yaml
 
 # 4. Train RL agents
-python src/train_rl.py --agent sac
-python src/train_rl.py --agent td3
+python -m src.training.cli rl src/configs/ray/ppo_ray.yaml
 ```
 
 ## Installation
@@ -67,8 +66,7 @@ docker run --rm -it -v "$(pwd):/app" trading-rl-agent bash
 ```text
 trading-rl-agent/
 ├── src/                      # Source code
-│   ├── train_cnn_lstm.py     # CNN-LSTM training
-│   ├── train_rl.py          # RL agent training
+│   ├── training/            # Training utilities
 │   ├── agents/               # RL agents (SAC, TD3, ensemble)
 │   ├── models/               # Neural network architectures
 │   ├── envs/                 # Trading environments
@@ -83,19 +81,12 @@ trading-rl-agent/
 
 ### CNN-LSTM Training
 ```bash
-python src/train_cnn_lstm.py
+python -m src.training.cli cnn-lstm src/configs/training/cnn_lstm_default.yaml
 ```
 
 ### RL Agent Training
 ```bash
-# Train SAC agent
-python src/train_rl.py --agent sac --env trader_env
-
-# Train TD3 agent  
-python src/train_rl.py --agent td3
-
-# Train ensemble
-python src/train_rl.py --agent ensemble
+python -m src.training.cli rl src/configs/ray/ppo_ray.yaml
 ```
 
 ## Testing
