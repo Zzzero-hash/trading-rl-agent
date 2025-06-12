@@ -131,15 +131,15 @@ class TestCNNLSTMTrainer:
     
     def test_prepare_data_basic(self):
         """Test basic data preparation without sentiment."""
-        # Create sample DataFrame
-        dates = pd.date_range('2023-01-01', periods=20, freq='D')
+        # Create sample DataFrame with enough data for technical indicators
+        dates = pd.date_range('2023-01-01', periods=100, freq='D')  # Increased from 20 to 100
         df = pd.DataFrame({
             'timestamp': dates,
-            'open': np.random.randn(20) + 100,
-            'high': np.random.randn(20) + 102,
-            'low': np.random.randn(20) + 98,
-            'close': np.random.randn(20) + 100,
-            'volume': np.random.randint(1000, 10000, 20)
+            'open': np.random.randn(100) + 100,
+            'high': np.random.randn(100) + 102,
+            'low': np.random.randn(100) + 98,
+            'close': np.random.randn(100) + 100,
+            'volume': np.random.randint(1000, 10000, 100)
         })
         
         features, targets = self.trainer.prepare_data(df)
@@ -151,14 +151,14 @@ class TestCNNLSTMTrainer:
     
     def test_prepare_data_normalization(self):
         """Test data normalization."""
-        dates = pd.date_range('2023-01-01', periods=15, freq='D')
+        dates = pd.date_range('2023-01-01', periods=100, freq='D')  # Increased from 15 to 100
         df = pd.DataFrame({
             'timestamp': dates,
-            'open': np.random.randn(15) * 10 + 100,
-            'high': np.random.randn(15) * 10 + 105,
-            'low': np.random.randn(15) * 10 + 95,
-            'close': np.random.randn(15) * 10 + 100,
-            'volume': np.random.randint(1000, 100000, 15)
+            'open': np.random.randn(100) * 10 + 100,
+            'high': np.random.randn(100) * 10 + 105,
+            'low': np.random.randn(100) * 10 + 95,
+            'close': np.random.randn(100) * 10 + 100,
+            'volume': np.random.randint(1000, 100000, 100)
         })
         
         # Test with normalization
@@ -231,8 +231,8 @@ class TestCNNLSTMTrainer:
         # Create dummy validation data
         features = torch.randn(16, self.config.sequence_length, input_dim)
         targets = torch.randn(16)
-        dataset = torch.utils.data.TensorDataset(features, targets)
-        loader = torch.utils.data.DataLoader(dataset, batch_size=4)
+        dataset = TensorDataset(features, targets)
+        loader = DataLoader(dataset, batch_size=4)
         
         # Validate
         val_loss, val_corr = self.trainer.validate(loader)
@@ -388,14 +388,9 @@ class TestErrorHandling:
         )
         trainer = CNNLSTMTrainer(config)
         
-        # Should handle gracefully (may result in empty dataset)
-        features, targets = trainer.prepare_data(df)
-        
-        # After feature generation and NaN removal, might have very few or no samples
-        if len(features) > 0:
-            train_loader, val_loader, test_loader = trainer.create_data_loaders(features, targets)
-            # Should create loaders even if empty
-            assert train_loader is not None
+        # Should raise ValueError for insufficient data after NaN removal
+        with pytest.raises(ValueError, match="No data remaining after NaN removal"):
+            trainer.prepare_data(df)
     
     def test_model_config_validation(self):
         """Test model configuration validation."""
@@ -437,27 +432,35 @@ class TestSentimentIntegration:
         mock_analyzer.get_symbol_sentiment.side_effect = lambda symbol, days_back: mock_sentiment_data.get(symbol, {}).get('score', 0.0)
         mock_sentiment_analyzer.return_value = mock_analyzer
         
-        # Create training config with sentiment enabled
-        config = TrainingConfig(include_sentiment=True, normalize_features=False)
+        # Create training config with sentiment enabled and smaller sequence length
+        config = TrainingConfig(
+            include_sentiment=True, 
+            normalize_features=False,
+            sequence_length=10,  # Much smaller to work with limited test data
+            prediction_horizon=1
+        )
         trainer = CNNLSTMTrainer(config)
         
-        # Create sample data
-        dates = pd.date_range('2023-01-01', periods=20, freq='D')
+        # Create sample data with sufficient rows for feature engineering
+        # Need enough data for technical indicators (at least 26 rows) plus sequence length
+        dates = pd.date_range('2023-01-01', periods=100, freq='D')  # Increased from 30 to 100
+        np.random.seed(42)  # For reproducible tests
         df = pd.DataFrame({
             'timestamp': dates,
-            'open': np.random.randn(20) + 100,
-            'high': np.random.randn(20) + 102,
-            'low': np.random.randn(20) + 98,
-            'close': np.random.randn(20) + 100,
-            'volume': np.random.randint(1000, 10000, 20)
+            'open': np.random.randn(100) + 100,
+            'high': np.random.randn(100) + 102,
+            'low': np.random.randn(100) + 98,
+            'close': np.random.randn(100) + 100,
+            'volume': np.random.randint(1000, 10000, 100)
         })
         
         # Prepare data with sentiment
         symbols = ['AAPL', 'GOOGL']
         features, targets = trainer.prepare_data(df, symbols)
         
-        # Should have more features due to sentiment
-        assert features.shape[1] > 5  # More than just OHLCV
+        # Should have more features due to sentiment (base features + sentiment features)
+        assert features.shape[1] > 10  # More than just technical indicators
+        assert features.shape[0] > 0  # Should have some data after processing
 
 
 # Run tests if this file is executed directly

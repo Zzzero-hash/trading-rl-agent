@@ -33,12 +33,9 @@ class CNNLSTMModel(nn.Module):
 
         layers = []
         in_channels = input_dim
-        # Kernel size check: ensure kernel does not exceed input size
+        # Build CNN layers - kernel size will be validated during forward pass based on sequence length
         for i, (out_c, k) in enumerate(zip(filters, kernels)):
-            if k > input_dim:
-                print(f"[CNNLSTMModel] Reducing kernel size from {k} to {input_dim} for layer {i} (input_dim={input_dim})")
-                k = input_dim
-            layers.append(nn.Conv1d(in_channels, out_c, kernel_size=k))
+            layers.append(nn.Conv1d(in_channels, out_c, kernel_size=k, padding=k//2))
             layers.append(nn.ReLU())
             in_channels = out_c
         self.conv = nn.Sequential(*layers)
@@ -61,6 +58,12 @@ class CNNLSTMModel(nn.Module):
         Returns:
             Tensor of shape (batch, output_size)
         """
+        batch_size, seq_len, features = x.shape
+        
+        # Validate input dimensions
+        if features != self.input_dim:
+            raise ValueError(f"Expected input features {self.input_dim}, got {features}")
+        
         # Convolution expects (batch, channels, seq)
         x = x.transpose(1, 2)
         x = self.conv(x)

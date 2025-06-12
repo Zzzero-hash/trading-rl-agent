@@ -336,7 +336,13 @@ def predict_features(
     model.eval()
     with torch.no_grad():
         out = model(x.to(device))
-    return out.squeeze().cpu()
+    # Only squeeze the batch dimension if present, preserve output dimension
+    if out.dim() > 1 and out.shape[0] == 1:
+        out = out.squeeze(0)
+    # Ensure output is always at least 1D to prevent scalar outputs
+    if out.dim() == 0:
+        out = out.unsqueeze(0)
+    return out.cpu()
 
 
 def select_best_model(log_dir: str) -> str:
