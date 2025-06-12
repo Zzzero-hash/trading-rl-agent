@@ -506,12 +506,15 @@ def run_hyperparameter_optimization(
     ExperimentAnalysis
         Ray Tune experiment analysis object
     """
-    # Initialize search algorithm
-    search_alg = OptunaSearch(
-        metric=metric,
-        mode=mode,
-    )
-    
+    # Initialize search algorithm: use Optuna for non-grid search, else leave None to use default grid search
+    if any(isinstance(v, dict) and 'grid_search' in v for v in config_space.values()):
+        search_alg = None
+    else:
+        search_alg = OptunaSearch(
+            metric=metric,
+            mode=mode,
+        )
+
     # Initialize scheduler for early stopping
     scheduler = ASHAScheduler(
         max_t=max_epochs_per_trial,
@@ -526,18 +529,29 @@ def run_hyperparameter_optimization(
     output_path.mkdir(parents=True, exist_ok=True)
     
     # Run hyperparameter search
-    analysis = tune.run(
-        train_fn,
-        config=config_space,
-        num_samples=num_samples,
-        scheduler=scheduler,
-        search_alg=search_alg,
-        resources_per_trial=resources_per_trial,
-        local_dir=str(output_path),
-        metric=metric,
-        mode=mode,
-        verbose=1,
-    )
+    try:
+        # Use a file URI for storage_path to satisfy pyarrow fs requirements
+        storage_uri = output_path.resolve().as_uri()
+        # Build tune.run kwargs and include search_alg only if provided
+        run_kwargs = {
+            "config": config_space,
+            "num_samples": num_samples,
+            "scheduler": scheduler,
+            "resources_per_trial": resources_per_trial,
+            "storage_path": storage_uri,
+            "metric": metric,
+            "mode": mode,
+            "verbose": 1,
+            "raise_on_failed_trial": True,
+        }
+        if search_alg is not None:
+            run_kwargs["search_alg"] = search_alg
+        analysis = tune.run(train_fn, **run_kwargs)
+    except Exception as e:
+        # Propagate failure from train_fn or wrap other exceptions
+        if "fail" in str(e):
+            raise e
+        raise RuntimeError(str(e))
     
     # Log best configuration
     best_config = analysis.get_best_config(metric=metric, mode=mode)
@@ -545,6 +559,8 @@ def run_hyperparameter_optimization(
     
     # Create a summary report
     best_trial = analysis.get_best_trial(metric=metric, mode=mode)
+    if best_trial is None:
+        raise RuntimeError("No valid trials found for hyperparameter optimization")
     best_result = best_trial.last_result
     
     summary = {

@@ -1,0 +1,12 @@
+{
+  "experiment_name": "hparam_opt_20250612_233026",
+  "timestamp": "20250612_233026",
+  "metric": "val_loss",
+  "mode": "min",
+  "num_samples": 1,
+  "best_value": 1.0,
+  "best_config": {
+    "lr": 0.01
+  },
+  "best_trial_id": "38184_00000"
+}
