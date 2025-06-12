@@ -5,7 +5,7 @@ sentiment analysis and technical indicators. It supports both classification
 and regression tasks for market prediction.
 
 Example usage:
->>> from src.train_cnn_lstm import CNNLSTMTrainer, TrainingConfig
+>>> from src.training.train_cnn_lstm import CNNLSTMTrainer, TrainingConfig
 >>> trainer = CNNLSTMTrainer()
 >>> model, history = trainer.train_from_config('src/configs/training/cnn_lstm_train.yaml')
 """
@@ -28,9 +28,9 @@ from dotenv import load_dotenv
 
 try:
     # Try relative imports first (when used as module)
-    from .models.cnn_lstm import CNNLSTMModel, CNNLSTMConfig
-    from .data.sentiment import SentimentAnalyzer, SentimentConfig
-    from .data.features import generate_features
+    from ..models.cnn_lstm import CNNLSTMModel, CNNLSTMConfig
+    from ..data.sentiment import SentimentAnalyzer, SentimentConfig
+    from ..data.features import generate_features
 except ImportError:
     # Fallback to absolute imports (when run directly)
     import sys
