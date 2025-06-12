@@ -56,9 +56,8 @@ def check_sample_data():
 
 
 def test_sample_data():
-    success, df = check_sample_data()
+    success, _ = check_sample_data()
     assert success
-    return success, df
 
 def check_sentiment_module():
     """Test sentiment analysis module."""
