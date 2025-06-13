@@ -2,7 +2,7 @@
 
 ## 📚 Overview
 
-This guide provides best practices for using Jupyter notebooks in machine learning training workflows, particularly for hyperparameter optimization and model experimentation.
+This guide provides best practices for using Jupyter notebooks in machine learning training workflows, particularly for hyperparameter optimization and model experimentation. This project includes automated tools for managing experiment outputs and maintaining clean development workflows.
 
 ## 🎯 Development Workflow
 

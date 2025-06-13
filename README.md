@@ -14,6 +14,7 @@ A sophisticated reinforcement learning framework for algorithmic trading that co
 - **Deep RL ensemble training** (SAC, TD3, ensemble methods)
 - **Comprehensive testing** with robust error handling
 - **Production deployment** ready architecture
+- **🆕 Professional experiment management** with automated cleanup and git integration
 
 ### 🏆 Current Stats
 - **Tests**: 290 passed, 31 skipped, 0 failures (100% success rate)
@@ -21,11 +22,12 @@ A sophisticated reinforcement learning framework for algorithmic trading that co
 - **Data**: 3,827 samples, 26 features, 3,817 sequences
 - **Agents**: Complete SAC & TD3 implementations
 - **Pipeline**: End-to-end integration validated
+- **🆕 DevOps**: Automated experiment management with cleanup tools and git hooks
 
-### 🎉 Phase 2.5 BREAKTHROUGH - CNN-LSTM Pipeline VALIDATED!
+### 🎉 Phase 2.5 BREAKTHROUGH - CNN-LSTM Pipeline + DevOps Tooling VALIDATED!
 **Date: June 13, 2025**
 
-**✅ Major Achievement**: End-to-end CNN-LSTM hyperparameter optimization pipeline successfully implemented:
+**✅ Major Achievement**: End-to-end CNN-LSTM hyperparameter optimization pipeline + professional experiment management:
 
 - **🧠 Model Architecture**: PyTorch CNN-LSTM with Conv1d(5→32→64) + LSTM(64→50) + fully connected output
 - **📊 Data Processing**: 721 OHLCV samples → 691 time series sequences (30 timesteps, 5 features)
@@ -33,16 +35,18 @@ A sophisticated reinforcement learning framework for algorithmic trading that co
 - **🔧 Ray Tune Ready**: Distributed hyperparameter optimization with local fallback
 - **📈 Search Space**: Comprehensive grid covering CNN filters, LSTM units, learning rates, batch sizes
 - **💾 Results Tracking**: Automated metrics collection, visualization, and checkpoint management
+- **🆕 🔧 DevOps Integration**: Automated cleanup, git hooks, and experiment lifecycle management
 
 **Technical Implementation**:
-- **Notebook**: `cnn_lstm_hparam_test.ipynb` - Complete hyperparameter sweep pipeline
+- **Notebook**: `cnn_lstm_hparam_clean.ipynb` - Complete hyperparameter sweep pipeline
 - **Ray Integration**: Cluster connectivity with robust local fallback
 - **Training Function**: Ray Tune compatible with manual grid search support  
 - **Visualization**: Training curves, loss distributions, hyperparameter effect analysis
+- **🆕 DevOps Tools**: `scripts/cleanup_experiments.py`, pre-commit hooks, automated archiving
 
-**Current Status**: Ready for full-scale hyperparameter optimization and RL agent training integration
+**Current Status**: Ready for full-scale hyperparameter optimization with production-grade experiment management
 
-See [ROADMAP.md](ROADMAP.md) for detailed development phases.
+See [ROADMAP.md](ROADMAP.md) for detailed development phases and [docs/](docs/) for comprehensive development guides.
 
 ## Quick Start
 
@@ -199,9 +203,17 @@ obs, _ = env.reset()
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Add comprehensive tests for your changes
 4. Ensure all tests pass (`pytest tests/ -v`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+5. Clear notebook outputs (automatic with pre-commit hook)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+## Documentation
+
+Comprehensive development guides are available in [`docs/`](docs/):
+- **[Notebook Best Practices](docs/NOTEBOOK_BEST_PRACTICES.md)**: Complete guide for ML development workflows
+- **[Experiment Management](docs/EXPERIMENT_OUTPUTS_MANAGEMENT.md)**: Automated cleanup and storage management
+- **[Scripts Documentation](scripts/README.md)**: Utility tools for experiment management
 
 ## License
 
