@@ -27,6 +27,7 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+*.ipynb_outputs/
 
 # Testing
 .pytest_cache/
@@ -34,6 +35,42 @@ Thumbs.db
 # Data
 /data/
 outputs/
+
+# ML/AI Training Outputs
+models/
+*.pth
+*.pt
+*.pkl
+*.ckpt
+checkpoints/
+rl_checkpoints/
+
+# Hyperparameter Optimization
+optimization_results/
+ray_results/
+wandb/
+wandb-summary.json
+*.wandb
+
+# Training Logs and Metrics
+logs/
+tensorboard_logs/
+mlruns/
+*.log
+training_*.json
+hparam_*.json
+hparam_*.csv
+*_trials_*.csv
+best_*_config_*.json
+*_results_*.json
+experiment_*.json
+results_archive/
+
+# Temporary Training Files
+temp_model_*
+experiment_*_*/
+tune_*_*/
+*_hparam_*/
 
 # Docker
 .Dockerfile*

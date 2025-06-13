@@ -134,6 +134,32 @@ pytest tests/test_sac_agent.py -v       # SAC agent tests
 
 ## Advanced Features
 
+### Experiment Management & Cleanup
+The project includes automated tools for managing ML experiment outputs:
+
+```bash
+# Check storage usage of experiment outputs
+python scripts/cleanup_experiments.py --status-only
+
+# Clean up old experiments (keeps last 7 days)
+python scripts/cleanup_experiments.py --all
+
+# Archive important results before cleanup
+python scripts/cleanup_experiments.py --archive --all
+
+# Set up automatic notebook cleanup (optional)
+cp scripts/pre-commit-hook.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+**What gets cleaned up:**
+- Old Ray Tune experiment directories (`ray_results/`)
+- Old optimization results (`optimization_results/hparam_opt_*/`)  
+- Python cache files (`__pycache__/`, `*.pyc`)
+- Jupyter notebook outputs (before commits)
+
+See `docs/EXPERIMENT_OUTPUTS_MANAGEMENT.md` for detailed cleanup procedures.
+
 ### Sentiment Analysis Integration (Hugging Face, Twitter, News)
 ```python
 from build_datasets import add_hf_sentiment, add_twitter_sentiment, add_news_sentiment, NEWS_FEEDS
