@@ -1,0 +1,15 @@
+{
+  "batch_size": 32,
+  "cnn_filters": [
+    64,
+    128
+  ],
+  "cnn_kernel_sizes": [
+    3,
+    3
+  ],
+  "dropout": 0.3895912960322062,
+  "learning_rate": 0.00026765151794528946,
+  "lstm_units": 32,
+  "num_epochs": 15
+}

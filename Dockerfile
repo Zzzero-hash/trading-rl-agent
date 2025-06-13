@@ -8,7 +8,7 @@ RUN groupadd -g 1000 rluser && useradd -m -u 1000 -g rluser rluser
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       vim nano curl wget git-lfs \
-      htop nvtop \
+      htop nvtop nvidia-driver-525  \
       build-essential wget autoconf automake libtool pkg-config \
       software-properties-common cmake git python3-dev python3-pip \
       libssl-dev libgl1 libglib2.0-0 && \
