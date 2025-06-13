@@ -1,0 +1,10 @@
+{
+  "cnn_filters": [
+    32,
+    64
+  ],
+  "cnn_kernel_sizes": [
+    3,
+    3
+  ],
+  "lstm_units": 
