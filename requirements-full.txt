@@ -11,4 +11,9 @@ ray[rllib]>=2.31.0,<2.47.0  # 500MB - Distributed RL training
 yfinance>=0.2.0,<0.3.0       # 10MB - Financial data
 ta>=0.10.0,<0.11.0           # 5MB - Technical analysis indicators
 
+# Additional dependencies
+datasets
+vaderSentiment
+snscrape
+
 # Total: ~2.6GB - Full production deployment

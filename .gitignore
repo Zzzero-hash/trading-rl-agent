@@ -1,57 +1,43 @@
-.env
-rl-trader
-.vscode
-__pycache__/
-*.pyc
-
-# Byte-compiled / optimized / DLL files
+# Python bytecode
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.pytest_cache/
 
 # Virtual environments
 venv/
 env/
 .venv/
 
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-
-# OS-specific files
-.DS_Store
-Thumbs.db
-desktop.ini
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
 
 # Logs
 *.log
 
-# Local data & model outputs
+# IDE/Editor
+.vscode/
+*.swp
+*.tmp
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+
+# Data
 /data/
-/outputs/
+outputs/
 
 # Docker
 .Dockerfile*
-!Dockerfile
 docker-compose*.yml
-compose-dev.yaml
 
 # Kubernetes manifests
-*.yaml
-!src/configs/**
-
-# Misc
-*.swp
-*.tmp
+yaml

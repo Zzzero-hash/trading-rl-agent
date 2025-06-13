@@ -1,0 +1,17 @@
+# Code owners for automatic review requests
+# Each line is a file pattern followed by one or more owners
+# These owners will be requested for review when PRs touch the matching paths
+
+# Infrastructure
+.github/ @yourusername/infra-team
+.github/workflows/ci.yml @yourusername/infra-team
+
+# Core code
+src/ @yourusername/core-dev
+build_datasets.py @yourusername/core-dev
+
+# Tests
+tests/ @yourusername/testing-team
+
+# Documentation
+README.md @yourusername/docs-team

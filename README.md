@@ -1,5 +1,7 @@
 # Trading RL Agent
 
+[![CI](https://github.com/yourusername/trading-rl-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/trading-rl-agent/actions/workflows/ci.yml)  [![Codecov](https://codecov.io/gh/yourusername/trading-rl-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/trading-rl-agent)
+
 A sophisticated reinforcement learning framework for algorithmic trading that combines deep learning models (CNN-LSTM) with reinforcement learning agents (SAC, TD3) for automated trading strategies.
 
 ## 🎯 Project Status
@@ -120,12 +122,18 @@ pytest tests/test_sac_agent.py -v       # SAC agent tests
 
 ## Advanced Features
 
-### Sentiment Analysis Integration
+### Sentiment Analysis Integration (Hugging Face, Twitter, News)
 ```python
-from src.data.sentiment import SentimentAnalyzer
-
-analyzer = SentimentAnalyzer()
-sentiment = analyzer.get_symbol_sentiment("AAPL", "2024-01-01")
+from build_datasets import add_hf_sentiment, add_twitter_sentiment, add_news_sentiment, NEWS_FEEDS
+# Configure RSS/News feeds per symbol:
+NEWS_FEEDS['AAPL'] = [
+    'https://finance.yahoo.com/rss/headline?s=AAPL',
+    'https://www.reuters.com/companies/AAPL.OQ?view=companyNews&format=xml',
+]
+# Given a DataFrame `df` with 'timestamp' & 'symbol':
+df = add_hf_sentiment(df)
+df = add_twitter_sentiment(df)
+df = add_news_sentiment(df)
 ```
 
 ### Trading Environment
