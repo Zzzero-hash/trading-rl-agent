@@ -144,7 +144,7 @@ def check_data_preprocessing():
     
     try:
         # Load sample data
-        success, df = test_sample_data()
+        success, df = check_sample_data()
         assert success and df is not None
         
         # Simple feature extraction
@@ -196,7 +196,7 @@ def check_training_pipeline():
     
     try:
         # Get preprocessed data
-        success, X, y = test_data_preprocessing()
+        success, X, y = check_data_preprocessing()
         assert success and X is not None and y is not None, "Data preprocessing failed"
         
         # Import model components

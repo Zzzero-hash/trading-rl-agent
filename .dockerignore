@@ -1,0 +1,37 @@
+# Bytecode
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Environment
+.env
+.venv/
+venv/
+
+# Git
+.git/
+
+# IDE/Editor
+.vscode/
+
+# Pytest cache
+.pytest_cache/
+
+# Data and outputs
+data/
+outputs/
+experiments/
+notebooks/
+optimization_results/
+
+# Docker and Compose
+Dockerfile*
+docker-compose*.yml
+
+# Kubernetes manifests
+*.yaml
+!src/configs/*
