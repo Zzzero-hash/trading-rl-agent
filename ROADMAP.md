@@ -183,6 +183,12 @@ Build a production-ready trading system combining CNN-LSTM prediction models wit
 - **Scalability**: Handle multiple assets and timeframes
 - **Risk Management**: Real-time risk monitoring and controls
 
+## 🛠️ Technical Debt & Optimization (Opportunities)
+- [ ] TODO: Add richer type annotations (e.g. mypy) across public APIs.
+- [ ] TODO: Refactor sentiment scrapers (Twitter, News) to use async I/O for higher throughput.
+- [ ] TODO: Implement end-to-end smoke tests that spin up the full containerized serving stack.
+- [ ] TODO: Integrate MLOps telemetry and monitoring (Airflow/Kubeflow pipelines, dashboards).
+
 ---
 
 **🎉 MILESTONE**: Phases 1 & 2 complete with 100% test coverage! Ready for Phase 3 production development.**
