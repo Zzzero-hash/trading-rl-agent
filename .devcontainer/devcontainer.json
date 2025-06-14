@@ -7,15 +7,9 @@
 		"context": "..",
 		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
 		"dockerfile": "../Dockerfile"
-	},
-	"features": {
+	},	"features": {
 		// GPU support
 		"ghcr.io/devcontainers/features/nvidia-cuda:latest": {},
-		
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-			"version": "latest",
-			"dockerDashComposeVersion": "v2"
-		},
 		"ghcr.io/devcontainers/features/git-lfs:1": {
 			"autoPull": true,
 			"version": "latest"
@@ -29,6 +23,16 @@
 			"optimize": true,
 			"version": "os-provided"
 		}
+	},
+
+	// GPU Runtime Configuration
+	"runArgs": [
+		"--gpus=all"
+	],
+
+	// Host requirements for GPU support
+	"hostRequirements": {
+		"gpu": "optional"
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
