@@ -9,6 +9,9 @@
 		"dockerfile": "../Dockerfile"
 	},
 	"features": {
+		// GPU support
+		"ghcr.io/devcontainers/features/nvidia-cuda:latest": {},
+		
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
 			"version": "latest",
 			"dockerDashComposeVersion": "v2"
