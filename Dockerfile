@@ -1,5 +1,7 @@
 ARG CUDA_VARIANT=nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04
+ARG DEBIAN_FRONTEND=noninteractive
 FROM ${CUDA_VARIANT} AS development
+ENV TZ=Etc/UTC
 
 # Create non-root user
 RUN groupadd -g 1000 rluser && useradd -m -u 1000 -g rluser rluser
@@ -8,7 +10,7 @@ RUN groupadd -g 1000 rluser && useradd -m -u 1000 -g rluser rluser
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       vim nano curl wget git-lfs \
-      htop nvtop nvidia-driver-525  \
+      htop nvtop \
       build-essential wget autoconf automake libtool pkg-config \
       software-properties-common cmake git python3-dev python3-pip \
       libssl-dev libgl1 libglib2.0-0 && \

@@ -1,9 +1,0 @@
-{
-  "batch_size": 16,
-  "cnn_filters_1": 16,
-  "cnn_filters_2": 32,
-  "cnn_kernel_size": 3,
-  "dropout_rate": 0.24382630139936234,
-  "learning_rate": 0.0009166729013038351,
-  "lstm_units": 50
-}
