@@ -2,10 +2,15 @@
 """
 Minimal TD3 Integration Test
 Tests basic TD3 functionality without complex environment integration.
+
+NOTE: TD3 has been removed from Ray RLlib 2.38.0+
+This test demonstrates the custom TD3 implementation as an alternative.
+For Ray RLlib integration, use SAC instead.
 """
 
 import sys
 import os
+import warnings
 sys.path.append('/workspaces/trading-rl-agent')
 
 import numpy as np

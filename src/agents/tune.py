@@ -56,13 +56,19 @@ def run_tune(config_paths):
 
     algorithm = search_space.pop("algorithm", "PPO")
     env_cfg = search_space.pop("env_config", {})
-
+    
     search_space.setdefault("env", "TraderEnv")
 
     if not ray.is_initialized():
         ray.init()
     register_env()
 
-    analysis = tune.run(algorithm, config=search_space, local_dir="tune")
-    print(f"Tuning completed. Results are in {analysis.best_logdir if analysis.trials else 'tune'}")
+    analysis = tune.run(
+        algorithm, 
+        config=search_space, 
+        local_dir="tune",
+        metric="episode_reward_mean",  # Add default metric for RL
+        mode="max"                     # Add default mode for RL
+    )
+    print("Tuning completed. Results are in 'tune' directory")
     ray.shutdown()

@@ -2,6 +2,11 @@ import pandas as pd
 import datetime
 import json
 import pytest
+import sys
+from pathlib import Path
+
+# Add the root directory to the path so we can import build_datasets
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from build_datasets import add_hf_sentiment, add_twitter_sentiment
 from build_datasets import add_news_sentiment, NEWS_FEEDS
@@ -15,9 +20,11 @@ class DummyAnalyzer:
         # Return constant compound score based on text length for variation
         return {'compound': 0.5 if len(text) % 2 == 0 else -0.5}
 
-@ pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)
 def patch_hf(monkeypatch):
-    # Patch load_dataset to return our dummy dataset
+    # Patch HAS_DATASETS to True and provide mock load_dataset
+    monkeypatch.setattr('build_datasets.HAS_DATASETS', True)
+    
     def fake_load_dataset(name, split):
         # Provide two entries, one matches df, one extra
         return DummyDataset([
@@ -27,10 +34,12 @@ def patch_hf(monkeypatch):
     monkeypatch.setattr('build_datasets.load_dataset', fake_load_dataset)
     yield
 
-@ pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)
 def patch_twitter(monkeypatch):
-    # Patch VADER analyzer to use DummyAnalyzer
+    # Patch HAS_VADER to True and provide mock analyzer
+    monkeypatch.setattr('build_datasets.HAS_VADER', True)
     monkeypatch.setattr('build_datasets.SentimentIntensityAnalyzer', lambda: DummyAnalyzer())
+    
     # Patch subprocess.check_output to return fake tweet JSON lines
     def fake_check_output(cmd, shell, text):
         tweets = [

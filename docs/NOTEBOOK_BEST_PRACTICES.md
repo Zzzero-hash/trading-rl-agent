@@ -296,13 +296,13 @@ def distributed_training_function(config):
     # Your training code here
     model = create_model(config)
     train_loader, val_loader = create_data_loaders(config)
-    
-    for epoch in range(config["epochs"]):
+      for epoch in range(config["epochs"]):
         train_loss = train_epoch(model, train_loader)
         val_loss = validate_epoch(model, val_loader)
         
-        # Report to Ray Tune
-        tune.report(
+        # Report to Ray Tune (Ray 2.0+ API)
+        from ray import train
+        train.report(
             train_loss=train_loss,
             val_loss=val_loss,
             epoch=epoch

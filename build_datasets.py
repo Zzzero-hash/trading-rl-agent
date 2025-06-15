@@ -8,8 +8,20 @@ from pathlib import Path
 
 import pandas as pd
 import subprocess, json, datetime
-from datasets import load_dataset
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+try:
+    from datasets import load_dataset
+    HAS_DATASETS = True
+except ImportError:
+    HAS_DATASETS = False
+    print("Warning: 'datasets' package not found. HuggingFace sentiment will be skipped.")
+
+try:
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+    HAS_VADER = True
+except ImportError:
+    HAS_VADER = False
+    print("Warning: 'vaderSentiment' package not found. Twitter sentiment will be skipped.")
+
 import feedparser
 
 # Ensure root dir in path for imports
@@ -56,6 +68,11 @@ def fetch_real(symbols, start, end, timestep):
 
 def add_hf_sentiment(df: pd.DataFrame) -> pd.DataFrame:
     """Merge historical sentiment from Hugging Face financial_sentiment dataset."""
+    if not HAS_DATASETS:
+        print("Warning: datasets package not available, skipping HF sentiment")
+        df['hf_sentiment'] = 0.0
+        return df
+    
     # Load dataset once
     ds = load_dataset("financial_sentiment", split="train")
     hf_df = pd.DataFrame(list(ds))
@@ -73,6 +90,11 @@ def add_hf_sentiment(df: pd.DataFrame) -> pd.DataFrame:
 
 def add_twitter_sentiment(df: pd.DataFrame) -> pd.DataFrame:
     """Fetch tweets via snscrape and analyze with VADER, per symbol per day."""
+    if not HAS_VADER:
+        print("Warning: vaderSentiment package not available, skipping Twitter sentiment")
+        df['twitter_sentiment'] = 0.0
+        return df
+        
     analyzer = SentimentIntensityAnalyzer()
     records = []
     for symbol in df['symbol'].unique():
@@ -105,14 +127,47 @@ NEWS_FEEDS = {
     #               'https://www.reuters.com/companies/AAPL.OQ?view=companyNews&format=xml'],
 }
 def add_news_sentiment(df: pd.DataFrame) -> pd.DataFrame:
-    """Placeholder news sentiment per symbol per day (neutral=0.0)."""
-    # For data quality, use daily batch pipeline; here we set neutral scores
+    """Add news sentiment per symbol per day using RSS feeds and VADER analysis."""
+    if not HAS_VADER:
+        print("Warning: vaderSentiment package not available for news sentiment")
+        df['news_sentiment'] = 0.0
+        return df
+        
+    analyzer = SentimentIntensityAnalyzer()
     records = []
+    
     for symbol in df['symbol'].unique():
         for date in df['timestamp'].dt.date.unique():
-            records.append({'symbol': symbol,
-                            'timestamp': pd.Timestamp(date),
-                            'news_sentiment': 0.0})
+            sentiment_scores = []
+            
+            # Check if we have news feeds for this symbol
+            if symbol in NEWS_FEEDS:
+                for feed_url in NEWS_FEEDS[symbol]:
+                    try:
+                        feed = feedparser.parse(feed_url)
+                        for entry in feed.entries:
+                            # Parse entry date - this is a simplified approach
+                            if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                                entry_date = datetime.date(*entry.published_parsed[:3])
+                                if entry_date == date:
+                                    # Analyze sentiment of title and summary
+                                    title = entry.get('title', '')
+                                    summary = entry.get('summary', '')
+                                    text = f"{title} {summary}"
+                                    score = analyzer.polarity_scores(text)['compound']
+                                    sentiment_scores.append(score)
+                    except Exception as e:
+                        print(f"Error parsing feed {feed_url}: {e}")
+                        continue
+            
+            # Average sentiment for the day
+            avg_sentiment = sum(sentiment_scores) / len(sentiment_scores) if sentiment_scores else 0.0
+            records.append({
+                'symbol': symbol,
+                'timestamp': pd.Timestamp(date),
+                'news_sentiment': avg_sentiment
+            })
+    
     news_df = pd.DataFrame(records)
     df = df.merge(news_df, on=['symbol', 'timestamp'], how='left')
     df['news_sentiment'] = df['news_sentiment'].fillna(0.0)
