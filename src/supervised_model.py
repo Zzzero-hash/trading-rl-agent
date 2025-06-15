@@ -34,9 +34,15 @@ logger = logging.getLogger(__name__)
 
 def _to_tensor(data: Any) -> torch.Tensor:
     """Convert numpy array or pandas DataFrame to float tensor."""
-    if hasattr(data, "values") and not torch.is_tensor(data):
-        data = data.values
-    return torch.as_tensor(data, dtype=torch.float32)
+    if torch.is_tensor(data):
+        # If already a tensor, just ensure it's float32
+        return data.to(dtype=torch.float32)
+    elif hasattr(data, "values"):
+        # Handle pandas DataFrame/Series
+        return torch.tensor(data.values, dtype=torch.float32)
+    else:
+        # Handle numpy arrays and other array-like data
+        return torch.tensor(data, dtype=torch.float32)
 
 
 @dataclass
@@ -157,8 +163,9 @@ def train_supervised(
     if t_cfg.batch_size > len(x):
         raise ValueError("Batch size cannot be larger than the dataset")
 
+    # Smart device selection for Ray workers
     gpu_ids = ray.get_gpu_ids()
-    if gpu_ids and torch.cuda.is_available():
+    if gpu_ids and torch.cuda.is_available() and torch.cuda.device_count() > 0:
         device = torch.device(f"cuda:{int(gpu_ids[0])}")
     else:
         device = torch.device("cpu")
@@ -221,6 +228,8 @@ def train_supervised(
         else:
             logger.info("Epoch %d: train_loss=%.4f val_loss=%.4f", epoch + 1, avg_loss, val_loss)
 
+    # Move model to CPU before returning to avoid CUDA serialization issues
+    model = model.cpu()
     return model, history
 
 
@@ -236,12 +245,12 @@ def train_supervised_local(
 def tune_example():
     """Illustrative example of wrapping training for Ray Tune."""
 
-    # from ray import tune
+    # from ray import tune    # from ray import train
     # def train_fn(config):
     #     model_cfg = ModelConfig(**config.get("model", {}))
     #     train_cfg = TrainingConfig(**config.get("train", {}))
     #     _, history = train_supervised(features, targets, model_cfg, train_cfg)
-    #     tune.report(loss=history["val_loss"][-1])
+    #     train.report(loss=history["val_loss"][-1])  # Updated for Ray 2.0+
     pass
 
 

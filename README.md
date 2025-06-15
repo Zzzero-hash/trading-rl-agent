@@ -2,7 +2,9 @@
 
 [![CI](https://github.com/yourusername/trading-rl-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/trading-rl-agent/actions/workflows/ci.yml)  [![Codecov](https://codecov.io/gh/yourusername/trading-rl-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/trading-rl-agent)
 
-A sophisticated reinforcement learning framework for algorithmic trading that combines deep learning models (CNN-LSTM) with reinforcement learning agents (SAC, TD3) for automated trading strategies.
+A sophisticated reinforcement learning framework for algorithmic trading that combines deep learning models (CNN-LSTM) with reinforcement learning agents (SAC, custom TD3) for automated trading strategies.
+
+**Ray RLlib Integration**: Uses SAC for distributed training (TD3 removed from Ray RLlib 2.38.0+). Custom TD3 implementation available for local development.
 
 ## 🎯 Project Status
 
@@ -11,7 +13,7 @@ A sophisticated reinforcement learning framework for algorithmic trading that co
 **Current Achievement**: Production-ready trading system featuring:
 - **Live data ingestion** with sentiment analysis integration
 - **CNN-LSTM hybrid models** for time-series prediction  
-- **Deep RL ensemble training** (SAC, TD3, ensemble methods)
+- **Deep RL ensemble training** (SAC for Ray RLlib, custom TD3 for local testing)
 - **Comprehensive testing** with robust error handling
 - **Production deployment** ready architecture
 - **🆕 Professional experiment management** with automated cleanup and git integration
@@ -20,7 +22,7 @@ A sophisticated reinforcement learning framework for algorithmic trading that co
 - **Tests**: 290 passed, 31 skipped, 0 failures (100% success rate)
 - **Model**: CNN-LSTM with 19,843 parameters
 - **Data**: 3,827 samples, 26 features, 3,817 sequences
-- **Agents**: Complete SAC & TD3 implementations
+- **Agents**: Complete SAC (Ray RLlib) & TD3 (custom) implementations
 - **Pipeline**: End-to-end integration validated
 - **🆕 DevOps**: Automated experiment management with cleanup tools and git hooks
 
@@ -63,8 +65,8 @@ python -m pytest tests/ -v
 python src/train_cnn_lstm.py
 
 # 4. Train RL agents
-python src/train_rl.py --agent sac
-python src/train_rl.py --agent td3
+python src/train_rl.py --agent sac     # Uses Ray RLlib (recommended)
+python src/train_rl.py --agent td3     # Uses custom implementation
 ```
 
 ## Installation
@@ -103,6 +105,23 @@ trading-rl-agent/
 └── requirements.txt          # Dependencies
 ```
 
+## ⚡ Ray RLlib Migration (Important)
+
+**TD3 has been removed from Ray RLlib 2.38.0+**. This project has been updated:
+
+- **✅ Primary Algorithm**: SAC (Soft Actor-Critic) for Ray RLlib integration
+- **✅ Custom TD3**: Available for local development and testing
+- **✅ Ray Tune Compatible**: All hyperparameter optimization uses SAC
+- **✅ Documentation**: Complete migration guide in [`docs/RAY_RLLIB_MIGRATION.md`](docs/RAY_RLLIB_MIGRATION.md)
+
+```bash
+# Ray RLlib distributed training (recommended)
+python src/train_rl.py --agent sac
+
+# Custom TD3 local training
+python src/train_rl.py --agent td3
+```
+
 ## Usage
 
 ### CNN-LSTM Training
@@ -112,10 +131,10 @@ python src/train_cnn_lstm.py
 
 ### RL Agent Training
 ```bash
-# Train SAC agent
+# Train SAC agent (Ray RLlib - recommended for distributed training)
 python src/train_rl.py --agent sac --env trader_env
 
-# Train TD3 agent  
+# Train TD3 agent (custom implementation - local testing)
 python src/train_rl.py --agent td3
 
 # Train ensemble

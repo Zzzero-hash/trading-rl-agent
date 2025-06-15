@@ -4,10 +4,12 @@ This module provides utilities for hyperparameter tuning of RL models
 using Ray Tune. It includes specialized sampling distributions and
 configuration spaces for common RL algorithms.
 
+Note: TD3 has been removed from Ray RLlib 2.38.0+. Use SAC for continuous control tasks.
+
 Example usage:
 
->>> from src.optimization.rl_optimization import optimize_td3_hyperparams
->>> results = optimize_td3_hyperparams(
+>>> from src.optimization.rl_optimization import optimize_sac_hyperparams
+>>> results = optimize_sac_hyperparams(
 ...     env_config=env_config,
 ...     num_samples=20,
 ...     max_iterations_per_trial=100,
@@ -27,7 +29,7 @@ import ray
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
-from ray.rllib.algorithms.td3 import TD3Config
+# TD3 has been removed from Ray RLlib 2.38.0+, use SAC instead
 from ray.rllib.algorithms.sac import SACConfig
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.utils.framework import try_import_torch
@@ -46,33 +48,8 @@ def create_env(config):
     return TradingEnv(config)
 
 
-def _get_default_td3_search_space() -> Dict[str, Any]:
-    """Get default TD3 hyperparameter search space."""
-    return {
-        "twin_q": True,
-        "policy_delay": tune.choice([1, 2, 3]),
-        "smooth_target_policy": True,
-        "target_noise": tune.uniform(0.1, 0.5),
-        "noise_clip": tune.uniform(0.1, 0.5),
-        # Learning rates
-        "actor_lr": tune.loguniform(1e-5, 1e-3),
-        "critic_lr": tune.loguniform(1e-5, 1e-3),
-        "tau": tune.loguniform(1e-4, 1e-2),
-        # Training parameters
-        "train_batch_size": tune.choice([64, 128, 256, 512]),
-        "gamma": tune.uniform(0.95, 0.999),
-        # Exploration parameters
-        "exploration_config": {
-            "type": "GaussianNoise",
-            "stddev": tune.uniform(0.1, 0.5),
-            "initial_scale": 1.0,
-            "final_scale": tune.uniform(0.01, 0.2),
-        },
-    }
-
-
 def _get_default_sac_search_space() -> Dict[str, Any]:
-    """Get default SAC hyperparameter search space."""
+    """Get default SAC hyperparameter search space for continuous control."""
     return {
         "twin_q": True,
         "q_model_config": {
@@ -86,6 +63,7 @@ def _get_default_sac_search_space() -> Dict[str, Any]:
         # Learning rates
         "actor_lr": tune.loguniform(1e-5, 1e-3),
         "critic_lr": tune.loguniform(1e-5, 1e-3),
+        "alpha_lr": tune.loguniform(1e-5, 1e-3),
         "tau": tune.loguniform(1e-4, 1e-2),
         # Entropy parameters
         "target_entropy": "auto",
@@ -93,12 +71,29 @@ def _get_default_sac_search_space() -> Dict[str, Any]:
         # Training parameters
         "train_batch_size": tune.choice([64, 128, 256, 512]),
         "gamma": tune.uniform(0.95, 0.999),
-        "optimization": {
-            "actor_learning_rate": tune.loguniform(1e-5, 1e-3),
-            "critic_learning_rate": tune.loguniform(1e-5, 1e-3),
-            "entropy_learning_rate": tune.loguniform(1e-5, 1e-3),
+        # Replay buffer
+        "replay_buffer_config": {
+            "type": "MultiAgentPrioritizedReplayBuffer",
+            "capacity": tune.choice([100000, 1000000]),
+            "prioritized_replay_alpha": tune.uniform(0.4, 0.8),
+            "prioritized_replay_beta": tune.uniform(0.4, 0.6),
         },
     }
+
+
+def _get_default_td3_search_space() -> Dict[str, Any]:
+    """DEPRECATED: TD3 has been removed from Ray RLlib 2.38.0+. Use SAC instead.
+    
+    This function is kept for backward compatibility but will raise a deprecation warning.
+    """
+    import warnings
+    warnings.warn(
+        "TD3 has been removed from Ray RLlib 2.38.0+. Use optimize_sac_hyperparams() instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    # Return SAC search space as fallback
+    return _get_default_sac_search_space()
 
 
 def _get_default_ppo_search_space() -> Dict[str, Any]:
@@ -144,7 +139,9 @@ def optimize_td3_hyperparams(
     gpu_per_trial: float = 0.0,
     use_best_model: bool = True,
 ) -> tune.ExperimentAnalysis:
-    """Optimize TD3 hyperparameters using Ray Tune.
+    """DEPRECATED: TD3 has been removed from Ray RLlib 2.38.0+. Use optimize_sac_hyperparams() instead.
+    
+    This function will automatically redirect to SAC optimization with a deprecation warning.
     
     Parameters
     ----------
@@ -170,61 +167,25 @@ def optimize_td3_hyperparams(
     ExperimentAnalysis
         Ray Tune experiment analysis object
     """
-    # Initialize Ray if not already done
-    if not ray.is_initialized():
-        init_ray()
-        
-    # Register models and environments
-    register_models_and_envs()
-    
-    # Prepare search space
-    search_space = _get_default_td3_search_space()
-    if custom_search_space:
-        search_space.update(custom_search_space)
-    
-    # Add environment configuration
-    search_space["env"] = "TradingEnv"
-    search_space["env_config"] = env_config
-    search_space["framework"] = "torch"
-    
-    # Configure search algorithm
-    search_alg = OptunaSearch(
-        metric="episode_reward_mean",
-        mode="max",
+    import warnings
+    warnings.warn(
+        "optimize_td3_hyperparams() is deprecated. TD3 has been removed from Ray RLlib 2.38.0+. "
+        "Automatically redirecting to optimize_sac_hyperparams() which provides similar continuous control capabilities.",
+        DeprecationWarning,
+        stacklevel=2
     )
     
-    # Configure scheduler
-    scheduler = ASHAScheduler(
-        max_t=max_iterations_per_trial,
-        grace_period=min(10, max(1, max_iterations_per_trial // 10)),
-        reduction_factor=3,
-        brackets=1,
-    )
-    
-    # Setup output directory
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    
-    # Run optimization
-    analysis = tune.run(
-        "TD3",
-        config=search_space,
+    # Redirect to SAC optimization
+    return optimize_sac_hyperparams(
+        env_config=env_config,
         num_samples=num_samples,
-        scheduler=scheduler,
-        search_alg=search_alg,
-        stop={"training_iteration": max_iterations_per_trial},
-        checkpoint_at_end=use_best_model,
-        checkpoint_freq=max(1, max_iterations_per_trial // 5),
-        keep_checkpoints_num=2,
-        local_dir=output_dir,
-        resources_per_trial={"cpu": cpu_per_trial, "gpu": gpu_per_trial},
-        verbose=2,
+        max_iterations_per_trial=max_iterations_per_trial,
+        output_dir=output_dir,
+        custom_search_space=custom_search_space,
+        cpu_per_trial=cpu_per_trial,
+        gpu_per_trial=gpu_per_trial,
+        use_best_model=use_best_model,
     )
-    
-    # Log best config
-    best_config = analysis.get_best_config(metric="episode_reward_mean", mode="max")
-    logger.info(f"Best TD3 config: {best_config}")
-    
-    return analysis
 
 
 def optimize_sac_hyperparams(
@@ -296,8 +257,7 @@ def optimize_sac_hyperparams(
     
     # Setup output directory
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    
-    # Run optimization
+      # Run optimization
     analysis = tune.run(
         "SAC",
         config=search_space,
@@ -311,6 +271,8 @@ def optimize_sac_hyperparams(
         local_dir=output_dir,
         resources_per_trial={"cpu": cpu_per_trial, "gpu": gpu_per_trial},
         verbose=2,
+        metric="episode_reward_mean",  # Add metric for Ray 2.0+
+        mode="max"                     # Add mode for Ray 2.0+
     )
     
     # Log best config
@@ -389,8 +351,7 @@ def optimize_ppo_hyperparams(
     
     # Setup output directory
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    
-    # Run optimization
+      # Run optimization
     analysis = tune.run(
         "PPO",
         config=search_space,
@@ -404,6 +365,8 @@ def optimize_ppo_hyperparams(
         local_dir=output_dir,
         resources_per_trial={"cpu": cpu_per_trial, "gpu": gpu_per_trial},
         verbose=2,
+        metric="episode_reward_mean",  # Add metric for Ray 2.0+
+        mode="max"                     # Add mode for Ray 2.0+
     )
     
     # Log best config

@@ -30,7 +30,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import ray
-from ray import tune
+from ray import tune, train
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
 from sklearn.preprocessing import StandardScaler
@@ -231,9 +231,8 @@ def _train_cnn_lstm(
         
         history["val_rmse"].append(rmse)
         history["val_r2"].append(r2)
-        
-        # Report metrics to Ray Tune
-        tune.report(
+          # Report metrics to Ray Tune
+        train.report(
             epoch=epoch,
             train_loss=train_loss,
             val_loss=val_loss,
