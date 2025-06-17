@@ -16,9 +16,15 @@ class DummyAnalyzer:
 
 @pytest.fixture(autouse=True)
 def patch_sentiment(monkeypatch):
+    # Import the build_datasets module first
+    import build_datasets
+    
     # Patch HAS_VADER to True and provide mock analyzer
     monkeypatch.setattr('build_datasets.HAS_VADER', True)
-    monkeypatch.setattr('build_datasets.SentimentIntensityAnalyzer', lambda: DummyAnalyzer())
+    
+    # Set the analyzer class directly on the module
+    build_datasets.SentimentIntensityAnalyzer = lambda: DummyAnalyzer()
+    yield
 
 def test_add_news_sentiment_empty(monkeypatch, patch_sentiment):
     # Monkeypatch NEWS_FEEDS to include a dummy feed URL

@@ -210,9 +210,9 @@ class TestCNNLSTMTrainer:
         input_dim = 6
         self.trainer.initialize_model(input_dim)
         
-        # Create dummy data loader
+        # Create dummy data loader with proper classification targets (0, 1, 2)
         features = torch.randn(20, self.config.sequence_length, input_dim)
-        targets = torch.randn(20)  # Define targets tensor
+        targets = torch.randint(0, 3, (20,))  # Classification targets: 0, 1, 2
         dataset = TensorDataset(features, targets)
         loader = DataLoader(dataset, batch_size=4)
         
@@ -228,9 +228,9 @@ class TestCNNLSTMTrainer:
         input_dim = 6
         self.trainer.initialize_model(input_dim)
         
-        # Create dummy validation data
+        # Create dummy validation data with proper classification targets (0, 1, 2)
         features = torch.randn(16, self.config.sequence_length, input_dim)
-        targets = torch.randn(16)
+        targets = torch.randint(0, 3, (16,))  # Classification targets: 0, 1, 2
         dataset = TensorDataset(features, targets)
         loader = DataLoader(dataset, batch_size=4)
         
@@ -280,7 +280,8 @@ class TestTrainingIntegration:
             'high': np.cumsum(np.random.randn(100) * 0.1) + 102,
             'low': np.cumsum(np.random.randn(100) * 0.1) + 98,
             'close': np.cumsum(np.random.randn(100) * 0.1) + 100,
-            'volume': np.random.randint(1000, 10000, 100)
+            'volume': np.random.randint(1000, 10000, 100),
+            'label': np.random.randint(0, 3, 100)  # Add classification labels: 0, 1, 2
         })
         
         # Quick training config
