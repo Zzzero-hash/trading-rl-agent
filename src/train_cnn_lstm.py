@@ -209,11 +209,19 @@ class CNNLSTMTrainer:
         if 'close' not in df_features.columns:
             raise ValueError("DataFrame must contain 'close' column")
             
-        # Check if we have enough data for pct_change calculation
-        if len(df_features) < 2:
-            raise ValueError("Insufficient data for target calculation (need at least 2 rows)")
-            
-        df_features['target'] = df_features['close'].pct_change().shift(-self.config.prediction_horizon)
+        # Use existing label column if available, otherwise create target from price changes
+        if 'label' in df_features.columns:
+            # Use existing balanced labels (0=Hold, 1=Buy, 2=Sell)
+            target_column = 'label'
+        elif 'target' in df_features.columns:
+            # Use existing target column
+            target_column = 'target'
+        else:
+            # Create target from price changes as fallback
+            if len(df_features) < 2:
+                raise ValueError("Insufficient data for target calculation (need at least 2 rows)")
+            df_features['target'] = df_features['close'].pct_change().shift(-self.config.prediction_horizon)
+            target_column = 'target'
         
         # Remove rows with NaN values
         df_clean = df_features.dropna()
@@ -223,9 +231,9 @@ class CNNLSTMTrainer:
             raise ValueError("No data remaining after NaN removal")
             
         # Separate features and targets
-        feature_columns = [col for col in df_clean.columns if col not in ['target', 'timestamp']]
+        feature_columns = [col for col in df_clean.columns if col not in ['target', 'label', 'timestamp']]
         features = df_clean[feature_columns].values.astype(np.float32)
-        targets = df_clean['target'].values.astype(np.float32)
+        targets = df_clean[target_column].values.astype(np.float32)
         
         # Log feature columns and shape for debugging
         logger.info(f"Feature columns used: {feature_columns}")
@@ -354,14 +362,16 @@ class CNNLSTMTrainer:
         # Create model
         self.model = CNNLSTMModel(
             input_dim=input_dim,
-            output_size=model_config.get('output_size', 1),  # Use config value or default to 1
+            output_size=model_config.get('output_size', 3),  # 3 classes: Hold, Buy, Sell
             config=model_config,
             use_attention=model_config.get('use_attention', self.config.use_attention)
         ).to(self.device)
         
         # Initialize optimizer and loss function
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
-        self.criterion = nn.MSELoss()  # Regression task
+        
+        # Use CrossEntropyLoss for classification (labels 0, 1, 2)
+        self.criterion = nn.CrossEntropyLoss()
         
         # Log input_dim for debugging
         logger.info(f"Initializing model with input_dim={input_dim}")
@@ -375,10 +385,10 @@ class CNNLSTMTrainer:
         total_loss = 0.0
         
         for batch_idx, (data, target) in enumerate(train_loader):
-            data, target = data.to(self.device), target.to(self.device)
+            data, target = data.to(self.device), target.to(self.device).long()  # Convert to long for classification
             
             self.optimizer.zero_grad()
-            output = self.model(data).squeeze()
+            output = self.model(data)  # Don't squeeze for classification
             loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
@@ -399,29 +409,31 @@ class CNNLSTMTrainer:
         
         with torch.no_grad():
             for data, target in val_loader:
-                data, target = data.to(self.device), target.to(self.device)
-                output = self.model(data).squeeze()
+                data, target = data.to(self.device), target.to(self.device).long()  # Convert to long for classification
+                output = self.model(data)  # Don't squeeze for classification
                 loss = self.criterion(output, target)
                 total_loss += loss.item()
                 
-                predictions.extend(output.cpu().numpy())
+                # Get predicted classes for classification accuracy
+                predicted_classes = torch.argmax(output, dim=1)
+                predictions.extend(predicted_classes.cpu().numpy())
                 actuals.extend(target.cpu().numpy())
         
         avg_loss = total_loss / len(val_loader)
         
-        # Calculate correlation as performance metric
+        # Calculate accuracy as performance metric for classification
         predictions = np.array(predictions)
         actuals = np.array(actuals)
-        correlation = np.corrcoef(predictions, actuals)[0, 1] if len(predictions) > 1 else 0.0
+        accuracy = np.mean(predictions == actuals) if len(predictions) > 0 else 0.0
         
-        return avg_loss, correlation
+        return avg_loss, accuracy
     
     def train(self, train_loader: DataLoader, val_loader: DataLoader) -> Dict[str, List[float]]:
         """Full training loop with early stopping."""
         history = {
             'train_loss': [],
             'val_loss': [],
-            'val_correlation': []
+            'val_accuracy': []  # Changed from correlation to accuracy
         }
         
         best_val_loss = float('inf')
@@ -434,11 +446,11 @@ class CNNLSTMTrainer:
             
             # Validate
             if epoch % self.config.validate_interval == 0:
-                val_loss, val_corr = self.validate(val_loader)
+                val_loss, val_acc = self.validate(val_loader)  # Changed from val_corr to val_acc
                 history['val_loss'].append(val_loss)
-                history['val_correlation'].append(val_corr)
+                history['val_accuracy'].append(val_acc)  # Changed from correlation to accuracy
                 
-                logger.info(f"Epoch {epoch}: Train Loss={train_loss:.6f}, Val Loss={val_loss:.6f}, Val Corr={val_corr:.4f}")
+                logger.info(f"Epoch {epoch}: Train Loss={train_loss:.6f}, Val Loss={val_loss:.6f}, Val Acc={val_acc:.4f}")  # Updated logging
                 
                 # Early stopping
                 if val_loss < best_val_loss:

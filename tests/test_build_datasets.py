@@ -22,6 +22,9 @@ class DummyAnalyzer:
 
 @pytest.fixture(autouse=True)
 def patch_hf(monkeypatch):
+    # Import the build_datasets module first
+    import build_datasets
+    
     # Patch HAS_DATASETS to True and provide mock load_dataset
     monkeypatch.setattr('build_datasets.HAS_DATASETS', True)
     
@@ -31,14 +34,21 @@ def patch_hf(monkeypatch):
             {'symbol': 'AAPL', 'date': '2021-01-01', 'sentiment_score': 0.8},
             {'symbol': 'GOOG', 'date': '2021-01-02', 'sentiment_score': -0.2}
         ])
-    monkeypatch.setattr('build_datasets.load_dataset', fake_load_dataset)
+    
+    # Set the function directly on the module
+    build_datasets.load_dataset = fake_load_dataset
     yield
 
 @pytest.fixture(autouse=True)
 def patch_twitter(monkeypatch):
+    # Import the build_datasets module first
+    import build_datasets
+    
     # Patch HAS_VADER to True and provide mock analyzer
     monkeypatch.setattr('build_datasets.HAS_VADER', True)
-    monkeypatch.setattr('build_datasets.SentimentIntensityAnalyzer', lambda: DummyAnalyzer())
+    
+    # Set the analyzer class directly on the module
+    build_datasets.SentimentIntensityAnalyzer = lambda: DummyAnalyzer()
     
     # Patch subprocess.check_output to return fake tweet JSON lines
     def fake_check_output(cmd, shell, text):

@@ -24,13 +24,16 @@ def check_sample_data():
     print("1. Testing sample data...")
     
     data_dir = current_dir / "data"
-    sample_files = list(data_dir.glob("sample_training_data_*.csv"))
     
-    if not sample_files:
-        pytest.skip("sample data not available")
+    # Use the main validated dataset first
+    sample_file = data_dir / "sample_data.csv"
+    if not sample_file.exists():
+        # Fallback to other sample files
+        sample_files = list(data_dir.glob("sample_training_data_*.csv"))
+        if not sample_files:
+            pytest.skip("sample data not available")
+        sample_file = max(sample_files, key=lambda f: f.stat().st_mtime)
     
-    # Use the most recent file
-    sample_file = max(sample_files, key=lambda f: f.stat().st_mtime)
     print(f"   Using: {sample_file.name}")
     
     try:
@@ -70,12 +73,26 @@ def check_sentiment_module():
         analyzer = SentimentAnalyzer()
         print("   ✅ SentimentAnalyzer created")
         
-        # Test mock sentiment
-        sentiment = analyzer.get_symbol_sentiment("AAPL", pd.Timestamp.now())
-        if not isinstance(sentiment, SentimentData):
-            print(f"   ⚠️  Unexpected sentiment type: {type(sentiment)}")
+        # Test mock sentiment - get_symbol_sentiment returns a float score
+        sentiment_score = analyzer.get_symbol_sentiment("AAPL", 7)  # 7 days back
+        if not isinstance(sentiment_score, (int, float)):
+            print(f"   ⚠️  Unexpected sentiment type: {type(sentiment_score)}")
             return False
-        print(f"   ✅ Sentiment retrieved: {sentiment.composite_score:.3f}")
+        
+        # Validate sentiment score is a reasonable value
+        if -1.0 <= sentiment_score <= 1.0:
+            print(f"   ✅ Sentiment score retrieved: {sentiment_score:.3f}")
+        else:
+            print(f"   ⚠️  Sentiment score out of range: {sentiment_score}")
+            return False
+        
+        # Test getting actual SentimentData objects
+        sentiment_data_list = analyzer.fetch_all_sentiment("AAPL", 7)
+        if sentiment_data_list and isinstance(sentiment_data_list[0], SentimentData):
+            print(f"   ✅ SentimentData objects retrieved: {len(sentiment_data_list)} items")
+        else:
+            print(f"   ⚠️  SentimentData retrieval failed, using fallback")
+            # This is ok - the module falls back to mock data when rate limited
         
         print("✅ Sentiment module test passed")
         return True

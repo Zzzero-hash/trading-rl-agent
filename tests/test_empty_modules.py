@@ -69,23 +69,25 @@ class TestMetricsModule:
             pytest.fail(f"Failed to import metrics module: {e}")
     
     def test_module_is_empty(self):
-        """Test that the metrics module is currently empty."""
+        """Test that the metrics module has expected functions."""
         from src.utils import metrics
         
         # Get all attributes that don't start with underscore
         public_attrs = [attr for attr in dir(metrics) if not attr.startswith('_')]
         
-        # Should only have built-in module attributes
-        assert len(public_attrs) == 0, f"Expected empty module, but found: {public_attrs}"
+        # Should have metric calculation functions
+        expected_functions = ['calculate_sharpe_ratio', 'calculate_max_drawdown', 'calculate_sortino_ratio']
+        for func in expected_functions:
+            assert func in public_attrs, f"Expected function {func} not found in metrics module"
     
     def test_module_file_size(self):
-        """Test that the metrics module file is empty or very small."""
+        """Test that the metrics module file has reasonable size."""
         current_file = Path(__file__).resolve()
         project_root = current_file.parent.parent
         module_path = project_root / "src" / "utils" / "metrics.py"
         
         file_size = module_path.stat().st_size
-        assert file_size <= 100, f"Expected small/empty file, but size is {file_size} bytes"
+        assert file_size > 100, f"Expected implemented file, but size is only {file_size} bytes"
 
 
 class TestQuantizationModule:
@@ -100,23 +102,25 @@ class TestQuantizationModule:
             pytest.fail(f"Failed to import quantization module: {e}")
     
     def test_module_is_empty(self):
-        """Test that the quantization module is currently empty."""
+        """Test that the quantization module has expected functions."""
         from src.utils import quantization
         
         # Get all attributes that don't start with underscore
         public_attrs = [attr for attr in dir(quantization) if not attr.startswith('_')]
         
-        # Should only have built-in module attributes
-        assert len(public_attrs) == 0, f"Expected empty module, but found: {public_attrs}"
+        # Should have quantization functions
+        expected_functions = ['quantize_model', 'dynamic_quantization', 'static_quantization']
+        for func in expected_functions:
+            assert func in public_attrs, f"Expected function {func} not found in quantization module"
     
     def test_module_file_size(self):
-        """Test that the quantization module file is empty or very small."""
+        """Test that the quantization module file has reasonable size."""
         current_file = Path(__file__).resolve()
         project_root = current_file.parent.parent
         module_path = project_root / "src" / "utils" / "quantization.py"
         
         file_size = module_path.stat().st_size
-        assert file_size <= 100, f"Expected small/empty file, but size is {file_size} bytes"
+        assert file_size > 100, f"Expected implemented file, but size is only {file_size} bytes"
 
 
 class TestRewardsModule:
@@ -131,23 +135,25 @@ class TestRewardsModule:
             pytest.fail(f"Failed to import rewards module: {e}")
     
     def test_module_is_empty(self):
-        """Test that the rewards module is currently empty."""
+        """Test that the rewards module has expected functions."""
         from src.utils import rewards
         
         # Get all attributes that don't start with underscore
         public_attrs = [attr for attr in dir(rewards) if not attr.startswith('_')]
         
-        # Should only have built-in module attributes
-        assert len(public_attrs) == 0, f"Expected empty module, but found: {public_attrs}"
+        # Should have reward calculation functions
+        expected_functions = ['compute_reward', 'simple_profit_reward', 'sharpe_based_reward']
+        for func in expected_functions:
+            assert func in public_attrs, f"Expected function {func} not found in rewards module"
     
     def test_module_file_size(self):
-        """Test that the rewards module file is empty or very small."""
+        """Test that the rewards module file has reasonable size."""
         current_file = Path(__file__).resolve()
         project_root = current_file.parent.parent
         module_path = project_root / "src" / "utils" / "rewards.py"
         
         file_size = module_path.stat().st_size
-        assert file_size <= 100, f"Expected small/empty file, but size is {file_size} bytes"
+        assert file_size > 100, f"Expected implemented file, but size is only {file_size} bytes"
 
 
 class TestFutureImplementationFramework:
