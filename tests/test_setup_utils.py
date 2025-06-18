@@ -5,7 +5,7 @@ import numpy as np
 from src.envs.trading_env import TradingEnv
 from src.agents.td3_agent import TD3Agent
 from src.agents.configs import TD3Config
-from tests.test_data_utils import get_dynamic_test_config, TestDataManager
+from tests.test_data_utils import get_dynamic_test_config, DynamicTestDataManager
 
 def setup_test_env(env_cfg=None, td3_config=None):
     if env_cfg is None:
@@ -37,7 +37,7 @@ def teardown_test_env(env, agent):
     # Cleanup test data if manager was stored in config
     if hasattr(env, 'config') and '_test_manager' in env.config:
         test_manager = env.config['_test_manager']
-        if isinstance(test_manager, TestDataManager):
+        if isinstance(test_manager, DynamicTestDataManager):
             test_manager.cleanup()
     
     del env

@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 logger = logging.getLogger(__name__)
 
 
-class TestDataManager:
+class DynamicTestDataManager:
     """Manages test data with dynamic discovery and synthetic generation."""
     
     def __init__(self, data_dir: str = "data"):
@@ -174,7 +174,7 @@ class TestDataManager:
 def test_dataset_context(data_dir: str = "data", 
                         required_columns: Optional[List[str]] = None):
     """Context manager for test dataset with automatic cleanup."""
-    manager = TestDataManager(data_dir)
+    manager = DynamicTestDataManager(data_dir)
     try:
         dataset_path = manager.get_or_create_test_dataset(required_columns)
         yield dataset_path
@@ -185,7 +185,7 @@ def test_dataset_context(data_dir: str = "data",
 def get_dynamic_test_config(base_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Get test configuration with dynamically discovered or generated dataset."""
     
-    manager = TestDataManager()
+    manager = DynamicTestDataManager()
     # Required columns for trading environment
     required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     dataset_path = manager.get_or_create_test_dataset(required_columns)
