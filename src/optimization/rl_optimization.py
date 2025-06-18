@@ -268,7 +268,7 @@ def optimize_sac_hyperparams(
         checkpoint_at_end=use_best_model,
         checkpoint_freq=max(1, max_iterations_per_trial // 5),
         keep_checkpoints_num=2,
-        local_dir=output_dir,
+        storage_path=output_dir,
         resources_per_trial={"cpu": cpu_per_trial, "gpu": gpu_per_trial},
         verbose=2,
         metric="episode_reward_mean",  # Add metric for Ray 2.0+
@@ -362,7 +362,7 @@ def optimize_ppo_hyperparams(
         checkpoint_at_end=use_best_model,
         checkpoint_freq=max(1, max_iterations_per_trial // 5),
         keep_checkpoints_num=2,
-        local_dir=output_dir,
+        storage_path=output_dir,
         resources_per_trial={"cpu": cpu_per_trial, "gpu": gpu_per_trial},
         verbose=2,
         metric="episode_reward_mean",  # Add metric for Ray 2.0+

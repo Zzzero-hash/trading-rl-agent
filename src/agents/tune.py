@@ -66,7 +66,7 @@ def run_tune(config_paths):
     analysis = tune.run(
         algorithm, 
         config=search_space, 
-        local_dir="tune",
+        storage_path="tune",
         metric="episode_reward_mean",  # Add default metric for RL
         mode="max"                     # Add default mode for RL
     )
