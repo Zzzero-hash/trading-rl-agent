@@ -18,6 +18,7 @@ class TradingEnv(gym.Env):
 
     def __init__(self, env_cfg: dict):
         cfg = env_cfg or {}
+        self.config = cfg  # Store config for potential cleanup access
         self.data_paths = cfg.get("dataset_paths", [])
         if isinstance(self.data_paths, str):
             self.data_paths = [self.data_paths]

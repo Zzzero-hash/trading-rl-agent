@@ -5,19 +5,16 @@ import numpy as np
 from src.envs.trading_env import TradingEnv
 from src.agents.td3_agent import TD3Agent
 from src.agents.configs import TD3Config
+from tests.test_data_utils import get_dynamic_test_config, TestDataManager
 
 def setup_test_env(env_cfg=None, td3_config=None):
     if env_cfg is None:
-        env_cfg = {
-            "dataset_paths": ["data/sample_training_data_simple_20250607_192034.csv"],
-            "window_size": 10,
-            "initial_balance": 10000,
-            "transaction_cost": 0.001,
-            "include_features": False,
-            "continuous_actions": True  # Ensure continuous for TD3
-        }
+        # Use dynamic test configuration
+        env_cfg = get_dynamic_test_config()
+    
     if td3_config is None:
         td3_config = TD3Config(batch_size=8, buffer_capacity=32)
+    
     env = TradingEnv(env_cfg)
     # Determine state_dim (flattened for continuous action/TD3)
     obs, _ = env.reset()
@@ -36,5 +33,12 @@ def setup_test_env(env_cfg=None, td3_config=None):
     return env, agent
 
 def teardown_test_env(env, agent):
+    """Clean up test environment and any associated test data."""
+    # Cleanup test data if manager was stored in config
+    if hasattr(env, 'config') and '_test_manager' in env.config:
+        test_manager = env.config['_test_manager']
+        if isinstance(test_manager, TestDataManager):
+            test_manager.cleanup()
+    
     del env
     del agent
