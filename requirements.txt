@@ -3,14 +3,14 @@
 
 # Core numerical computing
 numpy>=1.21.0,<2.0.0  # Fix compatibility with wandb and ray
-torch>=1.12.0,<2.4.0  # PyTorch for neural networks  
+torch>=1.12.0,<2.4.0  # PyTorch for neural networks
 scipy>=1.7.0,<1.12.0  # Scientific computing
 
 # Data handling
 pandas>=1.5.0,<2.2.0  # Data manipulation
 pyyaml>=6.0,<7.0      # Configuration files
 
-# Machine Learning & RL  
+# Machine Learning & RL
 ray[rllib]>=2.31.0,<2.47.0  # Distributed RL (minimal extras)
 gymnasium>=0.28.0,<0.30.0  # RL environments
 

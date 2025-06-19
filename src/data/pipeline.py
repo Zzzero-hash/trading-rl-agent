@@ -2,14 +2,14 @@ import os
 from pathlib import Path
 
 import pandas as pd
-import yaml
 import ray
 import ray.data as rdata
+import yaml
 
-from .historical import fetch_historical_data
 from .features import generate_features
-from .synthetic import fetch_synthetic_data
+from .historical import fetch_historical_data
 from .live import fetch_live_data
+from .synthetic import fetch_synthetic_data
 
 
 @ray.remote
@@ -80,27 +80,37 @@ def run_pipeline(config_path: str):
 
     started_ray = False
     if not ray.is_initialized():
-        ray.init(address=cfg.get("ray_address", os.getenv("RAY_ADDRESS")),
-                 log_to_driver=False)
+        ray.init(
+            address=cfg.get("ray_address", os.getenv("RAY_ADDRESS")),
+            log_to_driver=False,
+        )
         started_ray = True
 
     tasks = {}
 
     for symbol in coinbase_symbols:
         key = f"coinbase_{symbol}"
-        tasks[key] = _fetch_data_remote.remote(fetch_historical_data, symbol, start, end, timestep)
+        tasks[key] = _fetch_data_remote.remote(
+            fetch_historical_data, symbol, start, end, timestep
+        )
 
     for symbol in oanda_symbols:
         key = f"oanda_{symbol}"
-        tasks[key] = _fetch_data_remote.remote(fetch_historical_data, symbol, start, end, timestep)
+        tasks[key] = _fetch_data_remote.remote(
+            fetch_historical_data, symbol, start, end, timestep
+        )
 
     for symbol in cfg.get("synthetic_symbols", []):
         key = f"synthetic_{symbol}"
-        tasks[key] = _fetch_data_remote.remote(fetch_synthetic_data, symbol, start, end, timestep)
+        tasks[key] = _fetch_data_remote.remote(
+            fetch_synthetic_data, symbol, start, end, timestep
+        )
 
     for symbol in cfg.get("live_symbols", []):
         key = f"live_{symbol}"
-        tasks[key] = _fetch_data_remote.remote(fetch_live_data, symbol, start, end, timestep)
+        tasks[key] = _fetch_data_remote.remote(
+            fetch_live_data, symbol, start, end, timestep
+        )
 
     fetched = ray.get(list(tasks.values())) if tasks else []
 
@@ -123,14 +133,18 @@ def run_pipeline(config_path: str):
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description='Fetch OHLCV data pipeline for Coinbase and OANDA')
+
+    parser = argparse.ArgumentParser(
+        description="Fetch OHLCV data pipeline for Coinbase and OANDA"
+    )
     parser.add_argument(
-        '--config', '-c',
+        "--config",
+        "-c",
         type=str,
-        default='src/configs/data/pipeline.yaml',
-        help='Path to pipeline configuration YAML'
+        default="src/configs/data/pipeline.yaml",
+        help="Path to pipeline configuration YAML",
     )
     args = parser.parse_args()
     print(f"Loading config from {args.config}")

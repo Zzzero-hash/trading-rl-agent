@@ -141,7 +141,7 @@ def linkcode_resolve(domain, info):
 
     filename = info["module"].replace(".", "/")
     return (
-        f"https://github.com/yourusername/trading-rl-agent/blob/main/src/{filename}.py"
+        f"https://github.com/Zzzero-hash/trading-rl-agent/blob/main/src/{filename}.py"
     )
 
 
@@ -173,39 +173,3 @@ import numpy as np
 import pandas as pd
 import torch
 """
-napoleon_use_ivar = False
-napoleon_use_param = True
-napoleon_use_rtype = True
-napoleon_type_aliases = None
-napoleon_attr_annotations = True
-
-# Autodoc settings
-autodoc_default_options = {
-    "members": True,
-    "undoc-members": True,
-    "show-inheritance": True,
-    "special-members": "__init__",
-    "exclude-members": "__weakref__",
-}
-autodoc_typehints = "description"
-autodoc_typehints_description_target = "documented"
-
-# Autosummary settings
-autosummary_generate = True
-autosummary_generate_overwrite = True
-
-# Intersphinx mappings
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas": ("https://pandas.pydata.org/docs/", None),
-    "torch": ("https://pytorch.org/docs/stable/", None),
-    "gymnasium": ("https://gymnasium.farama.org/", None),
-    "ray": ("https://docs.ray.io/en/latest/", None),
-}
-
-# TODO extension
-todo_include_todos = True
-
-# Coverage extension
-coverage_show_missing_items = True

@@ -1,9 +1,10 @@
 # 🚀 Streamlined Trading RL Agent Pipeline
 
-**Complete Production-Ready Development Pipeline**  
-*From Installation to Phase 2.5 Model Training*
+**Complete Production-Ready Development Pipeline**
+_From Installation to Phase 2.5 Model Training_
 
 ## 📋 **Table of Contents**
+
 1. [System Overview](#system-overview)
 2. [Installation & Setup](#installation--setup)
 3. [Data Pipeline](#data-pipeline)
@@ -17,6 +18,7 @@
 ## 🎯 **System Overview**
 
 This pipeline provides a complete end-to-end solution for:
+
 - **Data Generation**: Advanced 1.3M+ record datasets with 23 features
 - **Hyperparameter Optimization**: Ray Tune + Optuna for CNN-LSTM and RL agents
 - **Model Training**: Production-ready CNN-LSTM and RL models
@@ -24,20 +26,21 @@ This pipeline provides a complete end-to-end solution for:
 
 ### **Key Infrastructure Already Built ✅**
 
-| Component | Status | Files |
-|-----------|--------|-------|
-| **Advanced Dataset Builder** | ✅ Complete | `build_production_dataset.py` |
-| **CNN-LSTM Optimization** | ✅ Complete | `src/optimization/cnn_lstm_optimization.py` |
-| **RL Optimization** | ✅ Complete | `src/optimization/rl_optimization.py` |
-| **Trading Environment** | ✅ Complete | `src/envs/trading_env.py` |
-| **Model Implementations** | ✅ Complete | `src/models/` |
-| **Comprehensive Testing** | ✅ Complete | `tests/` (49 test files) |
+| Component                    | Status      | Files                                       |
+| ---------------------------- | ----------- | ------------------------------------------- |
+| **Advanced Dataset Builder** | ✅ Complete | `build_production_dataset.py`               |
+| **CNN-LSTM Optimization**    | ✅ Complete | `src/optimization/cnn_lstm_optimization.py` |
+| **RL Optimization**          | ✅ Complete | `src/optimization/rl_optimization.py`       |
+| **Trading Environment**      | ✅ Complete | `src/envs/trading_env.py`                   |
+| **Model Implementations**    | ✅ Complete | `src/models/`                               |
+| **Comprehensive Testing**    | ✅ Complete | `tests/` (49 test files)                    |
 
 ---
 
 ## 🔧 **Installation & Setup**
 
 ### **1. Prerequisites**
+
 ```bash
 # Verify Python 3.10+ and CUDA
 python --version  # Should be 3.10+
@@ -45,6 +48,7 @@ nvidia-smi       # Should show GPU info
 ```
 
 ### **2. Environment Setup**
+
 ```bash
 # Create and activate environment
 python -m venv trading-env
@@ -56,6 +60,7 @@ pip install -r requirements.txt
 ```
 
 ### **3. Verification**
+
 ```bash
 # Run comprehensive tests
 python -m pytest tests/ -v
@@ -81,11 +86,13 @@ python build_production_dataset.py
 ```
 
 **Expected Output**:
+
 - 📁 `data/sample_data.csv` (30+ MB, 31K+ records)
-- 📁 `data/advanced_trading_dataset_YYYYMMDD_HHMMSS.csv` 
+- 📁 `data/advanced_trading_dataset_YYYYMMDD_HHMMSS.csv`
 - 📁 `data/dataset_metadata_YYYYMMDD_HHMMSS.json`
 
 **Dataset Specifications**:
+
 - **Records**: 31,645+ high-quality samples
 - **Features**: 78 engineered features (technical indicators, candlestick patterns, sentiment)
 - **Labels**: Balanced classification (Hold: 41.8%, Buy: 31.9%, Sell: 26.3%)
@@ -109,6 +116,7 @@ python validate_dataset.py data/sample_data.csv
 **🎯 Goal**: Find optimal CNN-LSTM architecture using Ray Tune + Optuna
 
 #### **Option A: Quick Optimization**
+
 ```python
 from src.optimization.cnn_lstm_optimization import optimize_cnn_lstm
 import pandas as pd
@@ -135,12 +143,14 @@ print(f"Best hyperparameters: {best_config}")
 ```
 
 #### **Option B: Comprehensive Optimization (Notebook)**
+
 ```bash
 # Run comprehensive hyperparameter optimization
 jupyter lab cnn_lstm_hparam_clean.ipynb
 ```
 
 **Expected Results**:
+
 - **Optimization Directory**: `optimization_results/hparam_opt_YYYYMMDD_HHMMSS/`
 - **Best Validation Loss**: < 1.0 (significantly better than baseline ~53K)
 - **Best Validation Accuracy**: > 50% (better than random 33%)
@@ -176,23 +186,27 @@ best_rl_config = analysis.get_best_config(metric="episode_reward_mean", mode="ma
 ### **Phase 5: Production Model Training**
 
 #### **CNN-LSTM Training (Optimized)**
+
 ```bash
 # Train with optimized hyperparameters
 python src/train_cnn_lstm.py --config path/to/best_config.yaml
 ```
 
 **Expected Performance**:
+
 - **Training Loss**: < 0.5 (decreasing trend)
-- **Validation Loss**: < 2.0 (stable, not overfitting)  
+- **Validation Loss**: < 2.0 (stable, not overfitting)
 - **Validation Accuracy**: > 45% (significantly better than random)
 
 #### **RL Agent Training**
+
 ```bash
 # Train RL agents
 python src/train_rl.py --algorithm SAC --config configs/sac_optimized.yaml
 ```
 
 ### **Training Pipeline Status Check**
+
 ```bash
 # Monitor training progress
 ls -la models/           # Check saved models
@@ -204,6 +218,7 @@ ls -la optimization_results/  # Check optimization results
 ## ✅ **Validation & Testing**
 
 ### **Model Validation**
+
 ```bash
 # Test trained models
 python -m pytest tests/test_train_cnn_lstm.py -v
@@ -212,6 +227,7 @@ python -m pytest tests/test_sac_agent.py -v
 ```
 
 ### **Integration Testing**
+
 ```bash
 # Full pipeline integration test
 python -m pytest tests/test_integration_isolation.py -v
@@ -221,7 +237,9 @@ python -m pytest tests/test_trader_env.py -v
 ```
 
 ### **Performance Benchmarks**
+
 Expected test results:
+
 - **All core tests**: PASSED
 - **Integration tests**: PASSED
 - **Model loading**: PASSED
@@ -234,6 +252,7 @@ Expected test results:
 ### **Phase 6: Production Readiness Checklist**
 
 #### **✅ Infrastructure Checklist**
+
 - [x] Advanced dataset generation pipeline
 - [x] Hyperparameter optimization (Ray Tune + Optuna)
 - [x] CNN-LSTM model architecture
@@ -244,6 +263,7 @@ Expected test results:
 - [x] Model serving capabilities
 
 #### **✅ Performance Benchmarks**
+
 - [x] Dataset: 31K+ records, 0% missing
 - [x] CNN-LSTM: Val accuracy > 45%
 - [x] RL agents: Stable training
@@ -251,6 +271,7 @@ Expected test results:
 - [x] Integration: End-to-end pipeline working
 
 #### **✅ Next Steps Ready**
+
 - [x] Model deployment (`src/serve_deployment.py`)
 - [x] Live data integration (`src/data/live_data.py`)
 - [x] Performance monitoring
@@ -293,13 +314,15 @@ trading-rl-agent/
 ## 🎯 **Current Status: Phase 2.5 Complete**
 
 ### **✅ Completed**
+
 1. **Data Pipeline**: Production-ready dataset generation
-2. **Hyperparameter Optimization**: Ray Tune + Optuna infrastructure  
+2. **Hyperparameter Optimization**: Ray Tune + Optuna infrastructure
 3. **Model Training**: CNN-LSTM and RL agent training pipelines
 4. **Testing**: Comprehensive validation suite
 5. **Integration**: End-to-end pipeline working
 
 ### **🎯 Ready for Phase 3**
+
 - **Model Deployment**: Serving infrastructure ready
 - **Live Trading**: Real-time data integration ready
 - **Performance Monitoring**: Metrics and logging ready
@@ -313,7 +336,7 @@ trading-rl-agent/
 # 1. Generate Dataset
 python build_production_dataset.py
 
-# 2. Validate Dataset  
+# 2. Validate Dataset
 python validate_dataset.py data/sample_data.csv
 
 # 3. Optimize Hyperparameters

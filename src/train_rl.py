@@ -8,9 +8,10 @@ from pathlib import Path
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.models import ModelCatalog
 from ray.tune.registry import register_env
-from src.utils.cluster import init_ray, get_available_devices
+
 from src.envs.trading_env import TradingEnv
 from src.models.concat_model import ConcatModel
+from src.utils.cluster import get_available_devices, init_ray
 
 
 def create_env(cfg):
@@ -19,8 +20,15 @@ def create_env(cfg):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, required=True, help="CSV file with market data")
-    parser.add_argument("--model-path", type=str, required=True, help="Path to supervised model checkpoint")
+    parser.add_argument(
+        "--data", type=str, required=True, help="CSV file with market data"
+    )
+    parser.add_argument(
+        "--model-path",
+        type=str,
+        required=True,
+        help="Path to supervised model checkpoint",
+    )
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--num-gpus", type=int, default=0)
     parser.add_argument(
@@ -64,7 +72,12 @@ def main():
     algo = config.build()
     for _ in range(5):
         result = algo.train()
-        print("iteration", result["training_iteration"], "reward", result["episode_reward_mean"]) 
+        print(
+            "iteration",
+            result["training_iteration"],
+            "reward",
+            result["episode_reward_mean"],
+        )
 
     checkpoint_dir = Path("./rl_checkpoints")
     checkpoint_dir.mkdir(exist_ok=True)

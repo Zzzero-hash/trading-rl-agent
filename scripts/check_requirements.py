@@ -55,10 +55,10 @@ def check_requirements_consistency() -> bool:
             if (
                 missing and name != "test"
             ):  # Test requirements might not include all core
-                errors.append(f"Missing core packages in {name}: {missing}")
-
-    # Check for duplicate packages across files
-    all_packages = {}
+                errors.append(
+                    f"Missing core packages in {name}: {missing}"
+                )  # Check for duplicate packages across files
+    all_packages: dict[str, list[str]] = {}
     for name, packages in parsed_reqs.items():
         for package in packages:
             if package not in all_packages:

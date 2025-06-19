@@ -20,21 +20,25 @@ will produce the following diagram:
 ![Pipeline](img/architecture_pipeline.png)
 
 ## Data Ingestion
+
 - Source files are prepared using `build_datasets.py` and related scripts.
 - Raw market data is read, merged with sentiment data, and stored in CSV files under `data/`.
 
 ## Feature Engineering
+
 - Features are generated in `src/data/features.py`.
 - Common technical indicators (SMA, EMA, RSI, Bollinger Bands) and sentiment metrics are added.
 - Feature generation is used both for supervised training and for the RL environment when `include_features` is enabled.
 
 ## Trading Environment
+
 - Implementation: [`src/envs/trading_env.py`](../src/envs/trading_env.py).
 - Wraps market data into a Gym-compatible environment.
 - Supports discrete and continuous actions for compatibility with TD3.
 - Optionally injects CNN‑LSTM predictions into the observation space.
 
 ## RL Agents
+
 - **SAC Agent** – [`src/agents/sac_agent.py`](../src/agents/sac_agent.py)
   - Used for distributed training via Ray RLlib.
   - Provides stochastic policy with entropy regularization.
@@ -43,6 +47,7 @@ will produce the following diagram:
   - Uses deterministic policies with twin critics and delayed actor updates.
 
 ## Ensemble Interaction
+
 - **Ensemble Agent** – [`src/agents/ensemble_agent.py`](../src/agents/ensemble_agent.py)
   - Combines the outputs of SAC and TD3 agents.
   - Designed to reduce variance and improve stability.

@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 
-def check_tool(tool_name: str, command: list) -> bool:
+def check_tool(tool_name: str, command: list[str]) -> bool:
     """Check if a tool is installed and working."""
     try:
         result = subprocess.run(command, capture_output=True, text=True)

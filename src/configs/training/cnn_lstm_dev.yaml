@@ -4,75 +4,75 @@
 # Model Architecture (Smaller for quick training)
 model:
   name: "cnn_lstm_dev"
-  input_dim: 15  # Fewer features for faster training
-  lstm_units: 64  # Changed from hidden_dim to match CNNLSTMConfig
+  input_dim: 15 # Fewer features for faster training
+  lstm_units: 64 # Changed from hidden_dim to match CNNLSTMConfig
   cnn_filters: [16, 32]
   cnn_kernel_sizes: [3, 3]
   dropout: 0.1
-  output_size: 3  # Changed from output_dim to match CNNLSTMConfig
+  output_size: 3 # Changed from output_dim to match CNNLSTMConfig
   use_attention: false
-  
+
 # Data Configuration (Smaller datasets)
 data:
-  sequence_length: 30  # Shorter sequences
+  sequence_length: 30 # Shorter sequences
   prediction_horizon: 1
   train_split: 0.7
   val_split: 0.2
   test_split: 0.1
-  batch_size: 16  # Smaller batches
+  batch_size: 16 # Smaller batches
   shuffle: true
-  
+
   # Feature engineering
   features:
     technical_indicators: true
     sentiment_analysis: true
     price_changes: true
-    volume_features: false  # Skip volume for faster training
-    
+    volume_features: false # Skip volume for faster training
+
   # Sentiment configuration
   sentiment:
-    sources: ["news"]  # Only news, no social media
+    sources: ["news"] # Only news, no social media
     cache_enabled: true
-    cache_ttl: 1800  # 30 minutes
+    cache_ttl: 1800 # 30 minutes
     aggregation_window: "30m"
-    
+
 # Training Configuration (Fast training)
 training:
-  epochs: 20  # Fewer epochs
-  learning_rate: 0.01  # Higher learning rate
+  epochs: 20 # Fewer epochs
+  learning_rate: 0.01 # Higher learning rate
   weight_decay: 0.001
   early_stopping:
     patience: 5
     min_delta: 0.01
     monitor: "val_loss"
-    
+
   # Optimization
   optimizer: "adam"
   scheduler:
     type: "step"
     step_size: 10
     gamma: 0.5
-    
+
   # Loss function
   loss_function: "cross_entropy"
   class_weights: null
-  
+
 # Validation & Metrics
 validation:
-  frequency: 2  # Validate every 2 epochs
+  frequency: 2 # Validate every 2 epochs
   metrics: ["accuracy", "f1"]
   save_best_model: true
-  
+
 # Model Persistence
 persistence:
   save_dir: "models/cnn_lstm_dev"
   checkpoint_frequency: 5
-  save_optimizer_state: false  # Skip for dev
-  
+  save_optimizer_state: false # Skip for dev
+
 # Ray Configuration
 ray:
   enabled: false
-  
+
 # Logging & Monitoring
 logging:
   level: "DEBUG"
@@ -80,7 +80,7 @@ logging:
   tensorboard: false
   wandb:
     enabled: false
-    
+
 # Random Seeds
 random_seed: 123
 torch_seed: 123

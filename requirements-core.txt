@@ -6,7 +6,7 @@ numpy>=1.21.0,<2.0.0     # 15MB - Fixed compatibility with Ray/wandb
 pandas>=1.5.0,<2.2.0     # 30MB - Data manipulation
 scipy>=1.7.0,<1.12.0     # 50MB - Scientific computing
 
-# Configuration and utilities  
+# Configuration and utilities
 pyyaml>=6.0,<7.0         # 1MB - YAML configuration files
 python-dotenv>=0.20.0,<1.1.0  # Environment variables
 
