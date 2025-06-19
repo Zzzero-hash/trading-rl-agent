@@ -7,6 +7,7 @@ This guide provides best practices for using Jupyter notebooks in machine learni
 ## 🎯 Development Workflow
 
 ### 1. Notebook Structure
+
 ```
 # Notebook Title and Objectives
 ## Step 1: Environment Setup
@@ -18,6 +19,7 @@ This guide provides best practices for using Jupyter notebooks in machine learni
 ```
 
 ### 2. Code Organization
+
 - **Import cells**: Group all imports at the beginning
 - **Configuration cells**: Define hyperparameters and settings
 - **Function definitions**: Keep reusable functions in separate cells
@@ -25,6 +27,7 @@ This guide provides best practices for using Jupyter notebooks in machine learni
 - **Output cells**: Clear visualizations and results
 
 ### 3. Documentation Standards
+
 - Use markdown cells to explain each section
 - Document experiment parameters and expected outcomes
 - Include links to relevant papers or documentation
@@ -33,6 +36,7 @@ This guide provides best practices for using Jupyter notebooks in machine learni
 ## 🔧 Technical Best Practices
 
 ### Memory Management
+
 ```python
 # Clear variables between experiments
 def clear_memory():
@@ -48,6 +52,7 @@ with torch.no_grad():
 ```
 
 ### Progress Tracking
+
 ```python
 from tqdm.notebook import tqdm
 import time
@@ -60,6 +65,7 @@ for epoch in tqdm(range(num_epochs), desc="Training"):
 ```
 
 ### Resource Monitoring
+
 ```python
 # Monitor GPU usage
 def check_gpu_usage():
@@ -80,6 +86,7 @@ def check_disk_usage():
 ## 🚀 Hyperparameter Optimization
 
 ### Experiment Configuration
+
 ```python
 # Define experiment metadata
 experiment_config = {
@@ -96,23 +103,24 @@ experiment_config = {
 ```
 
 ### Results Tracking
+
 ```python
 # Save experiment results
 def save_experiment_results(analysis, config):
     results_dir = Path("optimization_results")
     results_dir.mkdir(exist_ok=True)
-    
+
     timestamp = config["timestamp"]
-    
+
     # Save best configuration
     best_config = analysis.get_best_config()
     with open(results_dir / f"best_config_{timestamp}.json", "w") as f:
         json.dump(best_config, f, indent=2)
-    
+
     # Save experiment metadata
     with open(results_dir / f"experiment_{timestamp}.json", "w") as f:
         json.dump(config, f, indent=2)
-    
+
     # Save trial results as CSV
     df = analysis.dataframe()
     df.to_csv(results_dir / f"trials_{timestamp}.csv", index=False)
@@ -121,6 +129,7 @@ def save_experiment_results(analysis, config):
 ## 📊 Visualization Best Practices
 
 ### Interactive Plots
+
 ```python
 import plotly.express as px
 import plotly.graph_objects as go
@@ -129,12 +138,12 @@ import plotly.graph_objects as go
 def plot_training_history(history):
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        y=history['train_loss'], 
+        y=history['train_loss'],
         name='Training Loss',
         mode='lines'
     ))
     fig.add_trace(go.Scatter(
-        y=history['val_loss'], 
+        y=history['val_loss'],
         name='Validation Loss',
         mode='lines'
     ))
@@ -147,6 +156,7 @@ def plot_training_history(history):
 ```
 
 ### Results Comparison
+
 ```python
 # Compare multiple experiments
 def compare_experiments(results_dir):
@@ -155,7 +165,7 @@ def compare_experiments(results_dir):
         with open(config_file) as f:
             config = json.load(f)
             experiments.append(config)
-    
+
     df = pd.DataFrame(experiments)
     return df.sort_values('val_loss').head(10)
 ```
@@ -163,6 +173,7 @@ def compare_experiments(results_dir):
 ## 🧹 Cleanup and Maintenance
 
 ### Pre-commit Checklist
+
 - [ ] Clear all cell outputs
 - [ ] Remove temporary variables
 - [ ] Check for hardcoded paths
@@ -188,6 +199,7 @@ python scripts/cleanup_experiments.py --archive --all
 ```
 
 ### Output Management
+
 ```python
 # Clear notebook outputs before saving
 def clear_all_outputs():
@@ -198,13 +210,13 @@ def clear_all_outputs():
 def archive_results():
     important_files = [
         "best_config.json",
-        "final_model.pth", 
+        "final_model.pth",
         "training_plots.png"
     ]
-    
+
     archive_dir = Path("results_archive")
     archive_dir.mkdir(exist_ok=True)
-    
+
     for file in important_files:
         if Path(file).exists():
             shutil.copy2(file, archive_dir)
@@ -213,7 +225,7 @@ def archive_results():
 ### Storage Management Guidelines
 
 - **optimization_results/**: Keep < 500MB, archive older results
-- **ray_results/**: Keep < 1GB, clean up after experiments  
+- **ray_results/**: Keep < 1GB, clean up after experiments
 - **Notebook outputs**: Always clear before commits
 - **Python cache**: Clean regularly with cleanup script
 
@@ -222,13 +234,14 @@ See `docs/EXPERIMENT_OUTPUTS_MANAGEMENT.md` for detailed cleanup procedures.
 ## 🔄 Reproducibility
 
 ### Environment Setup
+
 ```python
 # Set random seeds
 def set_random_seeds(seed=42):
     import random
     import numpy as np
     import torch
-    
+
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -248,40 +261,45 @@ def log_environment():
 ```
 
 ### Configuration Versioning
+
 ```python
 # Version control for configurations
 def save_config_version(config, version="v1"):
     config_dir = Path("configs")
     config_dir.mkdir(exist_ok=True)
-    
+
     filename = f"experiment_config_{version}.json"
     with open(config_dir / filename, "w") as f:
         json.dump(config, f, indent=2)
-    
+
     print(f"Configuration saved as {filename}")
 ```
 
 ## 🚨 Common Pitfalls to Avoid
 
 ### Memory Issues
+
 - Don't accumulate large objects in loops
 - Clear variables after heavy computations
 - Use `del` and `gc.collect()` strategically
 - Monitor GPU memory usage
 
 ### Reproducibility Issues
+
 - Always set random seeds
 - Pin dependency versions
 - Document hardware specifications
 - Save model architectures with weights
 
 ### Performance Issues
+
 - Use appropriate batch sizes for your hardware
 - Implement early stopping
 - Profile code to identify bottlenecks
 - Use mixed precision training when appropriate
 
 ### Organization Issues
+
 - Don't mix exploration and production code
 - Keep notebooks focused on single objectives
 - Extract reusable code to modules
@@ -290,6 +308,7 @@ def save_config_version(config, version="v1"):
 ## 📈 Advanced Techniques
 
 ### Distributed Training Integration
+
 ```python
 # Ray Tune integration
 def distributed_training_function(config):
@@ -299,7 +318,7 @@ def distributed_training_function(config):
       for epoch in range(config["epochs"]):
         train_loss = train_epoch(model, train_loader)
         val_loss = validate_epoch(model, val_loader)
-        
+
         # Report to Ray Tune (Ray 2.0+ API)
         from ray import train
         train.report(
@@ -310,6 +329,7 @@ def distributed_training_function(config):
 ```
 
 ### Experiment Tracking
+
 ```python
 # Integration with experiment tracking tools
 import wandb  # or mlflow, tensorboard
@@ -320,7 +340,7 @@ def setup_experiment_tracking(config):
         config=config,
         name=f"experiment_{config['timestamp']}"
     )
-    
+
 def log_metrics(metrics, step):
     wandb.log(metrics, step=step)
 ```

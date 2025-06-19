@@ -1,9 +1,10 @@
 import pandas as pd
-import yaml
 import pytest
 import ray
+import yaml
 
 from src.data.pipeline import run_pipeline
+
 
 @pytest.fixture(autouse=True)
 def dummy_fetch(monkeypatch):

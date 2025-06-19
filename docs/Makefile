@@ -7,6 +7,9 @@ SPHINXBUILD  ?= sphinx-build
 SOURCEDIR    = .
 BUILDDIR     = _build
 
+# O is used as a shortcut for additional Sphinx options
+O ?=
+
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

@@ -1,8 +1,8 @@
 """Utilities for hyperparameter tuning with Ray Tune."""
 
-import yaml
 import ray
 from ray import tune
+import yaml
 
 from src.envs.trading_env import register_env
 
@@ -26,6 +26,7 @@ def _convert_value(value):
 def _load_search_space(path):
     with open(path) as f:
         cfg = yaml.safe_load(f) or {}
+
     def _recurse_convert(obj):
         if isinstance(obj, dict):
             return {k: _recurse_convert(_convert_value(v)) for k, v in obj.items()}
@@ -51,12 +52,14 @@ def run_tune(config_paths):
     for path in config_paths:
         loaded_space = _load_search_space(path)
         if not isinstance(loaded_space, dict):
-            raise ValueError(f"Expected a dict from _load_search_space, got {type(loaded_space).__name__}")
+            raise ValueError(
+                f"Expected a dict from _load_search_space, got {type(loaded_space).__name__}"
+            )
         search_space.update(loaded_space)
 
     algorithm = search_space.pop("algorithm", "PPO")
     env_cfg = search_space.pop("env_config", {})
-    
+
     search_space.setdefault("env", "TraderEnv")
 
     if not ray.is_initialized():
@@ -64,11 +67,11 @@ def run_tune(config_paths):
     register_env()
 
     analysis = tune.run(
-        algorithm, 
-        config=search_space, 
+        algorithm,
+        config=search_space,
         storage_path="tune",
         metric="episode_reward_mean",  # Add default metric for RL
-        mode="max"                     # Add default mode for RL
+        mode="max",  # Add default mode for RL
     )
     print("Tuning completed. Results are in 'tune' directory")
     ray.shutdown()

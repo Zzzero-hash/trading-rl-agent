@@ -15,6 +15,7 @@ python evaluate_agent.py --data path/to/market_data.csv \
 ```
 
 Arguments:
+
 - `--data` – CSV file containing the market data used for evaluation.
 - `--checkpoint` – File path to the saved agent parameters.
 - `--agent` – Type of agent to load (`sac`, `td3`, or `ensemble`).
@@ -33,7 +34,7 @@ An example output file `results/evaluation.json` looks like this:
 ```json
 {
   "sharpe_ratio": 1.25,
-  "sortino_ratio": 2.10,
+  "sortino_ratio": 2.1,
   "max_drawdown": 0.12,
   "profit_factor": 1.8,
   "win_rate": 0.55,

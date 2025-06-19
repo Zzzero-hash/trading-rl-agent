@@ -10,6 +10,7 @@ ready for future production use.
 from __future__ import annotations
 
 from typing import Any, Optional
+
 import numpy as np
 
 try:
@@ -19,14 +20,13 @@ except Exception:  # pragma: no cover - ray might not be installed
 
 from src.supervised_model import load_model, predict_features
 
-
 if serve:
 
     @serve.deployment
     class PredictorDeployment:
         """Load a trained ``TrendPredictor`` and return predictions."""
 
-        def __init__(self, model_path: Optional[str] = None):
+        def __init__(self, model_path: str | None = None):
             self.model_path = model_path
             self.model = None
             if model_path:
@@ -48,12 +48,11 @@ if serve:
                 pred = float(features.mean()) if features.size > 0 else 0.0
             return {"prediction": pred}
 
-
     @serve.deployment
     class PolicyDeployment:
         """RL policy that optionally queries ``PredictorDeployment``."""
 
-        def __init__(self, predictor_handle: Optional[Any] = None):
+        def __init__(self, predictor_handle: Any | None = None):
             self.predictor = predictor_handle
             self.action_space = 3  # hold/buy/sell
 
@@ -71,8 +70,7 @@ if serve:
             action = 1 if (obs.mean() + pred) > 0 else 0
             return {"action": int(action)}
 
-
-    def deployment_graph(model_path: Optional[str] = None):
+    def deployment_graph(model_path: str | None = None):
         """Return a Serve deployment graph for the predictor and policy."""
         predictor = PredictorDeployment.bind(model_path)
         policy = PolicyDeployment.bind(predictor)
@@ -83,7 +81,7 @@ else:  # pragma: no cover - serve not available
     class PredictorDeployment:  # type: ignore
         """Fallback predictor when Ray Serve is unavailable."""
 
-        def __init__(self, model_path: Optional[str] = None):
+        def __init__(self, model_path: str | None = None):
             self.model_path = model_path
             self.model = load_model(model_path) if model_path else None
 
@@ -99,7 +97,7 @@ else:  # pragma: no cover - serve not available
     class PolicyDeployment:  # type: ignore
         """Fallback policy implementation."""
 
-        def __init__(self, predictor_handle: Optional[Any] = None):
+        def __init__(self, predictor_handle: Any | None = None):
             self.predictor = predictor_handle
 
         async def __call__(self, request: Any) -> dict:
@@ -111,9 +109,10 @@ else:  # pragma: no cover - serve not available
             action = 1 if (obs.mean() + pred) > 0 else 0
             return {"action": int(action)}
 
-    def deployment_graph(model_path: Optional[str] = None):
+    def deployment_graph(model_path: str | None = None):
         predictor = PredictorDeployment(model_path)
         policy = PolicyDeployment(predictor)
         return {"predictor": predictor, "policy": policy}
+
 
 __all__ = ["PredictorDeployment", "PolicyDeployment", "deployment_graph"]

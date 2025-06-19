@@ -2,7 +2,7 @@
 
 This module provides clean, working implementations of:
 1. CNN-LSTM hyperparameter optimization
-2. RL agent hyperparameter optimization  
+2. RL agent hyperparameter optimization
 3. Model analysis and profiling utilities
 
 Example usage:
@@ -17,25 +17,26 @@ from .model_summary import (
     ModelSummarizer,
     profile_model_inference,
     detect_gpus,
-    optimal_gpu_config
+    optimal_gpu_config,
 )
 
 # Import RL optimization if available
 try:
     from .rl_optimization import optimize_sac_hyperparams
+
     __all__ = [
         "optimize_cnn_lstm",
-        "optimize_sac_hyperparams", 
+        "optimize_sac_hyperparams",
         "ModelSummarizer",
         "profile_model_inference",
         "detect_gpus",
-        "optimal_gpu_config"
+        "optimal_gpu_config",
     ]
 except ImportError:
     __all__ = [
         "optimize_cnn_lstm",
-        "ModelSummarizer", 
+        "ModelSummarizer",
         "profile_model_inference",
         "detect_gpus",
-        "optimal_gpu_config"
+        "optimal_gpu_config",
     ]

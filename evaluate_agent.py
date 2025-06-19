@@ -21,11 +21,11 @@ from pathlib import Path
 
 import numpy as np
 
-from src.envs.trading_env import TradingEnv
-from src.utils import metrics
+from src.agents.ensemble_agent import EnsembleAgent
 from src.agents.sac_agent import SACAgent
 from src.agents.td3_agent import TD3Agent
-from src.agents.ensemble_agent import EnsembleAgent
+from src.envs.trading_env import TradingEnv
+from src.utils import metrics
 
 
 def parse_args() -> argparse.Namespace:

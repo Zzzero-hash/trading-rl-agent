@@ -1,6 +1,6 @@
 # Trading RL Agent
 
-[![CI](https://github.com/yourusername/trading-rl-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/trading-rl-agent/actions/workflows/ci.yml)  [![Codecov](https://codecov.io/gh/yourusername/trading-rl-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/trading-rl-agent)
+[![CI](https://github.com/yourusername/trading-rl-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/trading-rl-agent/actions/workflows/ci.yml) [![Codecov](https://codecov.io/gh/yourusername/trading-rl-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/trading-rl-agent)
 
 A sophisticated reinforcement learning framework for algorithmic trading that combines deep learning models (CNN-LSTM) with reinforcement learning agents (SAC, custom TD3) for automated trading strategies.
 
@@ -13,8 +13,9 @@ A sophisticated reinforcement learning framework for algorithmic trading that co
 **All 367 Tests Passing! 🎉** | **Zero Technical Debt** | **Production Ready**
 
 **Current Achievement**: Clean, production-ready trading system featuring:
+
 - **Live data ingestion** with sentiment analysis integration
-- **CNN-LSTM hybrid models** for time-series prediction  
+- **CNN-LSTM hybrid models** for time-series prediction
 - **Deep RL ensemble training** (SAC for Ray RLlib, custom TD3 for local testing)
 - **Comprehensive testing** with robust error handling
 - **Production deployment** ready architecture
@@ -22,15 +23,17 @@ A sophisticated reinforcement learning framework for algorithmic trading that co
 - **✅ Repository cleanup** with organized structure and zero deprecated code
 
 ### 🏆 Current Stats
+
 - **Tests**: 367 tests, 100% passing (no failures, minimal skips)
 - **Model**: CNN-LSTM with 19,843 parameters
-- **Data**: 3,827 samples, 26 features, 3,817 sequences  
+- **Data**: 3,827 samples, 26 features, 3,817 sequences
 - **Agents**: Complete SAC (Ray RLlib) & TD3 (custom) implementations
 - **Pipeline**: End-to-end integration validated
 - **✅ Code Quality**: Zero deprecated files, clean imports, organized structure
 - **✅ Storage**: 625.8 MB experimental data properly organized
 
 ### ✅ REPOSITORY CLEANUP COMPLETE - Ready for Phase 3!
+
 **Date: June 15, 2025**
 
 **✅ FINAL ACHIEVEMENT**: Complete production-ready CNN-LSTM model with advanced optimization infrastructure:
@@ -44,8 +47,9 @@ A sophisticated reinforcement learning framework for algorithmic trading that co
 - **🆕 🔧 Advanced DevOps**: Professional experiment management, automated cleanup, and lifecycle management
 
 **Technical Implementation**:
+
 - **Notebook**: `cnn_lstm_hparam_clean.ipynb` - Complete production-grade optimization pipeline
-- **Ray Integration**: Intelligent resource allocation with distributed hyperparameter optimization  
+- **Ray Integration**: Intelligent resource allocation with distributed hyperparameter optimization
 - **Advanced Search**: ASHA scheduling + Optuna TPE for optimal hyperparameter discovery
 - **Monitoring**: Real-time metrics tracking, comprehensive visualization, and performance analysis
 - **🆕 Production Model**: Fully optimized model artifacts ready for deployment with preprocessing pipeline
@@ -86,6 +90,7 @@ pip install -r requirements.txt
 ```
 
 ### Docker
+
 ```bash
 # Build and run
 docker build -t trading-rl-agent .
@@ -129,11 +134,13 @@ python src/train_rl.py --agent td3
 ## Usage
 
 ### CNN-LSTM Training
+
 ```bash
 python src/train_cnn_lstm.py
 ```
 
 ### RL Agent Training
+
 ```bash
 # Train SAC agent (Ray RLlib - recommended for distributed training)
 python src/train_rl.py --agent sac --env trader_env
@@ -146,6 +153,7 @@ python src/train_rl.py --agent ensemble
 ```
 
 ### Evaluation
+
 After training, evaluate a saved agent checkpoint using `evaluate_agent.py`:
 
 ```bash
@@ -174,6 +182,7 @@ pytest tests/test_sac_agent.py -v       # SAC agent tests
 ## Advanced Features
 
 ### Experiment Management & Cleanup
+
 The project includes automated tools for managing ML experiment outputs:
 
 ```bash
@@ -192,14 +201,16 @@ chmod +x .git/hooks/pre-commit
 ```
 
 **What gets cleaned up:**
+
 - Old Ray Tune experiment directories (`ray_results/`)
-- Old optimization results (`optimization_results/hparam_opt_*/`)  
+- Old optimization results (`optimization_results/hparam_opt_*/`)
 - Python cache files (`__pycache__/`, `*.pyc`)
 - Jupyter notebook outputs (before commits)
 
 See `docs/EXPERIMENT_OUTPUTS_MANAGEMENT.md` for detailed cleanup procedures.
 
 ### Sentiment Analysis Integration (Hugging Face, Twitter, News)
+
 ```python
 from build_datasets import add_hf_sentiment, add_twitter_sentiment, add_news_sentiment, NEWS_FEEDS
 # Configure RSS/News feeds per symbol:
@@ -214,11 +225,12 @@ df = add_news_sentiment(df)
 ```
 
 ### Trading Environment
+
 ```python
 from src.envs.trading_env import TradingEnv
 
 env = TradingEnv({
-    "dataset_paths": ["data/sample_data.csv"], 
+    "dataset_paths": ["data/sample_data.csv"],
     "initial_balance": 10000
 })
 obs, _ = env.reset()
@@ -228,7 +240,7 @@ obs, _ = env.reset()
 
 - **CNN-LSTM**: Prediction accuracy > baseline (✅ functional)
 - **SAC/TD3**: Outperform baseline strategies
-- **Ensemble**: Reduce variance, increase return stability  
+- **Ensemble**: Reduce variance, increase return stability
 - **Backtesting**: Sharpe > 1.0, max drawdown < 15%
 - **Production**: API latency < 100ms, 99% uptime
 
@@ -246,6 +258,7 @@ obs, _ = env.reset()
 ## Documentation
 
 Comprehensive development guides are available in [`docs/`](docs/):
+
 - **[Notebook Best Practices](docs/NOTEBOOK_BEST_PRACTICES.md)**: Complete guide for ML development workflows
 - **[Experiment Management](docs/EXPERIMENT_OUTPUTS_MANAGEMENT.md)**: Automated cleanup and storage management
 - **[Scripts Documentation](scripts/README.md)**: Utility tools for experiment management

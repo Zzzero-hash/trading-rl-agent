@@ -18,9 +18,9 @@ configuration.
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Tuple
+import logging
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -37,14 +37,14 @@ logger = logging.getLogger(__name__)
 class PipelineConfig:
     """Configuration for feature generation."""
 
-    sma_windows: List[int] = field(default_factory=lambda: [5, 10])
-    momentum_windows: List[int] = field(default_factory=list)
+    sma_windows: list[int] = field(default_factory=lambda: [5, 10])
+    momentum_windows: list[int] = field(default_factory=list)
     rsi_window: int = 14
     vol_window: int = 20
     use_ray: bool = False
 
 
-def load_data(source_cfg: Dict[str, Any]) -> pd.DataFrame:
+def load_data(source_cfg: dict[str, Any]) -> pd.DataFrame:
     """Load market data from a CSV file or database.
 
     Parameters
@@ -82,6 +82,7 @@ def load_data(source_cfg: Dict[str, Any]) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Feature computations
 # ---------------------------------------------------------------------------
+
 
 def compute_log_returns(df: pd.DataFrame) -> pd.DataFrame:
     """Add log returns column ``log_return``.
@@ -174,7 +175,7 @@ def generate_features(df: pd.DataFrame, cfg: PipelineConfig) -> pd.DataFrame:
 
 def split_by_date(
     df: pd.DataFrame, train_end: str, val_end: str
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Split dataframe into train/validation/test by date.
 
     Parameters
@@ -199,7 +200,11 @@ def split_by_date(
     val = df[(df["timestamp"] >= train_end_ts) & (df["timestamp"] < val_end_ts)]
     test = df[df["timestamp"] >= val_end_ts]
 
-    return train.reset_index(drop=True), val.reset_index(drop=True), test.reset_index(drop=True)
+    return (
+        train.reset_index(drop=True),
+        val.reset_index(drop=True),
+        test.reset_index(drop=True),
+    )
 
 
 __all__ = [

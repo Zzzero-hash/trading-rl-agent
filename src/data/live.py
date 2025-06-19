@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import pandas as pd
+
 try:
     import yfinance as yf
 except ModuleNotFoundError:  # Allow import when yfinance not installed
     yf = None
 
 
-def fetch_live_data(symbol: str, start: str, end: str, timestep: str = "day") -> pd.DataFrame:
+def fetch_live_data(
+    symbol: str, start: str, end: str, timestep: str = "day"
+) -> pd.DataFrame:
     """Fetch live OHLCV data via ``yfinance``.
 
     Parameters
@@ -39,7 +42,9 @@ def fetch_live_data(symbol: str, start: str, end: str, timestep: str = "day") ->
 
     df = yf.Ticker(symbol).history(start=start, end=end, interval=interval)
     if df.empty:
-        return pd.DataFrame(columns=["timestamp", "open", "high", "low", "close", "volume"])
+        return pd.DataFrame(
+            columns=["timestamp", "open", "high", "low", "close", "volume"]
+        )
 
     df = df[["Open", "High", "Low", "Close", "Volume"]].copy()
     df.columns = ["open", "high", "low", "close", "volume"]

@@ -9,6 +9,7 @@ This document provides a comprehensive overview of the advanced dataset generati
 ### 1. Real Market Data Collection
 
 **Sources:**
+
 - **Stocks:** 10 major US stocks (AAPL, GOOGL, MSFT, AMZN, TSLA, META, NVDA, JPM, BAC, XOM)
 - **Forex:** 7 major USD pairs (EUR/USD, GBP/USD, USD/JPY, USD/CHF, USD/CAD, AUD/USD, NZD/USD)
 - **Cryptocurrency:** 2 major crypto pairs (BTC/USD, ETH/USD)
@@ -21,6 +22,7 @@ This document provides a comprehensive overview of the advanced dataset generati
 
 **Method:** Geometric Brownian Motion (GBM) with realistic market parameters
 **Parameters:**
+
 - Drift (μ): 0.0002 (daily)
 - Volatility (σ): 0.01 (daily)
 - Initial prices: Random between $50-$200
@@ -34,6 +36,7 @@ This document provides a comprehensive overview of the advanced dataset generati
 The feature engineering pipeline applies 78 advanced features using the existing `src.data.features.generate_features` infrastructure:
 
 #### Technical Indicators (42 features)
+
 - **Moving Averages:** SMA 5, 10, 20, 50
 - **Momentum:** RSI (14-period), MACD (12, 26, 9)
 - **Volatility:** Rolling volatility (20-period), ATR (14-period), Bollinger Bands
@@ -41,24 +44,29 @@ The feature engineering pipeline applies 78 advanced features using the existing
 - **Oscillators:** Stochastic (14, 3, 3), Williams %R (14), ADX (14)
 
 #### Price Action Features (15 features)
+
 - **OHLC-based:** Open, High, Low, Close, Volume
 - **Derived:** Price change %, High-Low %, Body size, Shadows
 - **Log returns:** Natural logarithm of price changes
 
 #### Candlestick Patterns (12 features)
+
 - **Reversal patterns:** Doji, Hammer, Shooting Star, Engulfing
 - **Continuation patterns:** Morning Star, Evening Star
 - **Pattern recognition:** Automated detection with configurable thresholds
 
 #### Temporal Features (4 features)
+
 - **Time-based:** Hour of day, Day of week, Month, Quarter
 - **Market timing:** Helps capture intraday and seasonal patterns
 
 #### Sentiment Features (2 features)
+
 - **News sentiment:** Scraped from Yahoo Finance (with rate limiting fallback)
 - **Sentiment magnitude:** Absolute sentiment strength
 
 #### Volume Analysis (3 features)
+
 - **Volume trends:** 20-period moving average, volume ratios
 - **Volume momentum:** Volume change percentages
 
@@ -66,15 +74,18 @@ The feature engineering pipeline applies 78 advanced features using the existing
 
 **Strategy:** Forward-looking profit optimization
 **Parameters:**
+
 - Forward periods: 5 (look ahead 5 time steps)
 - Profit threshold: 2% (minimum profit to trigger action)
 
 **Target Classes:**
+
 - **0 (Hold):** 42.0% - No significant profit opportunity
 - **1 (Buy):** 31.6% - Buy signal when future upward movement > 2%
 - **2 (Sell):** 26.4% - Sell signal when future downward movement > 2%
 
 **Target Logic:**
+
 ```python
 buy_profit = (max_future_price - current_price) / current_price
 sell_profit = (current_price - min_future_price) / current_price
@@ -90,6 +101,7 @@ else:
 ## Dataset Statistics
 
 ### Final Dataset Characteristics
+
 - **Total Records:** 31,625 samples
 - **Features:** 78 (all numeric for RL compatibility)
 - **Target:** 1 (3-class classification)
@@ -98,17 +110,20 @@ else:
 - **Date Range:** February 20, 2020 to June 14, 2025
 
 ### Data Quality Metrics
+
 - **Missing Values:** 0 (all NaN values filled with median imputation)
 - **Duplicate Rows:** 0
 - **Outliers:** Handled through robust feature engineering
 - **Data Types:** All features are numeric (float32) for RL training
 
 ### Symbol Distribution
+
 - **Real Market Data:** 19 symbols across stocks, forex, and crypto
 - **Synthetic Data:** 5 generated symbols
 - **Total Symbols:** 24
 
 ### Target Distribution (Well-Balanced)
+
 - **Hold (0):** 13,271 samples (42.0%)
 - **Buy (1):** 10,007 samples (31.6%)
 - **Sell (2):** 8,347 samples (26.4%)
@@ -118,24 +133,28 @@ else:
 ### Compatibility Standards
 
 #### Live Data Integration
+
 - **Feature Pipeline:** Uses `src.data.features.generate_features` for consistency
 - **Data Schema:** Maintains OHLCV + timestamp structure
 - **Real-time Ready:** All features can be computed incrementally
 - **Sentiment Integration:** Designed for real-time sentiment feeds
 
 #### Training Environment Compatibility
+
 - **TraderEnv Integration:** ✅ Fully compatible with existing training environment
 - **Observation Space:** (10, 79) - 10 time steps × 79 features
 - **Action Space:** Discrete(3) - Hold, Buy, Sell
 - **Data Type:** float32 for optimal memory usage and training speed
 
 #### Production Readiness
+
 - **Error Handling:** Robust error handling for missing data and API failures
 - **Scalability:** Modular design for easy addition of new symbols/features
 - **Configuration:** JSON-based configuration for easy parameter tuning
 - **Monitoring:** Comprehensive logging and progress tracking
 
 ### File Structure
+
 ```
 data/
 ├── sample_data.csv                           # Training-ready dataset (31.8 MB)
@@ -145,6 +164,7 @@ data/
 ```
 
 ### Metadata Schema
+
 ```json
 {
   "dataset_version": "20250615_191819",
@@ -168,6 +188,7 @@ data/
 ## Usage Instructions
 
 ### Training the Model
+
 ```python
 from src.envs.trader_env import TraderEnv
 
@@ -180,6 +201,7 @@ env = TraderEnv(['data/sample_data.csv'], window_size=10, initial_balance=10000)
 ```
 
 ### Live Data Integration
+
 ```python
 from src.data.features import generate_features
 from src.data.live import fetch_live_data
@@ -201,6 +223,7 @@ enhanced_live_data = generate_features(
 ```
 
 ### Extending the Dataset
+
 ```python
 from build_production_dataset import AdvancedDatasetBuilder
 
@@ -221,6 +244,7 @@ file_paths = builder.build_dataset()
 ## Performance Validation
 
 ### Training Environment Tests
+
 - ✅ **Environment Creation:** TraderEnv successfully created
 - ✅ **Observation Space:** Correct shape (10, 79)
 - ✅ **Action Space:** Correct discrete(3) space
@@ -229,6 +253,7 @@ file_paths = builder.build_dataset()
 - ✅ **Reward System:** Generates meaningful rewards (avg: 1.0379)
 
 ### Data Quality Tests
+
 - ✅ **Completeness:** 0.00% missing data
 - ✅ **Consistency:** All required OHLCV columns present
 - ✅ **Type Safety:** All features are numeric (float32)
@@ -236,6 +261,7 @@ file_paths = builder.build_dataset()
 - ✅ **Uniqueness:** No duplicate rows
 
 ### Live Data Compatibility
+
 - ✅ **Schema Consistency:** Same feature engineering pipeline
 - ✅ **Real-time Processing:** All features computable incrementally
 - ✅ **API Integration:** Compatible with existing data providers
@@ -244,19 +270,23 @@ file_paths = builder.build_dataset()
 ## Advanced Features
 
 ### Synthetic Data Quality
+
 The GBM-generated synthetic data provides:
+
 - **Realistic volatility clustering**
 - **Mean-reverting behavior**
 - **Diverse market scenarios**
 - **Edge case coverage**
 
 ### Feature Engineering Innovations
+
 - **Multi-timeframe analysis:** Features from multiple time horizons
 - **Pattern recognition:** Automated candlestick pattern detection
 - **Sentiment integration:** Real-time news sentiment analysis
 - **Volume analysis:** Advanced volume-based indicators
 
 ### Production Optimizations
+
 - **Memory efficiency:** Optimized data types and storage
 - **Processing speed:** Vectorized computations using pandas/numpy
 - **Scalability:** Parallel processing for multiple symbols
@@ -275,6 +305,7 @@ The advanced dataset generation pipeline successfully creates a comprehensive, p
 The dataset is immediately ready for training the RL agent and can seamlessly integrate with live data feeds for production deployment.
 
 **Next Steps:**
+
 1. Train your RL agent using the generated `data/sample_data.csv`
 2. Implement live data integration using the documented patterns
 3. Monitor performance and iterate on feature engineering as needed
