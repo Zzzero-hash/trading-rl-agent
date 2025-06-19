@@ -30,6 +30,10 @@ This directory contains comprehensive documentation for the Trading RL Agent pro
 **High level architecture and RL agent interactions**
 - Data pipeline, `TradingEnv`, SAC/TD3, and ensemble overview
 
+#### [`EVALUATION_GUIDE.md`](EVALUATION_GUIDE.md)
+**How to evaluate trained agents and interpret metrics**
+
+
 ## 🎯 Quick Navigation
 
 ### For New Developers
