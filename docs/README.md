@@ -23,7 +23,12 @@ This directory contains comprehensive documentation for the Trading RL Agent pro
 - Storage management and monitoring
 - VS Code integration and settings
 - Emergency cleanup procedures
+
 - Git integration and pre-commit hooks
+
+#### [`ARCHITECTURE_OVERVIEW.md`](ARCHITECTURE_OVERVIEW.md)
+**High level architecture and RL agent interactions**
+- Data pipeline, `TradingEnv`, SAC/TD3, and ensemble overview
 
 ## 🎯 Quick Navigation
 
