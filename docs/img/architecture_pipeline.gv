@@ -1,0 +1,14 @@
+digraph G {
+  rankdir=LR;
+  DataIngestion [label="Data Ingestion\n(build_datasets.py)"];
+  FeatureEngineering [label="Feature Engineering\n(src/data/features.py)"];
+  TradingEnv [label="TradingEnv\n(src/envs/trading_env.py)"];
+  SAC [label="SAC Agent\n(src/agents/sac_agent.py)"];
+  TD3 [label="TD3 Agent\n(src/agents/td3_agent.py)"];
+  Ensemble [label="Ensemble Agent\n(src/agents/ensemble_agent.py)"];
+  DataIngestion -> FeatureEngineering -> TradingEnv;
+  TradingEnv -> SAC;
+  TradingEnv -> TD3;
+  SAC -> Ensemble;
+  TD3 -> Ensemble;
+}
