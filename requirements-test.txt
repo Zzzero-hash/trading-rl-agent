@@ -1,0 +1,33 @@
+# Testing Requirements for Comprehensive Coverage
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.0  # Parallel testing
+pytest-timeout>=2.1.0
+pytest-mock>=3.11.0
+pytest-asyncio>=0.21.0
+pytest-benchmark>=4.0.0
+pytest-html>=3.2.0  # HTML reports
+pytest-json-report>=1.5.0  # JSON reports for CI
+coverage>=7.3.0
+coverage[toml]>=7.3.0
+
+# Testing utilities
+factory-boy>=3.3.0  # Test data factories
+faker>=19.0.0  # Fake data generation
+responses>=0.23.0  # HTTP mocking
+freezegun>=1.2.0  # Time mocking
+testfixtures>=7.2.0  # Test fixtures
+
+# Performance testing
+memory-profiler>=0.61.0
+psutil>=5.9.0
+
+# Linting and formatting for tests
+flake8>=6.0.0
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.5.0
+
+# Additional testing dependencies
+parameterized>=0.9.0  # Parameterized tests
+hypothesis>=6.82.0  # Property-based testing
