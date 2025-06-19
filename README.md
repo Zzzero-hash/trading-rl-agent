@@ -145,6 +145,18 @@ python src/train_rl.py --agent td3
 python src/train_rl.py --agent ensemble
 ```
 
+### Evaluation
+After training, evaluate a saved agent checkpoint using `evaluate_agent.py`:
+
+```bash
+python evaluate_agent.py --data data/sample_data.csv \
+    --checkpoint checkpoints/agent.pth --agent sac \
+    --output results/evaluation.json
+```
+
+The resulting metrics JSON is described in
+[`docs/EVALUATION_GUIDE.md`](docs/EVALUATION_GUIDE.md).
+
 ## Testing
 
 **All 321 tests passing! ✅**
