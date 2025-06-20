@@ -3,10 +3,9 @@ pytest configuration and fixtures for test data management.
 """
 
 import logging
-
+import pytest
 import pandas as pd
-import logging
-from tests.test_data_utils import TestDataManager, get_dynamic_test_config
+from tests.test_data_utils import DynamicTestDataManager, get_dynamic_test_config
 
 # Import legacy function for backward compatibility
 try:
@@ -63,7 +62,7 @@ def test_dataset():
     """Provide a test dataset for individual tests."""
     global _test_manager
     if _test_manager is None:
-        _test_manager = TestDataManager()
+        _test_manager = DynamicTestDataManager()
     
     required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     dataset_path = _test_manager.get_or_create_test_dataset(required_columns)
