@@ -206,7 +206,7 @@ def get_dynamic_test_config(
 ) -> dict[str, Any]:
     """Get test configuration with dynamically discovered or generated dataset."""
     
-    manager = TestDataManager()
+    manager = DynamicTestDataManager()
     # Required columns for trading environment
     required_columns = ["timestamp", "open", "high", "low", "close", "volume"]
     dataset_path = manager.get_or_create_test_dataset(required_columns)

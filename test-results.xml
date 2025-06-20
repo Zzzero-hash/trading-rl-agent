@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="21.634" timestamp="2025-06-20T14:03:21.216441+00:00" hostname="794e742f6e4a"><testcase classname="" name="tests.test_comprehensive_data_preprocessing" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/test_comprehensive_data_preprocessing.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_comprehensive_data_preprocessing.py:30: in &lt;module&gt;
+    from src.data.preprocessing import create_sequences, standardize_data
+E   ModuleNotFoundError: No module named 'src.data.preprocessing'</error></testcase></testsuite></testsuites>
