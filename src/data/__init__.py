@@ -14,8 +14,8 @@ from .forex_sentiment import ForexSentimentData
 # Update imports as modules are implemented
 
 __all__ = [
-    'SentimentAnalyzer',
-    'SentimentData', 
-    'SentimentConfig',
-    'ForexSentimentData'
+    "SentimentAnalyzer",
+    "SentimentData",
+    "SentimentConfig",
+    "ForexSentimentData",
 ]

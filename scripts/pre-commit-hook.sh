@@ -9,7 +9,7 @@ notebooks=$(find . -name "*.ipynb" -not -path "./.git/*" -not -path "./.ipynb_ch
 
 if [ ! -z "$notebooks" ]; then
     echo "📓 Clearing notebook outputs..."
-    
+
     # Try to clear notebook outputs using nbconvert
     if command -v jupyter &> /dev/null; then
         echo "$notebooks" | xargs jupyter nbconvert --clear-output --inplace 2>/dev/null || {

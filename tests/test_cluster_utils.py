@@ -1,7 +1,8 @@
-import ray
 import types
 
-from src.utils.cluster import init_ray, get_available_devices
+import ray
+
+from src.utils.cluster import get_available_devices, init_ray
 
 
 def test_get_available_devices(monkeypatch):

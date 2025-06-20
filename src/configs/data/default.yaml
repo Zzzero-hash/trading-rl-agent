@@ -3,7 +3,7 @@
 # Time range for data fetching
 start: 2021-01-01
 end: 2021-12-31
-timestep: day  # day, hour or minute
+timestep: day # day, hour or minute
 
 # Coinbase perpetual futures symbols for historical data
 coinbase_perp_symbols:
@@ -26,9 +26,9 @@ live_symbols:
   - EUR_USD
 
 # Feature generation options
-generate_features: true        # Compute technical indicators
-advanced_candles: true         # Include advanced candlestick patterns
+generate_features: true # Compute technical indicators
+advanced_candles: true # Include advanced candlestick patterns
 
 # Output settings
-to_csv: true                   # Write datasets to CSV
-output_dir: data/raw           # Directory where CSV files are stored
+to_csv: true # Write datasets to CSV
+output_dir: data/raw # Directory where CSV files are stored

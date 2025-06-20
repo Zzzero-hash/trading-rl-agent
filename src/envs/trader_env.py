@@ -2,12 +2,15 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 
+
 class TraderEnv(gym.Env):
     """Simple trading environment for demonstration purposes."""
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, data_paths, initial_balance=10000, window_size=50, transaction_cost=0.001):
+    def __init__(
+        self, data_paths, initial_balance=10000, window_size=50, transaction_cost=0.001
+    ):
         super().__init__()
         if isinstance(data_paths, str):
             data_paths = [data_paths]
@@ -70,7 +73,11 @@ class TraderEnv(gym.Env):
         price_diff = current_price - prev_price
         reward = float(self.position * price_diff - cost)
         self.balance += reward
-        obs = self._get_observation() if not done else np.zeros_like(self.observation_space.sample())
+        obs = (
+            self._get_observation()
+            if not done
+            else np.zeros_like(self.observation_space.sample())
+        )
         info = {"balance": self.balance}
         return obs, reward, done, False, info
 
@@ -80,7 +87,9 @@ class TraderEnv(gym.Env):
             f"Position: {self.position}, Balance: {self.balance}"
         )
 
+
 # Registration -------------------------------------------------------------
+
 
 def env_creator(env_cfg):
     data_paths = env_cfg.get("dataset_paths", [])
@@ -94,4 +103,5 @@ def env_creator(env_cfg):
 
 def register_env():
     from ray.tune.registry import register_env as ray_register_env
+
     ray_register_env("TraderEnv", env_creator)

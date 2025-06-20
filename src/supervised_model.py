@@ -19,9 +19,10 @@ search (see the ``tune_example`` function at the bottom of this file).
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+from dataclasses import asdict, dataclass, field
 import logging
-from dataclasses import dataclass, field, asdict
-from typing import Iterable, Tuple, Dict, List, Any
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import ray
@@ -82,14 +83,16 @@ class TrendPredictor(nn.Module):
         if len(filters) != len(kernels):
             raise ValueError("cnn_filters and cnn_kernel_sizes must have same length")
 
-        layers: List[nn.Module] = []
+        layers: list[nn.Module] = []
         in_ch = input_dim
         for out_ch, k in zip(filters, kernels):
             layers.append(nn.Conv1d(in_ch, out_ch, kernel_size=k))
             layers.append(nn.ReLU())
             in_ch = out_ch
         self.conv = nn.Sequential(*layers)
-        self.lstm = nn.LSTM(input_size=in_ch, hidden_size=cfg.lstm_units, batch_first=True)
+        self.lstm = nn.LSTM(
+            input_size=in_ch, hidden_size=cfg.lstm_units, batch_first=True
+        )
         self.dropout = nn.Dropout(cfg.dropout)
         self.fc = nn.Linear(cfg.lstm_units, cfg.output_size)
 
@@ -113,11 +116,14 @@ class TrendPredictor(nn.Module):
         return out
 
 
-def _split_data(x: torch.Tensor, y: torch.Tensor, val_split: float) -> Tuple[Tuple[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]:
+def _split_data(
+    x: torch.Tensor, y: torch.Tensor, val_split: float
+) -> tuple[tuple[torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
     """Split tensors into train and validation sets chronologically."""
     n = x.shape[0]
     split = int(n * (1 - val_split))
     return (x[:split], y[:split]), (x[split:], y[split:])
+
 
 @ray.remote(num_gpus=1, num_cpus=4)
 def train_supervised(
@@ -125,7 +131,7 @@ def train_supervised(
     targets: Any,
     model_cfg: ModelConfig | None = None,
     train_cfg: TrainingConfig | None = None,
-) -> Tuple[TrendPredictor, Dict[str, List[float]]]:
+) -> tuple[TrendPredictor, dict[str, list[float]]]:
     """Train ``TrendPredictor`` on provided data.
 
     Parameters
@@ -217,16 +223,26 @@ def train_supervised(
                     correct += (predicted == yb).all(dim=1).sum().item()
                     total_samples += xb.size(0)
         if len(y_val) == 0:
-            logger.warning("Validation set is empty. Skipping validation for this epoch.")
+            logger.warning(
+                "Validation set is empty. Skipping validation for this epoch."
+            )
             continue
         val_loss /= len(y_val)
         history["val_loss"].append(val_loss)
         if m_cfg.task == "classification":
             acc = correct / max(1, total_samples)
             history["val_acc"].append(acc)
-            logger.info("Epoch %d: train_loss=%.4f val_loss=%.4f val_acc=%.3f", epoch + 1, avg_loss, val_loss, acc)
+            logger.info(
+                "Epoch %d: train_loss=%.4f val_loss=%.4f val_acc=%.3f",
+                epoch + 1,
+                avg_loss,
+                val_loss,
+                acc,
+            )
         else:
-            logger.info("Epoch %d: train_loss=%.4f val_loss=%.4f", epoch + 1, avg_loss, val_loss)
+            logger.info(
+                "Epoch %d: train_loss=%.4f val_loss=%.4f", epoch + 1, avg_loss, val_loss
+            )
 
     # Move model to CPU before returning to avoid CUDA serialization issues
     model = model.cpu()
@@ -238,8 +254,10 @@ def train_supervised_local(
     targets: Any,
     model_cfg: ModelConfig | None = None,
     train_cfg: TrainingConfig | None = None,
-) -> Tuple[TrendPredictor, Dict[str, List[float]]]:
-    raise NotImplementedError("train_supervised_local has been removed. Use train_supervised (Ray) instead.")
+) -> tuple[TrendPredictor, dict[str, list[float]]]:
+    raise NotImplementedError(
+        "train_supervised_local has been removed. Use train_supervised (Ray) instead."
+    )
 
 
 def tune_example():
@@ -289,7 +307,7 @@ def evaluate_model(
     model_or_path: TrendPredictor | str,
     features: Any,
     targets: Any,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Evaluate a trained model on ``features`` and ``targets``."""
     if features is None or len(features) == 0:
         raise ValueError("Features cannot be empty")
@@ -329,7 +347,9 @@ def predict_features(
 ) -> torch.Tensor:
     """Return model prediction for ``recent_data``."""
     if callable(recent_data):
-        raise ValueError("recent_data must be an array or tensor, not a function or method")
+        raise ValueError(
+            "recent_data must be an array or tensor, not a function or method"
+        )
     if isinstance(model_or_path, (str, bytes)):
         model = load_model(model_or_path, device)
     else:

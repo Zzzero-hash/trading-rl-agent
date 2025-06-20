@@ -1,10 +1,10 @@
 import os
-import sys
 from pathlib import Path
+import sys
+
+import gymnasium as gym
 import numpy as np
 import pandas as pd
-import gymnasium as gym
-
 import pytest
 
 # Patch gym before importing the environment module
@@ -17,29 +17,38 @@ from ray.tune.registry import register_env
 pytestmark = pytest.mark.integration
 from src.envs.trading_env import env_creator
 
+
 class FlattenWrapper(gym.ObservationWrapper):
     """Flatten observations so RLlib can handle 2D arrays."""
+
     def __init__(self, env):
         super().__init__(env)
         shape = int(np.prod(env.observation_space.shape))
-        self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=(shape,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(
+            -np.inf, np.inf, shape=(shape,), dtype=np.float32
+        )
+
     def observation(self, obs):
         return np.asarray(obs, dtype=np.float32).flatten()
 
+
 def register_flat_env():
     register_env("FlatTraderEnv", lambda cfg: FlattenWrapper(env_creator(cfg)))
+
 
 def test_ray_trainer_checkpoint(tmp_path):
     # Ensure previous Ray state is cleared to avoid reinit errors
     ray.shutdown()
     sys.modules["gym"] = gym  # trader_env expects gym
-    df = pd.DataFrame({
-        "open": [1.0] * 60,
-        "high": [1.0] * 60,
-        "low": [1.0] * 60,
-        "close": [1.0] * 60,
-        "volume": [1.0] * 60,
-    })
+    df = pd.DataFrame(
+        {
+            "open": [1.0] * 60,
+            "high": [1.0] * 60,
+            "low": [1.0] * 60,
+            "close": [1.0] * 60,
+            "volume": [1.0] * 60,
+        }
+    )
     csv_path = tmp_path / "data.csv"
     df.to_csv(csv_path, index=False)
 
@@ -47,7 +56,10 @@ def test_ray_trainer_checkpoint(tmp_path):
     ray.init(log_to_driver=False)
     config = (
         PPOConfig()
-        .environment("FlatTraderEnv", env_config={"dataset_paths": [str(csv_path)], "window_size": 10})
+        .environment(
+            "FlatTraderEnv",
+            env_config={"dataset_paths": [str(csv_path)], "window_size": 10},
+        )
         .env_runners(num_env_runners=0)
         .framework("torch")
     )

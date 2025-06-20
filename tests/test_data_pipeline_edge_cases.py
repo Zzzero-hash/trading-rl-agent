@@ -1,10 +1,13 @@
 # tests/test_data_pipeline_edge_cases.py
-import yaml
-import pytest
-import pandas as pd
-import ray
 from pathlib import Path
+
+import pandas as pd
+import pytest
+import ray
+import yaml
+
 from src.data.pipeline import run_pipeline
+
 
 @pytest.fixture(autouse=True)
 def dummy_fetch(monkeypatch):
@@ -86,7 +89,13 @@ def test_to_csv_creates_files(tmp_path, dummy_fetch):
 
     # Read back and verify contents
     df_csv = pd.read_csv(csv_file, index_col=0)
-    assert list(df_csv.columns) == ["open", "high", "low", "close", "volume"], "CSV columns mismatch"
+    assert list(df_csv.columns) == [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    ], "CSV columns mismatch"
     pd.testing.assert_frame_equal(df_csv, dummy_fetch)
 
 

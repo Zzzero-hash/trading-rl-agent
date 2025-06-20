@@ -3,24 +3,24 @@ data:
     path: data/sample_data.csv
     type: csv
   symbols:
-  - AAPL
-  - GOOGL  
-  - TSLA
+    - AAPL
+    - GOOGL
+    - TSLA
 training:
   batch_size: 64
   epochs: 30
-  include_sentiment: false  # Disable to avoid rate limiting
-  learning_rate: 0.0005     # Optimized learning rate
+  include_sentiment: false # Disable to avoid rate limiting
+  learning_rate: 0.0005 # Optimized learning rate
   model_config:
     cnn_filters:
-    - 32
-    - 64
+      - 32
+      - 64
     cnn_kernel_sizes:
-    - 3
-    - 5
-    dropout: 0.3           # Higher dropout to reduce overfitting
-    lstm_units: 128        # Optimized LSTM units
+      - 3
+      - 5
+    dropout: 0.3 # Higher dropout to reduce overfitting
+    lstm_units: 128 # Optimized LSTM units
   prediction_horizon: 1
-  sequence_length: 30      # Shorter sequences for better performance
+  sequence_length: 30 # Shorter sequences for better performance
   use_attention: true
-  early_stopping_patience: 10  # Early stopping
+  early_stopping_patience: 10 # Early stopping

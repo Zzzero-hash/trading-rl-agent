@@ -7,12 +7,15 @@
 ## Migration Summary
 
 ### What Changed
+
 - **Ray RLlib Integration**: All `optimize_td3_hyperparams()` calls now automatically redirect to `optimize_sac_hyperparams()`
 - **Primary Algorithm**: SAC is now the recommended algorithm for continuous control tasks
 - **Custom Implementation**: TD3 remains available as a custom implementation for local testing and development
 
 ### Why SAC?
+
 SAC (Soft Actor-Critic) is an excellent replacement for TD3 because:
+
 1. **Entropy Regularization**: Encourages exploration and prevents premature convergence
 2. **Sample Efficiency**: Generally more sample-efficient than TD3
 3. **Stability**: More robust to hyperparameter choices
@@ -21,6 +24,7 @@ SAC (Soft Actor-Critic) is an excellent replacement for TD3 because:
 ## Code Changes Required
 
 ### 1. Import Updates
+
 ```python
 # OLD (TD3 - no longer works)
 from ray.rllib.algorithms.td3 import TD3Config
@@ -30,6 +34,7 @@ from ray.rllib.algorithms.sac import SACConfig
 ```
 
 ### 2. Algorithm Configuration
+
 ```python
 # OLD (TD3)
 config = TD3Config()
@@ -54,6 +59,7 @@ config.training(
 ```
 
 ### 3. Hyperparameter Optimization
+
 ```python
 # OLD (TD3 - deprecated)
 from src.optimization.rl_optimization import optimize_td3_hyperparams
@@ -67,12 +73,14 @@ results = optimize_sac_hyperparams(env_config, num_samples=20)
 ## Custom TD3 Implementation
 
 While TD3 is no longer available in Ray RLlib, this project maintains a **custom TD3 implementation** for:
+
 - Local development and testing
 - Educational purposes
 - Comparison with SAC performance
 - Environments where Ray RLlib is not required
 
 ### Usage of Custom TD3
+
 ```python
 from src.agents.td3_agent import TD3Agent
 from src.agents.configs import TD3Config
@@ -104,21 +112,23 @@ agent = TD3Agent(config, state_dim=10, action_dim=3)
 ## Best Practices
 
 ### For New Development
+
 1. **Use SAC** for Ray RLlib integration and distributed training
 2. **Use custom TD3** only for local experiments or specific research needs
 3. **Follow SAC hyperparameters** in the updated configuration files
 
 ### For Existing Code
+
 1. **Replace TD3 imports** with SAC imports for Ray RLlib code
 2. **Update configuration files** to use SAC-specific parameters
 3. **Test thoroughly** as SAC may have different convergence characteristics
 
 ## Performance Considerations
 
-| Algorithm | Sample Efficiency | Stability | Ray RLlib Support | Use Case |
-|-----------|------------------|-----------|-------------------|-----------|
-| **SAC** | High | High | ✅ Full Support | **Production, Ray RLlib** |
-| **TD3 (Custom)** | Medium | High | ❌ Not Available | Local development only |
+| Algorithm        | Sample Efficiency | Stability | Ray RLlib Support | Use Case                  |
+| ---------------- | ----------------- | --------- | ----------------- | ------------------------- |
+| **SAC**          | High              | High      | ✅ Full Support   | **Production, Ray RLlib** |
+| **TD3 (Custom)** | Medium            | High      | ❌ Not Available  | Local development only    |
 
 ## Migration Checklist
 

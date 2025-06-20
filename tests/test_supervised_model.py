@@ -1,26 +1,27 @@
-import numpy as np
-import torch
-import pytest
 import logging
+
+import numpy as np
+import pytest
 import ray
+import torch
 
 from src.supervised_model import (
-    TrendPredictor,
     ModelConfig,
     TrainingConfig,
-    train_supervised,  # Use Ray remote version
-    save_model,
-    load_model,
+    TrendPredictor,
     evaluate_model,
+    load_model,
     predict_features,
+    save_model,
     select_best_model,
 )
+from src.supervised_model import train_supervised  # Use Ray remote version
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
 
 # Ensure Ray is initialized for all tests
 @pytest.fixture(scope="session", autouse=True)
@@ -30,6 +31,7 @@ def _init_ray():
     yield
     if ray.is_initialized():
         ray.shutdown()
+
 
 def test_model_output_shape():
     cfg = ModelConfig(cnn_filters=[4], cnn_kernel_sizes=[2], lstm_units=8)
@@ -52,11 +54,15 @@ def test_training_step_reduces_loss():
     y = x.sum(axis=1).reshape(-1, 1)
 
     # Define model and training configurations
-    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
-    train_cfg = TrainingConfig(epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2)    
+    model_cfg = ModelConfig(
+        task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4
+    )
+    train_cfg = TrainingConfig(
+        epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2
+    )
     logging.info("Model and training configuration initialized.")
 
-    obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg) # type: ignore
+    obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
     model, history = ray.get(obj_ref)
 
     logging.info("Training completed. Checking loss reduction...")
@@ -65,7 +71,9 @@ def test_training_step_reduces_loss():
     initial_loss = history["train_loss"][0]
     final_loss = history["train_loss"][-1]
     assert final_loss < initial_loss, "Final loss should be smaller than initial loss."
-    assert (initial_loss - final_loss) > 0.01, "Improvement in loss should be significant."
+    assert (
+        initial_loss - final_loss
+    ) > 0.01, "Improvement in loss should be significant."
 
     # Ensure configuration parameters were respected
     assert list(model.config.cnn_filters) == list(model_cfg.cnn_filters)
@@ -79,9 +87,11 @@ def test_training_step_reduces_loss():
 def test_validation_accuracy_perfect_when_same_data():
     x = np.random.randn(10, 3, 1).astype(np.float32)
     y = (x.sum(axis=1) > 0).astype(np.float32).reshape(-1, 1)
-    model_cfg = ModelConfig(task="classification", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    model_cfg = ModelConfig(
+        task="classification", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4
+    )
     train_cfg = TrainingConfig(epochs=2, batch_size=2, val_split=0.5)
-    obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg) # type: ignore
+    obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
     model, history = ray.get(obj_ref)
     assert 0.0 <= history["val_acc"][-1] <= 1.0
 
@@ -113,9 +123,11 @@ def test_predict_features_dummy():
 def test_evaluate_model_returns_metrics():
     x = np.random.randn(6, 3, 1).astype(np.float32)
     y = (x.sum(axis=1) > 0).astype(np.float32)
-    model_cfg = ModelConfig(task="classification", cnn_filters=[1], cnn_kernel_sizes=[1], lstm_units=2)
+    model_cfg = ModelConfig(
+        task="classification", cnn_filters=[1], cnn_kernel_sizes=[1], lstm_units=2
+    )
     train_cfg = TrainingConfig(epochs=1, batch_size=2, val_split=0.0)
-    obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg) # type: ignore
+    obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
     model, _ = ray.get(obj_ref)
     metrics = evaluate_model(model, x, y)
     assert "accuracy" in metrics
@@ -137,19 +149,27 @@ def test_select_best_model(tmp_path):
 def test_empty_input_data():
     x = np.empty((0, 4, 1), dtype=np.float32)
     y = np.empty((0, 1), dtype=np.float32)
-    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
-    train_cfg = TrainingConfig(epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2)
+    model_cfg = ModelConfig(
+        task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4
+    )
+    train_cfg = TrainingConfig(
+        epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2
+    )
     with pytest.raises(ValueError, match="Input data cannot be empty"):
-        obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg) # type: ignore
+        obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
         ray.get(obj_ref)
 
 
 def test_large_input_data():
     x = np.random.randn(10000, 4, 1).astype(np.float32)
     y = x.sum(axis=1).reshape(-1, 1)
-    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
-    train_cfg = TrainingConfig(epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2)
-    obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg) # type: ignore
+    model_cfg = ModelConfig(
+        task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4
+    )
+    train_cfg = TrainingConfig(
+        epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2
+    )
+    obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
     model, history = ray.get(obj_ref)
     assert len(history["train_loss"]) == train_cfg.epochs
 
@@ -157,37 +177,53 @@ def test_large_input_data():
 def test_mismatched_input_target_dimensions():
     x = np.random.randn(20, 4, 1).astype(np.float32)
     y = np.random.randn(10, 1).astype(np.float32)
-    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
-    train_cfg = TrainingConfig(epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2)
+    model_cfg = ModelConfig(
+        task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4
+    )
+    train_cfg = TrainingConfig(
+        epochs=3, batch_size=5, learning_rate=0.01, val_split=0.2
+    )
     with pytest.raises(ValueError, match="Input and target dimensions must match"):
-        obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg) # type: ignore
+        obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
         ray.get(obj_ref)
 
 
 def test_zero_epochs():
     x = np.random.randn(20, 4, 1).astype(np.float32)
     y = x.sum(axis=1).reshape(-1, 1)
-    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
-    train_cfg = TrainingConfig(epochs=0, batch_size=5, learning_rate=0.01, val_split=0.2)
+    model_cfg = ModelConfig(
+        task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4
+    )
+    train_cfg = TrainingConfig(
+        epochs=0, batch_size=5, learning_rate=0.01, val_split=0.2
+    )
     with pytest.raises(ValueError, match="Number of epochs must be greater than zero"):
-        obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg) # type: ignore
+        obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
         ray.get(obj_ref)
 
 
 def test_batch_size_larger_than_dataset():
     x = np.random.randn(5, 4, 1).astype(np.float32)
     y = x.sum(axis=1).reshape(-1, 1)
-    model_cfg = ModelConfig(task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
-    train_cfg = TrainingConfig(epochs=3, batch_size=10, learning_rate=0.01, val_split=0.2)
-    with pytest.raises(ValueError, match="Batch size cannot be larger than the dataset"):
-        obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg) # type: ignore
+    model_cfg = ModelConfig(
+        task="regression", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4
+    )
+    train_cfg = TrainingConfig(
+        epochs=3, batch_size=10, learning_rate=0.01, val_split=0.2
+    )
+    with pytest.raises(
+        ValueError, match="Batch size cannot be larger than the dataset"
+    ):
+        obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
         ray.get(obj_ref)
 
 
 def test_evaluation_with_empty_features():
     x = np.empty((0, 4, 1), dtype=np.float32)
     y = np.empty((0, 1), dtype=np.float32)
-    model_cfg = ModelConfig(task="classification", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    model_cfg = ModelConfig(
+        task="classification", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4
+    )
     model = TrendPredictor(input_dim=4, config=model_cfg)
     with pytest.raises(ValueError, match="Features cannot be empty"):
         evaluate_model(model, x, y)
@@ -196,7 +232,9 @@ def test_evaluation_with_empty_features():
 def test_evaluation_with_incorrect_dimensions():
     x = np.random.randn(10, 4, 1).astype(np.float32)
     y = np.random.randn(10, 2).astype(np.float32)
-    model_cfg = ModelConfig(task="classification", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4)
+    model_cfg = ModelConfig(
+        task="classification", cnn_filters=[2], cnn_kernel_sizes=[2], lstm_units=4
+    )
     model = TrendPredictor(input_dim=4, config=model_cfg)
     with pytest.raises(ValueError, match="Target dimensions must match model output"):
         evaluate_model(model, x, y)

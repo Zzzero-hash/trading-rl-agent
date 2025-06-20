@@ -131,7 +131,7 @@ $PYTHON_BIN -m pytest tests/test_data_pipeline.py tests/test_trading_env.py test
 EOF
 chmod +x test-fast.sh
 
-# ML test script  
+# ML test script
 cat > test-ml.sh << EOF
 #!/bin/sh
 # ML tests requiring PyTorch
@@ -155,7 +155,7 @@ echo "\n🎉 Setup Complete!"
 echo "================================"
 echo "Quick start commands:"
 echo "  pytrading minimal_test.py     # Test environment"
-echo "  ./test-fast.sh                # Run fast tests"  
+echo "  ./test-fast.sh                # Run fast tests"
 echo "  pytrading src/agents/sac_agent.py  # Test SAC agent"
 echo ""
 echo "To activate aliases in current session:"

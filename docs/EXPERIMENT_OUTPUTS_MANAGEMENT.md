@@ -33,10 +33,10 @@ trading-rl-agent/
    ```bash
    # Create archive directory
    mkdir -p results_archive/$(date +%Y%m%d)
-   
+
    # Copy best configurations
    cp optimization_results/best_*_config_*.json results_archive/$(date +%Y%m%d)/
-   
+
    # Copy summary results
    cp optimization_results/*_hparam_results_*.json results_archive/$(date +%Y%m%d)/
    ```
@@ -47,7 +47,7 @@ trading-rl-agent/
    ```bash
    # Remove Ray Tune results older than 7 days
    find ray_results/ -type d -name "*_hparam_*" -mtime +7 -exec rm -rf {} +
-   
+
    # Remove old optimization run directories
    find optimization_results/ -type d -name "hparam_opt_*" -mtime +7 -exec rm -rf {} +
    ```
@@ -101,7 +101,7 @@ from pathlib import Path
 def cleanup_old_experiments(days_to_keep=7):
     """Remove experiment results older than specified days."""
     cutoff_date = datetime.now() - timedelta(days=days_to_keep)
-    
+
     # Cleanup Ray results
     ray_results = Path("ray_results")
     if ray_results.exists():
@@ -111,7 +111,7 @@ def cleanup_old_experiments(days_to_keep=7):
                 if dir_time < cutoff_date:
                     print(f"Removing old experiment: {experiment_dir}")
                     shutil.rmtree(experiment_dir)
-    
+
     # Cleanup optimization results subdirectories
     opt_results = Path("optimization_results")
     if opt_results.exists():

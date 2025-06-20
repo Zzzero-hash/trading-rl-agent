@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import gymnasium as gym
 import numpy as np
 import pandas as pd
-import gymnasium as gym
-from pathlib import Path
 
 from src.data.features import generate_features
 from src.supervised_model import load_model, predict_features
@@ -48,11 +49,15 @@ class TradingEnv(gym.Env):
 
         if self.continuous_actions:
             # For TD3: continuous action in range [-1, 1], shape (1,)
-            self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+            self.action_space = gym.spaces.Box(
+                low=-1.0, high=1.0, shape=(1,), dtype=np.float32
+            )
         else:
             self.action_space = gym.spaces.Discrete(3)  # hold/buy/sell
 
-        base_box = gym.spaces.Box(low=-np.inf, high=np.inf, shape=obs_shape, dtype=np.float32)
+        base_box = gym.spaces.Box(
+            low=-np.inf, high=np.inf, shape=obs_shape, dtype=np.float32
+        )
         if self.model:
             pred_box = gym.spaces.Box(
                 low=-np.inf,
@@ -80,12 +85,19 @@ class TradingEnv(gym.Env):
         obs_arr = np.asarray(obs_val)
         print(f"[TradingEnv] Initial observation shape: {obs_arr.shape}")
         if self.continuous_actions:
-            assert obs_arr.ndim == 1, f"Continuous action env must return flat obs, got shape {obs_arr.shape}"
+            assert (
+                obs_arr.ndim == 1
+            ), f"Continuous action env must return flat obs, got shape {obs_arr.shape}"
             # TD3 expects obs shape to match state_dim; help debug mismatches
             expected_state_dim = cfg.get("state_dim")
-            if expected_state_dim is not None and obs_arr.shape[0] != expected_state_dim:
-                raise ValueError(f"[TradingEnv] For TD3, observation shape {obs_arr.shape} does not match expected state_dim={expected_state_dim}. "
-                                 f"Set window_size * num_features = {expected_state_dim} in your config.")
+            if (
+                expected_state_dim is not None
+                and obs_arr.shape[0] != expected_state_dim
+            ):
+                raise ValueError(
+                    f"[TradingEnv] For TD3, observation shape {obs_arr.shape} does not match expected state_dim={expected_state_dim}. "
+                    f"Set window_size * num_features = {expected_state_dim} in your config."
+                )
         self.reset()
 
     # ------------------------------------------------------------------
@@ -98,29 +110,45 @@ class TradingEnv(gym.Env):
         if self.include_features:
             data = generate_features(data)
         # Explicitly cast price/volume columns to float32
-        price_cols = [
-            'open', 'high', 'low', 'close', 'volume'
-        ]
+        price_cols = ["open", "high", "low", "close", "volume"]
         for col in price_cols:
             if col in data.columns:
-                data[col] = pd.to_numeric(data[col], errors='coerce').astype(np.float32)
+                data[col] = pd.to_numeric(data[col], errors="coerce").astype(np.float32)
         # Optionally cast other known numeric feature columns if present
         numeric_feature_cols = [
-            'sma_10', 'sma_20', 'sma_50', 'ema_12', 'ema_26', 'macd', 'macd_signal', 'rsi',
-            'bb_middle', 'bb_upper', 'bb_lower', 'bb_position', 'volume_sma', 'volume_ratio',
-            'price_change', 'price_change_5', 'volatility', 'news_sentiment', 'social_sentiment',
-            'composite_sentiment', 'sentiment_volume', 'label'
+            "sma_10",
+            "sma_20",
+            "sma_50",
+            "ema_12",
+            "ema_26",
+            "macd",
+            "macd_signal",
+            "rsi",
+            "bb_middle",
+            "bb_upper",
+            "bb_lower",
+            "bb_position",
+            "volume_sma",
+            "volume_ratio",
+            "price_change",
+            "price_change_5",
+            "volatility",
+            "news_sentiment",
+            "social_sentiment",
+            "composite_sentiment",
+            "sentiment_volume",
+            "label",
         ]
         for col in numeric_feature_cols:
             if col in data.columns:
-                data[col] = pd.to_numeric(data[col], errors='coerce').astype(np.float32)
+                data[col] = pd.to_numeric(data[col], errors="coerce").astype(np.float32)
         return data
 
     def _get_observation(self):
         # Only use numeric columns for the observation
-        obs = self.data.iloc[
-            self.current_step - self.window_size : self.current_step
-        ][self.numeric_cols].values.astype(np.float32)
+        obs = self.data.iloc[self.current_step - self.window_size : self.current_step][
+            self.numeric_cols
+        ].values.astype(np.float32)
         if self.model:
             pred = predict_features(self.model, obs).numpy().astype(np.float32)
             # Ensure prediction has the expected shape for the observation space
@@ -134,7 +162,7 @@ class TradingEnv(gym.Env):
                 if len(pred) < self.model_output_size:
                     pred = np.pad(pred, (0, self.model_output_size - len(pred)))
                 else:
-                    pred = pred[:self.model_output_size]
+                    pred = pred[: self.model_output_size]
             obs_dict = {"market_features": obs, "model_pred": pred}
             if self.continuous_actions:
                 # For TD3, flatten the market_features for agent compatibility
@@ -213,6 +241,7 @@ class TradingEnv(gym.Env):
 
 
 # Registration helpers ---------------------------------------------------------
+
 
 def env_creator(env_cfg):
     return TradingEnv(env_cfg)

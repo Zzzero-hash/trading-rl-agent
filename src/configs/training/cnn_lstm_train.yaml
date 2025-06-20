@@ -3,9 +3,9 @@ data:
     path: data/sample_data.csv
     type: csv
   symbols:
-  - AAPL
-  - GOOGL
-  - TSLA
+    - AAPL
+    - GOOGL
+    - TSLA
 training:
   batch_size: 32
   epochs: 100
@@ -13,11 +13,11 @@ training:
   learning_rate: 0.001
   model_config:
     cnn_filters:
-    - 64
-    - 128
+      - 64
+      - 128
     cnn_kernel_sizes:
-    - 3
-    - 5
+      - 3
+      - 5
     dropout: 0.2
     lstm_units: 256
   prediction_horizon: 1

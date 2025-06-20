@@ -1,5 +1,5 @@
 # CNN + LSTM model hyperparameters
-cnn_filters: [32, 64]        # Number of filters in each convolution layer
-cnn_kernel_sizes: [3, 3]     # Kernel sizes for the convolution layers
-lstm_units: 128              # Hidden units in the LSTM layer
-dropout: 0.5                 # Dropout rate applied after the LSTM
+cnn_filters: [32, 64] # Number of filters in each convolution layer
+cnn_kernel_sizes: [3, 3] # Kernel sizes for the convolution layers
+lstm_units: 128 # Hidden units in the LSTM layer
+dropout: 0.5 # Dropout rate applied after the LSTM

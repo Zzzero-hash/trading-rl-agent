@@ -17,9 +17,9 @@ synthetic_symbols: []
 live_symbols: []
 
 # Feature processing controls
-generate_features: false  # Skip feature generation
-advanced_candles: false   # Only basic candlestick patterns
+generate_features: false # Skip feature generation
+advanced_candles: false # Only basic candlestick patterns
 
 # Output configuration
-to_csv: true              # Save data to CSV files
-output_dir: data/historical  # Directory for historical CSVs
+to_csv: true # Save data to CSV files
+output_dir: data/historical # Directory for historical CSVs

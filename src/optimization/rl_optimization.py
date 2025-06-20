@@ -1,6 +1,6 @@
 """Hyperparameter optimization for RL models.
 
-This module provides utilities for hyperparameter tuning of RL models 
+This module provides utilities for hyperparameter tuning of RL models
 using Ray Tune. It includes specialized sampling distributions and
 configuration spaces for common RL algorithms.
 
@@ -20,24 +20,25 @@ Example usage:
 
 from __future__ import annotations
 
-import os
 import logging
-from typing import Dict, Any, List, Optional
+import os
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import ray
 from ray import tune
-from ray.tune.schedulers import ASHAScheduler
-from ray.tune.search.optuna import OptunaSearch
+from ray.rllib.algorithms.ppo import PPOConfig
+
 # TD3 has been removed from Ray RLlib 2.38.0+, use SAC instead
 from ray.rllib.algorithms.sac import SACConfig
-from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.utils.framework import try_import_torch
 from ray.tune.registry import register_env
+from ray.tune.schedulers import ASHAScheduler
+from ray.tune.search.optuna import OptunaSearch
 
-from src.utils.cluster import init_ray, get_available_devices
 from src.envs.trading_env import TradingEnv
 from src.models.concat_model import ConcatModel
+from src.utils.cluster import get_available_devices, init_ray
 
 torch, _ = try_import_torch()
 logger = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ def create_env(config):
     return TradingEnv(config)
 
 
-def _get_default_sac_search_space() -> Dict[str, Any]:
+def _get_default_sac_search_space() -> dict[str, Any]:
     """Get default SAC hyperparameter search space for continuous control."""
     return {
         "twin_q": True,
@@ -81,22 +82,23 @@ def _get_default_sac_search_space() -> Dict[str, Any]:
     }
 
 
-def _get_default_td3_search_space() -> Dict[str, Any]:
+def _get_default_td3_search_space() -> dict[str, Any]:
     """DEPRECATED: TD3 has been removed from Ray RLlib 2.38.0+. Use SAC instead.
-    
+
     This function is kept for backward compatibility but will raise a deprecation warning.
     """
     import warnings
+
     warnings.warn(
         "TD3 has been removed from Ray RLlib 2.38.0+. Use optimize_sac_hyperparams() instead.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
     # Return SAC search space as fallback
     return _get_default_sac_search_space()
 
 
-def _get_default_ppo_search_space() -> Dict[str, Any]:
+def _get_default_ppo_search_space() -> dict[str, Any]:
     """Get default PPO hyperparameter search space."""
     return {
         "lr": tune.loguniform(1e-5, 1e-3),
@@ -121,28 +123,28 @@ def _get_default_ppo_search_space() -> Dict[str, Any]:
 def register_models_and_envs():
     """Register custom models and environments with Ray."""
     from ray.rllib.models import ModelCatalog
-    
+
     # Register the custom model
     ModelCatalog.register_custom_model("concat_model", ConcatModel)
-    
+
     # Register the environment
     register_env("TradingEnv", lambda cfg: create_env(cfg))
 
 
 def optimize_td3_hyperparams(
-    env_config: Dict[str, Any],
+    env_config: dict[str, Any],
     num_samples: int = 20,
     max_iterations_per_trial: int = 100,
     output_dir: str = "./rl_optimization",
-    custom_search_space: Optional[Dict[str, Any]] = None,
+    custom_search_space: dict[str, Any] | None = None,
     cpu_per_trial: float = 1.0,
     gpu_per_trial: float = 0.0,
     use_best_model: bool = True,
 ) -> tune.ExperimentAnalysis:
     """DEPRECATED: TD3 has been removed from Ray RLlib 2.38.0+. Use optimize_sac_hyperparams() instead.
-    
+
     This function will automatically redirect to SAC optimization with a deprecation warning.
-    
+
     Parameters
     ----------
     env_config : dict
@@ -168,13 +170,14 @@ def optimize_td3_hyperparams(
         Ray Tune experiment analysis object
     """
     import warnings
+
     warnings.warn(
         "optimize_td3_hyperparams() is deprecated. TD3 has been removed from Ray RLlib 2.38.0+. "
         "Automatically redirecting to optimize_sac_hyperparams() which provides similar continuous control capabilities.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
-    
+
     # Redirect to SAC optimization
     return optimize_sac_hyperparams(
         env_config=env_config,
@@ -189,17 +192,17 @@ def optimize_td3_hyperparams(
 
 
 def optimize_sac_hyperparams(
-    env_config: Dict[str, Any],
+    env_config: dict[str, Any],
     num_samples: int = 20,
     max_iterations_per_trial: int = 100,
     output_dir: str = "./rl_optimization",
-    custom_search_space: Optional[Dict[str, Any]] = None,
+    custom_search_space: dict[str, Any] | None = None,
     cpu_per_trial: float = 1.0,
     gpu_per_trial: float = 0.0,
     use_best_model: bool = True,
 ) -> tune.ExperimentAnalysis:
     """Optimize SAC hyperparameters using Ray Tune.
-    
+
     Parameters
     ----------
     env_config : dict
@@ -227,26 +230,26 @@ def optimize_sac_hyperparams(
     # Initialize Ray if not already done
     if not ray.is_initialized():
         init_ray()
-        
+
     # Register models and environments
     register_models_and_envs()
-    
+
     # Prepare search space
     search_space = _get_default_sac_search_space()
     if custom_search_space:
         search_space.update(custom_search_space)
-    
+
     # Add environment configuration
     search_space["env"] = "TradingEnv"
     search_space["env_config"] = env_config
     search_space["framework"] = "torch"
-    
+
     # Configure search algorithm
     search_alg = OptunaSearch(
         metric="episode_reward_mean",
         mode="max",
     )
-    
+
     # Configure scheduler
     scheduler = ASHAScheduler(
         max_t=max_iterations_per_trial,
@@ -254,10 +257,10 @@ def optimize_sac_hyperparams(
         reduction_factor=3,
         brackets=1,
     )
-    
+
     # Setup output directory
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-      # Run optimization
+    # Run optimization
     analysis = tune.run(
         "SAC",
         config=search_space,
@@ -272,28 +275,28 @@ def optimize_sac_hyperparams(
         resources_per_trial={"cpu": cpu_per_trial, "gpu": gpu_per_trial},
         verbose=2,
         metric="episode_reward_mean",  # Add metric for Ray 2.0+
-        mode="max"                     # Add mode for Ray 2.0+
+        mode="max",  # Add mode for Ray 2.0+
     )
-    
+
     # Log best config
     best_config = analysis.get_best_config(metric="episode_reward_mean", mode="max")
     logger.info(f"Best SAC config: {best_config}")
-    
+
     return analysis
 
 
 def optimize_ppo_hyperparams(
-    env_config: Dict[str, Any],
+    env_config: dict[str, Any],
     num_samples: int = 20,
     max_iterations_per_trial: int = 100,
     output_dir: str = "./rl_optimization",
-    custom_search_space: Optional[Dict[str, Any]] = None,
+    custom_search_space: dict[str, Any] | None = None,
     cpu_per_trial: float = 1.0,
     gpu_per_trial: float = 0.0,
     use_best_model: bool = True,
 ) -> tune.ExperimentAnalysis:
     """Optimize PPO hyperparameters using Ray Tune.
-    
+
     Parameters
     ----------
     env_config : dict
@@ -321,26 +324,26 @@ def optimize_ppo_hyperparams(
     # Initialize Ray if not already done
     if not ray.is_initialized():
         init_ray()
-        
+
     # Register models and environments
     register_models_and_envs()
-    
+
     # Prepare search space
     search_space = _get_default_ppo_search_space()
     if custom_search_space:
         search_space.update(custom_search_space)
-    
+
     # Add environment configuration
     search_space["env"] = "TradingEnv"
     search_space["env_config"] = env_config
     search_space["framework"] = "torch"
-    
+
     # Configure search algorithm
     search_alg = OptunaSearch(
         metric="episode_reward_mean",
         mode="max",
     )
-    
+
     # Configure scheduler
     scheduler = ASHAScheduler(
         max_t=max_iterations_per_trial,
@@ -348,10 +351,10 @@ def optimize_ppo_hyperparams(
         reduction_factor=3,
         brackets=1,
     )
-    
+
     # Setup output directory
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-      # Run optimization
+    # Run optimization
     analysis = tune.run(
         "PPO",
         config=search_space,
@@ -366,26 +369,26 @@ def optimize_ppo_hyperparams(
         resources_per_trial={"cpu": cpu_per_trial, "gpu": gpu_per_trial},
         verbose=2,
         metric="episode_reward_mean",  # Add metric for Ray 2.0+
-        mode="max"                     # Add mode for Ray 2.0+
+        mode="max",  # Add mode for Ray 2.0+
     )
-    
+
     # Log best config
     best_config = analysis.get_best_config(metric="episode_reward_mean", mode="max")
     logger.info(f"Best PPO config: {best_config}")
-    
+
     return analysis
 
 
 def optimize_ensemble_hyperparams(
-    env_config: Dict[str, Any],
+    env_config: dict[str, Any],
     num_samples: int = 20,
     max_iterations_per_trial: int = 100,
     output_dir: str = "./rl_optimization",
     cpu_per_trial: float = 1.0,
     gpu_per_trial: float = 0.0,
-) -> Dict[str, tune.ExperimentAnalysis]:
+) -> dict[str, tune.ExperimentAnalysis]:
     """Optimize hyperparameters for an ensemble of RL algorithms.
-    
+
     Parameters
     ----------
     env_config : dict
@@ -408,13 +411,13 @@ def optimize_ensemble_hyperparams(
     """
     # Use smaller number of samples for ensemble to keep total trials manageable
     samples_per_algo = max(5, num_samples // 3)
-    
+
     # Create ensemble output directory
     ensemble_dir = Path(output_dir) / "ensemble"
     ensemble_dir.mkdir(parents=True, exist_ok=True)
-    
+
     results = {}
-    
+
     # Optimize TD3
     td3_dir = ensemble_dir / "td3"
     results["td3"] = optimize_td3_hyperparams(
@@ -425,7 +428,7 @@ def optimize_ensemble_hyperparams(
         cpu_per_trial=cpu_per_trial,
         gpu_per_trial=gpu_per_trial,
     )
-    
+
     # Optimize SAC
     sac_dir = ensemble_dir / "sac"
     results["sac"] = optimize_sac_hyperparams(
@@ -436,7 +439,7 @@ def optimize_ensemble_hyperparams(
         cpu_per_trial=cpu_per_trial,
         gpu_per_trial=gpu_per_trial,
     )
-    
+
     # Optimize PPO
     ppo_dir = ensemble_dir / "ppo"
     results["ppo"] = optimize_ppo_hyperparams(
@@ -447,16 +450,16 @@ def optimize_ensemble_hyperparams(
         cpu_per_trial=cpu_per_trial,
         gpu_per_trial=gpu_per_trial,
     )
-    
+
     # Compile summary of best configs
     best_configs = {
         algo: analysis.get_best_config(metric="episode_reward_mean", mode="max")
         for algo, analysis in results.items()
     }
-    
+
     # Log best configs
     logger.info("Best hyperparameters for ensemble:")
     for algo, config in best_configs.items():
         logger.info(f"{algo.upper()}: {config}")
-    
+
     return results

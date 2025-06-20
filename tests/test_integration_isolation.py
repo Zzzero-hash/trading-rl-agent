@@ -2,17 +2,20 @@
 Integration tests for Model ↔ Environment, Agent ↔ Environment, Model ↔ Agent, and Full Pipeline.
 """
 
-import pytest
-import numpy as np
-import torch
-import sys
 import os
+import sys
 
-from src.envs.trading_env import TradingEnv
-from src.agents.td3_agent import TD3Agent
+import numpy as np
+import pytest
+import torch
+
 from src.agents.configs import TD3Config
+from src.agents.td3_agent import TD3Agent
+from src.envs.trading_env import TradingEnv
+
 sys.path.insert(0, os.path.dirname(__file__))
 from test_setup_utils import setup_test_env, teardown_test_env
+
 
 @pytest.mark.integration
 def test_model_environment_interface():
@@ -21,12 +24,18 @@ def test_model_environment_interface():
     try:
         state_dim = env.observation_space.shape[0]
         # Robust action_dim logic
-        if hasattr(env.action_space, 'n'):
+        if hasattr(env.action_space, "n"):
             action_dim = env.action_space.n
-        elif hasattr(env.action_space, 'shape') and env.action_space.shape is not None and len(env.action_space.shape) > 0:
+        elif (
+            hasattr(env.action_space, "shape")
+            and env.action_space.shape is not None
+            and len(env.action_space.shape) > 0
+        ):
             action_dim = env.action_space.shape[0]
         else:
-            raise ValueError("env.action_space does not have 'n' or a valid 'shape' attribute")
+            raise ValueError(
+                "env.action_space does not have 'n' or a valid 'shape' attribute"
+            )
         assert state_dim > 0, f"State dim should be > 0, got {state_dim}"
         assert action_dim > 0, f"Action dim should be > 0, got {action_dim}"
     except Exception as e:
@@ -35,6 +44,7 @@ def test_model_environment_interface():
         raise
     finally:
         teardown_test_env(env, agent)
+
 
 @pytest.mark.integration
 def test_agent_environment_interface():
@@ -61,6 +71,7 @@ def test_agent_environment_interface():
     finally:
         teardown_test_env(env, agent)
 
+
 @pytest.mark.integration
 def test_model_agent_interface():
     """Test model ↔ agent integration."""
@@ -79,6 +90,7 @@ def test_model_agent_interface():
         raise
     finally:
         teardown_test_env(None, agent)
+
 
 @pytest.mark.integration
 def test_full_pipeline_integration():

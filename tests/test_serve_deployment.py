@@ -1,6 +1,6 @@
 import asyncio
 
-from src.serve_deployment import PredictorDeployment, PolicyDeployment
+from src.serve_deployment import PolicyDeployment, PredictorDeployment
 
 
 def test_predictor_returns_value():

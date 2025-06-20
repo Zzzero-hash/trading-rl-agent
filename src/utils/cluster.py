@@ -5,7 +5,9 @@ import ray
 import yaml
 
 
-def init_ray(address: str | None = None, config_path: str | None = None, local_mode: bool = False):
+def init_ray(
+    address: str | None = None, config_path: str | None = None, local_mode: bool = False
+):
     """Initialize Ray with the given address or configuration.
 
     Parameters
@@ -31,7 +33,7 @@ def init_ray(address: str | None = None, config_path: str | None = None, local_m
         ray.init(local_mode=local_mode)
 
 
-def get_available_devices() -> Dict[str, float]:
+def get_available_devices() -> dict[str, float]:
     """Return available cluster resources (CPUs and GPUs)."""
     if ray.is_initialized():
         resources = ray.cluster_resources()

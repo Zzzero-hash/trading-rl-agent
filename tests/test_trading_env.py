@@ -1,6 +1,6 @@
-import pandas as pd
-import numpy as np
 import gymnasium as gym
+import numpy as np
+import pandas as pd
 import pytest
 
 from src.envs.trading_env import TradingEnv, env_creator, register_env
@@ -8,13 +8,15 @@ from src.envs.trading_env import TradingEnv, env_creator, register_env
 
 @pytest.fixture
 def sample_csv(tmp_path):
-    data = pd.DataFrame({
-        "open": [1.0] * 60,
-        "high": [1.0] * 60,
-        "low": [1.0] * 60,
-        "close": np.linspace(1.0, 2.0, 60),
-        "volume": [1.0] * 60,
-    })
+    data = pd.DataFrame(
+        {
+            "open": [1.0] * 60,
+            "high": [1.0] * 60,
+            "low": [1.0] * 60,
+            "close": np.linspace(1.0, 2.0, 60),
+            "volume": [1.0] * 60,
+        }
+    )
     csv = tmp_path / "data.csv"
     data.to_csv(csv, index=False)
     return str(csv)
