@@ -1,6 +1,7 @@
 from collections.abc import Sequence
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import torch
 from torch import nn
@@ -68,6 +69,7 @@ class CNNLSTMModel(nn.Module):
 
         Args:
             x: Tensor of shape (batch, seq, features)
+
         Returns:
             Tensor of shape (batch, output_size)
         """
@@ -93,32 +95,21 @@ class CNNLSTMModel(nn.Module):
         return out
 
 
+@dataclass
 class CNNLSTMConfig:
-    def __init__(
-        self,
-        input_dim: int,
-        output_size: int = 1,
-        cnn_filters: Sequence[int] = [32, 64],
-        cnn_kernel_sizes: Sequence[int] = [3, 3],
-        lstm_units: int = 128,
-        dropout: float = 0.5,
-        use_attention: bool = False,
-    ):
-        self.input_dim = input_dim
-        self.output_size = output_size
-        self.cnn_filters = cnn_filters
-        self.cnn_kernel_sizes = cnn_kernel_sizes
-        self.lstm_units = lstm_units
-        self.dropout = dropout
-        self.use_attention = use_attention
+    """Configuration for the CNN-LSTM model."""
 
-    def to_dict(self):
-        return {
-            "cnn_filters": self.cnn_filters,
-            "cnn_kernel_sizes": self.cnn_kernel_sizes,
-            "lstm_units": self.lstm_units,
-            "dropout": self.dropout,
-        }
+    input_dim: int
+    output_size: int = 1
+    cnn_filters: Sequence[int] = (32, 64)
+    cnn_kernel_sizes: Sequence[int] = (3, 3)
+    lstm_units: int = 128
+    dropout: float = 0.5
+    use_attention: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the config."""
+        return asdict(self)
 
 
 def create_model(config: CNNLSTMConfig):
