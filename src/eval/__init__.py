@@ -5,6 +5,7 @@ illustrates the interface for an event-driven backtesting engine.
 """
 
 from __future__ import annotations
+from typing import Any
 
 
 class Backtester:
@@ -25,7 +26,7 @@ class Backtester:
     0.5
     """
 
-    def run_backtest(self, prices, policy):
+    def run_backtest(self, prices: Any, policy: Any) -> Any:
         """Execute a backtest over ``prices`` using ``policy``.
 
         Parameters

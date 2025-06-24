@@ -103,8 +103,6 @@ def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df.copy()
     close = pd.to_numeric(df["close"], errors="coerce")
-    high = pd.to_numeric(df["high"], errors="coerce")
-    low = pd.to_numeric(df["low"], errors="coerce")
     volume = pd.to_numeric(df["volume"], errors="coerce")
 
     # Moving averages
@@ -327,7 +325,7 @@ def main():
     logging.info(
         f"Feature columns: {len([col for col in df.columns if col not in ['timestamp', 'symbol', 'label']])}"
     )
-    logging.info(f"Label distribution:")
+    logging.info("Label distribution:")
     logging.info(f"{df['label'].value_counts().sort_index()}")
     logging.info(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
 

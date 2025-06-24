@@ -114,7 +114,7 @@ class TestFeatureEngineering:
 
         doji_pattern = detect_doji(doji_data)
         assert len(doji_pattern) == 3
-        assert doji_pattern.iloc[-1] == True  # Last candle should be doji
+        assert doji_pattern.iloc[-1] is True  # Last candle should be doji
 
         # Create test data for hammer pattern
         hammer_data = pd.DataFrame(

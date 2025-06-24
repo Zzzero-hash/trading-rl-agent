@@ -217,8 +217,8 @@ class ModelSummarizer:
             Path to save the visualization. If None, displays the plot.
         """
         # Extract data
-        names = [f"{l['name']} ({l['type']})" for l in self.layer_info]
-        params = [l["parameters"] for l in self.layer_info]
+        names = [f"{layer['name']} ({layer['type']})" for layer in self.layer_info]
+        params = [layer["parameters"] for layer in self.layer_info]
 
         # Create horizontal bar chart
         plt.figure(figsize=(10, max(6, len(names) * 0.3)))
@@ -302,8 +302,6 @@ def profile_model_inference(
     benchmark_time = avg_time
     if TORCH_BENCHMARK_AVAILABLE:
         try:
-            from torch.utils.benchmark import Timer
-
             timer = Timer(stmt="model(x)", globals={"model": model, "x": x})
             benchmark_time = timer.timeit(num_runs).mean
         except Exception as e:

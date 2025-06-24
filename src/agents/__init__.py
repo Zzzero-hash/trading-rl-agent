@@ -1,4 +1,5 @@
-# Agents package
+"""Agents package - Contains reinforcement learning agents and training utilities."""
+
 # Configs are imported separately by each agent to avoid circular dependencies
 
 # Import agents and trainer

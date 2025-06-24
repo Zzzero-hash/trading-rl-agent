@@ -144,7 +144,7 @@ def test_sac_configuration():
     assert config.actor_lr == 3e-4
     assert config.critic_lr == 3e-4
     assert config.alpha_lr == 3e-4
-    assert config.twin_q == True
+    assert config.twin_q is True
     print("✅ SAC configuration successful")
 
 

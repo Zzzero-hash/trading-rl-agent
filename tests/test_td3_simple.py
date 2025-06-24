@@ -88,11 +88,11 @@ def test_td3_basic_functionality():
 
         if (agent.total_it % policy_delay) == 0:
             assert (
-                metrics.get("policy_update", False) == True
+                metrics.get("policy_update", False) is True
             ), f"Policy should update on iteration {agent.total_it}"
         else:
             assert (
-                metrics.get("policy_update", False) == False
+                metrics.get("policy_update", False) is False
             ), f"Policy should NOT update on iteration {agent.total_it}"
 
     print(f"✅ Policy delay mechanism working correctly (delay={policy_delay})")

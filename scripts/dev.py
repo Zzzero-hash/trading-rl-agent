@@ -129,7 +129,7 @@ class DevAutomation:
                 "bandit-report.json",
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
 
             # Parse bandit results
             try:

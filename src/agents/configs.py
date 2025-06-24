@@ -25,7 +25,7 @@ class EnsembleConfig:
     # Support agent_configs as parameter name
     agent_configs: Optional[dict[str, dict[str, Any]]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Handle agent_configs alias and validation after initialization."""
         # If agent_configs was passed, use it instead of agents
         if self.agent_configs is not None:

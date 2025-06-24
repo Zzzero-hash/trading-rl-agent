@@ -505,20 +505,20 @@ class RainbowDQNAgent:
 
                 # Project onto support
                 b = (target_support - self.v_min) / self.delta_z
-                l = b.floor().long()
+                lower = b.floor().long()
                 u = b.ceil().long()
 
                 target_q_dist = torch.zeros_like(next_q_dist)
                 for i in range(self.batch_size):
                     for j in range(self.n_atoms):
-                        if l[i, j] == u[i, j]:
-                            target_q_dist[i, l[i, j]] += next_q_dist[i, j]
+                        if lower[i, j] == u[i, j]:
+                            target_q_dist[i, lower[i, j]] += next_q_dist[i, j]
                         else:
-                            target_q_dist[i, l[i, j]] += next_q_dist[i, j] * (
+                            target_q_dist[i, lower[i, j]] += next_q_dist[i, j] * (
                                 u[i, j] - b[i, j]
                             )
                             target_q_dist[i, u[i, j]] += next_q_dist[i, j] * (
-                                b[i, j] - l[i, j]
+                                b[i, j] - lower[i, j]
                             )
 
             # Cross-entropy loss

@@ -33,9 +33,6 @@ try:
     from .models.cnn_lstm import CNNLSTMConfig, CNNLSTMModel
 except ImportError:
     # Fallback to absolute imports (when run directly)
-    from pathlib import Path
-    import sys
-
     # Add parent directory to path
     current_dir = Path(__file__).parent
     parent_dir = current_dir.parent
