@@ -173,7 +173,7 @@ class DocumentationBuilder:
                 str(self.build_dir / "coverage"),
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
 
             coverage_file = self.build_dir / "coverage" / "python.txt"
             if coverage_file.exists():

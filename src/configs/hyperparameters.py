@@ -223,7 +223,7 @@ class ConfigManager:
 
     def save_config(
         self, config: dict[str, Any], config_type: str, config_name: str = "default"
-    ):
+    ) -> None:
         """Save configuration to YAML file."""
         config_file = self.config_dir / f"{config_type}_{config_name}.yaml"
 
@@ -294,7 +294,7 @@ def get_agent_config(
 
 def save_agent_config(
     config: dict[str, Any], agent_type: str, config_name: str = "default"
-):
+) -> None:
     """Save agent configuration."""
     config_manager.save_config(config, agent_type, config_name)
 

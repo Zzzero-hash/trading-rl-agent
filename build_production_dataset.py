@@ -422,7 +422,7 @@ class AdvancedDatasetBuilder:
             "metadata": self.config["output"]["metadata_path"],
         }
 
-        print(f"✅ Datasets saved:")
+        print("✅ Datasets saved:")
         for name, path in paths.items():
             size = os.path.getsize(path) / (1024 * 1024)
             print(f"  {name}: {path} ({size:.1f} MB)")
@@ -491,7 +491,7 @@ def main():
                 [file_paths["training_data"]], window_size=10, initial_balance=10000
             )
             obs, info = env.reset()
-            print(f"✅ Training environment test passed!")
+            print("✅ Training environment test passed!")
             print(f"   Observation shape: {obs.shape}")
             print(f"   Action space: {env.action_space}")
         except Exception as e:

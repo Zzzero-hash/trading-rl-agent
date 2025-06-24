@@ -199,9 +199,6 @@ if __name__ == "__main__":
 
     sys.path.append("/workspaces/trading-rl-agent")
 
-    from src.agents.configs import TD3Config
-    from src.envs.trading_env import TradingEnv
-
     print("🧪 Running TD3 Integration Test...")
 
     # Initialize environment and agent

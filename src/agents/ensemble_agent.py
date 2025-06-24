@@ -120,10 +120,6 @@ class EnsembleAgent:
 
         # Load configuration
         if config is None:
-            try:
-                from configs.hyperparameters import EnsembleConfig
-            except ImportError:
-                from src.configs.hyperparameters import EnsembleConfig
             config = EnsembleConfig()
 
         if is_dataclass(config):

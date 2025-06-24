@@ -95,8 +95,6 @@ def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df.copy()
     close = df["close"]
-    high = df["high"]
-    low = df["low"]
     volume = df["volume"]
 
     # Moving averages
@@ -258,7 +256,7 @@ def main():
     print(
         f"Feature columns: {len([col for col in df.columns if col not in ['timestamp', 'symbol', 'label']])}"
     )
-    print(f"Label distribution:")
+    print("Label distribution:")
     print(df["label"].value_counts().sort_index())
     print(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
 
@@ -269,7 +267,7 @@ def main():
     correlations = (
         df[feature_cols + ["label"]].corr()["label"].abs().sort_values(ascending=False)
     )
-    print(f"\nTop 10 features correlated with labels:")
+    print("\nTop 10 features correlated with labels:")
     for i, (feature, corr) in enumerate(correlations.head(10).items()):
         if feature != "label":
             print(f"{i+1:2d}. {feature:20s}: {corr:.4f}")
