@@ -145,7 +145,6 @@ class TestAgentComprehensive:
     @pytest.mark.parametrize("agent_type", ["td3", "sac"])
     def test_agent_action_selection(self, agent_type, agent_configs, mock_environment):
         """Test agent action selection in different modes."""
-        agent = None
         try:
             if agent_type == "td3":
                 from src.agents.configs import TD3Config
@@ -169,24 +168,23 @@ class TestAgentComprehensive:
                     config=config,
                 )
 
-            assert agent is not None, f"Failed to create {agent_type} agent"
             obs = np.random.normal(0, 1, 20)
 
-            # Test deterministic action selection
+            # Test deterministic action selection (with add_noise=False for TD3)
             if agent_type == "td3":
                 action_det = agent.select_action(obs, add_noise=False)
-            else:  # SAC - use evaluate=True for deterministic
-                action_det = agent.select_action(obs, evaluate=True)
+            else:  # SAC
+                action_det = agent.select_action(obs)
 
             assert action_det is not None
             assert isinstance(action_det, np.ndarray)
             assert action_det.shape == (1,)
 
-            # Test stochastic action selection
+            # Test stochastic action selection (with add_noise=True for TD3)
             if agent_type == "td3":
                 action_stoch = agent.select_action(obs, add_noise=True)
-            else:  # SAC - use evaluate=False for stochastic (default)
-                action_stoch = agent.select_action(obs, evaluate=False)
+            else:  # SAC
+                action_stoch = agent.select_action(obs)
 
             assert action_stoch is not None
             assert isinstance(action_stoch, np.ndarray)
@@ -325,26 +323,21 @@ class TestAgentComprehensive:
 
             # Test that loaded agent can still select actions
             obs = np.random.normal(0, 1, 20)
+            action1 = (
+                agent.select_action(obs, add_noise=False)
+                if agent_type == "td3"
+                else agent.select_action(obs)
+            )
+            action2 = (
+                agent_loaded.select_action(obs, add_noise=False)
+                if agent_type == "td3"
+                else agent_loaded.select_action(obs)
+            )
 
-            if agent_type == "td3":
-                # TD3 is deterministic, so actions should be identical
-                action1 = agent.select_action(obs, add_noise=False)
-                action2 = agent_loaded.select_action(obs, add_noise=False)
-                # Actions should be very similar (allowing for numerical precision)
-                assert np.allclose(
-                    action1, action2, atol=1e-6
-                ), f"Actions differ: {action1} vs {action2}"
-            else:  # SAC
-                # SAC is stochastic, so just test that both agents can select actions
-                action1 = agent.select_action(obs)
-                action2 = agent_loaded.select_action(obs)
-                # Just ensure both actions are valid (within bounds)
-                assert np.all(action1 >= -1.0) and np.all(
-                    action1 <= 1.0
-                ), f"Action1 out of bounds: {action1}"
-                assert np.all(action2 >= -1.0) and np.all(
-                    action2 <= 1.0
-                ), f"Action2 out of bounds: {action2}"
+            # Actions should be very similar (allowing for numerical precision)
+            assert np.allclose(
+                action1, action2, atol=1e-6
+            ), f"Actions differ: {action1} vs {action2}"
 
             print(f"✅ {agent_type.upper()} save/load test passed")
 

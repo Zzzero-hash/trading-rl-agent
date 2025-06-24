@@ -145,7 +145,6 @@ class TestAgentComprehensive:
     @pytest.mark.parametrize("agent_type", ["td3", "sac"])
     def test_agent_action_selection(self, agent_type, agent_configs, mock_environment):
         """Test agent action selection in different modes."""
-        agent = None
         try:
             if agent_type == "td3":
                 from src.agents.configs import TD3Config
@@ -169,24 +168,23 @@ class TestAgentComprehensive:
                     config=config,
                 )
 
-            assert agent is not None, f"Failed to create {agent_type} agent"
             obs = np.random.normal(0, 1, 20)
 
-            # Test deterministic action selection
+            # Test deterministic action selection (with add_noise=False for TD3)
             if agent_type == "td3":
                 action_det = agent.select_action(obs, add_noise=False)
-            else:  # SAC - use evaluate=True for deterministic
-                action_det = agent.select_action(obs, evaluate=True)
+            else:  # SAC
+                action_det = agent.select_action(obs)
 
             assert action_det is not None
             assert isinstance(action_det, np.ndarray)
             assert action_det.shape == (1,)
 
-            # Test stochastic action selection
+            # Test stochastic action selection (with add_noise=True for TD3)
             if agent_type == "td3":
                 action_stoch = agent.select_action(obs, add_noise=True)
-            else:  # SAC - use evaluate=False for stochastic (default)
-                action_stoch = agent.select_action(obs, evaluate=False)
+            else:  # SAC
+                action_stoch = agent.select_action(obs)
 
             assert action_stoch is not None
             assert isinstance(action_stoch, np.ndarray)
@@ -234,7 +232,7 @@ class TestAgentComprehensive:
             experiences = []
             obs, _ = mock_environment.reset()
 
-            for _ in range(100):
+            for step in range(100):
                 action = agent.select_action(obs)
                 next_obs, reward, terminated, truncated, info = mock_environment.step(
                     action

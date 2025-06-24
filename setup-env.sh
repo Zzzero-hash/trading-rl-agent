@@ -4,6 +4,10 @@
 
 set -e
 
+# Fix locale issues in dev container - use available locale
+export LANG=C.utf8
+export LC_ALL=C.utf8
+
 echo "🚀 Setting up Trading RL Agent Development Environment"
 echo "======================================================="
 

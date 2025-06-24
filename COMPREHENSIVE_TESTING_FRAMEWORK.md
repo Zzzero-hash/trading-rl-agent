@@ -226,13 +226,11 @@ skip_covered = false
 **Pipeline Stages**:
 
 1. **Setup and Validation**
-
    - Environment setup
    - Dependency caching
    - Code structure validation
 
 2. **Code Quality Checks**
-
    - Black (formatting)
    - isort (import sorting)
    - flake8 (linting)
@@ -240,37 +238,31 @@ skip_covered = false
    - bandit (security analysis)
 
 3. **Smoke Tests**
-
    - Critical import tests
    - Basic functionality validation
    - Fast execution (<60 seconds)
 
 4. **Unit Tests**
-
    - Parallel execution by component
    - Coverage collection per component
    - Matrix testing across Python versions
 
 5. **Integration Tests**
-
    - Ray cluster setup
    - Component interaction testing
    - End-to-end workflow validation
 
 6. **Performance Tests**
-
    - Benchmark execution
    - Performance regression detection
    - Resource usage monitoring
 
 7. **Memory Tests**
-
    - Memory leak detection
    - Memory usage profiling
    - Efficiency validation
 
 8. **Coverage Aggregation**
-
    - Combined coverage reports
    - Coverage badge generation
    - PR coverage comments
@@ -336,19 +328,16 @@ skip_covered = false
 ### Benchmark Categories
 
 1. **Data Processing**
-
    - Feature generation speed
    - Large dataset handling
    - Memory efficiency
 
 2. **Agent Training**
-
    - Training steps per second
    - Batch processing speed
    - Model update latency
 
 3. **Environment Simulation**
-
    - Environment reset speed
    - Step execution time
    - Episode completion rate

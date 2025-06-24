@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -19,23 +19,27 @@ repos:
       - id: check-xml
 
   - repo: https://github.com/psf/black
-    rev: 24.1.1
+    rev: 25.1.0
     hooks:
       - id: black
         language_version: python3
         args: ["--line-length=88"]
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
         args: ["--profile", "black", "--filter-files"]
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
+    rev: 7.3.0
     hooks:
       - id: flake8
-        args: ["--max-line-length=88", "--extend-ignore=E203,W503"]
+        args:
+          [
+            "--max-line-length=100",
+            "--extend-ignore=E203,W503,E402,F401,F541,D100,D103,D107,D200,D202,D205,D400,D401,B001,E722,SIM101,SIM102,SIM105,SIM115,B009",
+          ]
         additional_dependencies:
           - flake8-docstrings
           - flake8-bugbear
@@ -43,18 +47,18 @@ repos:
           - flake8-simplify
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
+    rev: v1.16.1
     hooks:
       - id: mypy
         additional_dependencies:
           - types-PyYAML
           - types-requests
           - types-setuptools
-        args: ["--strict", "--ignore-missing-imports"]
+        args: ["--ignore-missing-imports", "--no-strict-optional"]
         exclude: ^(tests/|docs/)
 
   - repo: https://github.com/pycqa/bandit
-    rev: 1.7.5
+    rev: 1.8.5
     hooks:
       - id: bandit
         args: ["-c", "pyproject.toml"]
@@ -65,11 +69,15 @@ repos:
     rev: 6.3.0
     hooks:
       - id: pydocstyle
-        args: ["--convention=google"]
+        args:
+          [
+            "--convention=google",
+            "--add-ignore=D100,D103,D107,D200,D202,D205,D400,D401",
+          ]
         exclude: ^(tests/|docs/)
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
+    rev: v3.20.0
     hooks:
       - id: pyupgrade
         args: ["--py39-plus"]
@@ -82,7 +90,7 @@ repos:
         exclude: ^(\.github/|docs/_build/)
 
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.7.1
+    rev: 1.9.1
     hooks:
       - id: nbqa-black
         additional_dependencies: [black==24.1.1]

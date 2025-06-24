@@ -1,0 +1,38 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml:coverage.xml",
+    "--durations=10",
+    "--maxfail=5"
+]
+markers = [
+    "unit: mark as unit test (fast, isolated)",
+    "integration: mark as integration test (components working together)",
+    "slow: mark as slow running test (>5 seconds)",
+    "gpu: mark as requiring GPU hardware",
+    "network: mark as requiring network access",
+    "ray: mark as requiring Ray cluster",
+    "ml: mark as requiring ML dependencies (PyTorch, etc.)",
+    "smoke: mark as smoke test for CI pipeline",
+    "e2e: mark as end-to-end test (full pipeline)",
+    "regression: mark as regression test",
+    "performance: mark as performance test",
+    "memory: mark as memory usage test",
+    "security: mark as security test"
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::FutureWarning",
+    "ignore::UserWarning",
+    "ignore::RuntimeWarning"
+]

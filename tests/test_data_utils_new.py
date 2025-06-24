@@ -147,7 +147,7 @@ def managed_test_data(data_dir: str = "data", **kwargs):
 
 
 def get_dynamic_test_config(
-    base_config: Optional[dict[str, Any]] = None
+    base_config: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Get a test configuration with dynamically discovered or generated test data."""
     manager = DataManager()

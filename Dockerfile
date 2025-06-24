@@ -3,9 +3,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 FROM ${CUDA_VARIANT} AS development
 ENV TZ=Etc/UTC
 
-# Create non-root user
-RUN groupadd -g 1000 rluser && useradd -m -u 1000 -g rluser rluser
-
 # Install build tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -43,12 +40,5 @@ COPY --from=deps /usr/local/lib/python3.10/dist-packages /usr/local/lib/python3.
 COPY --from=deps /usr/local/bin /usr/local/bin
 # copy application code
 COPY . .
-# Change ownership of ALL files and directories to rluser with comprehensive permissions
-RUN chown -R rluser:rluser /workspace && \
-    find /workspace -type d -exec chmod 755 {} \; && \
-    find /workspace -type f -name "*.sh" -exec chmod 755 {} \; && \
-    find /workspace -type f -name "*.py" -exec chmod 644 {} \; && \
-    find /workspace -type f ! -name "*.sh" ! -name "*.py" -exec chmod 644 {} \; && \
-    chmod -R u+w /workspace
-USER rluser
+# Run the tests before starting the application
 ENTRYPOINT ["pytest", "--maxfail=1", "--disable-warnings", "-q"]

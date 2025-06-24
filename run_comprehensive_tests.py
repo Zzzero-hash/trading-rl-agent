@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Tuple
 class ComprehensiveTestRunner:
     """Comprehensive test runner with advanced features."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.project_root = Path(__file__).parent
         self.test_results = {}
         self.start_time = time.time()
@@ -42,9 +42,11 @@ class ComprehensiveTestRunner:
                 print("❌ Python 3.9+ required")
                 return False
 
-            print(
-                f"✅ Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            python_version = (
+                f"✅ Python {sys.version_info.major}."
+                f"{sys.version_info.minor}.{sys.version_info.micro}"
             )
+            print(python_version)
 
             # Check if pytest is available
             result = subprocess.run(
@@ -466,7 +468,11 @@ Coverage reports are available in:
         if report["summary"]["failed"] == 0:
             md += "🎉 **All tests passed!** The codebase is ready for deployment."
         else:
-            md += f"⚠️ **{report['summary']['failed']} test suite(s) failed.** Please review and fix issues before deployment."
+            failed_count = report["summary"]["failed"]
+            md += (
+                f"⚠️ **{failed_count} test suite(s) failed.** "
+                "Please review and fix issues before deployment."
+            )
 
         return md
 
@@ -530,7 +536,7 @@ Coverage reports are available in:
         print("✅ Cleanup completed")
 
 
-def main():
+def main() -> None:
     """Main entry point for the test runner."""
     parser = argparse.ArgumentParser(
         description="Comprehensive test runner for trading RL agent"

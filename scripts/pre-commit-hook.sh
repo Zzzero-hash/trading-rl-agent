@@ -2,6 +2,10 @@
 # Pre-commit script for cleaning up notebook outputs and checking for large files
 # Place this in .git/hooks/pre-commit and make it executable
 
+# Fix locale issues
+export LANG=C.utf8
+export LC_ALL=C.utf8
+
 echo "🧹 Pre-commit cleanup..."
 
 # Check if we have any notebooks to clean

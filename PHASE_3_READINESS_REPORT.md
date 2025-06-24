@@ -58,13 +58,11 @@ The repository provides a solid foundation for multi-asset portfolio development
 ### Immediate Development Targets
 
 1. **Multi-Asset Environment Extension**
-
    - Extend trading environment to handle portfolio of assets
    - Implement portfolio-level observations and actions
    - Add portfolio rebalancing logic
 
 2. **Portfolio Agent Development**
-
    - Adapt existing agents for portfolio management
    - Implement portfolio-specific reward functions
    - Add risk management constraints
