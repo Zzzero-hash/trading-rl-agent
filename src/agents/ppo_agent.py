@@ -461,7 +461,7 @@ class PPOAgent:
             "training_step": self.training_step,
         }
 
-    def save(self, filepath: str):
+    def save(self, filepath: str) -> None:
         """Save agent state."""
         torch.save(
             {
@@ -474,7 +474,7 @@ class PPOAgent:
             filepath,
         )
 
-    def load(self, filepath: str):
+    def load(self, filepath: str) -> None:
         """Load agent state."""
         checkpoint = torch.load(filepath, map_location=self.device)
         self.network.load_state_dict(checkpoint["network_state_dict"])

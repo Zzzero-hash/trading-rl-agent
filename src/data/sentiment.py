@@ -107,12 +107,12 @@ class NewsSentimentProvider(SentimentProvider):
         random.seed(hash(symbol))
         sentiment_data = []
         for i in range(min(5, days_back)):
-            score = random.uniform(-0.5, 0.8)
+            score = random.uniform(-0.5, 0.8)  # nosec B311
             sentiment_data.append(
                 SentimentData(
                     symbol=symbol,
                     score=score,
-                    magnitude=random.uniform(0.5, 0.9),
+                    magnitude=random.uniform(0.5, 0.9),  # nosec B311
                     timestamp=datetime.datetime.now() - datetime.timedelta(days=i),
                     source="news_mock",
                     raw_data={"mock": True},
@@ -126,7 +126,10 @@ class NewsSentimentProvider(SentimentProvider):
         """Scrape news headlines from Yahoo Finance and analyze sentiment (robust)."""
         url = f"https://finance.yahoo.com/quote/{symbol}/news?p={symbol}"
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            )
         }
 
         try:
@@ -225,12 +228,12 @@ class SocialSentimentProvider(SentimentProvider):
 
         sentiment_data = []
         for i in range(min(3, days_back)):
-            score = random.uniform(-0.8, 0.6)  # More volatile than news
+            score = random.uniform(-0.8, 0.6)  # More volatile than news  # nosec B311
             sentiment_data.append(
                 SentimentData(
                     symbol=symbol,
                     score=score,
-                    magnitude=random.uniform(0.3, 0.8),
+                    magnitude=random.uniform(0.3, 0.8),  # nosec B311
                     timestamp=datetime.datetime.now() - datetime.timedelta(days=i),
                     source="social_mock",
                     raw_data={"mock": True},
@@ -343,7 +346,7 @@ class SentimentAnalyzer:
             )  # Magnitude feature
         return features
 
-    def update_sentiment_cache(self, symbol: str, days_back: int = 1):
+    def update_sentiment_cache(self, symbol: str, days_back: int = 1) -> None:
         """Manually update sentiment cache for a symbol."""
         self.fetch_all_sentiment(symbol, days_back)
 
@@ -357,6 +360,6 @@ def get_sentiment_score(symbol: str, days_back: int = 1) -> float:
     return _default_analyzer.get_symbol_sentiment(symbol, days_back)
 
 
-def update_sentiment(symbol: str, days_back: int = 1):
+def update_sentiment(symbol: str, days_back: int = 1) -> None:
     """Convenience function to update sentiment."""
     _default_analyzer.update_sentiment_cache(symbol, days_back)

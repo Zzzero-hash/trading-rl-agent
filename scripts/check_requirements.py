@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Check requirements files for consistency and security issues.
-"""
+"""Check requirements files for consistency and security issues."""  # noqa: D212
 
 from pathlib import Path
 import re
@@ -18,11 +16,16 @@ def parse_requirements(file_path: Path) -> set[str]:
     with open(file_path) as f:
         for line in f:
             line = line.strip()
-            if line and not line.startswith("#") and not line.startswith("-"):
-                # Extract package name (before version specifiers)
-                package = re.split(r"[>=<!=]", line)[0].strip()
-                if package:
-                    packages.add(package.lower())
+            if line and not line.startswith("#"):
+                if line.startswith("-r "):
+                    # Handle included requirements files
+                    included_file = file_path.parent / line[3:].strip()
+                    packages.update(parse_requirements(included_file))
+                elif not line.startswith("-"):
+                    # Extract package name (before version specifiers)
+                    package = re.split(r"[>=<!=]", line)[0].strip()
+                    if package:
+                        packages.add(package.lower())
 
     return packages
 
@@ -58,6 +61,7 @@ def check_requirements_consistency() -> bool:
                 errors.append(
                     f"Missing core packages in {name}: {missing}"
                 )  # Check for duplicate packages across files
+
     all_packages: dict[str, list[str]] = {}
     for name, packages in parsed_reqs.items():
         for package in packages:
@@ -102,15 +106,21 @@ def check_pinned_versions() -> bool:
         "mypy",
     }
 
-    unpinned = []
+    unpinned: list[str] = []
     with open(main_req_file) as f:
         for line in f:
             line = line.strip()
-            if line and not line.startswith("#"):
-                package_name = re.split(r"[>=<!=]", line)[0].strip().lower()
-                if package_name in critical_packages:
-                    if not re.search(r"[>=<!=]", line):
-                        unpinned.append(package_name)
+            if not line or line.startswith("#"):
+                continue
+
+            pkg = re.split(r"[>=<!=]", line)[0].strip().lower()
+            if pkg not in critical_packages:
+                continue
+
+            # Check if package has version constraint
+            has_version_constraint = re.search(r"[>=<!=]", line) is not None
+            if not has_version_constraint:
+                unpinned.append(pkg)
 
     if unpinned:
         print(f"Warning: Critical packages without version pins: {unpinned}")

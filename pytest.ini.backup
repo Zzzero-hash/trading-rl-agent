@@ -36,8 +36,11 @@ filterwarnings =
     ignore::DeprecationWarning
     ignore::PendingDeprecationWarning
     ignore::FutureWarning
-    ignore::UserWarning
+    ignore::UserWarning:ray
+    ignore::UserWarning:torch
+    ignore::UserWarning:gymnasium
     ignore::RuntimeWarning
+    error::UserWarning:src
 norecursedirs =
     .git
     .pytest_cache
@@ -60,3 +63,6 @@ required_plugins =
     pytest-asyncio
     pytest-timeout
     pytest-benchmark
+    ignore::FutureWarning
+    ignore::UserWarning:ray.*
+    ignore::UserWarning:torch.*

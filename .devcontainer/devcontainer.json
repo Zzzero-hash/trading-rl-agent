@@ -1,15 +1,10 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
 {
   "name": "Existing Dockerfile",
   "build": {
-    // Sets the run context to one level up instead of the .devcontainer folder.
     "context": "..",
-    // Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
     "dockerfile": "../Dockerfile"
   },
   "features": {
-    // GPU support
     "ghcr.io/devcontainers/features/nvidia-cuda:latest": {},
     "ghcr.io/devcontainers/features/git-lfs:1": {
       "autoPull": true,
@@ -25,24 +20,9 @@
       "version": "os-provided"
     }
   },
-
-  // GPU Runtime Configuration
   "runArgs": ["--gpus=all"],
-
-  // Host requirements for GPU support
   "hostRequirements": {
     "gpu": "optional"
   },
-
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [11434],
-
-  // Run commands after the container is created to ensure proper permissions
-  "postCreateCommand": "chmod -R u+w /workspace && find /workspace -name '*.sh' -exec chmod +x {} \\;",
-
-  // Configure tool-specific properties.
-  // "customizations": {},
-
-  // Connect as the rluser to maintain consistent permissions
-  "remoteUser": "rluser"
+  "postCreateCommand": "chmod -R 755 /workspace && find /workspace -name '*.sh' -exec chmod +x {} \\; && pip install -e . && python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")'"
 }

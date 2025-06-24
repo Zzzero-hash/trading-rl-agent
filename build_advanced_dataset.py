@@ -24,6 +24,7 @@ import json
 import logging
 from pathlib import Path
 import sys
+from typing import Any, List
 
 import numpy as np
 import pandas as pd
@@ -70,9 +71,8 @@ class AdvancedDatasetBuilder:
         self.output_dir = Path(config.get("output_dir", "data"))
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize data containers
-        self.synthetic_data = []
-        self.real_data = []
+        # Initialize data containers        self.synthetic_data: List[pd.DataFrame] = []
+        self.real_data: list[pd.DataFrame] = []
         self.combined_data = None
 
     def generate_advanced_synthetic_data(self) -> pd.DataFrame:
@@ -93,13 +93,29 @@ class AdvancedDatasetBuilder:
         symbols = MAJOR_USD_PAIRS + MAJOR_STOCKS[:5]  # Mix of forex and stocks
 
         for symbol in tqdm(symbols, desc="Generating synthetic data for symbols"):
-            for regime in market_regimes:
-                for scenario in range(regime["scenarios"]):
+            for regime in market_regimes:  # Type cast with proper error handling
+                scenarios = (
+                    int(regime["scenarios"])
+                    if isinstance(regime["scenarios"], (int, float, str))
+                    else 1
+                )
+                mu_val = (
+                    float(regime["mu"])
+                    if isinstance(regime["mu"], (int, float, str))
+                    else 0.0
+                )
+                sigma_val = (
+                    float(regime["sigma"])
+                    if isinstance(regime["sigma"], (int, float, str))
+                    else 0.1
+                )
+
+                for scenario in range(scenarios):
                     # Generate base synthetic data using GBM
                     df = generate_gbm_prices(
                         n_days=self.config.get("synthetic_days", 500),
-                        mu=regime["mu"],
-                        sigma=regime["sigma"],
+                        mu=mu_val,
+                        sigma=sigma_val,
                         s0=np.random.uniform(50, 200),  # Random starting price
                     )
 
@@ -114,9 +130,7 @@ class AdvancedDatasetBuilder:
                     # Add regime-specific patterns
                     df = self._add_regime_patterns(df, regime)
 
-                    synthetic_datasets.append(df)
-
-        # Combine all synthetic data
+                    synthetic_datasets.append(df)  # Combine all synthetic data
         synthetic_combined = pd.concat(synthetic_datasets, ignore_index=True)
 
         # Sort by timestamp within each symbol
@@ -125,7 +139,8 @@ class AdvancedDatasetBuilder:
         ).reset_index(drop=True)
 
         logger.info(
-            f"Generated {len(synthetic_combined)} synthetic data points across {len(symbols)} symbols"
+            f"Generated {len(synthetic_combined)} synthetic data points across "
+            f"{len(symbols)} symbols"
         )
         return synthetic_combined
 
@@ -258,9 +273,9 @@ class AdvancedDatasetBuilder:
                 )
 
                 # Add symbol-specific features
-                symbol_data = self._add_symbol_specific_features(symbol_data, symbol)
-
-                # Add time-based features
+                symbol_data = self._add_symbol_specific_features(
+                    symbol_data, symbol
+                )  # Add time-based features
                 symbol_data = self._add_temporal_features(symbol_data)
 
                 # Add market regime features
@@ -274,7 +289,8 @@ class AdvancedDatasetBuilder:
         if enhanced_datasets:
             result = pd.concat(enhanced_datasets, ignore_index=True)
             logger.info(
-                f"Added features to {len(result)} data points across {len(enhanced_datasets)} symbols"
+                f"Added features to {len(result)} data points across "
+                f"{len(enhanced_datasets)} symbols"
             )
             return result
         else:
@@ -493,18 +509,38 @@ class AdvancedDatasetBuilder:
                 if extreme_moves > 0:
                     validation_results["data_quality_issues"].append(
                         f"Extreme price movements in {col}: {extreme_moves} occurrences"
-                    )
-
-        # Feature statistics
+                    )  # Feature statistics
         for col in numeric_cols[:10]:  # Top 10 numeric columns
-            validation_results["feature_statistics"][col] = {
-                "mean": float(df[col].mean()),
-                "std": float(df[col].std()),
-                "min": float(df[col].min()),
-                "max": float(df[col].max()),
-                "skewness": float(df[col].skew()),
-                "kurtosis": float(df[col].kurtosis()),
-            }
+            try:
+                skew_val = df[col].skew()
+                kurt_val = df[col].kurtosis()
+
+                # Safe conversion to float
+                def safe_float(val: Any) -> float:
+                    if pd.isna(val):
+                        return 0.0
+                    try:
+                        return float(val)
+                    except (TypeError, ValueError):
+                        return 0.0
+
+                validation_results["feature_statistics"][col] = {
+                    "mean": float(df[col].mean()),
+                    "std": float(df[col].std()),
+                    "min": float(df[col].min()),
+                    "max": float(df[col].max()),
+                    "skewness": safe_float(skew_val),
+                    "kurtosis": safe_float(kurt_val),
+                }
+            except (TypeError, ValueError, AttributeError):
+                validation_results["feature_statistics"][col] = {
+                    "mean": float(df[col].mean()),
+                    "std": float(df[col].std()),
+                    "min": float(df[col].min()),
+                    "max": float(df[col].max()),
+                    "skewness": 0.0,
+                    "kurtosis": 0.0,
+                }
 
         # Label distribution
         if "label" in df.columns:
@@ -514,7 +550,8 @@ class AdvancedDatasetBuilder:
             }
 
         logger.info(
-            f"Data validation completed: {len(validation_results['data_quality_issues'])} issues found"
+            f"Data validation completed: {len(validation_results['data_quality_issues'])} "
+            f"issues found"
         )
         return validation_results
 
@@ -561,7 +598,7 @@ class AdvancedDatasetBuilder:
         logger.info(f"Dataset build completed: {len(combined_data)} total records")
         return combined_data, validation_results
 
-    def save_dataset(self, df: pd.DataFrame, validation_results: dict):
+    def save_dataset(self, df: pd.DataFrame, validation_results: dict) -> dict:
         """Save the dataset and validation results."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -589,7 +626,7 @@ class AdvancedDatasetBuilder:
         }
 
 
-def main():
+def main() -> None:
     """Main execution function."""
     parser = argparse.ArgumentParser(description="Build advanced trading dataset")
     parser.add_argument("--output_dir", default="data", help="Output directory")
@@ -636,14 +673,15 @@ def main():
     print(f"Unique Symbols: {dataset['symbol'].nunique()}")
     print(f"Features: {len(dataset.columns)}")
     print(
-        f"Date Range: {validation_results['date_range']['start']} to {validation_results['date_range']['end']}"
+        f"Date Range: {validation_results['date_range']['start']} "
+        f"to {validation_results['date_range']['end']}"
     )
     print(f"Data Quality Issues: {len(validation_results['data_quality_issues'])}")
 
     if "label_distribution" in validation_results:
         print(f"Label Distribution: {validation_results['label_distribution']}")
 
-    print(f"\nFiles created:")
+    print("\nFiles created:")
     for key, path in file_paths.items():
         print(f"  {key}: {path}")
 

@@ -4,5 +4,9 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "github.copilot.chat.byok.ollamaEndpoint": "http://host.docker.internal:11434"
+    "github.copilot.chat.byok.ollamaEndpoint": "http://host.docker.internal:11434",
+    "terminal.integrated.env.linux": {
+        "LANG": "C.utf8",
+        "LC_ALL": "C.utf8"
+    }
 }

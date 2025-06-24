@@ -32,6 +32,10 @@ Thumbs.db
 # Testing
 .pytest_cache/
 
+# Node modules and cache files
+node_modules/
+.cache/
+
 # Data
 /data/
 outputs/

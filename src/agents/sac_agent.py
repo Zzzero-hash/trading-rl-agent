@@ -33,11 +33,13 @@ class Actor(nn.Module):
         self,
         state_dim: int,
         action_dim: int,
-        hidden_dims: list[int] = [256, 256],
+        hidden_dims: list[int] | None = None,
         log_std_min: float = -20,
         log_std_max: float = 2,
     ):
         super().__init__()
+        if hidden_dims is None:
+            hidden_dims = [256, 256]
         self.log_std_min = log_std_min
         self.log_std_max = log_std_max
 
@@ -84,9 +86,11 @@ class QNetwork(nn.Module):
     """SAC Q-Network (single critic)."""
 
     def __init__(
-        self, state_dim: int, action_dim: int, hidden_dims: list[int] = [256, 256]
+        self, state_dim: int, action_dim: int, hidden_dims: list[int] | None = None
     ):
         super().__init__()
+        if hidden_dims is None:
+            hidden_dims = [256, 256]
 
         layers = []
         input_dim = state_dim + action_dim
@@ -111,9 +115,11 @@ class Critic(nn.Module):
     """Twin Critic Network for SAC (returns both Q1 and Q2)."""
 
     def __init__(
-        self, state_dim: int, action_dim: int, hidden_dims: list[int] = [256, 256]
+        self, state_dim: int, action_dim: int, hidden_dims: list[int] | None = None
     ):
         super().__init__()
+        if hidden_dims is None:
+            hidden_dims = [256, 256]
 
         # Create two Q-networks
         self.q1 = QNetwork(state_dim, action_dim, hidden_dims)
@@ -146,6 +152,17 @@ class ReplayBuffer:
         """Add experience to buffer."""
         self.buffer.append((state, action, reward, next_state, done))
 
+    def add(
+        self,
+        state: np.ndarray,
+        action: np.ndarray,
+        reward: float,
+        next_state: np.ndarray,
+        done: bool,
+    ):
+        """Add experience to buffer (alias for push to match test API)."""
+        self.push(state, action, reward, next_state, done)
+
     def sample(self, batch_size: int) -> tuple[torch.Tensor, ...]:
         """Sample batch of experiences."""
         batch = random.sample(self.buffer, batch_size)
@@ -154,12 +171,14 @@ class ReplayBuffer:
         return (
             torch.FloatTensor(state),
             torch.FloatTensor(action),
-            torch.FloatTensor(reward),  # 1D tensor for rewards
-            torch.FloatTensor(next_state),
+            torch.FloatTensor(
+                reward
+            ),  # 1D tensor for rewards            torch.FloatTensor(next_state),
             torch.BoolTensor(done),  # 1D tensor for dones
         )
 
     def __len__(self) -> int:
+        """Return the current size of replay buffer."""
         return len(self.buffer)
 
 
@@ -219,15 +238,15 @@ class SACAgent:
             hidden_dims = config.hidden_dims
             buffer_capacity = config.buffer_capacity
 
-        self.replay_buffer = ReplayBuffer(buffer_capacity)
-
-        # Initialize networks
+        self.replay_buffer = ReplayBuffer(buffer_capacity)  # Initialize networks
         self.actor = Actor(state_dim, action_dim, hidden_dims).to(self.device)
         self.critic1 = QNetwork(state_dim, action_dim, hidden_dims).to(self.device)
         self.critic2 = QNetwork(state_dim, action_dim, hidden_dims).to(self.device)
 
-        # Backward compatibility - alias for tests that expect 'critic'
+        # Backward compatibility aliases for tests
         self.critic = self.critic1
+        self.critic_1 = self.critic1  # For test compatibility with TD3 naming
+        self.critic_2 = self.critic2  # For test compatibility with TD3 naming
 
         # Target networks
         self.target_critic1 = copy.deepcopy(self.critic1)
