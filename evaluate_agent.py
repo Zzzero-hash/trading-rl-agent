@@ -5,7 +5,7 @@ on the provided dataset, and computes common performance metrics such as
 Sharpe ratio and maximum drawdown. Results are stored in a JSON file for
 later analysis.
 
-Example
+Example:
 -------
 ```
 python evaluate_agent.py --data data/sample_data.csv --checkpoint sac_agent.pth \

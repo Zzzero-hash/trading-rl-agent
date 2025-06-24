@@ -402,9 +402,15 @@ class TestTuneIntegration:
                     if "choice" in value:
                         return f"tune.choice({value['choice']})"
                     elif "uniform" in value:
-                        return f"tune.uniform({value['uniform'][0]}, {value['uniform'][1]})"
+                        return (
+                            f"tune.uniform({value['uniform'][0]}, "
+                            f"{value['uniform'][1]})"
+                        )
                     elif "randint" in value:
-                        return f"tune.randint({value['randint'][0]}, {value['randint'][1]})"
+                        return (
+                            f"tune.randint({value['randint'][0]}, "
+                            f"{value['randint'][1]})"
+                        )
                 return value
 
             with patch("src.agents.tune._convert_value", side_effect=mock_convert):

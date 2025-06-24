@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""
-GPU Verification Script for Trading RL Agent
+"""GPU Verification Script for Trading RL Agent.
+
 Checks if GPU is available and properly configured in the container.
 """
 

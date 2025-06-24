@@ -1,3 +1,5 @@
+"""Checks the type coverage of the trading-rl-agent project using mypy."""
+
 #!/usr/bin/env python3
 """
 Type checking script to ensure comprehensive type coverage.
