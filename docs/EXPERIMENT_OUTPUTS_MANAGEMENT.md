@@ -22,6 +22,7 @@ trading-rl-agent/
 ### Before Each Commit
 
 1. **Clear Notebook Outputs**: Always clear notebook outputs before committing
+
    ```bash
    # Use VS Code command palette: "Notebook: Clear All Outputs"
    # Or programmatically in notebook:
@@ -30,6 +31,7 @@ trading-rl-agent/
    ```
 
 2. **Archive Important Results**: Save significant results before cleanup
+
    ```bash
    # Create archive directory
    mkdir -p results_archive/$(date +%Y%m%d)
@@ -44,6 +46,7 @@ trading-rl-agent/
 ### Weekly Cleanup
 
 1. **Remove Old Experiment Directories**:
+
    ```bash
    # Remove Ray Tune results older than 7 days
    find ray_results/ -type d -name "*_hparam_*" -mtime +7 -exec rm -rf {} +
@@ -61,6 +64,7 @@ trading-rl-agent/
 ## 📋 What to Keep vs. What to Clean
 
 ### ✅ Keep (Archive)
+
 - Best configuration files (`best_*_config_*.json`)
 - Final experiment summaries (`*_hparam_results_*.json`)
 - Key trial data for analysis
@@ -68,6 +72,7 @@ trading-rl-agent/
 - Performance plots and visualizations
 
 ### 🗑️ Clean Up Regularly
+
 - Individual Ray Tune trial directories
 - Temporary optimization directories (`hparam_opt_*`)
 - Large CSV files with all trial data (after extracting insights)
@@ -80,6 +85,7 @@ trading-rl-agent/
 ### 1. Pre-commit Hook Setup
 
 Create `.git/hooks/pre-commit`:
+
 ```bash
 #!/bin/bash
 # Clear Jupyter notebook outputs before commit
@@ -129,7 +135,9 @@ if __name__ == "__main__":
 ## 📊 Storage Management
 
 ### Current Storage Usage
+
 Monitor disk usage regularly:
+
 ```bash
 # Check size of output directories
 du -sh optimization_results/ ray_results/ data/
@@ -139,6 +147,7 @@ find . -type f -size +10M -not -path "./.git/*" | xargs ls -lh | sort -k5 -h
 ```
 
 ### Recommended Limits
+
 - **optimization_results/**: Keep < 500MB (archive older results)
 - **ray_results/**: Keep < 1GB (clean up after each experiment)
 - **Notebook outputs**: Always clear before commit
@@ -149,19 +158,21 @@ find . -type f -size +10M -not -path "./.git/*" | xargs ls -lh | sort -k5 -h
 ### Settings for Notebook Management
 
 Add to `.vscode/settings.json`:
+
 ```json
 {
-    "notebook.output.textLineLimit": 30,
-    "notebook.output.wordWrap": true,
-    "notebook.clearOutputBeforeSave": true,
-    "files.watcherExclude": {
-        "**/ray_results/**": true,
-        "**/optimization_results/hparam_opt_*/**": true
-    }
+  "notebook.output.textLineLimit": 30,
+  "notebook.output.wordWrap": true,
+  "notebook.clearOutputBeforeSave": true,
+  "files.watcherExclude": {
+    "**/ray_results/**": true,
+    "**/optimization_results/hparam_opt_*/**": true
+  }
 }
 ```
 
 ### Recommended Extensions
+
 - **Jupyter**: Core notebook support
 - **Python**: Language support
 - **GitLens**: Better git integration
@@ -180,6 +191,7 @@ Add to `.vscode/settings.json`:
 ## 🚨 Emergency Cleanup
 
 If disk space is critically low:
+
 ```bash
 # Emergency cleanup (BE CAREFUL!)
 # 1. Clear all notebook outputs

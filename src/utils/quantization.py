@@ -1,5 +1,4 @@
-"""
-Model Quantization Utilities
+"""Model Quantization Utilities.
 
 This module provides utilities for quantizing ML models to reduce memory
 usage and improve inference speed for trading applications.
@@ -15,8 +14,7 @@ import torch.nn as nn
 def quantize_model(
     model: nn.Module, quantization_type: str = "dynamic", backend: str = "fbgemm"
 ) -> nn.Module:
-    """
-    Quantize a PyTorch model for efficient inference.
+    """Quantize a PyTorch model for efficient inference.
 
     Args:
         model: PyTorch model to quantize
@@ -50,8 +48,7 @@ def quantize_model(
 def dynamic_quantization(
     model: nn.Module, dtype: torch.dtype = torch.qint8
 ) -> nn.Module:
-    """
-    Apply dynamic quantization to model.
+    """Apply dynamic quantization to model.
 
     Args:
         model: PyTorch model to quantize
@@ -73,8 +70,7 @@ def dynamic_quantization(
 def static_quantization(
     model: nn.Module, calibration_data: Optional[torch.Tensor] = None
 ) -> nn.Module:
-    """
-    Apply static quantization to model (requires calibration data).
+    """Apply static quantization to model (requires calibration data).
 
     Args:
         model: PyTorch model to quantize
@@ -96,8 +92,7 @@ def static_quantization(
 
 
 def int8_quantization(model: nn.Module) -> nn.Module:
-    """
-    Apply INT8 quantization to model.
+    """Apply INT8 quantization to model.
 
     Args:
         model: PyTorch model to quantize
@@ -111,8 +106,7 @@ def int8_quantization(model: nn.Module) -> nn.Module:
 def compare_model_sizes(
     original_model: nn.Module, quantized_model: nn.Module
 ) -> dict[str, float]:
-    """
-    Compare sizes of original and quantized models.
+    """Compare sizes of original and quantized models.
 
     Args:
         original_model: Original model
@@ -156,8 +150,7 @@ def benchmark_quantized_model(
     sample_input: torch.Tensor,
     num_runs: int = 100,
 ) -> dict[str, float]:
-    """
-    Benchmark inference speed of original vs quantized model.
+    """Benchmark inference speed of original vs quantized model.
 
     Args:
         original_model: Original model
@@ -203,8 +196,7 @@ def benchmark_quantized_model(
 def quantize_for_deployment(
     model: nn.Module, sample_input: torch.Tensor, target_platform: str = "cpu"
 ) -> dict[str, Any]:
-    """
-    Quantize model for deployment with performance analysis.
+    """Quantize model for deployment with performance analysis.
 
     Args:
         model: PyTorch model to quantize

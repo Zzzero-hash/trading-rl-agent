@@ -550,8 +550,8 @@ class AdvancedDatasetBuilder:
             }
 
         logger.info(
-            f"Data validation completed: {len(validation_results['data_quality_issues'])} "
-            f"issues found"
+            f"Data validation completed: "
+            f"{len(validation_results['data_quality_issues'])} issues found"
         )
         return validation_results
 

@@ -28,7 +28,8 @@ try:
 except ImportError:
     HAS_VADER = False
     print(
-        "Warning: 'vaderSentiment' package not found. Twitter sentiment will be skipped."
+        "Warning: 'vaderSentiment' package not found. "
+        "Twitter sentiment will be skipped."
     )
 
 import feedparser

@@ -1,5 +1,4 @@
-"""
-Externalized Hyperparameter Configuration System
+"""Externalized Hyperparameter Configuration System.
 
 This module provides a centralized configuration system for all RL agents
 with support for YAML configs, environment variables, and dynamic loading.

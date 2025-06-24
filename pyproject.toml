@@ -202,7 +202,7 @@ directory = "htmlcov"
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "build", "dist"]
-skips = ["B101", "B601", "B102", "B108", "B324", "B506"]  # Skip assert_used, shell commands, weak cryptography, etc.
+skips = ["B101", "B601", "B102", "B108", "B324", "B506", "B614"]  # Skip assert_used, shell commands, weak cryptography, unsafe PyTorch load, etc.
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]

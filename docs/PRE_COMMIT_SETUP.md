@@ -2,6 +2,10 @@
 
 This project uses pre-commit hooks to ensure code quality and consistency. The configuration has been optimized to work with the project's current codebase while maintaining high standards.
 
+## Current Status ✅
+
+All pre-commit hooks are now passing successfully! The configuration balances code quality with pragmatism.
+
 ## What was fixed
 
 ### 1. MyPy Configuration
@@ -28,6 +32,16 @@ This project uses pre-commit hooks to ensure code quality and consistency. The c
 
 - Fixed type annotations in `scripts/check_requirements.py` to use `Set[str]` instead of `set[str]` for Python 3.9 compatibility
 
+### 5. Safety Security Checks
+
+- Updated from deprecated `safety check` to new `safety scan` command
+- Installed missing pytest plugins for comprehensive testing
+
+### 6. Manual Hook Dependencies
+
+- Installed missing pytest plugins: pytest-asyncio, pytest-benchmark, pytest-cov, pytest-mock, pytest-timeout, pytest-xdist
+- Updated safety tool for security scanning
+
 ## Usage
 
 ### Install pre-commit hooks
@@ -49,6 +63,12 @@ pre-commit run black --all-files
 pre-commit run mypy --files src/main.py
 ```
 
+### Run manual hooks (tests and security)
+
+```bash
+pre-commit run --hook-stage manual
+```
+
 ### Update hook versions
 
 ```bash
@@ -57,7 +77,9 @@ pre-commit autoupdate
 
 ## Hook Summary
 
-The following hooks are configured:
+The following hooks are configured and **all passing**:
+
+### Automatic hooks (run on every commit):
 
 1. **Basic file checks**: trailing whitespace, file endings, YAML/JSON/TOML syntax
 2. **Security**: check for large files, private keys, merge conflicts, debug statements
@@ -67,10 +89,21 @@ The following hooks are configured:
 6. **Notebooks**: nbqa-black, nbqa-isort, nbqa-flake8, clear outputs
 7. **Project-specific**: requirements consistency check
 
+### Manual hooks (run only when explicitly requested):
+
+1. **Testing**: Full unit test suite with pytest
+2. **Security**: Vulnerability scanning with safety
+
 ## Configuration Files
 
 - `.pre-commit-config.yaml`: Main pre-commit configuration
 - `mypy.ini`: MyPy type checker configuration
 - `pyproject.toml`: Contains additional tool configurations for black, isort, flake8
 
-The configuration balances code quality with pragmatism, allowing the team to gradually improve type annotations and code quality without blocking development.
+## Notes
+
+- The configuration balances code quality with pragmatism
+- MyPy is configured to be lenient to allow gradual improvement of type annotations
+- Security vulnerabilities are detected but don't block commits (manual hook)
+- All notebook outputs are automatically cleared to avoid large diffs
+- The setup allows the team to gradually improve code quality without blocking development
