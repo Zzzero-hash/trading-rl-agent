@@ -71,6 +71,15 @@ This directory contains comprehensive documentation for the Trading RL Agent pro
 - Updated algorithm configurations
 - Breaking changes and fixes
 
+#### [`INDUSTRY_STANDARDS_MIGRATION.md`](INDUSTRY_STANDARDS_MIGRATION.md)
+
+**Migration to industry-grade standards**
+
+- FinRL framework integration for production readiness
+- Professional data feeds and risk management
+- MLOps deployment pipeline and monitoring
+- Performance benchmarking with industry metrics
+
 ## 🎯 Quick Navigation
 
 ### For New Developers

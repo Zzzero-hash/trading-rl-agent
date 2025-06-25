@@ -28,6 +28,143 @@ except ImportError:
     from src.configs.hyperparameters import EnsembleConfig, get_agent_config
 
 
+class CNNLSTMIntegrator(nn.Module):
+    """Neural network layer for integrating CNN+LSTM predictions with RL agent outputs."""
+
+    def __init__(
+        self,
+        num_agents: int,
+        action_dim: int,
+        cnn_lstm_pred_dim: int = 3,
+        hidden_dims: list[int] = [128, 64],
+    ):
+        super().__init__()
+
+        # Input: [agent_outputs, cnn_lstm_predictions, confidence_scores, market_features]
+        input_dim = num_agents * action_dim + cnn_lstm_pred_dim + 1  # +1 for confidence
+
+        layers = []
+        current_dim = input_dim
+
+        for hidden_dim in hidden_dims:
+            layers.extend(
+                [
+                    nn.Linear(current_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.BatchNorm1d(hidden_dim),
+                    nn.Dropout(0.1),
+                ]
+            )
+            current_dim = hidden_dim
+
+        # Final output layer
+        layers.append(nn.Linear(current_dim, action_dim))
+        layers.append(nn.Tanh())  # For continuous actions in [-1, 1]
+
+        self.network = nn.Sequential(*layers)
+
+    def forward(
+        self,
+        agent_outputs: torch.Tensor,
+        cnn_lstm_predictions: torch.Tensor,
+        confidence_scores: torch.Tensor,
+    ) -> torch.Tensor:
+        """
+        Combine agent outputs with CNN+LSTM predictions.
+
+        Args:
+            agent_outputs: Tensor of shape (batch, num_agents * action_dim)
+            cnn_lstm_predictions: Tensor of shape (batch, 3) - trend predictions
+            confidence_scores: Tensor of shape (batch, 1) - prediction confidence
+
+        Returns:
+            Final action tensor of shape (batch, action_dim)
+        """
+        # Concatenate all inputs
+        combined_input = torch.cat(
+            [agent_outputs, cnn_lstm_predictions, confidence_scores], dim=-1
+        )
+
+        # Pass through neural network
+        final_action = self.network(combined_input)
+
+        return final_action
+
+
+class HybridStateProcessor:
+    """Process hybrid states containing market data and CNN+LSTM predictions."""
+
+    def __init__(self):
+        self.running_mean = None
+        self.running_var = None
+        self.running_count = 0
+        self.epsilon = 1e-8
+
+    def process_hybrid_state(
+        self, state: Union[np.ndarray, dict]
+    ) -> tuple[np.ndarray, np.ndarray, float]:
+        """
+        Process hybrid state to extract market features, CNN+LSTM predictions, and confidence.
+
+        Args:
+            state: Raw state (dict with market_features and cnn_lstm_pred) or array
+
+        Returns:
+            Tuple of (market_features, cnn_lstm_predictions, confidence_score)
+        """
+        if isinstance(state, dict):
+            # Extract components from dictionary state
+            market_features = state.get("market_features", np.array([]))
+            cnn_lstm_pred = state.get("cnn_lstm_predictions", np.array([0, 0, 0]))
+            confidence = state.get("confidence", 0.5)
+
+            # Flatten market features if needed
+            if market_features.ndim > 1:
+                market_features = market_features.flatten()
+
+        else:
+            # Handle plain array input (fallback)
+            market_features = state.flatten() if state.ndim > 1 else state
+            cnn_lstm_pred = np.array([0, 0, 0])  # Default neutral prediction
+            confidence = 0.5  # Default confidence
+
+        # Normalize market features
+        market_features = self._normalize_features(market_features)
+
+        # Ensure CNN+LSTM predictions are normalized (softmax-like)
+        if len(cnn_lstm_pred) == 3:
+            cnn_lstm_pred = np.exp(cnn_lstm_pred) / np.sum(np.exp(cnn_lstm_pred))
+        else:
+            cnn_lstm_pred = np.array([0.33, 0.34, 0.33])  # Default balanced
+
+        return market_features, cnn_lstm_pred, confidence
+
+    def _normalize_features(self, features: np.ndarray) -> np.ndarray:
+        """Normalize features using running statistics."""
+        if self.running_mean is None:
+            self.running_mean = np.zeros_like(features).astype(np.float32)
+            self.running_var = np.ones_like(features).astype(np.float32)
+
+        # Update running statistics
+        self.running_count += 1
+        delta = features - self.running_mean
+        self.running_mean = self.running_mean + delta / self.running_count
+        delta2 = features - self.running_mean
+
+        assert self.running_var is not None
+        self.running_var = (
+            self.running_var + (delta * delta2 - self.running_var) / self.running_count
+        )
+
+        # Normalize
+        normalized = (features - self.running_mean) / (
+            np.sqrt(self.running_var) + self.epsilon
+        )
+
+        # Clip to reasonable range
+        return np.clip(normalized, -5.0, 5.0)
+
+
 class UncertaintyEstimator(nn.Module):
     """Neural network for uncertainty estimation."""
 
@@ -186,6 +323,25 @@ class EnsembleAgent:
 
         # Initialize enabled agents
         self._initialize_agents()
+
+        # Initialize hybrid state processor for CNN+LSTM integration
+        self.hybrid_state_processor = HybridStateProcessor()
+
+        # Initialize CNN+LSTM integrator (final neural network layer)
+        num_enabled_agents = len([a for a in self.agents.values() if a is not None])
+        if num_enabled_agents > 0:
+            self.cnn_lstm_integrator = CNNLSTMIntegrator(
+                num_agents=num_enabled_agents,
+                action_dim=action_dim,
+                cnn_lstm_pred_dim=3,  # Hold/Buy/Sell predictions
+                hidden_dims=[128, 64],
+            ).to(self.device)
+            self.integrator_optimizer = optim.Adam(
+                self.cnn_lstm_integrator.parameters(), lr=1e-3
+            )
+        else:
+            self.cnn_lstm_integrator = None
+            self.integrator_optimizer = None
 
         # Performance tracking
         self.performance_history = {
