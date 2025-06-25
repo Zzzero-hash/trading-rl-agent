@@ -1,0 +1,11 @@
+# NATS client for Python
+nats-py>=2.6.0
+
+# Redis client for Python
+redis>=5.0.0
+
+# JSON handling improvements
+orjson>=3.9.0
+
+# Async utilities
+aiofiles>=23.0.0

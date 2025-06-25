@@ -26,24 +26,28 @@ def standardize_data(
     Returns:
         Tuple of (standardized_data, scaler)
     """
+    is_default_scaler = False
     if scaler is None:
         scaler = StandardScaler()
+        is_default_scaler = True
 
     if isinstance(data, pd.DataFrame):
         if fit_scaler:
             standardized = scaler.fit_transform(data)
         else:
             standardized = scaler.transform(data)
+        # Return DataFrame and scaler
         return (
             pd.DataFrame(standardized, columns=data.columns, index=data.index),
             scaler,
         )
     else:
+        # Standardize numpy array input
         if fit_scaler:
             standardized = scaler.fit_transform(data)
         else:
             standardized = scaler.transform(data)
-        return standardized, scaler
+        return standardized
 
 
 def create_sequences(
@@ -78,13 +82,17 @@ def create_sequences(
     sequences = []
     sequence_targets = []
 
-    for i in range(0, len(features) - sequence_length + 1, stride):
+    # Create sequences and next-step targets
+    for i in range(0, len(features) - sequence_length, stride):
         seq = features[i : i + sequence_length]
-        target = targets[i + sequence_length - 1]
+        # target is the next value after the sequence
+        target = targets[i + sequence_length]
         sequences.append(seq)
         sequence_targets.append(target)
 
-    return np.array(sequences), np.array(sequence_targets)
+    sequences_arr = np.array(sequences)
+    targets_arr = np.array(sequence_targets).reshape(-1, 1)
+    return sequences_arr, targets_arr
 
 
 def normalize_data(

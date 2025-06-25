@@ -130,7 +130,8 @@ class TestFeatureEngineering:
             }
         )
 
-        doji_pattern = detect_doji(doji_data)
+        # Get doji pattern series
+        doji_pattern = detect_doji(doji_data)["doji"]
         assert len(doji_pattern) == 3
         assert doji_pattern.iloc[-1] is True  # Last candle should be doji
 
