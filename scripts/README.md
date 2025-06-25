@@ -4,6 +4,21 @@ This directory contains utility scripts for managing the ML training project.
 
 ## Available Scripts
 
+### `fix_locale.sh`
+
+**Fixes locale warnings in Git operations and development environment**
+
+```bash
+# Source to fix locale environment variables
+source scripts/fix_locale.sh
+
+# Now run git commands without locale warnings
+git status
+git commit -m "Your commit message"
+```
+
+This script permanently fixes the `LC_ALL: cannot change locale` warnings by setting the locale to the stable `C.utf8` that's available in the dev container.
+
 ### `cleanup_experiments.py`
 
 Automated cleanup tool for managing experiment outputs and disk space.
