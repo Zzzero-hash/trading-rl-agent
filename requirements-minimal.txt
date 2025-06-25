@@ -19,7 +19,7 @@ yfinance>=0.2.0,<0.3.0     # Financial data
 ta>=0.10.0,<0.11.0         # Technical analysis
 
 # Testing
-pytest>=7.0.0,<8.0.0       # Unit testing
+pytest>=7.4.0              # Unit testing (updated for compatibility)
 faker>=13.0.0,<25.0.0      # Test data generation
 
 # Utilities
