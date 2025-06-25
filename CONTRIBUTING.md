@@ -405,7 +405,6 @@ python run_comprehensive_tests.py
    ```
 
 3. **Make your changes**
-
    - Follow code standards
    - Add/update tests
    - Update documentation

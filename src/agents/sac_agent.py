@@ -171,9 +171,8 @@ class ReplayBuffer:
         return (
             torch.FloatTensor(state),
             torch.FloatTensor(action),
-            torch.FloatTensor(
-                reward
-            ),  # 1D tensor for rewards            torch.FloatTensor(next_state),
+            torch.FloatTensor(reward),  # 1D tensor for rewards
+            torch.FloatTensor(next_state),
             torch.BoolTensor(done),  # 1D tensor for dones
         )
 
@@ -202,6 +201,12 @@ class SACAgent:
         self.device = torch.device(device)
         self.config = config  # Store original config
         self.training_step = 0
+        # Optional production risk manager integration
+        from src.risk.production_risk_manager import ProductionRiskManager
+
+        self.risk_manager = None
+        if isinstance(config, dict) and "risk_manager_config" in config:
+            self.risk_manager = ProductionRiskManager(config["risk_manager_config"])
 
         # Handle different config types and set defaults
         if config is None:
@@ -238,7 +243,12 @@ class SACAgent:
             hidden_dims = config.hidden_dims
             buffer_capacity = config.buffer_capacity
 
-        self.replay_buffer = ReplayBuffer(buffer_capacity)  # Initialize networks
+        self.replay_buffer = ReplayBuffer(buffer_capacity)
+
+        # Initialize state processor for enhanced state representation
+        self.state_processor = None  # Disabled for debugging
+
+        # Initialize networks
         self.actor = Actor(state_dim, action_dim, hidden_dims).to(self.device)
         self.critic1 = QNetwork(state_dim, action_dim, hidden_dims).to(self.device)
         self.critic2 = QNetwork(state_dim, action_dim, hidden_dims).to(self.device)
@@ -291,13 +301,28 @@ class SACAgent:
         Select action given state.
 
         Args:
-            state: Current state
+            state: Current state (can be raw or dict format)
             evaluate: If True, use deterministic policy (mean action)
 
         Returns:
             Selected action
         """
-        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        # Process state through enhanced representation if enabled
+        if self.state_processor is not None:
+            processed_state = self.state_processor.process_state(state)
+        else:
+            # Handle dict state format without processor
+            if isinstance(state, dict):
+                market_features = state.get("market_features", state)
+                processed_state = (
+                    market_features.flatten()
+                    if market_features.ndim > 1
+                    else market_features
+                )
+            else:
+                processed_state = state.flatten() if state.ndim > 1 else state
+
+        state_tensor = torch.FloatTensor(processed_state).unsqueeze(0).to(self.device)
 
         if evaluate:
             with torch.no_grad():
@@ -307,7 +332,14 @@ class SACAgent:
             with torch.no_grad():
                 action, _ = self.actor.sample(state_tensor)
 
-        return action.cpu().numpy().flatten()
+        action_array = action.cpu().numpy().flatten()
+        # Validate action with risk manager if available
+        if self.risk_manager is not None:
+            valid = self.risk_manager.validate_action(action_array, processed_state)
+            if not valid:
+                # Override action to zero (halt)
+                action_array = np.zeros_like(action_array)
+        return action_array
 
     def store_transition(
         self,
@@ -317,8 +349,38 @@ class SACAgent:
         next_state: np.ndarray,
         done: bool,
     ):
-        """Store transition in replay buffer."""
-        self.replay_buffer.push(state, action, reward, next_state, done)
+        """Store transition in replay buffer with enhanced state processing."""
+        # Process states through enhanced representation if enabled
+        if self.state_processor is not None:
+            processed_state = self.state_processor.process_state(state)
+            processed_next_state = self.state_processor.process_state(next_state)
+        else:
+            # Handle dict state format without processor
+            if isinstance(state, dict):
+                market_features = state.get("market_features", state)
+                processed_state = (
+                    market_features.flatten()
+                    if market_features.ndim > 1
+                    else market_features
+                )
+            else:
+                processed_state = state.flatten() if state.ndim > 1 else state
+
+            if isinstance(next_state, dict):
+                market_features = next_state.get("market_features", next_state)
+                processed_next_state = (
+                    market_features.flatten()
+                    if market_features.ndim > 1
+                    else market_features
+                )
+            else:
+                processed_next_state = (
+                    next_state.flatten() if next_state.ndim > 1 else next_state
+                )
+
+        self.replay_buffer.push(
+            processed_state, action, reward, processed_next_state, done
+        )
 
     def store_experience(
         self,

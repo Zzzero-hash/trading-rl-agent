@@ -65,6 +65,10 @@ def compute_ema(
     """
     Compute Exponential Moving Average (EMA).
     """
+    # Handle Series input (for backwards compatibility)
+    if isinstance(df, pd.Series):
+        return df.ewm(span=timeperiod, adjust=False).mean()
+
     # Use pandas built-in EMA implementation
     ema = df[price_col].ewm(span=timeperiod, adjust=False).mean()
     df[f"ema_{timeperiod}"] = ema
@@ -188,27 +192,17 @@ def compute_obv(df: pd.DataFrame) -> pd.DataFrame:
 
 def detect_doji(df: pd.DataFrame, threshold: float = 0.05) -> pd.DataFrame:
     """
-    Detect Doji candlestick pattern (open and close are nearly equal).
+    Detect Doji patterns.
 
-    Args:
-        df: DataFrame with OHLC data
-        threshold: Maximum percentage difference between open and close to qualify as a doji
+    A Doji occurs when the open and close prices are nearly identical relative to the total range.
 
     Returns:
-        DataFrame with new 'doji' column (1 for doji, 0 otherwise)
+        DataFrame with 'doji' column (1 if Doji, otherwise 0)
     """
-    body = abs(df["close"] - df["open"])
-    range_size = df["high"] - df["low"]
-
-    # Avoid division by zero
-    range_size = range_size.replace(0, np.nan)
-
-    # Calculate body-to-range ratio
-    body_ratio = body / range_size
-
-    # Doji has very small body compared to range
-    df["doji"] = ((body_ratio < threshold) & (range_size > 0)).astype(int)
-
+    # Calculate Doji condition
+    doji_cond = abs(df["open"] - df["close"]) <= threshold * (df["high"] - df["low"])
+    # Add 'doji' column
+    df["doji"] = doji_cond.astype(int)
     return df
 
 
