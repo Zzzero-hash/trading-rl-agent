@@ -192,16 +192,15 @@ def compute_obv(df: pd.DataFrame) -> pd.DataFrame:
 
 def detect_doji(df: pd.DataFrame, threshold: float = 0.05) -> pd.DataFrame:
     """
-    Detect Doji patterns.
+    Detect Doji patterns and add 'doji' column to DataFrame.
 
     A Doji occurs when the open and close prices are nearly identical relative to the total range.
 
     Returns:
-        DataFrame with 'doji' column (1 if Doji, otherwise 0)
+        DataFrame with 'doji' column indicating Doji pattern.
     """
     # Calculate Doji condition
     doji_cond = abs(df["open"] - df["close"]) <= threshold * (df["high"] - df["low"])
-    # Add 'doji' column
     df["doji"] = doji_cond.astype(int)
     return df
 
@@ -391,16 +390,17 @@ def compute_candle_features(df: pd.DataFrame, advanced: bool = True) -> pd.DataF
         # Use advanced patterns from candle_patterns.py
         from src.data.candle_patterns import compute_all_candle_patterns
 
-        df = compute_all_candle_patterns(df)
+        return compute_all_candle_patterns(df)
     else:
-        # Use basic patterns
-        df = detect_doji(df)
+        # Use basic patterns: assign Doji, then apply other patterns
+        df = df.copy()
+        df["doji"] = detect_doji(df)
         df = detect_hammer(df)
         df = detect_engulfing(df)
         df = detect_shooting_star(df)
         df = detect_morning_star(df)
         df = detect_evening_star(df)
-    return df
+        return df
 
 
 def generate_features(
@@ -460,10 +460,21 @@ def generate_features(
     df = add_sentiment(df)
 
     # Additional technical indicators
+    # Compute EMAs for MACD and additional periods
+    df = compute_ema(df, price_col="close", timeperiod=12)
+    df = compute_ema(df, price_col="close", timeperiod=26)
     df = compute_ema(df, price_col="close", timeperiod=20)
+    # MACD and signal
     df = compute_macd(df, price_col="close")
+    # Alias macd_line to 'macd' for compatibility
+    df["macd"] = df["macd_line"]
     df = compute_atr(df, timeperiod=14)
+    # Alias ATR to 'atr'
+    df["atr"] = df["atr_14"]
     df = compute_bollinger_bands(df, price_col="close", timeperiod=20)
+    # Alias Bollinger bands to 'bb_upper' and 'bb_lower'
+    df["bb_upper"] = df["bb_upper_20"]
+    df["bb_lower"] = df["bb_lower_20"]
     df = compute_stochastic(df, fastk_period=14, slowk_period=3, slowd_period=3)
     df = compute_adx(df, timeperiod=14)
     df = compute_williams_r(df, timeperiod=14)
@@ -492,7 +503,8 @@ def generate_features(
     max_core_window = max(windows) if windows else 0
     # Ensure we don't drop all rows for small datasets
     rows_to_drop = min(max_core_window, len(df) - 1) if len(df) > 1 else 0
-    df = df.iloc[rows_to_drop:].reset_index(drop=True)
+    # Preserve all rows; only reset index
+    df = df.reset_index(drop=True)
 
     # Final check: if DataFrame is empty after processing, return at least one row with NaN values
     if df.empty and len(df.columns) > 0:
