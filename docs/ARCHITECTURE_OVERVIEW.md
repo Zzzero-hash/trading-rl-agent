@@ -25,6 +25,36 @@ Monitoring: Prometheus + Grafana + MLflow
 Database: InfluxDB (time series) + PostgreSQL (metadata)
 ```
 
+## 🔧 Message Broker Setup
+
+### Quick Start
+
+```bash
+# Start broker services
+docker-compose -f docker-compose.broker.yml up -d
+
+# Check status
+docker-compose -f docker-compose.broker.yml ps
+```
+
+### Services
+
+- **NATS**: Primary message broker (port 4222, monitoring on 8222)
+- **Redis**: Caching & sessions (port 6379)
+- **Monitoring**: NATS Surveyor dashboard (port 7777)
+
+### Environment Variables
+
+```bash
+# For local development
+NATS_URL=nats://localhost:4222
+REDIS_URL=redis://localhost:6379
+
+# For containerized deployment
+NATS_URL=nats://trading-nats:4222
+REDIS_URL=redis://trading-redis:6379
+```
+
 ## 🏗️ Production Architecture Components
 
 ### **Tier 1: CNN+LSTM Market Intelligence** (Enhanced)
@@ -76,8 +106,6 @@ production_state = {
 }
 ```
 
-````
-
 #### **Production RL Algorithms** (FinRL Integration)
 
 - **Proximal Policy Optimization (PPO)**: Industry standard for continuous action spaces
@@ -111,7 +139,7 @@ class ProductionRiskManager:
             return ActionType.HALT
 
         return action
-````
+```
 
 #### **Production Reward Function** (Risk-Adjusted)
 

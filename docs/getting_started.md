@@ -11,50 +11,25 @@ This is a **two-tier hybrid system** that combines:
 
 **Current Status**: Production ready with 367 tests passing, 1.37M record dataset, and zero technical debt.
 
-## 🚀 Installation
+## 🚀 Quick Setup
 
 ### Prerequisites
 
 - Python 3.10+
 - CUDA 11.8+ (optional, for GPU training)
-- Docker (optional, for containerized deployment)
 
-### Basic Installation
+### Installation
 
 ```bash
-# Clone the repository
+# Clone and setup
 git clone https://github.com/your-org/trading-rl-agent.git
 cd trading-rl-agent
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Setup environment
+./setup-env.sh full
 
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### Development Installation
-
-```bash
-# Install development dependencies
-pip install -r requirements-test.txt
-
-# Install pre-commit hooks
-pre-commit install
-
-# Run tests to verify installation
+# Run tests to verify
 pytest
-```
-
-### Docker Installation
-
-```bash
-# Build development image
-docker build -f Dockerfile.dev -t trading-rl-agent:dev .
-
-# Run with GPU support
-docker run --gpus all -it trading-rl-agent:dev
 ```
 
 ## Quick Start Tutorial

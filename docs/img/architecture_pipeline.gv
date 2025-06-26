@@ -1,14 +1,12 @@
 digraph G {
   rankdir=LR;
-  DataIngestion [label="Data Ingestion\n(build_datasets.py)"];
+  DataIngestion [label="Data Ingestion\n(build_advanced_dataset.py)"];
   FeatureEngineering [label="Feature Engineering\n(src/data/features.py)"];
+  CNNLSTMExtractor [label="CNN+LSTM Features\n(src/models/cnn_lstm.py)"];
   TradingEnv [label="TradingEnv\n(src/envs/trading_env.py)"];
   SAC [label="SAC Agent\n(src/agents/sac_agent.py)"];
-  TD3 [label="TD3 Agent\n(src/agents/td3_agent.py)"];
   Ensemble [label="Ensemble Agent\n(src/agents/ensemble_agent.py)"];
-  DataIngestion -> FeatureEngineering -> TradingEnv;
+  DataIngestion -> FeatureEngineering -> CNNLSTMExtractor -> TradingEnv;
   TradingEnv -> SAC;
-  TradingEnv -> TD3;
   SAC -> Ensemble;
-  TD3 -> Ensemble;
 }
