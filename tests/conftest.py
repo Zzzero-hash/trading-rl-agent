@@ -125,7 +125,7 @@ def trading_env():
                 os.unlink(temp_file)
 
         # Store cleanup function on the environment
-        env._test_cleanup = cleanup
+        object.__setattr__(env, "_test_cleanup", cleanup)
 
         return env
     except ImportError:

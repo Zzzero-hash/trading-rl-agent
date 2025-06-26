@@ -49,7 +49,10 @@ env = TradingEnv(
 )
 
 # Create and train SAC agent
-agent = SACAgent(state_dim=env.observation_space.shape[0])
+agent = SACAgent(
+    state_dim=env.observation_space.shape[0],
+    action_dim=env.action_space.shape[0]
+)
 agent.train(env, episodes=1000)
 ```
 

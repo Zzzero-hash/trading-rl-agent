@@ -62,7 +62,7 @@ data/                   # Archive old datasets
 
 ```bash
 # Clear notebook outputs
-jupyter nbconvert --clear-output --inplace *.ipynb
+find . -name "*.ipynb" -exec jupyter nbconvert --clear-output --inplace {} +
 
 # Clean experiment outputs
 find optimization_results/ -name "hparam_opt_*" -type d -mtime +7 -exec rm -rf {} +
