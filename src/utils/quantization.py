@@ -233,14 +233,3 @@ def quantize_for_deployment(
             "target_platform": target_platform,
         },
     }
-
-
-# Legacy compatibility functions
-def quantize_cnn_lstm(model: nn.Module) -> nn.Module:
-    """Legacy function - use quantize_model instead."""
-    return quantize_model(model, quantization_type="dynamic")
-
-
-def quantize_trading_model(model: nn.Module) -> nn.Module:
-    """Legacy function - use quantize_model instead."""
-    return quantize_model(model, quantization_type="dynamic")

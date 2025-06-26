@@ -352,9 +352,3 @@ def get_sharpe_optimized_reward_fn() -> RewardFunction:
         transaction_cost=0.001,
         drawdown_threshold=0.1,
     )
-
-
-# Legacy compatibility
-def compute_reward(prev_balance: float, current_balance: float) -> float:
-    """Legacy function - use RewardFunction or specific reward functions instead."""
-    return simple_profit_reward(prev_balance, current_balance)

@@ -195,6 +195,21 @@ class TradingEnv(gym.Env):
         else:
             assert self.action_space.contains(action), "Invalid action"
             action_idx = action
+
+        # Check bounds before accessing data
+        if self.current_step - 1 >= len(self.data):
+            # Environment is already done, return terminal state
+            if isinstance(self.observation_space, gym.spaces.Dict):
+                obs = {
+                    "market_features": np.zeros(
+                        (self.window_size, len(self.numeric_cols)), dtype=np.float32
+                    ),
+                    "model_pred": np.zeros(self.model_output_size, dtype=np.float32),
+                }
+            else:
+                obs = np.zeros_like(self.observation_space.sample())
+            return obs, 0.0, True, False, {"balance": self.balance}
+
         prev_price = self.data.loc[self.current_step - 1, "close"]
         try:
             prev_price = float(np.asarray(prev_price).astype(np.float32))
@@ -208,14 +223,24 @@ class TradingEnv(gym.Env):
         self.position = new_position
 
         self.current_step += 1
+
+        # Check for episode termination BEFORE accessing data
         done = self.current_step >= len(self.data)
-        current_price = self.data.loc[self.current_step - 1, "close"]
-        try:
-            current_price = float(np.asarray(current_price).astype(np.float32))
-        except Exception:
-            current_price = np.nan
-        price_diff = current_price - prev_price
-        reward = float(self.position * price_diff - cost)
+
+        if done:
+            # Episode is done, use last available price or set a neutral reward
+            current_price = prev_price  # No price change if episode is done
+            reward = -cost  # Only transaction cost applies
+        else:
+            # Normal step, get current price
+            current_price = self.data.loc[self.current_step - 1, "close"]
+            try:
+                current_price = float(np.asarray(current_price).astype(np.float32))
+            except Exception:
+                current_price = np.nan
+            price_diff = current_price - prev_price
+            reward = float(self.position * price_diff - cost)
+
         self.balance += reward
 
         if done:
