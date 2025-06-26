@@ -179,14 +179,3 @@ def calculate_risk_metrics(
     }
 
     return metrics
-
-
-# Legacy compatibility
-def compute_sharpe_ratio(returns: Union[pd.Series, np.ndarray]) -> float:
-    """Legacy function name - use calculate_sharpe_ratio instead."""
-    return calculate_sharpe_ratio(returns)
-
-
-def compute_max_drawdown(equity_curve: Union[pd.Series, np.ndarray]) -> float:
-    """Legacy function name - use calculate_max_drawdown instead."""
-    return calculate_max_drawdown(equity_curve)
