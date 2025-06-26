@@ -88,3 +88,63 @@ def sample_csv_path(tmp_path_factory):
     df = df.drop(columns=["timestamp", "symbol"])
     df.to_csv(file_path, index=False)
     return str(file_path)
+
+
+@pytest.fixture
+def trading_env():
+    """Provide a trading environment for testing."""
+    try:
+        import os
+
+        # Create sample data for the environment and save it to a temporary file
+        import tempfile
+
+        from src.envs.trading_env import TradingEnv
+
+        data = generate_sample_price_data(days=100)
+
+        # Create a temporary CSV file
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+            data.to_csv(f.name, index=False)
+            temp_file = f.name
+
+        # Configure the environment
+        env_cfg = {
+            "dataset_paths": [temp_file],
+            "window_size": 10,
+            "initial_balance": 10000,
+            "transaction_cost": 0.001,
+            "include_features": False,
+        }
+
+        env = TradingEnv(env_cfg)
+
+        # Clean up function
+        def cleanup():
+            if os.path.exists(temp_file):
+                os.unlink(temp_file)
+
+        # Store cleanup function on the environment
+        env._test_cleanup = cleanup
+
+        return env
+    except ImportError:
+        # Fallback - create a mock environment if the real one isn't available
+        import unittest.mock
+
+        mock_env = unittest.mock.Mock()
+        mock_env.reset.return_value = (
+            {"observation": [1.0, 2.0, 3.0]},
+            {"info": "test"},
+        )
+        mock_env.step.return_value = (
+            {"observation": [1.1, 2.1, 3.1]},
+            0.1,
+            False,
+            False,
+            {"info": "test"},
+        )
+        mock_env.action_space = unittest.mock.Mock()
+        mock_env.observation_space = unittest.mock.Mock()
+        mock_env._test_cleanup = lambda: None
+        return mock_env

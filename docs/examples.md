@@ -5,27 +5,28 @@ This section provides practical examples of using the Trading RL Agent.
 ## Basic Training Example
 
 ```python
-from src.agents.td3_agent import TD3Agent
+from src.agents.sac_agent import SACAgent
 from src.envs.trading_env import TradingEnv
-from src.agents.configs import TD3Config
+from src.agents.configs import SACConfig
 
 # Create environment
 env_config = {
-    'dataset_paths': ['data/sample_data.csv'],
+    'dataset_paths': ['data/advanced_trading_dataset_*.csv'],
     'window_size': 50,
     'initial_balance': 10000,
-    'transaction_cost': 0.001
+    'transaction_cost': 0.001,
+    'use_cnn_lstm_features': True
 }
 env = TradingEnv(env_config)
 
 # Create agent
-agent_config = TD3Config(
+agent_config = SACConfig(
     learning_rate=3e-4,
     batch_size=256,
     buffer_size=1000000,
     tau=0.005
 )
-agent = TD3Agent(
+agent = SACAgent(
     state_dim=env.observation_space.shape[0],
     action_dim=env.action_space.shape[0],
     config=agent_config
@@ -115,13 +116,13 @@ print(f"Best config: {results.best_config}")
 ## Live Trading Example
 
 ```python
-from src.agents.td3_agent import TD3Agent
+from src.agents.sac_agent import SACAgent
 from src.data.live import LiveDataProvider
 from src.trading.portfolio import Portfolio
 import time
 
 # Load trained agent
-agent = TD3Agent.load('models/best_td3_agent.pkl')
+agent = SACAgent.load('models/best_sac_agent.pkl')
 
 # Initialize live data provider
 data_provider = LiveDataProvider(
@@ -233,7 +234,7 @@ from src.utils.metrics import calculate_trading_metrics
 import matplotlib.pyplot as plt
 
 # Load trained model
-agent = TD3Agent.load('models/best_model.pkl')
+agent = SACAgent.load('models/best_model.pkl')
 
 # Initialize evaluator
 evaluator = ModelEvaluator(
@@ -291,7 +292,7 @@ backtester = Backtester(
 )
 
 # Load strategy
-agent = TD3Agent.load('models/trained_agent.pkl')
+agent = SACAgent.load('models/trained_agent.pkl')
 
 # Run backtest
 results = backtester.run(
@@ -315,12 +316,12 @@ backtester.generate_report(results, 'backtest_report.html')
 ## Advanced Configuration Example
 
 ```python
-from src.agents.configs import TD3Config, SACConfig
+from src.agents.configs import SACConfig
 from src.optimization.config import OptimizationConfig
 from src.data.config import DataConfig
 
-# Advanced TD3 configuration
-td3_config = TD3Config(
+# Advanced SAC configuration
+sac_config = SACConfig(
     # Network architecture
     actor_hidden_dims=[400, 300],
     critic_hidden_dims=[400, 300],
@@ -330,10 +331,9 @@ td3_config = TD3Config(
     batch_size=256,
     buffer_size=1000000,
 
-    # TD3 specific
-    policy_noise=0.2,
-    noise_clip=0.5,
-    policy_delay=2,
+    # SAC specific
+    entropy_coeff=0.2,
+    target_entropy='auto',
 
     # Regularization
     weight_decay=1e-5,
