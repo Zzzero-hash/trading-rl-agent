@@ -1,6 +1,6 @@
 # Trading Agent Evaluation Guide
 
-This guide explains how to evaluate trained trading agents using the comprehensive evaluation framework. The system supports evaluation of individual agents (SAC, TD3) and ensemble methods with detailed performance metrics.
+This guide explains how to evaluate trained trading agents using the comprehensive evaluation framework. The system supports evaluation of individual agents (SAC with **FinRL** integration, experimental TD3) and ensemble methods with detailed performance metrics.
 
 ## 🚀 Quick Evaluation
 
