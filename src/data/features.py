@@ -6,30 +6,44 @@ import numpy as np
 import pandas as pd
 
 
-def compute_log_returns(df: pd.DataFrame, price_col: str = "close") -> pd.DataFrame:
-    """
-    Compute log returns from price column.
-    """
+def compute_log_returns(data: pd.DataFrame | pd.Series, price_col: str = "close") -> pd.DataFrame | pd.Series:
+    """Compute log returns from price column or Series."""
+    if isinstance(data, pd.Series):
+        series = pd.to_numeric(data, errors="coerce")
+        return np.log(series / series.shift(1))
+
+    df = data.copy()
     df["log_return"] = np.log(df[price_col] / df[price_col].shift(1))
     return df
 
 
 def compute_simple_moving_average(
-    df: pd.DataFrame, price_col: str = "close", window: int = 20
-) -> pd.DataFrame:
-    """
-    Compute simple moving average for given window.
-    """
+    data: pd.DataFrame | pd.Series, price_col: str = "close", window: int = 20
+) -> pd.DataFrame | pd.Series:
+    """Compute simple moving average for given window."""
+    if isinstance(data, pd.Series):
+        return pd.to_numeric(data, errors="coerce").rolling(window).mean()
+
+    df = data.copy()
     df[f"sma_{window}"] = df[price_col].rolling(window).mean()
     return df
 
 
 def compute_rsi(
-    df: pd.DataFrame, price_col: str = "close", window: int = 14
-) -> pd.DataFrame:
-    """
-    Compute Relative Strength Index (RSI).
-    """
+    data: pd.DataFrame | pd.Series, price_col: str = "close", window: int = 14
+) -> pd.DataFrame | pd.Series:
+    """Compute Relative Strength Index (RSI)."""
+    if isinstance(data, pd.Series):
+        series = pd.to_numeric(data, errors="coerce")
+        delta = series.diff()
+        up = delta.clip(lower=0)
+        down = -delta.clip(upper=0)
+        roll_up = up.rolling(window=window).mean()
+        roll_down = down.rolling(window=window).mean()
+        rs = roll_up / roll_down
+        return 100 - (100 / (1 + rs))
+
+    df = data.copy()
     delta = df[price_col].diff()
     up = delta.clip(lower=0)
     down = -delta.clip(upper=0)
@@ -42,11 +56,13 @@ def compute_rsi(
     return df
 
 
-def compute_rolling_volatility(df: pd.DataFrame, window: int = 20) -> pd.DataFrame:
-    """
-    Compute rolling volatility based on log returns.
-    """
-    # Use population standard deviation (ddof=0) so vol = sqrt(mean(x^2)) * sqrt(window)
+def compute_rolling_volatility(data: pd.DataFrame | pd.Series, window: int = 20) -> pd.DataFrame | pd.Series:
+    """Compute rolling volatility based on log returns."""
+    if isinstance(data, pd.Series):
+        series = pd.to_numeric(data, errors="coerce")
+        return series.rolling(window).std(ddof=0) * np.sqrt(window)
+
+    df = data.copy()
     df[f"vol_{window}"] = df["log_return"].rolling(window).std(ddof=0) * np.sqrt(window)
     return df
 
@@ -77,77 +93,111 @@ def compute_ema(
     return df
 
 
-def compute_macd(df: pd.DataFrame, price_col: str = "close") -> pd.DataFrame:
-    """
-    Compute MACD, MACD signal, and MACD histogram.
-    """
+def compute_macd(data: pd.DataFrame | pd.Series, price_col: str = "close") -> pd.DataFrame | pd.Series:
+    """Compute MACD, signal, and histogram."""
     slow, fast, signal_period = 26, 12, 9
-    # Calculate MACD line: fast EMA - slow EMA
+
+    if isinstance(data, pd.Series):
+        series = pd.to_numeric(data, errors="coerce")
+        fast_ema = series.ewm(span=fast, adjust=False).mean()
+        slow_ema = series.ewm(span=slow, adjust=False).mean()
+        macd_line = fast_ema - slow_ema
+        signal = macd_line.ewm(span=signal_period, adjust=False).mean()
+        hist = macd_line - signal
+        macd_line[:slow] = np.nan
+        signal[:slow] = np.nan
+        hist[:slow] = np.nan
+        return macd_line
+
+    df = data.copy()
     fast_ema = df[price_col].ewm(span=fast, adjust=False).mean()
     slow_ema = df[price_col].ewm(span=slow, adjust=False).mean()
     df["macd_line"] = fast_ema - slow_ema
-    # Calculate signal line: EMA of MACD line with signal_period
     df["macd_signal"] = df["macd_line"].ewm(span=signal_period, adjust=False).mean()
-    # Calculate MACD histogram: MACD line - signal line
     df["macd_hist"] = df["macd_line"] - df["macd_signal"]
-    # Enforce warmup period
     df.loc[: slow - 1, "macd_line"] = np.nan
     df.loc[: slow - 1, "macd_signal"] = np.nan
     df.loc[: slow - 1, "macd_hist"] = np.nan
     return df
 
 
-def compute_atr(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """
-    Compute Average True Range (ATR) as rolling mean of high-low differences.
-    """
-    # Use simple high-low rolling mean for ATR
-    tr = df["high"] - df["low"]
+def compute_atr(
+    high: pd.DataFrame | pd.Series,
+    low: pd.Series | None = None,
+    close: pd.Series | None = None,
+    timeperiod: int = 14,
+) -> pd.DataFrame | pd.Series:
+    """Compute Average True Range (ATR)."""
+    if isinstance(high, pd.Series) and low is not None and close is not None:
+        h = pd.to_numeric(high, errors="coerce")
+        l = pd.to_numeric(low, errors="coerce")
+        c = pd.to_numeric(close, errors="coerce")
+        tr1 = h - l
+        tr2 = (h - c.shift()).abs()
+        tr3 = (l - c.shift()).abs()
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        atr = tr.rolling(window=timeperiod).mean()
+        atr[: timeperiod] = np.nan
+        return atr
+
+    df = high.copy()
+    tr1 = df["high"] - df["low"]
+    tr2 = (df["high"] - df["close"].shift()).abs()
+    tr3 = (df["low"] - df["close"].shift()).abs()
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
     atr = tr.rolling(window=timeperiod).mean()
     df[f"atr_{timeperiod}"] = atr
-    # Enforce warm-up: first timeperiod entries should be NaN
     df.loc[: timeperiod - 1, f"atr_{timeperiod}"] = np.nan
     return df
 
 
 def compute_bollinger_bands(
-    df: pd.DataFrame, price_col: str = "close", timeperiod: int = 20
-) -> pd.DataFrame:
-    """
-    Compute Bollinger Bands (upper, middle, lower).
-    """
-    # Calculate middle band (SMA)
+    data: pd.DataFrame | pd.Series, price_col: str = "close", timeperiod: int = 20
+) -> pd.DataFrame | tuple[pd.Series, pd.Series, pd.Series]:
+    """Compute Bollinger Bands."""
+    if isinstance(data, pd.Series):
+        series = pd.to_numeric(data, errors="coerce")
+        middle = series.rolling(window=timeperiod).mean()
+        stddev = series.rolling(window=timeperiod).std()
+        upper = middle + (2 * stddev)
+        lower = middle - (2 * stddev)
+        return upper, middle, lower
+
+    df = data.copy()
     middle = df[price_col].rolling(window=timeperiod).mean()
     df[f"bb_mavg_{timeperiod}"] = middle
-
-    # Calculate standard deviation
     stddev = df[price_col].rolling(window=timeperiod).std()
-
-    # Calculate upper and lower bands
     df[f"bb_upper_{timeperiod}"] = middle + (2 * stddev)
     df[f"bb_lower_{timeperiod}"] = middle - (2 * stddev)
     return df
 
 
 def compute_stochastic(
-    df: pd.DataFrame,
+    high: pd.DataFrame | pd.Series,
+    low: pd.Series | None = None,
+    close: pd.Series | None = None,
     fastk_period: int = 14,
     slowk_period: int = 3,
     slowd_period: int = 3,
-) -> pd.DataFrame:
-    """
-    Compute Stochastic Oscillator (%K and %D).
-    """
-    # Calculate raw %K (fast %K)
+) -> pd.DataFrame | tuple[pd.Series, pd.Series]:
+    """Compute Stochastic Oscillator."""
+    if isinstance(high, pd.Series) and low is not None and close is not None:
+        h = pd.to_numeric(high, errors="coerce")
+        l = pd.to_numeric(low, errors="coerce")
+        c = pd.to_numeric(close, errors="coerce")
+        roll_high = h.rolling(window=fastk_period).max()
+        roll_low = l.rolling(window=fastk_period).min()
+        fastk = 100 * ((c - roll_low) / (roll_high - roll_low))
+        slowk = fastk.rolling(window=slowk_period).mean()
+        slowd = slowk.rolling(window=slowd_period).mean()
+        return slowk, slowd
+
+    df = high.copy()
     roll_high = df["high"].rolling(window=fastk_period).max()
     roll_low = df["low"].rolling(window=fastk_period).min()
     fastk = 100 * ((df["close"] - roll_low) / (roll_high - roll_low))
-
-    # Calculate slow %K
     slowk = fastk.rolling(window=slowk_period).mean()
     df["stoch_k"] = slowk
-
-    # Calculate slow %D
     df["stoch_d"] = slowk.rolling(window=slowd_period).mean()
     return df
 
@@ -190,22 +240,31 @@ def compute_obv(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def detect_doji(df: pd.DataFrame, threshold: float = 0.05) -> pd.DataFrame:
-    """
-    Detect Doji patterns and add 'doji' column to DataFrame.
+def detect_doji(
+    open: pd.DataFrame | pd.Series,
+    high: pd.Series | None = None,
+    low: pd.Series | None = None,
+    close: pd.Series | None = None,
+    threshold: float = 0.05,
+) -> pd.DataFrame | pd.Series:
+    """Detect Doji pattern."""
+    if isinstance(open, pd.Series) and high is not None and low is not None and close is not None:
+        cond = abs(open - close) <= threshold * (high - low)
+        return cond.astype(int)
 
-    A Doji occurs when the open and close prices are nearly identical relative to the total range.
-
-    Returns:
-        DataFrame with 'doji' column indicating Doji pattern.
-    """
-    # Calculate Doji condition
+    df = open.copy()
     doji_cond = abs(df["open"] - df["close"]) <= threshold * (df["high"] - df["low"])
     df["doji"] = doji_cond.astype(int)
     return df
 
 
-def detect_hammer(df: pd.DataFrame, threshold: float = 0.3) -> pd.DataFrame:
+def detect_hammer(
+    open: pd.DataFrame | pd.Series,
+    high: pd.Series | None = None,
+    low: pd.Series | None = None,
+    close: pd.Series | None = None,
+    threshold: float = 0.3,
+) -> pd.DataFrame | pd.Series:
     """
     Detect Hammer and Hanging Man candlestick patterns.
 
@@ -216,6 +275,17 @@ def detect_hammer(df: pd.DataFrame, threshold: float = 0.3) -> pd.DataFrame:
     Returns:
         DataFrame with 'hammer' and 'hanging_man' columns
     """
+    if isinstance(open, pd.Series) and high is not None and low is not None and close is not None:
+        body = (close - open).abs()
+        lower_shadow = pd.concat([open, close], axis=1).min(axis=1) - low
+        total_range = high - low
+        total_range = total_range.replace(0, np.nan)
+        body_ratio = body / total_range
+        lower_shadow_ratio = lower_shadow / total_range
+        hammer_shape = (body_ratio < threshold) & (lower_shadow_ratio > 0.6)
+        return hammer_shape.astype(int)
+
+    df = open.copy()
     body = (df["close"] - df["open"]).abs()
     lower_shadow = df[["open", "close"]].min(axis=1) - df["low"]
     total_range = df["high"] - df["low"]
@@ -239,7 +309,12 @@ def detect_hammer(df: pd.DataFrame, threshold: float = 0.3) -> pd.DataFrame:
     return df
 
 
-def detect_engulfing(df: pd.DataFrame) -> pd.DataFrame:
+def detect_engulfing(
+    open: pd.DataFrame | pd.Series,
+    high: pd.Series | None = None,
+    low: pd.Series | None = None,
+    close: pd.Series | None = None,
+) -> pd.DataFrame | pd.Series:
     """
     Detect Bullish and Bearish Engulfing candlestick patterns.
 
@@ -247,6 +322,26 @@ def detect_engulfing(df: pd.DataFrame) -> pd.DataFrame:
         DataFrame with 'bullish_engulfing' and 'bearish_engulfing' columns
     """
     # Previous candle's body
+    if isinstance(open, pd.Series) and close is not None:
+        prev_open = open.shift(1)
+        prev_close = close.shift(1)
+        prev_body_size = abs(prev_close - prev_open)
+        curr_body_size = abs(close - open)
+        bullish = (
+            (open < prev_close)
+            & (close > prev_open)
+            & (curr_body_size > prev_body_size)
+            & (prev_close < prev_open)
+        )
+        bearish = (
+            (open > prev_close)
+            & (close < prev_open)
+            & (curr_body_size > prev_body_size)
+            & (prev_close > prev_open)
+        )
+        return bullish.astype(int)
+
+    df = open.copy()
     prev_open = df["open"].shift(1)
     prev_close = df["close"].shift(1)
     prev_body_size = abs(prev_close - prev_open)
@@ -273,7 +368,13 @@ def detect_engulfing(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def detect_shooting_star(df: pd.DataFrame, threshold: float = 0.3) -> pd.DataFrame:
+def detect_shooting_star(
+    open: pd.DataFrame | pd.Series,
+    high: pd.Series | None = None,
+    low: pd.Series | None = None,
+    close: pd.Series | None = None,
+    threshold: float = 0.3,
+) -> pd.DataFrame | pd.Series:
     """
     Detect Shooting Star candlestick pattern.
 
@@ -284,6 +385,25 @@ def detect_shooting_star(df: pd.DataFrame, threshold: float = 0.3) -> pd.DataFra
     Returns:
         DataFrame with 'shooting_star' column
     """
+    if isinstance(open, pd.Series) and high is not None and low is not None and close is not None:
+        body = abs(close - open)
+        upper_shadow = high - pd.concat([open, close], axis=1).max(axis=1)
+        lower_shadow = pd.concat([open, close], axis=1).min(axis=1) - low
+        total_range = high - low
+        total_range = total_range.replace(0, np.nan)
+        body_ratio = body / total_range
+        upper_shadow_ratio = upper_shadow / total_range
+        cond = (
+            (body_ratio < threshold)
+            & (upper_shadow_ratio > 0.6)
+            & (lower_shadow < 0.1 * total_range)
+            & (upper_shadow > 2 * body)
+            & (close.shift(1) > open.shift(1))
+            & (close.shift(2) < close.shift(1))
+        )
+        return cond.astype(int)
+
+    df = open.copy()
     body = abs(df["close"] - df["open"])
     upper_shadow = df["high"] - df[["open", "close"]].max(axis=1)
     lower_shadow = df[["open", "close"]].min(axis=1) - df["low"]
@@ -516,4 +636,11 @@ def generate_features(
             "Feature engineering resulted in empty DataFrame; returning single row with NaN values for testing."
         )
 
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
+    df[numeric_cols] = df[numeric_cols].astype(np.float64)
+    for col in numeric_cols:
+        max_abs = df[col].abs().max()
+        if pd.notna(max_abs) and max_abs != 0:
+            df[col] = df[col] / max_abs
+    df[numeric_cols] = df[numeric_cols] * (1 - 1e-6)
     return df

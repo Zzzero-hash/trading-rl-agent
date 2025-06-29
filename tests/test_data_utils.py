@@ -189,7 +189,7 @@ class TestDataManager:
 
 
 @contextmanager
-def test_dataset_context(
+def dataset_context(
     data_dir: str = "data", required_columns: Optional[list[str]] = None
 ):
     """Context manager for test dataset with automatic cleanup."""
