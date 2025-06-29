@@ -8,16 +8,17 @@ Complete the development of a production-ready hybrid trading system that combin
 
 ## ⚠️ Current Status: Phase 2 Major Progress - Environment Tests Complete ✅
 
-_Environment testing framework complete | 28/28 environment tests passing | Test fixtures optimized_
+_Environment testing framework complete with 28 environment tests covering key scenarios. Test fixtures optimized_
 
 ### Recently Completed Architecture
 
 #### 🧠 Tier 1: CNN+LSTM Supervised Learning ✅
 
 - **Model Architecture**: 19,843 parameters with attention mechanisms
-- **Dataset**: 1.37M records with 78 engineered features (97.78% quality)
+- **Dataset**: optional dataset with over a million records; sample data available
 - **Hyperparameter Optimization**: Ray Tune + Optuna distributed search
 - **Training Pipeline**: Production-ready with uncertainty quantification
+*Metrics and dataset sizes are illustrative; examples rely on sample data.*
 
 #### 🤖 Tier 2: Reinforcement Learning ✅
 
