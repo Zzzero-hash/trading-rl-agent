@@ -157,27 +157,37 @@ def multi_symbol_data():
 
 @pytest.fixture
 def sample_csv_path(tmp_path):
-    """Create a temporary CSV file with sample data for testing."""
-    df = generate_sample_price_data(
-        symbol="TEST", days=30, start_price=100.0, volatility=0.01
-    )
-    df = df.drop(columns=["timestamp", "symbol"])
+    """Create a temporary CSV file with ``TestDataManager``."""
+    from tests.test_data_utils import TestDataManager
+    import pandas as pd
+
+    manager = TestDataManager(str(tmp_path))
+    df = manager.generate_synthetic_dataset()
+    df = df.drop(columns=["timestamp"])  # Keep numeric columns only
     file_path = tmp_path / "sample.csv"
     df.to_csv(file_path, index=False)
-    return str(file_path)
+    manager.temp_files.append(file_path)
+
+    yield str(file_path)
+    manager.cleanup()
 
 
 @pytest.fixture(scope="session")
 def sample_csv_path_session(tmp_path_factory):
-    """Legacy fixture for backward compatibility - session scoped."""
+    """Session-scoped CSV path generated with ``TestDataManager``."""
+    from tests.test_data_utils import TestDataManager
+    import pandas as pd
+
     data_dir = tmp_path_factory.mktemp("data")
+    manager = TestDataManager(str(data_dir))
+    df = manager.generate_synthetic_dataset()
+    df = df.drop(columns=["timestamp"])  # Numeric columns only
     file_path = data_dir / "sample.csv"
-    df = generate_sample_price_data(
-        symbol="TEST", days=30, start_price=100.0, volatility=0.01
-    )
-    df = df.drop(columns=["timestamp", "symbol"])
     df.to_csv(file_path, index=False)
-    return str(file_path)
+    manager.temp_files.append(file_path)
+
+    yield str(file_path)
+    manager.cleanup()
 
 
 @pytest.fixture
