@@ -95,6 +95,8 @@ The evaluation system calculates comprehensive trading performance metrics:
 
 ### Sample Output
 
+*The JSON snippet below contains illustrative metrics produced from sample data.*
+
 ```json
 {
   "agent_type": "sac",
