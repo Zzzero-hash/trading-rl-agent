@@ -364,13 +364,88 @@ def ray_tune_optimization(
     targets: np.ndarray,
     num_samples: int,
     max_epochs_per_trial: int,
+    custom_search_space: dict[str, Any] | None = None,
+    ray_resources_per_trial: dict[str, int] | None = None,
 ) -> dict[str, Any]:
-    """Ray Tune optimization (when available)."""
+    """Ray Tune optimization when available.
 
-    # This is a placeholder for proper Ray Tune integration
-    # For now, fall back to simple grid search
-    logger.info("Ray Tune integration not fully implemented yet")
-    return simple_grid_search(features, targets, num_samples, max_epochs_per_trial)
+    Parameters
+    ----------
+    features : np.ndarray
+        Input feature array.
+    targets : np.ndarray
+        Target array.
+    num_samples : int
+        Number of trials to run.
+    max_epochs_per_trial : int
+        Maximum epochs per Ray Tune trial.
+    custom_search_space : dict, optional
+        Overrides the default search space.
+    ray_resources_per_trial : dict, optional
+        Resources to allocate per trial (``{"cpu": 1, "gpu": 0}`` by default).
+
+    Returns
+    -------
+    dict
+        Summary of optimization results.
+    """
+
+    if not RAY_AVAILABLE:
+        logger.info("Ray Tune not available - using simple grid search")
+        return simple_grid_search(features, targets, num_samples, max_epochs_per_trial)
+
+    if not ray.is_initialized():
+        try:
+            from src.utils.cluster import init_ray
+
+            init_ray()
+        except Exception:
+            ray.init()
+
+    search_space = get_default_search_space()
+    if custom_search_space:
+        search_space.update(custom_search_space)
+
+    if ray_resources_per_trial is None:
+        ray_resources_per_trial = {"cpu": 1, "gpu": int(torch.cuda.is_available())}
+
+    train_fn = tune.with_parameters(
+        train_single_trial,
+        features=features,
+        targets=targets,
+        max_epochs=max_epochs_per_trial,
+    )
+
+    scheduler = tune.schedulers.ASHAScheduler(
+        max_t=max_epochs_per_trial,
+        grace_period=1,
+        reduction_factor=2,
+    )
+
+    analysis = tune.run(
+        train_fn,
+        config=search_space,
+        num_samples=num_samples,
+        scheduler=scheduler,
+        resources_per_trial=ray_resources_per_trial,
+        metric="val_loss",
+        mode="min",
+        name="cnn_lstm_hparam_opt",
+        verbose=1,
+    )
+
+    best_config = analysis.get_best_config(metric="val_loss", mode="min")
+    best_trial = analysis.get_best_trial(metric="val_loss", mode="min")
+    best_score = float(best_trial.last_result.get("val_loss", float("inf")))
+
+    all_results = analysis.dataframe().to_dict(orient="records")
+
+    return {
+        "best_config": best_config,
+        "best_score": best_score,
+        "all_results": all_results,
+        "method": "ray_tune",
+    }
 
 
 # Alias for backward compatibility
