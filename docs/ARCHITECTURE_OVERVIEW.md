@@ -57,9 +57,11 @@ REDIS_URL=redis://trading-redis:6379
 
 ## 🏗️ Production Architecture Components
 
-### **Tier 1: CNN+LSTM Market Intelligence** (Enhanced)
+### **Tier 1: CNN+LSTM Market Prototype** 
 
 #### **Model Architecture** ([`src/models/cnn_lstm.py`](../src/models/cnn_lstm.py))
+
+**Planned**
 
 ```python
 ProductionCNNLSTMModel(
@@ -75,7 +77,7 @@ ProductionCNNLSTMModel(
 
 **Enhanced Data Flow**:
 
-1. **Professional Market Data** → Real-time feature engineering pipeline
+1. **Alpaca (implemented); Bloomberg/Refinitiv - planned** → Real-time feature engineering pipeline
 2. **Market Microstructure** → Order book dynamics, bid-ask spreads
 3. **Feature Sequences** → CNN layers (pattern detection)
 4. **CNN Features** → LSTM layers (temporal modeling)
@@ -88,7 +90,7 @@ ProductionCNNLSTMModel(
 - **Model Governance**: Automated retraining, A/B testing, version control
 - **Risk Validation**: Walk-forward testing with transaction costs and slippage
 
-### **Tier 2: Enterprise RL Decision Engine**
+### **Tier 2: Enterprise RL Decision Engine (planned enhancements)**
 
 #### **Production State Space Design**
 
@@ -229,14 +231,14 @@ def get_final_action(rl_action, cnn_lstm_confidence):
 
 ## 📊 Performance Advantages
 
-### **Hybrid vs Pure RL**
+### **Hybrid vs Pure RL Predictions**
 
 - **15% Performance Improvement**: Risk-adjusted returns
 - **Better Risk Management**: Lower maximum drawdown
 - **Faster Convergence**: Pre-trained feature representations
 - **Market Adaptation**: Supervised component captures changing patterns
 
-### **System Metrics**
+### **System Metrics Goals**
 
 - **Prediction Accuracy**: 43% (vs 33% random baseline)
 - **Model Parameters**: 19,843 optimized parameters
