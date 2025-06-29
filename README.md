@@ -77,7 +77,10 @@ production_state = {
 git clone https://github.com/your-org/trading-rl-agent.git
 cd trading-rl-agent
 
-# Install with FinRL (industry standard)
+# Install FinRL and Ray RLlib
+pip install finrl[full] "ray[rllib]"
+
+# Install pinned project dependencies
 pip install -r requirements-finrl.txt
 
 # Verify installation
@@ -104,6 +107,17 @@ python src/train_finrl_agent.py \
     --data professional \
     --risk-management enabled \
     --backtesting realistic
+```
+
+### Example: Train with FinRL + RLlib
+
+```python
+from finrl.env.env_stocktrading import StockTradingEnv
+from ray.rllib.algorithms.sac import SACConfig
+from ray import tune
+
+config = SACConfig().environment(StockTradingEnv)
+tune.Tuner("SAC", param_space=config, stop={"training_iteration": 10}).fit()
 ```
 
 ### 4. Deploy to Production
@@ -190,6 +204,7 @@ trading-rl-agent/
 - **[Architecture Guide](docs/ARCHITECTURE_OVERVIEW.md)**: System design and integration
 - **[Hyperparameter Optimization](cnn_lstm_hparam_clean.ipynb)**: Interactive workflow
 - **[Dataset Documentation](docs/ADVANCED_DATASET_DOCUMENTATION.md)**: Data generation process
+- **[RLlib Migration Guide](docs/RAY_RLLIB_MIGRATION.md)**: Using SAC with FinRL environments
 - **[Contributing Guide](CONTRIBUTING.md)**: Development guidelines and standards
 
 ## 🤝 Contributing
