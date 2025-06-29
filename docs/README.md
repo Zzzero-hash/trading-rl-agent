@@ -17,7 +17,7 @@ Production-ready hybrid CNN+LSTM + Reinforcement Learning system for algorithmic
 
 ### Migration & Compatibility
 
-- [`RAY_RLLIB_MIGRATION.md`](RAY_RLLIB_MIGRATION.md) - Ray RLlib 2.38.0+ compatibility (TD3→SAC)
+- [`RAY_RLLIB_MIGRATION.md`](RAY_RLLIB_MIGRATION.md) - Ray RLlib 2.38.0+ compatibility (SAC/FinRL integration; custom TD3 experimental)
 - [`PRE_COMMIT_SETUP.md`](PRE_COMMIT_SETUP.md) - Code quality and pre-commit hooks
 
 ### API Reference
@@ -30,7 +30,7 @@ Production-ready hybrid CNN+LSTM + Reinforcement Learning system for algorithmic
 - **Test Suite**: 497 tests (~83 passing, ~13 skipped) – environment fixes in progress
 - **Hybrid Architecture**: CNN+LSTM supervised learning + RL optimization
 - **Advanced Dataset**: 1.37M records with 78 engineered features
-- **Framework**: Ray RLlib, FinRL integration ready
+- **Framework**: Ray RLlib with SAC/FinRL integration (custom TD3 for experiments)
 
 ## 🎯 Quick Navigation
 

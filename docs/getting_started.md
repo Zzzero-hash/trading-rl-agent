@@ -7,7 +7,7 @@ Welcome to the Trading RL Agent - a production-ready hybrid CNN+LSTM + Reinforce
 This is a **two-tier hybrid system** that combines:
 
 - **Tier 1**: Deep Learning (CNN+LSTM) for market pattern recognition and feature extraction
-- **Tier 2**: Reinforcement Learning (SAC/TD3/Ensemble) for trading decision optimization
+- **Tier 2**: Reinforcement Learning (SAC with **FinRL** integration; custom TD3 available for experimentation) for trading decision optimization
 
 **Current Status**: Core modules validated with ~733 tests. Sample data is provided and large datasets are optional. Automated quality checks help maintain the codebase.
 
