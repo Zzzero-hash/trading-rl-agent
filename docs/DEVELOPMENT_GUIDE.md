@@ -120,3 +120,10 @@ results = optimize_cnn_lstm(features, targets, num_samples=20)
 from src.optimization.rl_optimization import optimize_sac_hyperparams
 results = optimize_sac_hyperparams(env_config, num_samples=10)
 ```
+
+## ✅ Progress Checklist
+
+The following tasks are tracked from the codebase TODOs:
+
+- [ ] Migrate training scripts into `src/training` and integrate Ray Tune sweeps.
+- [ ] Provide sentiment and risk scoring APIs in `src/nlp`.
