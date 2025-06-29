@@ -22,10 +22,12 @@ def sample_csv(tmp_path):
     return str(csv)
 
 
-@pytest.fixture
-def env(sample_csv):
-    cfg = {"dataset_paths": [sample_csv], "window_size": 10}
-    return TradingEnv(cfg)
+@pytest.fixture(params=["dict", "kwargs"])
+def env(sample_csv, request):
+    if request.param == "dict":
+        cfg = {"dataset_paths": [sample_csv], "window_size": 10}
+        return TradingEnv(cfg)
+    return TradingEnv(dataset_paths=[sample_csv], window_size=10)
 
 
 def test_reset_returns_observation(env):
