@@ -2,15 +2,15 @@
 
 ## Overview
 
-**Important**: TD3 (Twin Delayed Deep Deterministic Policy Gradient) has been **completely removed** from Ray RLlib version 2.38.0+. This project has been updated to use **SAC (Soft Actor-Critic)** as the primary continuous control algorithm for Ray RLlib integration, leveraging **FinRL** environments for trading tasks.
+**Important**: TD3 (Twin Delayed Deep Deterministic Policy Gradient) has been **completely removed** from Ray RLlib version 2.38.0+. This project has been updated to use **SAC (Soft Actor-Critic)** as the primary continuous control algorithm for Ray RLlib integration, leveraging **FinRL** environments for trading tasks. Production deployments now rely on **SAC** and **PPO** only.
 
 ## Migration Summary
 
 ### What Changed
 
-- **Ray RLlib Integration**: All `optimize_td3_hyperparams()` calls now automatically redirect to `optimize_sac_hyperparams()`
-- **Primary Algorithm**: SAC is now the recommended algorithm for continuous control tasks
-- **Custom Implementation**: TD3 remains available as a custom implementation for local testing and development
+- **Ray RLlib Integration**: The deprecated `optimize_td3_hyperparams()` utility has been removed. Use `optimize_sac_hyperparams()` instead.
+- **Primary Algorithms**: SAC and PPO are the supported options for production workloads.
+- **Custom Implementation**: TD3 remains available only for local experimentation.
 
 ### Why SAC?
 
@@ -61,12 +61,8 @@ config.training(
 ### 3. Hyperparameter Optimization
 
 ```python
-# OLD (TD3 - deprecated)
-from src.optimization.rl_optimization import optimize_td3_hyperparams
-results = optimize_td3_hyperparams(env_config, num_samples=20)
-
-# NEW (SAC - recommended)
 from src.optimization.rl_optimization import optimize_sac_hyperparams
+
 results = optimize_sac_hyperparams(env_config, num_samples=20)
 ```
 
@@ -100,8 +96,8 @@ agent = TD3Agent(config, state_dim=10, action_dim=3)
 ## Configuration Files Updated
 
 1. **`src/configs/model/td3_agent.yaml`**: Updated to use SAC configuration
-2. **`src/optimization/rl_optimization.py`**: TD3 functions redirect to SAC with deprecation warnings
-3. **Documentation**: All references updated to reflect SAC as primary algorithm
+2. **`src/optimization/rl_optimization.py`**: TD3 optimization utilities removed; use `optimize_sac_hyperparams()`
+3. **Documentation**: All references updated to reflect SAC/PPO as production algorithms
 
 ## Testing
 
