@@ -1,10 +1,10 @@
-# Industry-Grade Hybrid Trading RL System
+# Hybrid Trading RL System
 
-## 🎯 Production-Ready Design Philosophy
+## 🎯 Design Philosophy
 
-The Trading RL Agent implements a **production-grade hybrid architecture** following industry standards and proven fintech practices. This system combines CNN+LSTM supervised learning with reinforcement learning optimization, built on enterprise-grade frameworks and infrastructure.
+The Trading RL Agent implements a hybrid architecture using widely adopted open-source tools. It combines CNN+LSTM supervised learning with reinforcement learning optimization.
 
-## 🏗️ Enterprise Architecture Stack
+## 🏗️ Architecture Stack
 
 ### **Framework Foundation**
 
@@ -17,9 +17,9 @@ The Trading RL Agent implements a **production-grade hybrid architecture** follo
 
 ```yaml
 Data Pipeline: Apache Kafka + Apache Spark
-Market Data: Bloomberg API / Refinitiv / Polygon.io (replacing yfinance)
+Market Data: Alpaca (implemented) with placeholders for Bloomberg, Refinitiv, Polygon.io
 Model Training: Ray RLlib + FinRL environments
-Risk Management: Real-time monitoring with circuit breakers
+Risk Management: Planned monitoring with circuit breakers
 Deployment: Kubernetes + Docker containers
 Monitoring: Prometheus + Grafana + MLflow
 Database: InfluxDB (time series) + PostgreSQL (metadata)
@@ -57,9 +57,11 @@ REDIS_URL=redis://trading-redis:6379
 
 ## 🏗️ Production Architecture Components
 
-### **Tier 1: CNN+LSTM Market Intelligence** (Enhanced)
+### **Tier 1: CNN+LSTM Market Prototype** 
 
 #### **Model Architecture** ([`src/models/cnn_lstm.py`](../src/models/cnn_lstm.py))
+
+**Planned**
 
 ```python
 ProductionCNNLSTMModel(
@@ -75,7 +77,7 @@ ProductionCNNLSTMModel(
 
 **Enhanced Data Flow**:
 
-1. **Professional Market Data** → Real-time feature engineering pipeline
+1. **Alpaca (implemented); Bloomberg/Refinitiv - planned** → Real-time feature engineering pipeline
 2. **Market Microstructure** → Order book dynamics, bid-ask spreads
 3. **Feature Sequences** → CNN layers (pattern detection)
 4. **CNN Features** → LSTM layers (temporal modeling)
@@ -83,12 +85,12 @@ ProductionCNNLSTMModel(
 
 #### **Production Training Pipeline**
 
-- **Data Sources**: Professional market data feeds (Bloomberg, Refinitiv)
+- **Data Sources**: Alpaca data feed with planned support for Bloomberg and Refinitiv
 - **Distributed Training**: Ray Tune + Optuna for hyperparameter optimization
 - **Model Governance**: Automated retraining, A/B testing, version control
 - **Risk Validation**: Walk-forward testing with transaction costs and slippage
 
-### **Tier 2: Enterprise RL Decision Engine**
+### **Tier 2: Enterprise RL Decision Engine (planned enhancements)**
 
 #### **Production State Space Design**
 
@@ -229,14 +231,14 @@ def get_final_action(rl_action, cnn_lstm_confidence):
 
 ## 📊 Performance Advantages
 
-### **Hybrid vs Pure RL**
+### **Hybrid vs Pure RL Predictions**
 
 - **15% Performance Improvement**: Risk-adjusted returns
 - **Better Risk Management**: Lower maximum drawdown
 - **Faster Convergence**: Pre-trained feature representations
 - **Market Adaptation**: Supervised component captures changing patterns
 
-### **System Metrics**
+### **System Metrics Goals**
 
 - **Prediction Accuracy**: 43% (vs 33% random baseline)
 - **Model Parameters**: 19,843 optimized parameters
