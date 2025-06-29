@@ -103,23 +103,19 @@ def finrl_trading_env(finrl_sample_data):
 
 @pytest.fixture
 def sample_csv_file(tmp_path):
-    """Provide a sample CSV file for legacy compatibility tests."""
-    # Minimal CSV data for TraderEnv compatibility
-    np.random.seed(42)
+    """Provide a sample CSV file using ``TestDataManager`` utilities."""
+    from tests.test_data_utils import TestDataManager
+    import pandas as pd
 
-    data = pd.DataFrame(
-        {
-            "open": np.random.uniform(95, 105, 50),
-            "high": np.random.uniform(100, 110, 50),
-            "low": np.random.uniform(90, 100, 50),
-            "close": np.random.uniform(95, 105, 50),
-            "volume": np.random.randint(1000, 10000, 50),
-        }
-    )
+    manager = TestDataManager(str(tmp_path))
+    df = manager.generate_synthetic_dataset()
+    df = df.drop(columns=["timestamp"])  # TraderEnv expects numeric columns
+    dataset_path = tmp_path / "sample_test_data.csv"
+    df.to_csv(dataset_path, index=False)
+    manager.temp_files.append(dataset_path)
 
-    csv_path = tmp_path / "sample_test_data.csv"
-    data.to_csv(csv_path, index=False)
-    return str(csv_path)
+    yield str(dataset_path)
+    manager.cleanup()
 
 
 @pytest.fixture
