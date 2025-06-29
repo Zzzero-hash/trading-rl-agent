@@ -27,6 +27,8 @@ This section provides detailed API documentation for all modules and classes.
 
 ### TD3 Agent
 
+*Experimental: maintained only for custom research and testing*
+
 ```{eval-rst}
 .. automodule:: src.agents.td3_agent
    :members:

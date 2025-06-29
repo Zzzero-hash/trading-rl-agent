@@ -110,9 +110,11 @@ production_state = {
 
 #### **Production RL Algorithms** (FinRL Integration)
 
+FinRL provides standardized trading environments used by the SAC agent for production workloads. A custom TD3 implementation is kept only for research experiments.
+
 - **Proximal Policy Optimization (PPO)**: Industry standard for continuous action spaces
-- **Soft Actor-Critic (SAC)**: Optimal for trading with proper exploration
-- **Twin Delayed DDPG (TD3)**: Handles overestimation bias in Q-learning
+- **Soft Actor-Critic (SAC)**: Optimal for trading with proper exploration and fully integrated with FinRL
+- **Custom Twin Delayed DDPG (TD3)**: Maintained solely for experimentation
 - **Multi-Agent DDPG (MADDPG)**: Portfolio optimization across multiple strategies
 
 #### **Enterprise Risk Management Integration**
@@ -273,7 +275,7 @@ def get_final_action(rl_action, cnn_lstm_confidence):
 This hybrid architecture successfully demonstrates how supervised learning can enhance reinforcement learning for financial applications, providing both improved performance and better risk management through uncertainty quantification.
 
 - **Ensemble Agent** – [`src/agents/ensemble_agent.py`](../src/agents/ensemble_agent.py)
-  - Combines the outputs of SAC and TD3 agents.
+  - Combines SAC outputs with the optional TD3 experimental agent.
   - Designed to reduce variance and improve stability.
   - Can be extended to include additional models.
 
