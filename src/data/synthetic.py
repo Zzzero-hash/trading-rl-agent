@@ -2,7 +2,6 @@
 Synthetic OHLCV data generator for testing purposes.
 """
 
-from datetime import datetime, timedelta
 from typing import Optional
 
 import numpy as np
@@ -10,59 +9,40 @@ import pandas as pd
 
 
 def fetch_synthetic_data(
-    symbol: Optional[str] = None,
-    start: Optional[str] = None,
-    end: Optional[str] = None,
-    timestep: str = "day",
-    n_samples: Optional[int] = None,
+    n_samples: int,
+    timeframe: str = "day",
     volatility: float = 0.01,
+    symbol: Optional[str] = None,
 ) -> pd.DataFrame:
-    """
-    Generate synthetic OHLCV data matching pipeline schema.
-    :param symbol: ignored in this stub
-    :param start: start date (YYYY-MM-DD)
-    :param end: end date (YYYY-MM-DD)
-    :param timestep: 'day', 'hour', or 'minute'
-    :param n_samples: number of samples to generate (overrides start and end)
-    :param volatility: volatility factor for synthetic data
-    :return: DataFrame with ['timestamp','open','high','low','close','volume']
-    """
-    # If n_samples is provided, generate that many samples
-    if n_samples is not None:
-        # Generate default dates (fixed start for reproducibility)
-        dates = pd.date_range(start="1970-01-01", periods=n_samples, freq="D")
-        n = n_samples
-        # Random data based on volatility parameter
-        opens = np.random.uniform(100, 200, size=n)
-        highs = opens + np.random.uniform(0, volatility * opens, size=n)
-        lows = opens - np.random.uniform(0, volatility * opens, size=n)
-        closes = np.random.uniform(lows, highs)
-        volumes = np.random.randint(1000, 10000, size=n)
-        df = pd.DataFrame(
-            {
-                "open": opens,
-                "high": highs,
-                "low": lows,
-                "close": closes,
-                "volume": volumes.astype(int),
-            }
-        )
-        return df
+    """Generate synthetic OHLCV data.
 
-    # Legacy behavior: use date range from start to end
-    # Map timestep to pandas frequency
+    Parameters
+    ----------
+    n_samples : int
+        Number of rows to generate.
+    timeframe : str, optional
+        Data frequency (``"day"``, ``"hour"`` or ``"minute"``), by default ``"day"``.
+    volatility : float, optional
+        Volatility factor for synthetic price ranges, by default ``0.01``.
+    symbol : str, optional
+        Currently ignored but kept for API compatibility.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns ``['timestamp','open','high','low','close','volume']``.
+    """
+
     freq_map = {"day": "D", "hour": "H", "minute": "T"}
-    freq = freq_map.get(timestep, timestep)
-    # Create date range
-    dates = pd.date_range(start=start, end=end, freq=freq)
-    n = len(dates)
-    # Random data
-    opens = np.random.uniform(100, 200, size=n)
-    highs = opens + np.random.uniform(0, 10, size=n)
-    lows = opens - np.random.uniform(0, 10, size=n)
+    freq = freq_map.get(timeframe, timeframe)
+
+    dates = pd.date_range(start="1970-01-01", periods=n_samples, freq=freq)
+    opens = np.random.uniform(100, 200, size=n_samples)
+    highs = opens + np.random.uniform(0, volatility * opens, size=n_samples)
+    lows = opens - np.random.uniform(0, volatility * opens, size=n_samples)
     closes = np.random.uniform(lows, highs)
-    volumes = np.random.randint(1000, 10000, size=n)
-    # Assemble DataFrame
+    volumes = np.random.randint(1000, 10000, size=n_samples)
+
     df = pd.DataFrame(
         {
             "timestamp": dates,
@@ -73,6 +53,7 @@ def fetch_synthetic_data(
             "volume": volumes.astype(int),
         }
     )
+
     return df.reset_index(drop=True)
 
 
