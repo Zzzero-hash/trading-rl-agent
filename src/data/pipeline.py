@@ -13,9 +13,9 @@ from .synthetic import fetch_synthetic_data
 
 
 @ray.remote
-def _fetch_data_remote(fetch_fn, symbol: str, start: str, end: str, timestep: str):
+def _fetch_data_remote(fetch_fn, **kwargs):
     """Execute a data fetch function as a Ray remote task."""
-    return fetch_fn(symbol, start, end, timestep)
+    return fetch_fn(**kwargs)
 
 
 def load_cached_csvs(directory: str) -> pd.DataFrame:
@@ -91,25 +91,45 @@ def run_pipeline(config_path: str):
     for symbol in coinbase_symbols:
         key = f"coinbase_{symbol}"
         tasks[key] = _fetch_data_remote.remote(
-            fetch_historical_data, symbol, start, end, timestep
+            fetch_historical_data,
+            symbol=symbol,
+            start=start,
+            end=end,
+            timestep=timestep,
         )
 
     for symbol in oanda_symbols:
         key = f"oanda_{symbol}"
         tasks[key] = _fetch_data_remote.remote(
-            fetch_historical_data, symbol, start, end, timestep
+            fetch_historical_data,
+            symbol=symbol,
+            start=start,
+            end=end,
+            timestep=timestep,
         )
+
+    freq_map = {"day": "D", "hour": "H", "minute": "T"}
+    n_samples = 1
+    if start and end:
+        freq = freq_map.get(timestep, timestep)
+        n_samples = len(pd.date_range(start=start, end=end, freq=freq))
 
     for symbol in cfg.get("synthetic_symbols", []):
         key = f"synthetic_{symbol}"
         tasks[key] = _fetch_data_remote.remote(
-            fetch_synthetic_data, symbol, start, end, timestep
+            fetch_synthetic_data,
+            n_samples=n_samples,
+            timeframe=timestep,
         )
 
     for symbol in cfg.get("live_symbols", []):
         key = f"live_{symbol}"
         tasks[key] = _fetch_data_remote.remote(
-            fetch_live_data, symbol, start, end, timestep
+            fetch_live_data,
+            symbol=symbol,
+            start=start,
+            end=end,
+            timestep=timestep,
         )
 
     fetched = ray.get(list(tasks.values())) if tasks else []
