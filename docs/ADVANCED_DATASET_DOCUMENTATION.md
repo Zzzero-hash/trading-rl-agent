@@ -310,3 +310,31 @@ The dataset is immediately ready for training the RL agent and can seamlessly in
 2. Implement live data integration using the documented patterns
 3. Monitor performance and iterate on feature engineering as needed
 4. Scale to additional symbols and markets using the provided infrastructure
+
+## CNN-LSTM Hyperparameter Optimization
+
+The `src.optimization.cnn_lstm_optimization` module uses **Ray Tune** to search
+for optimal network parameters. When Ray is not available, it automatically
+falls back to a basic grid search.
+
+Example usage:
+
+```python
+from src.optimization.cnn_lstm_optimization import optimize_cnn_lstm
+from ray import tune
+
+results = optimize_cnn_lstm(
+    features,
+    targets,
+    num_samples=20,
+    max_epochs_per_trial=30,
+    output_dir="optimization_results",
+    ray_resources_per_trial={"cpu": 2, "gpu": 1},
+    custom_search_space={"lstm_units": tune.choice([128, 256, 512])},
+)
+print(results["best_config"])
+```
+
+The `custom_search_space` and `ray_resources_per_trial` parameters let you
+override default hyperparameters and specify CPU/GPU allocation for each Ray
+trial.
