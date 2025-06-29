@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Important**: TD3 (Twin Delayed Deep Deterministic Policy Gradient) has been **completely removed** from Ray RLlib version 2.38.0+. This project has been updated to use **SAC (Soft Actor-Critic)** as the primary continuous control algorithm for Ray RLlib integration.
+**Important**: TD3 (Twin Delayed Deep Deterministic Policy Gradient) has been **completely removed** from Ray RLlib version 2.38.0+. This project has been updated to use **SAC (Soft Actor-Critic)** as the primary continuous control algorithm for Ray RLlib integration, leveraging **FinRL** environments for trading tasks.
 
 ## Migration Summary
 

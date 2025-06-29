@@ -61,6 +61,6 @@ agent.train(env, episodes=1000)
 - ✅ **Test suite with 733 cases** covering core functionality
 - ✅ **Sample dataset included**; large historical datasets are optional
 - ✅ **Hybrid CNN+LSTM + SAC** architecture production-ready
-- ✅ **Ray RLlib 2.38.0+** compatibility (TD3 → SAC migration complete)
+- ✅ **Ray RLlib 2.38.0+** compatibility (SAC with **FinRL** integration; custom TD3 retained for experimentation)
 - ✅ **Automated quality checks** integrated
 *Metrics are illustrative and rely on sample data.*
