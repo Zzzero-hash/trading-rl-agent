@@ -6,8 +6,8 @@ from src.data.synthetic import fetch_synthetic_data
 
 
 def test_synthetic_columns_and_length():
-    # Generate daily data for 5 days
-    df = fetch_synthetic_data("SYM", "2021-01-01", "2021-01-05", "day")
+    # Generate 5 daily samples
+    df = fetch_synthetic_data(n_samples=5, timeframe="day")
     # Check columns
     expected_cols = ["timestamp", "open", "high", "low", "close", "volume"]
     assert list(df.columns) == expected_cols
@@ -22,7 +22,7 @@ def test_synthetic_columns_and_length():
 
 def test_high_low_relationship():
     # Ensure high >= max(open, close) and low <= min(open, close)
-    df = fetch_synthetic_data("SYM", "2021-01-01", "2021-01-05", "day")
+    df = fetch_synthetic_data(n_samples=5, timeframe="day")
     high = df["high"]
     low = df["low"]
     oc_max = df[["open", "close"]].max(axis=1)
@@ -33,26 +33,22 @@ def test_high_low_relationship():
 
 def test_volume_integer_positive():
     # Volume should be integer and non-negative
-    df = fetch_synthetic_data("SYM", "2021-01-01", "2021-01-02", "day")
+    df = fetch_synthetic_data(n_samples=2, timeframe="day")
     assert df["volume"].dtype.kind in ("i", "u")
     assert (df["volume"] >= 0).all()
 
 
 def test_hourly_timestamp_bounds():
-    # Generate hourly data over a single day
-    df = fetch_synthetic_data("SYM", "2021-01-01", "2021-01-01", "hour")
-    expected = pd.date_range(start="2021-01-01", end="2021-01-01", freq="H")
-    # Ensure first and last timestamps match expected
-    assert df["timestamp"].iloc[0] == expected[0]
-    assert df["timestamp"].iloc[-1] == expected[-1]
-    # Length matches expected
-    assert len(df) == len(expected)
+    # Generate a single hourly sample
+    df = fetch_synthetic_data(n_samples=1, timeframe="hour")
+    assert len(df) == 1
+    assert pd.api.types.is_datetime64_any_dtype(df["timestamp"])
 
 
 def test_minute_frequency_length():
     # Generate minute data for 1 hour
-    df = fetch_synthetic_data("SYM", "2021-01-01", "2021-01-01 01:00", "minute")
-    expected = pd.date_range(start="2021-01-01", end="2021-01-01 01:00", freq="T")
-    assert len(df) == len(expected)
-    assert df["timestamp"].iloc[0] == expected[0]
-    assert df["timestamp"].iloc[-1] == expected[-1]
+    df = fetch_synthetic_data(n_samples=61, timeframe="minute")
+    # Verify frequency and length
+    diffs = df["timestamp"].diff().dropna().unique()
+    assert len(df) == 61
+    assert len(diffs) == 1 and diffs[0] == pd.Timedelta(minutes=1)
