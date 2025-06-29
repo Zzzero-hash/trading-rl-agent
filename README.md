@@ -63,7 +63,8 @@ production_state = {
 | **Performance Monitoring** | ✅ Production | Prometheus + Grafana            |
 
 
-**SLA**: 99.9% uptime | **Latency**: <100ms decisions | **Tests**: 497 total (~83 passing, ~13 skipped)
+**SLA**: 99.9% uptime (target) | **Latency**: <100ms decisions | **Tests**: ~733 total
+*Note: sample data is used in examples; metrics are illustrative.*
 
 
 ## 🚀 Enterprise Quick Start
@@ -206,4 +207,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**🎯 Status**: Environment testing framework complete, core functionality validated | **🧪 Tests**: 497 total (~83 passing, ~13 skipped) | **📊 Data**: 1.37M records ready
+**🎯 Status**: Environment testing framework complete, core functionality validated | **🧪 Tests**: ~733 defined | **📊 Data**: sample datasets provided; large historical datasets optional. Metrics are illustrative.
