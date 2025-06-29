@@ -58,8 +58,9 @@ agent.train(env, episodes=1000)
 
 ## System Status
 
-- ✅ **367 tests passing** with comprehensive coverage
-- ✅ **1.37M record dataset** with 78 engineered features
+- ✅ **Test suite with 733 cases** covering core functionality
+- ✅ **Sample dataset included**; large historical datasets are optional
 - ✅ **Hybrid CNN+LSTM + SAC** architecture production-ready
 - ✅ **Ray RLlib 2.38.0+** compatibility (TD3 → SAC migration complete)
-- ✅ **Zero technical debt** with automated quality checks
+- ✅ **Automated quality checks** integrated
+*Metrics are illustrative and rely on sample data.*
