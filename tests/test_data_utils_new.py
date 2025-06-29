@@ -171,29 +171,3 @@ def get_dynamic_test_config(
     return config
 
 
-# Legacy functions for backward compatibility
-def generate_synthetic_test_data(path=None, days=30, num_assets=3):
-    """Legacy function for backward compatibility."""
-    manager = DataManager()
-    df = manager.generate_synthetic_dataset(n_days=days)
-
-    if path is None:
-        path = "data/synthetic_test_data.csv"
-
-    # Ensure directory exists
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(path, index=False)
-
-    logger.info(f"Generated synthetic test data: {path}")
-    return path
-
-
-def cleanup_synthetic_test_data(path="data/synthetic_test_data.csv"):
-    """Legacy function for backward compatibility."""
-    file_path = Path(path)
-    if file_path.exists():
-        try:
-            file_path.unlink()
-            logger.info(f"Cleaned up synthetic test data: {path}")
-        except Exception as e:
-            logger.warning(f"Failed to clean up {path}: {e}")
