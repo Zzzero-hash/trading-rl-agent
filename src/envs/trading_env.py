@@ -17,8 +17,21 @@ class TradingEnv(gym.Env):
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, env_cfg: dict):
-        cfg = env_cfg or {}
+    def __init__(self, env_cfg: dict | None = None, **kwargs):
+        """Initialize the environment.
+
+        Parameters can be provided either as a configuration dictionary
+        ``env_cfg`` or directly as keyword arguments. Keyword arguments will
+        override values in ``env_cfg`` when both are supplied. This preserves
+        backward compatibility with existing code that passes a single
+        configuration dictionary while allowing a more pythonic style of
+        initialization.
+        """
+
+        if env_cfg is not None and not isinstance(env_cfg, dict):
+            raise TypeError("env_cfg must be a dict if provided")
+
+        cfg = {**(env_cfg or {}), **kwargs}
         self.config = cfg  # Store config for potential cleanup access
         self.data_paths = cfg.get("dataset_paths", [])
         if isinstance(self.data_paths, str):
