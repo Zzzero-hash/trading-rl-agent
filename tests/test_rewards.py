@@ -1,6 +1,7 @@
 import numpy as np
 
 from src.utils.rewards import (
+    compute_reward,
     simple_profit_reward,
     risk_adjusted_reward,
     drawdown_penalty_reward,
@@ -80,4 +81,13 @@ def test_custom_trading_reward():
         + portfolio_diversification_reward(weights, diversification_bonus=0.02)
     )
     assert np.isclose(reward, expected)
+
+
+def test_compute_reward_dispatch():
+    assert np.isclose(compute_reward("simple_profit", 100.0, 110.0), 0.1)
+    returns = np.array([0.1, 0.2, 0.3])
+    expected = risk_adjusted_reward(returns, risk_penalty=0.1)
+    assert np.isclose(
+        compute_reward("risk_adjusted", returns, risk_penalty=0.1), expected
+    )
 
