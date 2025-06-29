@@ -204,7 +204,17 @@ def test_dataset_context(
 def get_dynamic_test_config(
     base_config: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
-    """Get test configuration with dynamically discovered or generated dataset."""
+    """
+    Return a test configuration dictionary with a dynamically discovered or generated dataset.
+    
+    If a base configuration is provided, its values override the defaults. The returned configuration includes dataset paths, trading environment parameters, and a reference to the test data manager for later cleanup.
+    
+    Parameters:
+        base_config (Optional[dict[str, Any]]): Optional dictionary of configuration values to override defaults.
+    
+    Returns:
+        dict[str, Any]: Configuration dictionary for test environments, including dataset paths and trading parameters.
+    """
 
     manager = TestDataManager()
     # Required columns for trading environment

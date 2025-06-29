@@ -149,7 +149,17 @@ def managed_test_data(data_dir: str = "data", **kwargs):
 def get_dynamic_test_config(
     base_config: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
-    """Get a test configuration with dynamically discovered or generated test data."""
+    """
+    Generate a test configuration dictionary using a dynamically discovered or generated dataset.
+    
+    If a base configuration is provided, its values override the defaults. The returned configuration includes the dataset path, window size, initial balance, transaction cost, and a reference to the DataManager instance for potential cleanup.
+    
+    Parameters:
+        base_config (Optional[dict[str, Any]]): Optional dictionary of configuration values to override defaults.
+    
+    Returns:
+        dict[str, Any]: Test configuration dictionary with dataset path and parameters.
+    """
     manager = DataManager()
 
     # Create test dataset

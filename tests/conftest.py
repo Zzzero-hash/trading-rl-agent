@@ -103,7 +103,17 @@ def finrl_trading_env(finrl_sample_data):
 
 @pytest.fixture
 def sample_csv_file(tmp_path):
-    """Provide a sample CSV file using ``TestDataManager`` utilities."""
+    """
+    Create and yield the file path to a temporary CSV file containing synthetic trading data for testing.
+    
+    The CSV is generated using `TestDataManager` utilities, formatted to exclude the "timestamp" column for compatibility with trading environments. The file is automatically cleaned up after the test completes.
+    
+    Parameters:
+        tmp_path: Temporary directory path provided by pytest for file creation.
+    
+    Yields:
+        str: Path to the generated CSV file.
+    """
     from tests.test_data_utils import TestDataManager
     import pandas as pd
 
