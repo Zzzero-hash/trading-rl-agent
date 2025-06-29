@@ -27,7 +27,7 @@ Production-ready hybrid CNN+LSTM + Reinforcement Learning system for algorithmic
 
 ## 🏗️ System Status
 
-- **Test Suite**: 495 tests (~83 passing, ~13 skipped) – environment fixes in progress
+- **Test Suite**: 497 tests (~83 passing, ~13 skipped) – environment fixes in progress
 - **Hybrid Architecture**: CNN+LSTM supervised learning + RL optimization
 - **Advanced Dataset**: 1.37M records with 78 engineered features
 - **Framework**: Ray RLlib, FinRL integration ready
@@ -64,7 +64,7 @@ Documentation references automated tools in [`../scripts/`](../scripts/):
 
 **Production Ready**: The system has achieved:
 
-- ✅ 367 comprehensive tests passing
+- ✅ 497 comprehensive tests collected (~83 passing, ~13 skipped)
 - ✅ 1.37M record production dataset
 - ✅ Zero technical debt
 - ✅ Hybrid CNN+LSTM + RL architecture
