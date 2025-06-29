@@ -7,6 +7,7 @@ This agent combines multiple RL agents using advanced ensemble methods:
 - Uncertainty quantification
 - Risk-adjusted consensus
 - Meta-learning capabilities
+- Fails fast if any sub-agent cannot be initialized
 """
 
 from collections import deque
@@ -423,12 +424,9 @@ class EnsembleAgent:
                         print(f"✅ Initialized {agent_name} agent")
 
                     except Exception as e:
-                        print(f"⚠️ Failed to initialize {agent_name} agent: {e}")
-                        # Create a dummy agent placeholder
-                        self.agents[agent_name] = None
-                        self.agent_weights[agent_name] = 0.0
-                        self.agent_performance[agent_name] = []
-                        self.agent_confidence[agent_name] = 0.0
+                        raise RuntimeError(
+                            f"Failed to initialize {agent_name} agent"
+                        ) from e
 
         # Normalize weights
         self._normalize_weights()

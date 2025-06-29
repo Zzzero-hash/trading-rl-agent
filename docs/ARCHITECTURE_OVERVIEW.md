@@ -278,5 +278,6 @@ This hybrid architecture successfully demonstrates how supervised learning can e
   - Combines SAC outputs with the optional TD3 experimental agent.
   - Designed to reduce variance and improve stability.
   - Can be extended to include additional models.
+  - Raises an error if any sub-agent fails to initialize.
 
 The agents consume observations from `TradingEnv`, take actions, and optionally contribute to ensemble decisions. This modular setup makes it straightforward to swap out or update individual components while keeping the overall pipeline intact.
