@@ -148,12 +148,14 @@ python src/monitoring/dashboard.py
 
 ## 📊 Performance Benchmarks
 
+*The metrics below are preliminary targets and will be validated with future benchmark scripts.*
+
 ### CNN+LSTM Model
 
-- **Prediction Accuracy**: 43% (vs 33% random baseline)
+- **Prediction Accuracy Target**: ~43% (estimated vs 33% random baseline)
 - **Model Size**: 19,843 parameters
 - **Training Time**: 2.5 min/epoch on GPU
-- **Inference Latency**: <50ms on GPU
+- **Inference Latency Goal**: <50ms on GPU
 
 ### RL Agents
 
