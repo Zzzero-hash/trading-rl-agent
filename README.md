@@ -1,15 +1,15 @@
-# Enterprise Trading RL System - Production Grade
+# Trading RL System
 
-A **production-ready algorithmic trading system** following 2024 industry standards that combines **CNN+LSTM market intelligence** with **reinforcement learning optimization**, built on proven frameworks used by major financial institutions.
+This project combines **CNN+LSTM market intelligence** with **reinforcement learning optimization** using open-source frameworks.
 
 ## 🏆 Industry Standards & Compliance
 
-**Built with frameworks used by JPMorgan, Goldman Sachs, and leading hedge funds:**
+**Built with open-source frameworks commonly used in the industry:**
 
 - **FinRL Foundation**: Industry-standard RL trading framework
 - **Ray RLlib**: Distributed training used by Uber, Shopify, major hedge funds
-- **Professional Data**: Bloomberg, Refinitiv, Polygon.io integration
-- **Enterprise Risk Management**: Real-time VaR, position limits, circuit breakers
+- **Professional Data**: Alpaca support with placeholders for Bloomberg, Refinitiv, and Polygon.io
+- **Risk Management**: Position limits with experimental VaR and circuit breaker components
 - **MLOps Governance**: Model versioning, A/B testing, automated retraining
 - **Regulatory Compliance**: MiFID II, audit trails, performance attribution
 
@@ -56,20 +56,22 @@ production_state = {
 | **Market Data Pipeline**   | ✅ Production | Kafka + Spark real-time         |
 | **CNN+LSTM Intelligence**  | ✅ Production | 1.37M records, 97.78% quality   |
 | **RL Optimization**        | ✅ Production | FinRL + Ray RLlib               |
-| **Risk Management**        | ✅ Production | Real-time VaR, circuit breakers |
+| **Risk Management**        | 🚧 Experimental | Position limits; VaR and circuit breakers planned |
 | **MLOps Pipeline**         | ✅ Production | MLflow + Kubernetes             |
-| **Professional Data**      | ✅ Production | Bloomberg, Alpaca APIs          |
+| **Professional Data**      | 🚧 In progress | Alpaca implemented; Bloomberg planned |
 | **Backtesting Engine**     | ✅ Production | Transaction costs, slippage     |
 | **Performance Monitoring** | ✅ Production | Prometheus + Grafana            |
 
+
 **SLA**: 99.9% uptime | **Latency**: <100ms decisions | **Tests**: 497 total (~83 passing, ~13 skipped)
+
 
 ## 🚀 Enterprise Quick Start
 
 ### 1. Production Installation
 
 ```bash
-# Install enterprise-grade frameworks
+# Install required frameworks
 # Clone repository
 git clone https://github.com/your-org/trading-rl-agent.git
 cd trading-rl-agent
@@ -172,7 +174,7 @@ trading-rl-agent/
 
 - **Portfolio-Level Optimization**: Extend to multiple assets simultaneously
 - **Cross-Asset Correlation**: Inter-asset relationship modeling with shared CNN layers
-- **Advanced Risk Management**: VaR, drawdown limits, sector constraints
+- **Advanced Risk Management**: Planned features include VaR, drawdown limits, and sector constraints
 - **Real-Time Deployment**: Production inference pipeline with streaming data
 
 ### Research Innovation
