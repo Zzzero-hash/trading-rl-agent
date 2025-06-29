@@ -70,6 +70,28 @@ Documentation references automated tools in [`../scripts/`](../scripts/):
 - ✅ Hybrid CNN+LSTM + RL architecture
 - ✅ Real-time trading capabilities
 
+## 🧪 Test Suite Requirements
+
+The test suite depends on common scientific packages and several `pytest`
+plugins. Ensure these are installed before running tests:
+
+- **numpy** – numerical computations
+- **pandas** – data manipulation
+- **torch** – neural network library
+- **pytest** and plugins:
+  - `pytest-cov`
+  - `pytest-mock`
+  - `pytest-xdist`
+  - `pytest-asyncio`
+  - `pytest-timeout`
+  - `pytest-benchmark`
+
+Install them with:
+
+```bash
+pip install -r requirements-test.txt
+```
+
 ## 🚀 Quick Setup
 
 ```bash
