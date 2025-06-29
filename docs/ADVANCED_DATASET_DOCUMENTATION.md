@@ -100,6 +100,8 @@ else:
 
 ## Dataset Statistics
 
+*The following figures are illustrative and generated from sample data.*
+
 ### Final Dataset Characteristics
 
 - **Total Records:** 31,625 samples
@@ -259,6 +261,8 @@ file_paths = builder.build_dataset()
 - ✅ **Type Safety:** All features are numeric (float32)
 - ✅ **Balance:** Target classes reasonably balanced
 - ✅ **Uniqueness:** No duplicate rows
+
+*Metrics in the performance validation section are illustrative and based on example runs.*
 
 ### Live Data Compatibility
 
