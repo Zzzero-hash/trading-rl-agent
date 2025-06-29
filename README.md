@@ -47,7 +47,7 @@ production_state = {
 - **Multi-agent RL**: SAC & PPO ensemble optimization (TD3 experimental only)
 - **Risk-adjusted rewards**: Sharpe ratio, VaR-constrained optimization
 - **Smart order routing**: Market impact minimization
-- **Real-time execution**: Sub-second trade decision latency
+- **Real-time execution**: Goal of sub-second trade decision latency
 
 ## ✅ **Production Readiness Status**
 
@@ -61,6 +61,8 @@ production_state = {
 | **Professional Data**      | 🚧 In progress | Alpaca implemented; Bloomberg planned |
 | **Backtesting Engine**     | ✅ Production | Transaction costs, slippage     |
 | **Performance Monitoring** | ✅ Production | Prometheus + Grafana            |
+
+*The table above is illustrative and reflects target capabilities rather than finalized features.*
 
 
 **SLA**: 99.9% uptime (target) | **Latency**: <100ms decisions | **Tests**: ~733 total
@@ -148,7 +150,7 @@ python src/monitoring/dashboard.py
 
 ## 📊 Performance Benchmarks
 
-*The metrics below are preliminary targets and will be validated with future benchmark scripts.*
+*The metrics below are illustrative targets and will be validated with future benchmark scripts.*
 
 ### CNN+LSTM Model
 
@@ -168,6 +170,7 @@ python src/monitoring/dashboard.py
 - **Test Fixtures**: Fixed and optimized for fast execution
 - **Data Quality**: 97.78% complete with balanced labels
 - **Phase 2 Status**: Environment integration complete, core functionality working
+*Metrics in this section are illustrative.*
 
 ## 📁 Project Structure
 
