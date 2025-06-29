@@ -82,20 +82,6 @@ def _get_default_sac_search_space() -> dict[str, Any]:
     }
 
 
-def _get_default_td3_search_space() -> dict[str, Any]:
-    """DEPRECATED: TD3 has been removed from Ray RLlib 2.38.0+. Use SAC instead.
-
-    This function is kept for backward compatibility but will raise a deprecation warning.
-    """
-    import warnings
-
-    warnings.warn(
-        "TD3 has been removed from Ray RLlib 2.38.0+. Use optimize_sac_hyperparams() instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    # Return SAC search space as fallback
-    return _get_default_sac_search_space()
 
 
 def _get_default_ppo_search_space() -> dict[str, Any]:
@@ -131,64 +117,6 @@ def register_models_and_envs():
     register_env("TradingEnv", lambda cfg: create_env(cfg))
 
 
-def optimize_td3_hyperparams(
-    env_config: dict[str, Any],
-    num_samples: int = 20,
-    max_iterations_per_trial: int = 100,
-    output_dir: str = "./rl_optimization",
-    custom_search_space: dict[str, Any] | None = None,
-    cpu_per_trial: float = 1.0,
-    gpu_per_trial: float = 0.0,
-    use_best_model: bool = True,
-) -> tune.ExperimentAnalysis:
-    """DEPRECATED: TD3 has been removed from Ray RLlib 2.38.0+. Use optimize_sac_hyperparams() instead.
-
-    This function will automatically redirect to SAC optimization with a deprecation warning.
-
-    Parameters
-    ----------
-    env_config : dict
-        Environment configuration
-    num_samples : int, default 20
-        Number of trials to run
-    max_iterations_per_trial : int, default 100
-        Maximum training iterations per trial
-    output_dir : str, default "./rl_optimization"
-        Directory to save results
-    custom_search_space : dict, optional
-        Custom hyperparameter search space (overrides default)
-    cpu_per_trial : float, default 1.0
-        CPUs to allocate per trial
-    gpu_per_trial : float, default 0.0
-        GPUs to allocate per trial
-    use_best_model : bool, default True
-        Whether to return the best performing model
-
-    Returns
-    -------
-    ExperimentAnalysis
-        Ray Tune experiment analysis object
-    """
-    import warnings
-
-    warnings.warn(
-        "optimize_td3_hyperparams() is deprecated. TD3 has been removed from Ray RLlib 2.38.0+. "
-        "Automatically redirecting to optimize_sac_hyperparams() which provides similar continuous control capabilities.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    # Redirect to SAC optimization
-    return optimize_sac_hyperparams(
-        env_config=env_config,
-        num_samples=num_samples,
-        max_iterations_per_trial=max_iterations_per_trial,
-        output_dir=output_dir,
-        custom_search_space=custom_search_space,
-        cpu_per_trial=cpu_per_trial,
-        gpu_per_trial=gpu_per_trial,
-        use_best_model=use_best_model,
-    )
 
 
 def optimize_sac_hyperparams(
@@ -417,17 +345,6 @@ def optimize_ensemble_hyperparams(
     ensemble_dir.mkdir(parents=True, exist_ok=True)
 
     results = {}
-
-    # Optimize TD3
-    td3_dir = ensemble_dir / "td3"
-    results["td3"] = optimize_td3_hyperparams(
-        env_config=env_config,
-        num_samples=samples_per_algo,
-        max_iterations_per_trial=max_iterations_per_trial,
-        output_dir=str(td3_dir),
-        cpu_per_trial=cpu_per_trial,
-        gpu_per_trial=gpu_per_trial,
-    )
 
     # Optimize SAC
     sac_dir = ensemble_dir / "sac"

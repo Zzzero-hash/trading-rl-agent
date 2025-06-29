@@ -44,7 +44,7 @@ production_state = {
 }
 ```
 
-- **Multi-agent RL**: PPO, SAC, TD3 ensemble optimization
+- **Multi-agent RL**: SAC & PPO ensemble optimization (TD3 experimental only)
 - **Risk-adjusted rewards**: Sharpe ratio, VaR-constrained optimization
 - **Smart order routing**: Market impact minimization
 - **Real-time execution**: Sub-second trade decision latency
@@ -160,7 +160,6 @@ python src/monitoring/dashboard.py
 ### RL Agents
 
 - **SAC Performance**: Sharpe ratio 1.2+ on validation data
-- **TD3 Performance**: Max drawdown <12% over 1000 episodes
 - **Hybrid Advantage**: 15% improvement over pure RL baseline
 
 ### System Performance
@@ -175,7 +174,7 @@ python src/monitoring/dashboard.py
 ```
 trading-rl-agent/
 ├── src/
-│   ├── agents/           # RL agents (SAC, TD3)
+│   ├── agents/           # RL agents (SAC, PPO, experimental TD3)
 │   ├── models/           # CNN+LSTM architectures
 │   ├── optimization/     # Hyperparameter optimization
 │   ├── data/            # Data processing & features
