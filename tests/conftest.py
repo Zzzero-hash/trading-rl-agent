@@ -88,17 +88,20 @@ def finrl_trading_env(finrl_sample_data):
             env.close()
 
     except ImportError:
-        # Fallback to mock environment if FinRL is not available
-        from unittest.mock import Mock
+        # Fallback to simple TradingEnv using synthetic data
+        from tests.test_data_utils import get_dynamic_test_config
+        from src.envs.trading_env import TradingEnv
 
-        mock_env = Mock()
-        mock_env.reset.return_value = (np.array([1.0, 2.0, 3.0]), {})
-        mock_env.step.return_value = (np.array([1.1, 2.1, 3.1]), 0.1, False, False, {})
-        mock_env.observation_space = Mock()
-        mock_env.action_space = Mock()
-        mock_env.action_space.sample.return_value = np.array([0.5, -0.3, 0.1])
+        cfg = get_dynamic_test_config({"include_features": False, "continuous_actions": False})
+        env = TradingEnv(cfg)
 
-        yield mock_env
+        yield env
+
+        manager = cfg.get("_test_manager")
+        if manager:
+            manager.cleanup()
+        if hasattr(env, "close"):
+            env.close()
 
 
 @pytest.fixture

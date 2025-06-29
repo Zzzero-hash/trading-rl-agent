@@ -32,21 +32,29 @@ def standardize_data(
         is_default_scaler = True
 
     if isinstance(data, pd.DataFrame):
+        df = data.copy()
+        # Convert any datetime columns to numeric values (ns since epoch)
+        datetime_cols = df.select_dtypes(include=["datetime", "datetimetz"]).columns
+        for col in datetime_cols:
+            df[col] = pd.to_datetime(df[col]).view("int64")
+
         if fit_scaler:
-            standardized = scaler.fit_transform(data)
+            standardized = scaler.fit_transform(df)
         else:
-            standardized = scaler.transform(data)
+            standardized = scaler.transform(df)
         # Return DataFrame and scaler
         return (
-            pd.DataFrame(standardized, columns=data.columns, index=data.index),
+            pd.DataFrame(standardized, columns=df.columns, index=df.index),
             scaler,
         )
     else:
-        # Standardize numpy array input
+        arr = np.asarray(data)
+        if np.issubdtype(arr.dtype, np.datetime64) or arr.dtype == object:
+            arr = pd.to_datetime(arr.ravel()).view("int64").reshape(arr.shape)
         if fit_scaler:
-            standardized = scaler.fit_transform(data)
+            standardized = scaler.fit_transform(arr)
         else:
-            standardized = scaler.transform(data)
+            standardized = scaler.transform(arr)
         return standardized
 
 
