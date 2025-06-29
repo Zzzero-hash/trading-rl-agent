@@ -352,3 +352,41 @@ def get_sharpe_optimized_reward_fn() -> RewardFunction:
         transaction_cost=0.001,
         drawdown_threshold=0.1,
     )
+
+
+def compute_reward(reward_type: str, *args, **kwargs) -> float:
+    """Dispatch to the appropriate reward function.
+
+    Parameters
+    ----------
+    reward_type : str
+        Identifier of the reward function to call. Supported types include
+        ``"simple_profit"``, ``"risk_adjusted"``, ``"drawdown_penalty"``,
+        ``"sharpe"``, ``"diversification"``, ``"transaction_cost"``,
+        ``"momentum"`` and ``"custom"``.
+    *args, **kwargs
+        Arguments forwarded to the underlying reward function.
+
+    Returns
+    -------
+    float
+        Computed reward value.
+    """
+
+    dispatch_map: Dict[str, Callable[..., float]] = {
+        "simple_profit": simple_profit_reward,
+        "profit": simple_profit_reward,
+        "risk_adjusted": risk_adjusted_reward,
+        "drawdown_penalty": drawdown_penalty_reward,
+        "sharpe": sharpe_based_reward,
+        "diversification": portfolio_diversification_reward,
+        "transaction_cost": transaction_cost_penalty,
+        "momentum": momentum_reward,
+        "custom": custom_trading_reward,
+    }
+
+    if reward_type not in dispatch_map:
+        raise ValueError(f"Unknown reward type: {reward_type}")
+
+    return dispatch_map[reward_type](*args, **kwargs)
+
