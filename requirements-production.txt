@@ -144,7 +144,7 @@ bokeh>=3.3.0                # Web-based plotting
 # Version Pinning for Stability
 # ========================================
 # Core dependencies pinned for production stability
-scikit-learn==1.3.2
+scikit-learn==1.5.0
 matplotlib==3.8.2
 seaborn==0.13.0
 scipy==1.11.4
