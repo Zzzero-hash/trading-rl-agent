@@ -18,48 +18,49 @@ import torch
 pytestmark = pytest.mark.integration
 
 
+@pytest.fixture
+def comprehensive_market_data(tmp_path):
+    """Generate comprehensive market data for thorough testing."""
+    # Create varied market conditions
+    data = []
+
+    # Bull market phase
+    bull_prices = [100]
+    for i in range(100):
+        change = np.random.normal(0.001, 0.02)  # Positive drift
+        bull_prices.append(bull_prices[-1] * (1 + change))
+
+    # Bear market phase
+    bear_prices = [bull_prices[-1]]
+    for i in range(100):
+        change = np.random.normal(-0.001, 0.02)  # Negative drift
+        bear_prices.append(bear_prices[-1] * (1 + change))
+
+    # Sideways market phase
+    sideways_prices = [bear_prices[-1]]
+    for i in range(100):
+        change = np.random.normal(0, 0.01)  # No drift, low volatility
+        sideways_prices.append(sideways_prices[-1] * (1 + change))
+
+    all_prices = bull_prices + bear_prices[1:] + sideways_prices[1:]
+
+    df = pd.DataFrame(
+        {
+            "open": all_prices,
+            "high": [p * (1 + abs(np.random.normal(0, 0.005))) for p in all_prices],
+            "low": [p * (1 - abs(np.random.normal(0, 0.005))) for p in all_prices],
+            "close": all_prices,
+            "volume": np.random.randint(1000, 50000, len(all_prices)),
+        }
+    )
+
+    csv_path = tmp_path / "comprehensive_data.csv"
+    df.to_csv(csv_path, index=False)
+    return str(csv_path)
+
+
 class TestTradingEnvironmentComprehensive:
     """Comprehensive test suite for trading environments."""
-
-    @pytest.fixture
-    def comprehensive_market_data(self, tmp_path):
-        """Generate comprehensive market data for thorough testing."""
-        # Create varied market conditions
-        data = []
-
-        # Bull market phase
-        bull_prices = [100]
-        for i in range(100):
-            change = np.random.normal(0.001, 0.02)  # Positive drift
-            bull_prices.append(bull_prices[-1] * (1 + change))
-
-        # Bear market phase
-        bear_prices = [bull_prices[-1]]
-        for i in range(100):
-            change = np.random.normal(-0.001, 0.02)  # Negative drift
-            bear_prices.append(bear_prices[-1] * (1 + change))
-
-        # Sideways market phase
-        sideways_prices = [bear_prices[-1]]
-        for i in range(100):
-            change = np.random.normal(0, 0.01)  # No drift, low volatility
-            sideways_prices.append(sideways_prices[-1] * (1 + change))
-
-        all_prices = bull_prices + bear_prices[1:] + sideways_prices[1:]
-
-        df = pd.DataFrame(
-            {
-                "open": all_prices,
-                "high": [p * (1 + abs(np.random.normal(0, 0.005))) for p in all_prices],
-                "low": [p * (1 - abs(np.random.normal(0, 0.005))) for p in all_prices],
-                "close": all_prices,
-                "volume": np.random.randint(1000, 50000, len(all_prices)),
-            }
-        )
-
-        csv_path = tmp_path / "comprehensive_data.csv"
-        df.to_csv(csv_path, index=False)
-        return str(csv_path)
 
     @pytest.fixture
     def environment_configs(self):
