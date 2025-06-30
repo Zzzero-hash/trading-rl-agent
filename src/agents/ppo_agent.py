@@ -498,7 +498,7 @@ if __name__ == "__main__":
     state = np.random.randn(state_dim)
     action, value, log_prob = agent.select_action(state)
 
-    print(f"✅ Action selection test:")
+    print("✅ Action selection test:")
     print(f"   Action: {action}")
     print(f"   Value: {value}")
     print(f"   Log prob: {log_prob}")
@@ -522,7 +522,7 @@ if __name__ == "__main__":
     print("\n🔄 Testing update...")
     metrics = agent.update()
 
-    print(f"✅ Update metrics:")
+    print("✅ Update metrics:")
     for key, value in metrics.items():
         print(f"   {key}: {value:.4f}")
 

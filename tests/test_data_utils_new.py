@@ -169,5 +169,3 @@ def get_dynamic_test_config(
         config.update(base_config)
 
     return config
-
-

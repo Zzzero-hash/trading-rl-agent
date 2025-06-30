@@ -26,7 +26,7 @@ def test_sample_data():
         print("📥 Loading data...")
         df = pd.read_csv(data_path, low_memory=False)
 
-        print(f"✅ Data loaded successfully")
+        print("✅ Data loaded successfully")
         print(f"   • Shape: {df.shape}")
         print(f"   • Memory usage: {df.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
 
@@ -46,19 +46,19 @@ def test_sample_data():
             print(f"❌ Missing required columns: {missing_cols}")
             return False
         else:
-            print(f"✅ All required columns present")
+            print("✅ All required columns present")
 
         # Check for targets
         if "target" in df.columns:
-            print(f"✅ Target column found")
+            print("✅ Target column found")
             target_dist = df["target"].value_counts().sort_index()
             print(f"   • Target distribution: {target_dist.to_dict()}")
         else:
-            print(f"⚠️ No target column - will need to generate")
+            print("⚠️ No target column - will need to generate")
 
         # Check data quality
         total_missing = df.isnull().sum().sum()
-        print(f"📊 Data quality:")
+        print("📊 Data quality:")
         print(
             f"   • Missing values: {total_missing:,} ({total_missing/df.size*100:.2f}%)"
         )
@@ -67,7 +67,7 @@ def test_sample_data():
         )
 
         # Check symbols and date range
-        print(f"📈 Data coverage:")
+        print("📈 Data coverage:")
         print(f"   • Symbols: {df['symbol'].nunique()} unique")
         print(f"   • Records per symbol: {len(df) // df['symbol'].nunique():.0f} avg")
 
@@ -94,7 +94,7 @@ def test_sample_data():
                 )
 
         # Test basic feature engineering works
-        print(f"🔧 Testing feature engineering compatibility...")
+        print("🔧 Testing feature engineering compatibility...")
         sample_symbol = df["symbol"].iloc[0]
         sample_data = df[df["symbol"] == sample_symbol].head(100).copy()
 
@@ -103,15 +103,15 @@ def test_sample_data():
         sample_data["returns"] = sample_data["close"].pct_change()
 
         if sample_data["sma_5"].notna().sum() > 0:
-            print(f"✅ Feature engineering test passed")
+            print("✅ Feature engineering test passed")
         else:
-            print(f"⚠️ Feature engineering may have issues")
+            print("⚠️ Feature engineering may have issues")
 
         # Summary
-        print(f"\n🎯 TRAINING READINESS SUMMARY")
-        print(f"=" * 40)
-        print(f"✅ File format: Compatible")
-        print(f"✅ Required columns: Present")
+        print("\n🎯 TRAINING READINESS SUMMARY")
+        print("=" * 40)
+        print("✅ File format: Compatible")
+        print("✅ Required columns: Present")
         print(f"✅ Data volume: {len(df):,} records")
         print(f"✅ Feature count: {len(df.columns)} columns")
         print(
@@ -119,8 +119,8 @@ def test_sample_data():
         )
         print(f"✅ Quality: {(1-total_missing/df.size)*100:.1f}% complete")
 
-        print(f"\n🚀 sample_data.csv is ready for CNN-LSTM training!")
-        print(f"📁 Use this file in your training scripts")
+        print("\n🚀 sample_data.csv is ready for CNN-LSTM training!")
+        print("📁 Use this file in your training scripts")
 
         return True
 
@@ -132,6 +132,6 @@ def test_sample_data():
 if __name__ == "__main__":
     success = test_sample_data()
     if success:
-        print(f"\n✅ All tests passed! Your dataset is ready for training.")
+        print("\n✅ All tests passed! Your dataset is ready for training.")
     else:
-        print(f"\n❌ Some tests failed. Check the data generation process.")
+        print("\n❌ Some tests failed. Check the data generation process.")

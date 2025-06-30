@@ -5,9 +5,6 @@ import sys
 import pandas as pd
 import pytest
 
-# Add the root directory to the path so we can import build_datasets
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from build_datasets import NEWS_FEEDS, add_news_sentiment
 
 

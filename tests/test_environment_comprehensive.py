@@ -438,7 +438,7 @@ class TestEnvironmentIntegration:
                             action = np.clip(
                                 action, env.action_space.low, env.action_space.high
                             )
-                except:
+                except Exception:
                     pass  # Some spaces might not support contains check
 
             # Take step with agent action

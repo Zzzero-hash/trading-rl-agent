@@ -7,8 +7,6 @@ Tests the complete pipeline from individual agents to ensemble decisions.
 import os
 import sys
 
-sys.path.append("/workspaces/trading-rl-agent")
-
 import numpy as np
 import pytest
 
@@ -81,7 +79,7 @@ def test_ensemble_integration():
 
         ensemble.store_experience(state, action, reward, next_state, done)
 
-    print(f"✅ Stored experiences in both agents")
+    print("✅ Stored experiences in both agents")
     print(f"   TD3 buffer size: {len(td3_agent.replay_buffer)}")
     print(f"   SAC buffer size: {len(sac_agent.replay_buffer)}")
 
@@ -92,7 +90,7 @@ def test_ensemble_integration():
 
     ensemble_metrics = ensemble.train()
 
-    print(f"✅ Training completed")
+    print("✅ Training completed")
     print(f"   TD3 iterations: {td3_agent.total_it} (was {initial_td3_it})")
     print(f"   SAC iterations: {sac_agent.total_it} (was {initial_sac_it})")
     print(f"   Ensemble metrics keys: {list(ensemble_metrics.keys())}")
@@ -102,7 +100,7 @@ def test_ensemble_integration():
     ensemble.update_agent_performance("td3", 0.75)
     ensemble.update_agent_performance("sac", 0.82)
 
-    print(f"✅ Performance updated:")
+    print("✅ Performance updated:")
     print(f"   TD3 performance: {ensemble.agent_performances.get('td3', 'Not set')}")
     print(f"   SAC performance: {ensemble.agent_performances.get('sac', 'Not set')}")
 

@@ -36,7 +36,7 @@ def test_add_sentiment_features_with_forex(monkeypatch):
         lambda pair: [type("Obj", (), {"score": 0.7})()],
     )
     features = trainer._add_sentiment_features(df, symbols, forex_pairs)
-    assert f"sentiment_AAPL" in features.columns
-    assert f"forex_sentiment_EURUSD" in features.columns
-    assert all(features[f"sentiment_AAPL"] == 0.5)
-    assert all(features[f"forex_sentiment_EURUSD"] == 0.7)
+    assert "sentiment_AAPL" in features.columns
+    assert "forex_sentiment_EURUSD" in features.columns
+    assert all(features["sentiment_AAPL"] == 0.5)
+    assert all(features["forex_sentiment_EURUSD"] == 0.7)

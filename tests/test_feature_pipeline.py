@@ -6,19 +6,16 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+from src.data.features import generate_features
+from src.data.synthetic import generate_gbm_prices
 
 pytestmark = pytest.mark.integration
-
-from src.data.features import generate_features
 
 
 @pytest.fixture(autouse=True)
 def set_seed():
     np.random.seed(42)
     torch.manual_seed(42)
-
-
-from src.data.synthetic import generate_gbm_prices
 
 
 def test_generate_features_with_advanced_candles():

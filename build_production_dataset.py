@@ -25,9 +25,6 @@ import pandas as pd
 from tqdm import tqdm
 import yfinance as yf
 
-# Add src to path for imports
-sys.path.append(str(Path(__file__).parent / "src"))
-
 from src.data.features import generate_features
 from src.data.sentiment import get_sentiment_score
 from src.data.synthetic import fetch_synthetic_data, generate_gbm_prices
@@ -207,7 +204,7 @@ class AdvancedDatasetBuilder:
                             sentiment_score = get_sentiment_score(symbol, days_back=1)
                             enhanced_data["sentiment"] = sentiment_score
                             enhanced_data["sentiment_magnitude"] = abs(sentiment_score)
-                        except:
+                        except Exception:
                             enhanced_data["sentiment"] = 0.0
                             enhanced_data["sentiment_magnitude"] = 0.0
                     else:

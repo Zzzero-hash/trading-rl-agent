@@ -595,7 +595,7 @@ if __name__ == "__main__":
     print(
         f"✅ Created Enhanced TD3 agent with state_dim={state_dim}, action_dim={action_dim}"
     )
-    print(f"   Features: Layer norm, Spectral norm, Dropout, Enhanced buffer")
+    print("   Features: Layer norm, Spectral norm, Dropout, Enhanced buffer")
 
     # Test action selection
     state = np.random.randn(state_dim)

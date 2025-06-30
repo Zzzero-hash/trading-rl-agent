@@ -94,7 +94,7 @@ class DocumentationBuilder:
                 print("✅ HTML documentation built successfully")
                 return True
             else:
-                print(f"❌ HTML build failed:")
+                print("❌ HTML build failed:")
                 print(result.stdout)
                 print(result.stderr)
                 return False

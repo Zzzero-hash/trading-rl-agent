@@ -15,15 +15,14 @@ import sys
 import numpy as np
 import pandas as pd
 
+# Add src to path for imports
+# (Assumes package installed in environment)
+from src.data.sentiment import SentimentAnalyzer
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
-# Add src to path for imports
-sys.path.append(str(Path(__file__).parent / "src"))
-
-from src.data.sentiment import SentimentAnalyzer
 
 
 def generate_sample_price_data(
