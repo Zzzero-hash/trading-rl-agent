@@ -2,6 +2,7 @@
 Synthetic OHLCV data generator for testing purposes.
 """
 
+from datetime import datetime, timedelta
 from typing import Optional
 
 import numpy as np
