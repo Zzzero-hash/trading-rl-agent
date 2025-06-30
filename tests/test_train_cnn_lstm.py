@@ -8,11 +8,10 @@ import pandas as pd
 import pytest
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-
-pytestmark = pytest.mark.integration
 from pathlib import Path
 import tempfile
 from unittest.mock import MagicMock, patch
+
 
 import yaml
 
@@ -23,6 +22,8 @@ from src.training.cnn_lstm import (
     TrainingConfig,
     create_example_config,
 )
+
+pytestmark = pytest.mark.integration
 
 
 class TestTrainingConfig:

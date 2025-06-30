@@ -11,11 +11,11 @@ import pytest
 import torch
 
 # Skip all tests in this file until EnsembleAgent is fully implemented
+from src.agents.configs import EnsembleConfig, SACConfig, TD3Config
+
 pytestmark = pytest.mark.skip(
     reason="EnsembleAgent stub implementation - tests temporarily disabled"
 )
-
-from src.agents.configs import EnsembleConfig, SACConfig, TD3Config
 
 
 class TestEnsembleAgent:

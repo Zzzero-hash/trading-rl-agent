@@ -180,7 +180,7 @@ class ModelSummarizer:
         lines.append(f"Parameters: {self.num_params['total']:,} total")
         lines.append(f"  - Trainable: {self.num_params['trainable']:,}")
         lines.append(f"  - Non-trainable: {self.num_params['non_trainable']:,}")
-        lines.append(f"Memory Usage (estimated):")
+        lines.append("Memory Usage (estimated):")
         lines.append(f"  - Parameters: {self.memory_estimate['parameters']:.2f} MB")
         lines.append(f"  - Gradients: {self.memory_estimate['gradients']:.2f} MB")
         lines.append(
@@ -190,12 +190,12 @@ class ModelSummarizer:
 
         # Layer-by-layer information if requested
         if detailed:
-            lines.append(f"\nLayer details:")
-            lines.append(f"{'-' * 80}")
+            lines.append("\nLayer details:")
+            lines.append("-" * 80)
             lines.append(
                 f"{'Layer Name':<40} {'Type':<15} {'Params':>10} {'Trainable':<10}"
             )
-            lines.append(f"{'-' * 80}")
+            lines.append("-" * 80)
             for layer in self.layer_info:
                 trainable = (
                     "Yes"
@@ -656,7 +656,7 @@ if __name__ == "__main__":
     print(summarizer.get_summary())
 
     gpu_info = detect_gpus()
-    print(f"\nGPU Information:")
+    print("\nGPU Information:")
     print(f"Available: {gpu_info['available']}")
     print(f"Count: {gpu_info['count']}")
 

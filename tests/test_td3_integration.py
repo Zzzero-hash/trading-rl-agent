@@ -7,10 +7,11 @@ import numpy as np
 import pytest
 import torch
 
-pytestmark = pytest.mark.integration
 from src.agents.configs import TD3Config
 from src.agents.td3_agent import TD3Agent
 from src.envs.trading_env import TradingEnv
+
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
@@ -240,7 +241,7 @@ if __name__ == "__main__":
     next_state, reward, terminated, truncated, info = result
     done = terminated or truncated
 
-    print(f"✅ Environment interaction successful")
+    print("✅ Environment interaction successful")
     print(f"   Continuous Action: {action_continuous}")
     print(f"   Discrete Action: {action_discrete}")
     print(f"   Reward: {reward:.4f}")

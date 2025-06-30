@@ -30,6 +30,7 @@ def test_trainer_algorithm_case_insensitive(monkeypatch, tmp_path):
     class FakeTuner:
         def __init__(self, algo_cls, param_space=None, run_config=None):
             calls["algo"] = algo_cls
+
         def fit(self):
             calls["fit"] = True
 

@@ -616,7 +616,7 @@ if __name__ == "__main__":
         f"✅ Created Rainbow DQN agent with state_dim={state_dim}, action_dim={action_dim}"
     )
     print(
-        f"   Features: Double DQN, Dueling, Noisy Nets, Prioritized Replay, Multi-step, Distributional"
+        "   Features: Double DQN, Dueling, Noisy Nets, Prioritized Replay, Multi-step, Distributional"
     )
 
     # Test action selection

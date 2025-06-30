@@ -389,4 +389,3 @@ def compute_reward(reward_type: str, *args, **kwargs) -> float:
         raise ValueError(f"Unknown reward type: {reward_type}")
 
     return dispatch_map[reward_type](*args, **kwargs)
-

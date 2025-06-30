@@ -978,7 +978,7 @@ if __name__ == "__main__":
     print("\n🔄 Testing ensemble update...")
     metrics = agent.update()
 
-    print(f"✅ Update metrics:")
+    print("✅ Update metrics:")
     for key, value in metrics.items():
         if isinstance(value, (int, float)):
             print(f"   {key}: {value:.4f}")
