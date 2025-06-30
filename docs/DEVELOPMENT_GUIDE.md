@@ -125,5 +125,5 @@ results = optimize_sac_hyperparams(env_config, num_samples=10)
 
 The following tasks are tracked from the codebase TODOs:
 
-- [ ] Migrate training scripts into `src/training` and integrate Ray Tune sweeps.
+- [x] Migrate training scripts into `src/training` and integrate Ray Tune sweeps.
 - [ ] Provide sentiment and risk scoring APIs in `src/nlp`.
