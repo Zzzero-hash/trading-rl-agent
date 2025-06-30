@@ -34,8 +34,12 @@ RUN pip install --no-cache-dir \
 FROM development AS deps
 WORKDIR /workspace
 COPY requirements.txt .
+ENV TA_LIBRARY_PATH=/usr/lib
+ENV TA_INCLUDE_PATH=/usr/include
+# Optionally, check that the header exists (for debug)
+RUN ls -l /usr/include/ta-lib/ta_defs.h
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt --ignore-installed blinker
+    pip install --no-cache-dir --global-option=build_ext --global-option="-I/usr/include" --global-option="-L/usr/lib" -r requirements.txt --ignore-installed blinker
 
 # Stage 2: run tests
 FROM development AS test
