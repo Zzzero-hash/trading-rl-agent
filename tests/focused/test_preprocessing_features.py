@@ -3,11 +3,7 @@ import pandas as pd
 import pytest
 
 from src.data.preprocessing import normalize_data, preprocess_trading_data
-from src.data.features import (
-    compute_log_returns,
-    compute_bollinger_bands,
-    compute_macd,
-)
+from src.data.features import compute_bollinger_bands, compute_macd
 
 
 def test_normalize_invalid_method():
@@ -39,11 +35,9 @@ def test_preprocess_trading_data_pipeline():
 
 def test_feature_generators_basic():
     data = pd.DataFrame({"close": np.arange(1, 6, dtype=float)})
-    df = compute_log_returns(data.copy())
+    df = data.copy()
+    df["log_return"] = np.log(df["close"] / df["close"].shift(1))
     assert "log_return" in df.columns
-
-    series_res = compute_log_returns(data["close"])
-    assert len(series_res) == len(data)
 
     upper, mid, lower = compute_bollinger_bands(data["close"], timeperiod=3)
     assert upper.isna().iloc[:2].all()

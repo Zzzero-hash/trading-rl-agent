@@ -6,69 +6,10 @@ import numpy as np
 import pandas as pd
 from ta.trend import EMAIndicator, MACD, ADXIndicator
 from ta.volatility import AverageTrueRange, BollingerBands
-from ta.momentum import StochasticOscillator, WilliamsRIndicator
+from ta.momentum import RSIIndicator, StochasticOscillator, WilliamsRIndicator
 from ta.volume import OnBalanceVolumeIndicator
 
 
-def compute_log_returns(data: pd.DataFrame | pd.Series, price_col: str = "close") -> pd.DataFrame | pd.Series:
-    """Compute log returns from price column or Series."""
-    if isinstance(data, pd.Series):
-        series = pd.to_numeric(data, errors="coerce")
-        return np.log(series / series.shift(1))
-
-    df = data.copy()
-    df["log_return"] = np.log(df[price_col] / df[price_col].shift(1))
-    return df
-
-
-def compute_simple_moving_average(
-    data: pd.DataFrame | pd.Series, price_col: str = "close", window: int = 20
-) -> pd.DataFrame | pd.Series:
-    """Compute simple moving average for given window."""
-    if isinstance(data, pd.Series):
-        return pd.to_numeric(data, errors="coerce").rolling(window).mean()
-
-    df = data.copy()
-    df[f"sma_{window}"] = df[price_col].rolling(window).mean()
-    return df
-
-
-def compute_rsi(
-    data: pd.DataFrame | pd.Series, price_col: str = "close", window: int = 14
-) -> pd.DataFrame | pd.Series:
-    """Compute Relative Strength Index (RSI)."""
-    if isinstance(data, pd.Series):
-        series = pd.to_numeric(data, errors="coerce")
-        delta = series.diff()
-        up = delta.clip(lower=0)
-        down = -delta.clip(upper=0)
-        roll_up = up.rolling(window=window).mean()
-        roll_down = down.rolling(window=window).mean()
-        rs = roll_up / roll_down
-        return 100 - (100 / (1 + rs))
-
-    df = data.copy()
-    delta = df[price_col].diff()
-    up = delta.clip(lower=0)
-    down = -delta.clip(upper=0)
-
-    roll_up = up.rolling(window=window).mean()
-    roll_down = down.rolling(window=window).mean()
-
-    rs = roll_up / roll_down
-    df[f"rsi_{window}"] = 100 - (100 / (1 + rs))
-    return df
-
-
-def compute_rolling_volatility(data: pd.DataFrame | pd.Series, window: int = 20) -> pd.DataFrame | pd.Series:
-    """Compute rolling volatility based on log returns."""
-    if isinstance(data, pd.Series):
-        series = pd.to_numeric(data, errors="coerce")
-        return series.rolling(window).std(ddof=0) * np.sqrt(window)
-
-    df = data.copy()
-    df[f"vol_{window}"] = df["log_return"].rolling(window).std(ddof=0) * np.sqrt(window)
-    return df
 
 
 def add_sentiment(df: pd.DataFrame, sentiment_col: str = "sentiment") -> pd.DataFrame:
@@ -547,13 +488,17 @@ def generate_features(
             vol_window = min(vol_window, len(df) // 2) if len(df) > 2 else 3
 
     df = df.copy()
-    df = compute_log_returns(df)
+    df["log_return"] = np.log(df["close"] / df["close"].shift(1))
 
     for w in ma_windows:
-        df = compute_simple_moving_average(df, window=w)
+        df[f"sma_{w}"] = df["close"].rolling(w).mean()
 
-    df = compute_rsi(df, window=rsi_window)
-    df = compute_rolling_volatility(df, window=vol_window)
+    rsi_ind = RSIIndicator(df["close"].astype(float), window=rsi_window)
+    df[f"rsi_{rsi_window}"] = rsi_ind.rsi()
+
+    df[f"vol_{vol_window}"] = (
+        df["log_return"].rolling(vol_window).std(ddof=0) * np.sqrt(vol_window)
+    )
     df = add_sentiment(df)
 
     # Additional technical indicators
@@ -573,7 +518,8 @@ def generate_features(
     df["bb_upper"] = df["bb_upper_20"]
     df["bb_lower"] = df["bb_lower_20"]
     df = compute_stochastic(df, fastk_period=14, slowk_period=3, slowd_period=3)
-    df = compute_adx(df, timeperiod=14)
+    if len(df) >= 28:
+        df = compute_adx(df, timeperiod=14)
     df = compute_williams_r(df, timeperiod=14)
     df = compute_obv(df)
 

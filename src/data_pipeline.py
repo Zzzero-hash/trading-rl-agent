@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+from ta.momentum import RSIIndicator
 
 try:
     import ray.data as rdata
@@ -84,53 +85,6 @@ def load_data(source_cfg: dict[str, Any]) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 
-def compute_log_returns(df: pd.DataFrame) -> pd.DataFrame:
-    """Add log returns column ``log_return``.
-
-    log_return_t = log(close_t / close_{t-1})
-    """
-    df = df.copy()
-    df["log_return"] = np.log(df["close"] / df["close"].shift(1))
-    return df
-
-
-def compute_sma(df: pd.DataFrame, window: int) -> pd.DataFrame:
-    """Add simple moving average feature.
-
-    SMA_t = mean(close_{t-window+1:t})
-    """
-    df = df.copy()
-    df[f"sma_{window}"] = df["close"].rolling(window).mean()
-    return df
-
-
-def compute_momentum(df: pd.DataFrame, window: int) -> pd.DataFrame:
-    """Add momentum indicator as difference from ``window`` days ago."""
-    df = df.copy()
-    df[f"mom_{window}"] = df["close"].diff(window)
-    return df
-
-
-def compute_rsi(df: pd.DataFrame, window: int) -> pd.DataFrame:
-    """Add Relative Strength Index (RSI) feature."""
-    df = df.copy()
-    delta = df["close"].diff()
-    up = delta.clip(lower=0)
-    down = -delta.clip(upper=0)
-    roll_up = up.rolling(window=window).mean()
-    roll_down = down.rolling(window=window).mean()
-    rs = roll_up / roll_down
-    df[f"rsi_{window}"] = 100 - (100 / (1 + rs))
-    return df
-
-
-def compute_volatility(df: pd.DataFrame, window: int) -> pd.DataFrame:
-    """Add rolling volatility based on ``log_return``."""
-    df = df.copy()
-    df[f"vol_{window}"] = df["log_return"].rolling(window).std(ddof=0) * np.sqrt(window)
-    return df
-
-
 # ---------------------------------------------------------------------------
 
 
@@ -152,23 +106,37 @@ def generate_features(df: pd.DataFrame, cfg: PipelineConfig) -> pd.DataFrame:
     if cfg.use_ray and rdata is not None:
         logger.info("Using Ray Datasets for feature computation")
         ds = rdata.from_pandas(df)
-        for w in cfg.sma_windows:
-            ds = ds.map_batches(lambda d, w=w: compute_sma(d, w))
-        for w in cfg.momentum_windows:
-            ds = ds.map_batches(lambda d, w=w: compute_momentum(d, w))
-        ds = ds.map_batches(lambda d: compute_log_returns(d))
-        ds = ds.map_batches(lambda d: compute_rsi(d, cfg.rsi_window))
-        ds = ds.map_batches(lambda d: compute_volatility(d, cfg.vol_window))
+
+        def apply_basic_features(batch: pd.DataFrame) -> pd.DataFrame:
+            batch = batch.copy()
+            batch["log_return"] = np.log(batch["close"] / batch["close"].shift(1))
+            for w in cfg.sma_windows:
+                batch[f"sma_{w}"] = batch["close"].rolling(w).mean()
+            for w in cfg.momentum_windows:
+                batch[f"mom_{w}"] = batch["close"].diff(w)
+            rsi_ind = RSIIndicator(batch["close"].astype(float), window=cfg.rsi_window)
+            batch[f"rsi_{cfg.rsi_window}"] = rsi_ind.rsi()
+            batch[f"vol_{cfg.vol_window}"] = (
+                batch["log_return"].rolling(cfg.vol_window).std(ddof=0)
+                * np.sqrt(cfg.vol_window)
+            )
+            return batch
+
+        ds = ds.map_batches(apply_basic_features)
         df = ds.to_pandas()
     else:
         df = df.copy()
-        df = compute_log_returns(df)
+        df["log_return"] = np.log(df["close"] / df["close"].shift(1))
         for w in cfg.sma_windows:
-            df = compute_sma(df, w)
+            df[f"sma_{w}"] = df["close"].rolling(w).mean()
         for w in cfg.momentum_windows:
-            df = compute_momentum(df, w)
-        df = compute_rsi(df, cfg.rsi_window)
-        df = compute_volatility(df, cfg.vol_window)
+            df[f"mom_{w}"] = df["close"].diff(w)
+        rsi_ind = RSIIndicator(df["close"].astype(float), window=cfg.rsi_window)
+        df[f"rsi_{cfg.rsi_window}"] = rsi_ind.rsi()
+        df[f"vol_{cfg.vol_window}"] = (
+            df["log_return"].rolling(cfg.vol_window).std(ddof=0)
+            * np.sqrt(cfg.vol_window)
+        )
 
     return df
 
