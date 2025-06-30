@@ -210,6 +210,7 @@ trading-rl-agent/
 - **[Dataset Documentation](docs/ADVANCED_DATASET_DOCUMENTATION.md)**: Data generation process
 - **[RLlib Migration Guide](docs/RAY_RLLIB_MIGRATION.md)**: Using SAC with FinRL environments
 - **[Contributing Guide](CONTRIBUTING.md)**: Development guidelines and standards
+- **[Testing Guide](TESTING.md)**: Installing requirements and running tests
 
 ## 🤝 Contributing
 
