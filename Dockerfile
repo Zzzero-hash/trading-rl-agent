@@ -3,14 +3,16 @@ ARG DEBIAN_FRONTEND=noninteractive
 FROM ${CUDA_VARIANT} AS development
 ENV TZ=Etc/UTC
 
-# Install build tools
+
+# Install build tools and TA-Lib system libraries
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       vim nano curl wget git-lfs \
       htop nvtop \
       build-essential wget autoconf automake libtool pkg-config \
       software-properties-common cmake git python3-dev python3-pip \
-      libssl-dev libgl1 libglib2.0-0 && \
+      libssl-dev libgl1 libglib2.0-0 \
+      libta-lib0 libta-lib0-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python development dependencies
