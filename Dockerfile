@@ -16,6 +16,10 @@ RUN apt-get update && \
     tar -xzf ta-lib-0.4.0-src.tar.gz && \
     cd ta-lib && ./configure --prefix=/usr && make && make install && cd .. && \
     rm -rf ta-lib ta-lib-0.4.0-src.tar.gz && \
+    # Symlink to satisfy '-lta-lib' for some builds and run ldconfig
+    ln -s /usr/lib/libta_lib.so /usr/lib/libta-lib.so 2>/dev/null || true && \
+    ln -s /usr/lib/libta_lib.a /usr/lib/libta-lib.a 2>/dev/null || true && \
+    ldconfig && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python development dependencies
