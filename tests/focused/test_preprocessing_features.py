@@ -2,14 +2,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.data.preprocessing import normalize_data, preprocess_trading_data
+from src.data.preprocessing import preprocess_trading_data
 from src.data.features import compute_bollinger_bands, compute_macd
 
 
 def test_normalize_invalid_method():
     df = pd.DataFrame({"a": [1, 2, 3]})
     with pytest.raises(ValueError):
-        normalize_data(df, method="unknown")
+        preprocess_trading_data(df, normalize_method="unknown")
 
 
 def test_preprocess_trading_data_pipeline():
