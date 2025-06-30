@@ -5,7 +5,8 @@ illustrates the interface for an event-driven backtesting engine.
 """
 
 from __future__ import annotations
-from typing import Any
+
+from typing import Any, Callable, List, Sequence
 
 
 class Backtester:
@@ -26,7 +27,15 @@ class Backtester:
     0.5
     """
 
-    def run_backtest(self, prices: Any, policy: Any) -> Any:
+    def __init__(self, slippage_pct: float = 0.0, latency_seconds: float = 0.0) -> None:
+        """Initialize backtester with slippage and latency models."""
+
+        self.slippage_pct = slippage_pct
+        self.latency_seconds = latency_seconds
+
+    def run_backtest(
+        self, prices: Sequence[float], policy: Callable[[float], Any]
+    ) -> List[dict]:
         """Execute a backtest over ``prices`` using ``policy``.
 
         Parameters
@@ -38,12 +47,18 @@ class Backtester:
 
         Returns
         -------
-        Any
-            Placeholder backtest results.  Currently returns ``None``.
+        list of dict
+            List of executed actions with adjusted price and delay.
         """
 
-        # TODO: implement event-driven backtesting
-        return None
+        results = []
+        for price in prices:
+            action = policy(price)
+            executed_price = self.apply_slippage(price)
+            delay = self.apply_latency(0.0)
+            results.append({"price": executed_price, "action": action, "delay": delay})
+
+        return results
 
     def apply_slippage(self, price: float) -> float:
         """Apply a slippage model to ``price``.
@@ -56,11 +71,10 @@ class Backtester:
         Returns
         -------
         float
-            Adjusted trade price.  Currently returned unchanged.
+            Adjusted trade price after slippage.
         """
 
-        # TODO: implement slippage logic
-        return price
+        return price * (1 + self.slippage_pct)
 
     def apply_latency(self, delay: float) -> float:
         """Apply a latency model to ``delay``.
@@ -73,8 +87,7 @@ class Backtester:
         Returns
         -------
         float
-            Adjusted delay after latency effects.  Currently returned unchanged.
+            Adjusted delay after latency effects.
         """
 
-        # TODO: implement latency logic
-        return delay
+        return delay + self.latency_seconds
