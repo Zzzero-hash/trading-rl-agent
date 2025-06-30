@@ -15,7 +15,7 @@ This is a **two-tier hybrid system** that combines:
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.10
 - CUDA 11.8+ (optional, for GPU training)
 
 ### Installation
