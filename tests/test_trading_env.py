@@ -61,3 +61,24 @@ def test_register_env(sample_csv):
         pass
     env = env_creator(cfg)
     assert env.action_space.n == 3
+
+
+def test_init_via_kwargs_sets_window_size(sample_csv):
+    """Regression test: ensure kwargs are respected."""
+    env = TradingEnv(dataset_paths=[sample_csv], window_size=7)
+    obs, _ = env.reset()
+    assert env.window_size == 7
+    assert obs.shape[0] == 7
+
+
+def test_step_increments_current_step(env):
+    """Regression test for correct step transitions."""
+    env.reset()
+    start = env.current_step
+    obs, reward, done, truncated, info = env.step(0)
+    assert env.current_step == start + 1
+    assert isinstance(done, bool)
+    assert isinstance(truncated, bool)
+    assert isinstance(info, dict)
+    if not done and hasattr(obs, "shape"):
+        assert obs.shape[0] == env.window_size
