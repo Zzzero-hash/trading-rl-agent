@@ -1,5 +1,22 @@
 """Training utilities and experiment orchestration.
 
-TODO: migrate existing training scripts into this package and integrate
-Ray Tune sweeps for hyperparameter search.
+This package contains the training implementations for both RL agents and
+supervised CNN-LSTM models. Use :mod:`src.training.cli` as the command line
+interface to launch training or Ray Tune sweeps.
 """
+
+from .cnn_lstm import (
+    CNNLSTMTrainer,
+    SequenceDataset,
+    TrainingConfig,
+    create_example_config,
+)
+from . import rl
+
+__all__ = [
+    "CNNLSTMTrainer",
+    "SequenceDataset",
+    "TrainingConfig",
+    "create_example_config",
+    "rl",
+]

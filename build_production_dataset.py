@@ -482,8 +482,6 @@ def main():
         # Test compatibility with training environment
         print("\n🧪 Testing compatibility with training environment...")
         try:
-            from src.envs.trader_env import TraderEnv
-
             env = TraderEnv(
                 [file_paths["training_data"]], window_size=10, initial_balance=10000
             )
@@ -498,8 +496,6 @@ def main():
 
     except Exception as e:
         print(f"❌ Dataset building failed: {e}")
-        import traceback
-
         traceback.print_exc()
         return None
 
