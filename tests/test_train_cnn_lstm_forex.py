@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.train_cnn_lstm import CNNLSTMTrainer, TrainingConfig
+from src.training.cnn_lstm import CNNLSTMTrainer, TrainingConfig
 
 
 class DummySentimentAnalyzer:
