@@ -10,52 +10,6 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
-def standardize_data(
-    data: Union[np.ndarray, pd.DataFrame],
-    scaler: Optional[Union[StandardScaler, MinMaxScaler]] = None,
-    fit_scaler: bool = True,
-) -> tuple[Union[np.ndarray, pd.DataFrame], Union[StandardScaler, MinMaxScaler]]:
-    """
-    Standardize data using StandardScaler or provided scaler.
-
-    Args:
-        data: Input data to standardize
-        scaler: Pre-fitted scaler to use (optional)
-        fit_scaler: Whether to fit the scaler on the data
-
-    Returns:
-        Tuple of (standardized_data, scaler)
-    """
-    is_default_scaler = False
-    if scaler is None:
-        scaler = StandardScaler()
-        is_default_scaler = True
-
-    if isinstance(data, pd.DataFrame):
-        df = data.copy()
-        # Convert any datetime columns to numeric values (ns since epoch)
-        datetime_cols = df.select_dtypes(include=["datetime", "datetimetz"]).columns
-        for col in datetime_cols:
-            df[col] = pd.to_datetime(df[col]).view("int64")
-
-        if fit_scaler:
-            standardized = scaler.fit_transform(df)
-        else:
-            standardized = scaler.transform(df)
-        # Return DataFrame and scaler
-        return (
-            pd.DataFrame(standardized, columns=df.columns, index=df.index),
-            scaler,
-        )
-    else:
-        arr = np.asarray(data)
-        if np.issubdtype(arr.dtype, np.datetime64) or arr.dtype == object:
-            arr = pd.to_datetime(arr.ravel()).view("int64").reshape(arr.shape)
-        if fit_scaler:
-            standardized = scaler.fit_transform(arr)
-        else:
-            standardized = scaler.transform(arr)
-        return standardized
 
 
 def create_sequences(
@@ -103,30 +57,6 @@ def create_sequences(
     return sequences_arr, targets_arr
 
 
-def normalize_data(
-    data: Union[np.ndarray, pd.DataFrame],
-    method: str = "minmax",
-    feature_range: tuple[float, float] = (0, 1),
-) -> tuple[Union[np.ndarray, pd.DataFrame], Union[StandardScaler, MinMaxScaler]]:
-    """
-    Normalize data using specified method.
-
-    Args:
-        data: Input data to normalize
-        method: Normalization method ('minmax' or 'standard')
-        feature_range: Range for MinMaxScaler
-
-    Returns:
-        Tuple of (normalized_data, scaler)
-    """
-    if method == "minmax":
-        scaler = MinMaxScaler(feature_range=feature_range)
-    elif method == "standard":
-        scaler = StandardScaler()
-    else:
-        raise ValueError(f"Unknown normalization method: {method}")
-
-    return standardize_data(data, scaler, fit_scaler=True)
 
 
 def preprocess_trading_data(
@@ -135,24 +65,26 @@ def preprocess_trading_data(
     target_column: str = "close",
     normalize_method: str = "minmax",
 ) -> tuple[np.ndarray, np.ndarray, Union[StandardScaler, MinMaxScaler]]:
-    """
-    Complete preprocessing pipeline for trading data.
+    """Complete preprocessing pipeline for trading data."""
 
-    Args:
-        data: Trading data DataFrame
-        sequence_length: Length of sequences to create
-        target_column: Name of target column
-        normalize_method: Normalization method
+    df = data.copy()
 
-    Returns:
-        Tuple of (sequences, targets, scaler)
-    """
-    # Normalize data
-    normalized_data, scaler = normalize_data(data, method=normalize_method)
+    # Convert datetime columns to numeric for scaling
+    datetime_cols = df.select_dtypes(include=["datetime", "datetimetz"]).columns
+    for col in datetime_cols:
+        df[col] = pd.to_datetime(df[col]).view("int64")
 
-    # Create sequences
-    sequences, targets = create_sequences(
-        normalized_data, sequence_length, target_column
+    if normalize_method == "minmax":
+        scaler = MinMaxScaler()
+    elif normalize_method == "standard":
+        scaler = StandardScaler()
+    else:
+        raise ValueError(f"Unknown normalization method: {normalize_method}")
+
+    normalized = pd.DataFrame(
+        scaler.fit_transform(df), columns=df.columns, index=df.index
     )
+
+    sequences, targets = create_sequences(normalized, sequence_length, target_column)
 
     return sequences, targets, scaler
