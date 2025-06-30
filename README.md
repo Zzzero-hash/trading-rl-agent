@@ -225,6 +225,14 @@ This is a research-focused project with production-ready implementations. See [C
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## ⚠️ Important Disclaimer
+
+This project is provided **for educational and research purposes only**. The code
+and examples are **not financial advice**. Always validate strategies thoroughly
+and begin with **paper trading** before using real capital. Trading carries
+substantial risk—never risk more than you can afford to lose and consider
+consulting a qualified financial professional.
+
 ---
 
 **🎯 Status**: Environment testing framework complete, core functionality validated | **🧪 Tests**: ~733 defined | **📊 Data**: sample datasets provided; large historical datasets optional. Metrics are illustrative.

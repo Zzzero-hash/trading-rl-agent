@@ -115,3 +115,5 @@ jupyter lab
 ---
 
 **📋 Note**: This documentation reflects the current production-ready state of the hybrid CNN+LSTM + RL trading system. All guides and tools have been validated in the production environment with comprehensive test coverage.
+
+For financial risk guidance, see the [Important Disclaimer](../README.md#important-disclaimer) in the project root.
