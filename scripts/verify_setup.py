@@ -31,7 +31,6 @@ def check_files(project_root: Path) -> bool:
         "docs/conf.py",
         "docs/Makefile",
         "CONTRIBUTING.md",
-        "scripts/dev.py",
         "scripts/build_docs.py",
         "scripts/check_type_coverage.py",
     ]
