@@ -10,6 +10,8 @@ ray[rllib]>=2.31.0,<2.47.0  # 500MB - Distributed RL training
 # Market data and analysis
 yfinance>=0.2.0,<0.3.0       # 10MB - Financial data
 ta>=0.10.0,<0.11.0           # 5MB - Technical analysis indicators
+pandas-ta>=0.3.14b0
+ta-lib>=0.4.28
 
 # Additional dependencies
 datasets
