@@ -39,7 +39,7 @@ root = Path(__file__).parent
 sys.path.insert(0, str(root))
 
 # Synthetic data generator
-from generate_sample_data import (
+from generate_sample_data import (  # noqa: E402
     add_sentiment_features,
     add_technical_indicators,
     generate_labels,
@@ -47,7 +47,7 @@ from generate_sample_data import (
 )
 
 # Historical data fetcher
-from src.data.historical import fetch_historical_data
+from src.data.historical import fetch_historical_data  # noqa: E402
 
 
 def generate_synthetic(symbols, days, volatility, scenarios_per_symbol):
