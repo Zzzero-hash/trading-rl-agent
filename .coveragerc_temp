@@ -4,9 +4,6 @@ source = src
 
 [report]
 include =
-    src/agents/configs.py
     src/agents/trainer.py
-    src/data/preprocessing.py
-    src/data/features.py
-    src/optimization/model_summary.py
+    src/data/pipeline.py
 show_missing = True
