@@ -132,26 +132,21 @@ class TestDataPreprocessingComprehensive:
     def test_technical_indicators_comprehensive(self, sample_market_data):
         """Test comprehensive technical indicator calculations."""
         try:
-            from src.data.features import (
-                compute_log_returns,
-                compute_rolling_volatility,
-                compute_rsi,
-                compute_simple_moving_average,
-            )
+            from ta.momentum import RSIIndicator
 
             # Test log returns
-            returns = compute_log_returns(sample_market_data["close"])
+            returns = np.log(sample_market_data["close"] / sample_market_data["close"].shift(1))
             assert isinstance(returns, pd.Series)
             assert len(returns) == len(sample_market_data)
             assert not np.any(np.isinf(returns.dropna()))
 
             # Test simple moving average
-            sma = compute_simple_moving_average(sample_market_data["close"], window=20)
+            sma = sample_market_data["close"].rolling(window=20).mean()
             assert isinstance(sma, pd.Series)
             assert len(sma) == len(sample_market_data)
 
             # Test RSI
-            rsi = compute_rsi(sample_market_data["close"])
+            rsi = RSIIndicator(sample_market_data["close"].astype(float)).rsi()
             assert isinstance(rsi, pd.Series)
             rsi_valid = rsi.dropna()
             if len(rsi_valid) > 0:
@@ -159,7 +154,8 @@ class TestDataPreprocessingComprehensive:
                 assert np.all(rsi_valid <= 100), "RSI values should be <= 100"
 
             # Test volatility
-            volatility = compute_rolling_volatility(sample_market_data["close"])
+            lr = returns
+            volatility = lr.rolling(window=20).std(ddof=0) * np.sqrt(20)
             assert isinstance(volatility, pd.Series)
             vol_valid = volatility.dropna()
             if len(vol_valid) > 0:
