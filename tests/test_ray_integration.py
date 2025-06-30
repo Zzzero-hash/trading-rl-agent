@@ -7,15 +7,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-# Patch gym before importing the environment module
-sys.modules["gym"] = gym
-
 import ray
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.tune.registry import register_env
+from src.envs.trading_env import env_creator
+
+# Patch gym before importing the environment module
+sys.modules["gym"] = gym
 
 pytestmark = pytest.mark.integration
-from src.envs.trading_env import env_creator
 
 
 class FlattenWrapper(gym.ObservationWrapper):

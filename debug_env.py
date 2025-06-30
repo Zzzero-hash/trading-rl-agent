@@ -7,8 +7,6 @@ import os
 import sys
 import tempfile
 
-sys.path.append("/workspaces/trading-rl-agent")
-
 import numpy as np
 import pandas as pd
 

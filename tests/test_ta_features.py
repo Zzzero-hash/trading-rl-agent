@@ -108,7 +108,7 @@ def test_compute_adx_constant():
     prices = np.ones(n) * 5.0
     df = pd.DataFrame({"high": prices, "low": prices, "close": prices})
     df_adx = compute_adx(df.copy(), timeperiod=5)
-    assert f"adx_5" in df_adx.columns
+    assert "adx_5" in df_adx.columns
     # First timeperiod entries NaN
     assert df_adx["adx_5"][:5].isnull().all()
     # Afterwards zero
@@ -121,7 +121,7 @@ def test_compute_williams_r_constant():
     prices = np.ones(n) * 7.0
     df = pd.DataFrame({"high": prices, "low": prices, "close": prices})
     df_wr = compute_williams_r(df.copy(), timeperiod=5)
-    assert f"wr_5" in df_wr.columns
+    assert "wr_5" in df_wr.columns
     # All NaN due to zero range
     assert df_wr["wr_5"].isnull().all()
 

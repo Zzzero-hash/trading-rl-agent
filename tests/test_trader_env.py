@@ -7,15 +7,13 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+from src.envs.trader_env import TraderEnv, env_creator, register_env
 
 
 @pytest.fixture(autouse=True)
 def set_seed():
     np.random.seed(42)
     torch.manual_seed(42)
-
-
-from src.envs.trader_env import TraderEnv, env_creator, register_env
 
 
 @pytest.fixture

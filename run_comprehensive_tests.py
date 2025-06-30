@@ -447,7 +447,7 @@ class ComprehensiveTestRunner:
             duration = f"{result['duration']:.2f}s" if "duration" in result else "N/A"
             md += f"| {test_name.title()} | {status} | {duration} |\n"
 
-        md += f"""
+        md += """
 ## Coverage
 
 Coverage reports are available in:
@@ -507,7 +507,7 @@ Coverage reports are available in:
         try:
             subprocess.run(["ray", "stop"], capture_output=True, timeout=10)
             print("🛑 Ray cluster stopped")
-        except:
+        except Exception:
             pass
 
     def cleanup(self) -> None:
@@ -530,7 +530,7 @@ Coverage reports are available in:
                         file.unlink()
                     elif file.is_dir():
                         shutil.rmtree(file)
-                except:
+                except Exception:
                     pass
 
         print("✅ Cleanup completed")

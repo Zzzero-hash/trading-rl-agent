@@ -41,6 +41,7 @@ def sample_market_data():
 
     return data
 
+
 # Mark all tests as unit tests
 pytestmark = pytest.mark.unit
 

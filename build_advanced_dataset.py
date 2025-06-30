@@ -30,9 +30,6 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent))
-
 from src.data.features import generate_features
 from src.data.forex_sentiment import get_forex_sentiment
 from src.data.historical import fetch_historical_data

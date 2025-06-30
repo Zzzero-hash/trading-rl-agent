@@ -8,9 +8,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
 from envs.trading_env import TradingEnv
 
 

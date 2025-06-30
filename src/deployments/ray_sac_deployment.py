@@ -12,9 +12,6 @@ from typing import Any, Optional
 
 import numpy as np
 
-# Add src to path for imports
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
 # Ray imports with fallback
 try:
     import ray

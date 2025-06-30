@@ -90,4 +90,3 @@ def test_compute_reward_dispatch():
     assert np.isclose(
         compute_reward("risk_adjusted", returns, risk_penalty=0.1), expected
     )
-

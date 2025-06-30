@@ -24,12 +24,12 @@ import pytest
 import torch
 import yaml
 
+# Import test utilities
+from tests.test_data_utils import TestDataManager, get_dynamic_test_config
+
 # Configure test logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Import test utilities
-from tests.test_data_utils import TestDataManager, get_dynamic_test_config
 
 # Legacy compatibility import
 try:
@@ -420,7 +420,7 @@ def ray_cluster():
         try:
             if ray.is_initialized():
                 ray.shutdown()
-        except:
+        except Exception:
             pass
 
 
@@ -473,7 +473,7 @@ def cleanup_temp_files():
         import tempfile
 
         temp_files_before = set(os.listdir(tempfile.gettempdir()))
-    except:
+    except Exception:
         pass
 
     yield
@@ -491,9 +491,9 @@ def cleanup_temp_files():
                         file_path.unlink()
                     elif file_path.is_dir():
                         shutil.rmtree(file_path, ignore_errors=True)
-                except:
+                except Exception:
                     pass
-    except:
+    except Exception:
         pass
 
 

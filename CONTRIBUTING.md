@@ -409,13 +409,17 @@ python run_comprehensive_tests.py
    - Add/update tests
    - Update documentation
 
-4. **Test your changes**
+4. **Run linting**
+   ```bash
+   flake8 src/ tests/
+   ```
 
+5. **Test your changes**
    ```bash
    python run_comprehensive_tests.py
    ```
 
-5. **Commit your changes**
+6. **Commit your changes**
    ```bash
    git add .
    git commit -m "feat: add new trading strategy implementation"

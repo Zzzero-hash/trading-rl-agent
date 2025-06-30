@@ -42,7 +42,7 @@ def check_pytorch_cuda():
         print(f"✅ PyTorch version: {torch.__version__}")
 
         if torch.cuda.is_available():
-            print(f"✅ CUDA is available in PyTorch")
+            print("✅ CUDA is available in PyTorch")
             print(f"✅ CUDA version: {torch.version.cuda}")
             print(f"✅ Number of GPUs: {torch.cuda.device_count()}")
 
