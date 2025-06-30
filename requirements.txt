@@ -2,7 +2,7 @@
 # Fixed NumPy compatibility and removed unnecessary packages
 
 # Core numerical computing
-numpy>=1.21.0,<2.0.0  # Fix compatibility with wandb and ray
+numpy>=1.22.2  # Fix compatibility with wandb and ray
 torch>=1.12.0,<2.4.0  # PyTorch for neural networks
 scipy>=1.7.0,<1.12.0  # Scientific computing
 
