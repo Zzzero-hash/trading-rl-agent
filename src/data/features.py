@@ -4,6 +4,10 @@ Feature engineering utilities for trading data pipelines.
 
 import numpy as np
 import pandas as pd
+from ta.trend import EMAIndicator, MACD, ADXIndicator
+from ta.volatility import AverageTrueRange, BollingerBands
+from ta.momentum import StochasticOscillator, WilliamsRIndicator
+from ta.volume import OnBalanceVolumeIndicator
 
 
 def compute_log_returns(data: pd.DataFrame | pd.Series, price_col: str = "close") -> pd.DataFrame | pd.Series:
@@ -76,48 +80,35 @@ def add_sentiment(df: pd.DataFrame, sentiment_col: str = "sentiment") -> pd.Data
 
 
 def compute_ema(
-    df: pd.DataFrame, price_col: str = "close", timeperiod: int = 20
-) -> pd.DataFrame:
-    """
-    Compute Exponential Moving Average (EMA).
-    """
-    # Handle Series input (for backwards compatibility)
+    df: pd.DataFrame | pd.Series, price_col: str = "close", timeperiod: int = 20
+) -> pd.DataFrame | pd.Series:
+    """Compute Exponential Moving Average (EMA) using ``ta`` library."""
     if isinstance(df, pd.Series):
-        return df.ewm(span=timeperiod, adjust=False).mean()
+        ema = EMAIndicator(df.astype(float), window=timeperiod).ema_indicator()
+        return ema
 
-    # Use pandas built-in EMA implementation
-    ema = df[price_col].ewm(span=timeperiod, adjust=False).mean()
-    df[f"ema_{timeperiod}"] = ema
-    # Force NaN values for warmup period
-    df.loc[: timeperiod - 2, f"ema_{timeperiod}"] = np.nan
-    return df
+    out_df = df.copy()
+    indicator = EMAIndicator(out_df[price_col].astype(float), window=timeperiod)
+    out_df[f"ema_{timeperiod}"] = indicator.ema_indicator()
+    return out_df
 
 
-def compute_macd(data: pd.DataFrame | pd.Series, price_col: str = "close") -> pd.DataFrame | pd.Series:
-    """Compute MACD, signal, and histogram."""
+def compute_macd(
+    data: pd.DataFrame | pd.Series, price_col: str = "close"
+) -> pd.DataFrame | pd.Series:
+    """Compute MACD, signal, and histogram using ``ta`` library."""
     slow, fast, signal_period = 26, 12, 9
 
     if isinstance(data, pd.Series):
         series = pd.to_numeric(data, errors="coerce")
-        fast_ema = series.ewm(span=fast, adjust=False).mean()
-        slow_ema = series.ewm(span=slow, adjust=False).mean()
-        macd_line = fast_ema - slow_ema
-        signal = macd_line.ewm(span=signal_period, adjust=False).mean()
-        hist = macd_line - signal
-        macd_line[:slow] = np.nan
-        signal[:slow] = np.nan
-        hist[:slow] = np.nan
-        return macd_line
+        ind = MACD(series, window_slow=slow, window_fast=fast, window_sign=signal_period)
+        return ind.macd()
 
     df = data.copy()
-    fast_ema = df[price_col].ewm(span=fast, adjust=False).mean()
-    slow_ema = df[price_col].ewm(span=slow, adjust=False).mean()
-    df["macd_line"] = fast_ema - slow_ema
-    df["macd_signal"] = df["macd_line"].ewm(span=signal_period, adjust=False).mean()
-    df["macd_hist"] = df["macd_line"] - df["macd_signal"]
-    df.loc[: slow - 1, "macd_line"] = np.nan
-    df.loc[: slow - 1, "macd_signal"] = np.nan
-    df.loc[: slow - 1, "macd_hist"] = np.nan
+    ind = MACD(df[price_col].astype(float), window_slow=slow, window_fast=fast, window_sign=signal_period)
+    df["macd_line"] = ind.macd()
+    df["macd_signal"] = ind.macd_signal()
+    df["macd_hist"] = ind.macd_diff()
     return df
 
 
@@ -127,48 +118,34 @@ def compute_atr(
     close: pd.Series | None = None,
     timeperiod: int = 14,
 ) -> pd.DataFrame | pd.Series:
-    """Compute Average True Range (ATR)."""
+    """Compute Average True Range (ATR) using ``ta`` library."""
     if isinstance(high, pd.Series) and low is not None and close is not None:
-        h = pd.to_numeric(high, errors="coerce")
-        l = pd.to_numeric(low, errors="coerce")
-        c = pd.to_numeric(close, errors="coerce")
-        tr1 = h - l
-        tr2 = (h - c.shift()).abs()
-        tr3 = (l - c.shift()).abs()
-        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-        atr = tr.rolling(window=timeperiod).mean()
-        atr[: timeperiod] = np.nan
-        return atr
+        df = pd.DataFrame({"high": high, "low": low, "close": close})
+        ind = AverageTrueRange(df["high"].astype(float), df["low"].astype(float), df["close"].astype(float), window=timeperiod)
+        return ind.average_true_range()
 
     df = high.copy()
-    tr1 = df["high"] - df["low"]
-    tr2 = (df["high"] - df["close"].shift()).abs()
-    tr3 = (df["low"] - df["close"].shift()).abs()
-    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-    atr = tr.rolling(window=timeperiod).mean()
-    df[f"atr_{timeperiod}"] = atr
-    df.loc[: timeperiod - 1, f"atr_{timeperiod}"] = np.nan
+    ind = AverageTrueRange(df["high"].astype(float), df["low"].astype(float), df["close"].astype(float), window=timeperiod)
+    df[f"atr_{timeperiod}"] = ind.average_true_range()
     return df
 
 
 def compute_bollinger_bands(
     data: pd.DataFrame | pd.Series, price_col: str = "close", timeperiod: int = 20
 ) -> pd.DataFrame | tuple[pd.Series, pd.Series, pd.Series]:
-    """Compute Bollinger Bands."""
+    """Compute Bollinger Bands using ``ta`` library."""
     if isinstance(data, pd.Series):
-        series = pd.to_numeric(data, errors="coerce")
-        middle = series.rolling(window=timeperiod).mean()
-        stddev = series.rolling(window=timeperiod).std()
-        upper = middle + (2 * stddev)
-        lower = middle - (2 * stddev)
+        ind = BollingerBands(data.astype(float), window=timeperiod, window_dev=2)
+        upper = ind.bollinger_hband()
+        middle = ind.bollinger_mavg()
+        lower = ind.bollinger_lband()
         return upper, middle, lower
 
     df = data.copy()
-    middle = df[price_col].rolling(window=timeperiod).mean()
-    df[f"bb_mavg_{timeperiod}"] = middle
-    stddev = df[price_col].rolling(window=timeperiod).std()
-    df[f"bb_upper_{timeperiod}"] = middle + (2 * stddev)
-    df[f"bb_lower_{timeperiod}"] = middle - (2 * stddev)
+    ind = BollingerBands(df[price_col].astype(float), window=timeperiod, window_dev=2)
+    df[f"bb_mavg_{timeperiod}"] = ind.bollinger_mavg()
+    df[f"bb_upper_{timeperiod}"] = ind.bollinger_hband()
+    df[f"bb_lower_{timeperiod}"] = ind.bollinger_lband()
     return df
 
 
@@ -180,63 +157,63 @@ def compute_stochastic(
     slowk_period: int = 3,
     slowd_period: int = 3,
 ) -> pd.DataFrame | tuple[pd.Series, pd.Series]:
-    """Compute Stochastic Oscillator."""
+    """Compute Stochastic Oscillator using ``ta`` library."""
     if isinstance(high, pd.Series) and low is not None and close is not None:
-        h = pd.to_numeric(high, errors="coerce")
-        l = pd.to_numeric(low, errors="coerce")
-        c = pd.to_numeric(close, errors="coerce")
-        roll_high = h.rolling(window=fastk_period).max()
-        roll_low = l.rolling(window=fastk_period).min()
-        fastk = 100 * ((c - roll_low) / (roll_high - roll_low))
-        slowk = fastk.rolling(window=slowk_period).mean()
-        slowd = slowk.rolling(window=slowd_period).mean()
-        return slowk, slowd
+        df = pd.DataFrame({"high": high, "low": low, "close": close})
+        ind = StochasticOscillator(
+            df["high"].astype(float),
+            df["low"].astype(float),
+            df["close"].astype(float),
+            window=fastk_period,
+            smooth_window=slowk_period,
+        )
+        fastk = ind.stoch()
+        slowd = ind.stoch_signal().rolling(window=slowd_period).mean()
+        return fastk, slowd
 
     df = high.copy()
-    roll_high = df["high"].rolling(window=fastk_period).max()
-    roll_low = df["low"].rolling(window=fastk_period).min()
-    fastk = 100 * ((df["close"] - roll_low) / (roll_high - roll_low))
-    slowk = fastk.rolling(window=slowk_period).mean()
-    df["stoch_k"] = slowk
-    df["stoch_d"] = slowk.rolling(window=slowd_period).mean()
+    ind = StochasticOscillator(
+        df["high"].astype(float),
+        df["low"].astype(float),
+        df["close"].astype(float),
+        window=fastk_period,
+        smooth_window=slowk_period,
+    )
+    df["stoch_k"] = ind.stoch()
+    df["stoch_d"] = ind.stoch_signal().rolling(window=slowd_period).mean()
     return df
 
 
 def compute_adx(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """
-    Compute a simplified directional movement indicator.
-    """
-    # Simple directional indicator (normalized high-low range)
-    high_low_range = df["high"] - df["low"]
-    avg_range = high_low_range.rolling(window=timeperiod).mean()
-    max_range = high_low_range.rolling(window=timeperiod).max()
-    df[f"adx_{timeperiod}"] = 100 * (avg_range / max_range)
+    """Compute Average Directional Index using ``ta`` library."""
+    ind = ADXIndicator(
+        df["high"].astype(float),
+        df["low"].astype(float),
+        df["close"].astype(float),
+        window=timeperiod,
+    )
+    df[f"adx_{timeperiod}"] = ind.adx()
     return df
 
 
 def compute_williams_r(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """
-    Compute Williams %R.
-    """
-    roll_high = df["high"].rolling(window=timeperiod).max()
-    roll_low = df["low"].rolling(window=timeperiod).min()
-    wr = -100 * ((roll_high - df["close"]) / (roll_high - roll_low))
-    df[f"wr_{timeperiod}"] = wr
+    """Compute Williams %R using ``ta`` library."""
+    ind = WilliamsRIndicator(
+        df["high"].astype(float),
+        df["low"].astype(float),
+        df["close"].astype(float),
+        lbp=timeperiod,
+    )
+    df[f"wr_{timeperiod}"] = ind.williams_r()
     return df
 
 
 def compute_obv(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute On-Balance Volume (OBV).
-    """
-    # Determine price change direction
-    price_change = pd.to_numeric(df["close"].diff(), errors="coerce")
-    # Create signals: 1 for up, -1 for down, 0 for no change
-    signals = pd.Series(0, index=df.index)
-    signals.loc[price_change > 0] = 1
-    signals.loc[price_change < 0] = -1
-    # Multiply signal by volume and compute cumulative sum
-    df["obv"] = (signals * df["volume"]).fillna(0).cumsum()
+    """Compute On-Balance Volume (OBV) using ``ta`` library."""
+    ind = OnBalanceVolumeIndicator(
+        df["close"].astype(float), df["volume"].astype(float)
+    )
+    df["obv"] = ind.on_balance_volume()
     return df
 
 
