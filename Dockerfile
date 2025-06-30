@@ -4,15 +4,18 @@ FROM ${CUDA_VARIANT} AS development
 ENV TZ=Etc/UTC
 
 
-# Install build tools and TA-Lib system libraries
+# Install build tools and build TA-Lib C library from source
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       vim nano curl wget git-lfs \
       htop nvtop \
       build-essential wget autoconf automake libtool pkg-config \
       software-properties-common cmake git python3-dev python3-pip \
-      libssl-dev libgl1 libglib2.0-0 \
-      libta-lib0 libta-lib0-dev && \
+      libssl-dev libgl1 libglib2.0-0 && \
+    wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
+    tar -xzf ta-lib-0.4.0-src.tar.gz && \
+    cd ta-lib && ./configure --prefix=/usr && make && make install && cd .. && \
+    rm -rf ta-lib ta-lib-0.4.0-src.tar.gz && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python development dependencies
