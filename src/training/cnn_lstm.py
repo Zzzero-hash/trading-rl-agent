@@ -5,7 +5,7 @@ sentiment analysis and technical indicators. It supports both classification
 and regression tasks for market prediction.
 
 Example usage:
->>> from src.train_cnn_lstm import CNNLSTMTrainer, TrainingConfig
+>>> from src.training.cnn_lstm import CNNLSTMTrainer, TrainingConfig
 >>> trainer = CNNLSTMTrainer()
 >>> model, history = trainer.train_from_config('src/configs/training/cnn_lstm_train.yaml')
 """
@@ -26,22 +26,9 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import yaml
 
-try:
-    # Try relative imports first (when used as module)
-    from .data.features import generate_features
-    from .data.sentiment import SentimentAnalyzer, SentimentConfig
-    from .models.cnn_lstm import CNNLSTMConfig, CNNLSTMModel
-except ImportError:
-    # Fallback to absolute imports (when run directly)
-    # Add parent directory to path
-    current_dir = Path(__file__).parent
-    parent_dir = current_dir.parent
-    sys.path.insert(0, str(parent_dir))
-    sys.path.insert(0, str(current_dir))
-
-    from src.data.features import generate_features
-    from src.data.sentiment import SentimentAnalyzer, SentimentConfig
-    from src.models.cnn_lstm import CNNLSTMConfig, CNNLSTMModel
+from src.data.features import generate_features
+from src.data.sentiment import SentimentAnalyzer, SentimentConfig
+from src.models.cnn_lstm import CNNLSTMConfig, CNNLSTMModel
 
 
 # Define a simple load_data function if not available
