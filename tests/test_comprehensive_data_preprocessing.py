@@ -50,7 +50,7 @@ class TestFeatureEngineering:
 
         # Test EMA
         data_ema = compute_ema(data.copy(), price_col="close", timeperiod=5)
-        ema = data_ema[f"ema_5"]
+        ema = data_ema["ema_5"]
         assert len(ema) == len(prices)
         assert not np.isnan(ema.iloc[-1])
 

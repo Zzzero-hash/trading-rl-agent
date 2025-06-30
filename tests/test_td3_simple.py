@@ -12,8 +12,6 @@ import os
 import sys
 import warnings
 
-sys.path.append("/workspaces/trading-rl-agent")
-
 import numpy as np
 
 from src.agents.configs import TD3Config
@@ -70,7 +68,7 @@ def test_td3_basic_functionality():
     initial_total_it = agent.total_it
     metrics = agent.train()
 
-    print(f"✅ Training step completed")
+    print("✅ Training step completed")
     print(f"✅ Total iterations: {agent.total_it} (was {initial_total_it})")
     print(f"✅ Training metrics: {metrics}")
 
@@ -122,7 +120,7 @@ def test_td3_basic_functionality():
         action2 = agent2.select_action(test_state, add_noise=False)
 
         np.testing.assert_allclose(action1, action2, rtol=1e-5)
-        print(f"✅ Save/load successful - actions match within tolerance")
+        print("✅ Save/load successful - actions match within tolerance")
 
     finally:
         os.unlink(save_path)

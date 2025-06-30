@@ -12,8 +12,6 @@ import torch
 from src.agents.configs import TD3Config
 from src.agents.td3_agent import TD3Agent
 from src.envs.trading_env import TradingEnv
-
-sys.path.insert(0, os.path.dirname(__file__))
 from test_setup_utils import setup_test_env, teardown_test_env
 
 

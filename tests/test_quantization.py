@@ -38,8 +38,8 @@ def test_compare_model_sizes_reduces_size():
     assert metrics["quantized_size_mb"] < metrics["original_size_mb"]
     assert metrics["size_reduction_percent"] >= 0
 
+
 def test_quantize_model_invalid_type():
     model = SimpleModel()
     with pytest.raises(ValueError):
         quantize_model(model, quantization_type="unknown")
-

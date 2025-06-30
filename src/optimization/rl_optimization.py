@@ -82,8 +82,6 @@ def _get_default_sac_search_space() -> dict[str, Any]:
     }
 
 
-
-
 def _get_default_ppo_search_space() -> dict[str, Any]:
     """Get default PPO hyperparameter search space."""
     return {
@@ -115,8 +113,6 @@ def register_models_and_envs():
 
     # Register the environment
     register_env("TradingEnv", lambda cfg: create_env(cfg))
-
-
 
 
 def optimize_sac_hyperparams(
