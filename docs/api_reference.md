@@ -193,7 +193,7 @@ This section provides detailed API documentation for all modules and classes.
 ### CNN-LSTM Training
 
 ```{eval-rst}
-.. automodule:: src.train_cnn_lstm
+.. automodule:: src.training.cnn_lstm
    :members:
    :undoc-members:
    :show-inheritance:
