@@ -20,6 +20,12 @@ def fetch_historical_data(
     :param timestep: Interval (e.g. 'day', '1m', '1h')
     :return: DataFrame with open/high/low/close/volume indexed by timestamp
     """
+    if client is None:
+        raise ImportError(
+            "yfinance package is required for fetch_historical_data."
+            " Install with `pip install yfinance`."
+        )
+
     # map human-friendly timestep to yfinance interval
     interval_map = {"day": "1d", "hour": "1h", "minute": "1m"}
     interval = interval_map.get(timestep, timestep)
