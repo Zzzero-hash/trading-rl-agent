@@ -2,12 +2,17 @@
 Feature engineering utilities for trading data pipelines.
 """
 
+import importlib
 import numpy as np
 import pandas as pd
-from ta.trend import EMAIndicator, MACD, ADXIndicator
-from ta.volatility import AverageTrueRange, BollingerBands
-from ta.momentum import RSIIndicator, StochasticOscillator, WilliamsRIndicator
-from ta.volume import OnBalanceVolumeIndicator
+import pandas_ta as pta
+
+try:  # optional TA-Lib support
+    talib = importlib.import_module("talib")
+    TA_LIB_AVAILABLE = True
+except ModuleNotFoundError:  # pragma: no cover - environment may lack C library
+    talib = None
+    TA_LIB_AVAILABLE = False
 
 
 
@@ -23,33 +28,41 @@ def add_sentiment(df: pd.DataFrame, sentiment_col: str = "sentiment") -> pd.Data
 def compute_ema(
     df: pd.DataFrame | pd.Series, price_col: str = "close", timeperiod: int = 20
 ) -> pd.DataFrame | pd.Series:
-    """Compute Exponential Moving Average (EMA) using ``ta`` library."""
+    """Compute Exponential Moving Average (EMA) using ``pandas_ta``."""
     if isinstance(df, pd.Series):
-        ema = EMAIndicator(df.astype(float), window=timeperiod).ema_indicator()
+        ema = pta.ema(df.astype(float), length=timeperiod)
+        ema.name = f"ema_{timeperiod}"
         return ema
 
     out_df = df.copy()
-    indicator = EMAIndicator(out_df[price_col].astype(float), window=timeperiod)
-    out_df[f"ema_{timeperiod}"] = indicator.ema_indicator()
+    result = pta.ema(out_df[price_col].astype(float), length=timeperiod)
+    out_df[f"ema_{timeperiod}"] = result
     return out_df
 
 
 def compute_macd(
     data: pd.DataFrame | pd.Series, price_col: str = "close"
 ) -> pd.DataFrame | pd.Series:
-    """Compute MACD, signal, and histogram using ``ta`` library."""
+    """Compute MACD, signal, and histogram using ``pandas_ta``."""
     slow, fast, signal_period = 26, 12, 9
 
     if isinstance(data, pd.Series):
         series = pd.to_numeric(data, errors="coerce")
-        ind = MACD(series, window_slow=slow, window_fast=fast, window_sign=signal_period)
-        return ind.macd()
+        result = pta.macd(series, fast=fast, slow=slow, signal=signal_period)
+        if result is None:
+            return series * np.nan
+        return result[f"MACD_{fast}_{slow}_{signal_period}"]
 
     df = data.copy()
-    ind = MACD(df[price_col].astype(float), window_slow=slow, window_fast=fast, window_sign=signal_period)
-    df["macd_line"] = ind.macd()
-    df["macd_signal"] = ind.macd_signal()
-    df["macd_hist"] = ind.macd_diff()
+    result = pta.macd(df[price_col].astype(float), fast=fast, slow=slow, signal=signal_period)
+    if result is None:
+        df["macd_line"] = np.nan
+        df["macd_signal"] = np.nan
+        df["macd_hist"] = np.nan
+    else:
+        df["macd_line"] = result[f"MACD_{fast}_{slow}_{signal_period}"]
+        df["macd_signal"] = result[f"MACDs_{fast}_{slow}_{signal_period}"]
+        df["macd_hist"] = result[f"MACDh_{fast}_{slow}_{signal_period}"]
     return df
 
 
@@ -59,34 +72,31 @@ def compute_atr(
     close: pd.Series | None = None,
     timeperiod: int = 14,
 ) -> pd.DataFrame | pd.Series:
-    """Compute Average True Range (ATR) using ``ta`` library."""
+    """Compute Average True Range (ATR) using ``pandas_ta``."""
     if isinstance(high, pd.Series) and low is not None and close is not None:
-        df = pd.DataFrame({"high": high, "low": low, "close": close})
-        ind = AverageTrueRange(df["high"].astype(float), df["low"].astype(float), df["close"].astype(float), window=timeperiod)
-        return ind.average_true_range()
+        result = pta.atr(high.astype(float), low.astype(float), close.astype(float), length=timeperiod)
+        return result
 
     df = high.copy()
-    ind = AverageTrueRange(df["high"].astype(float), df["low"].astype(float), df["close"].astype(float), window=timeperiod)
-    df[f"atr_{timeperiod}"] = ind.average_true_range()
+    df[f"atr_{timeperiod}"] = pta.atr(
+        df["high"].astype(float), df["low"].astype(float), df["close"].astype(float), length=timeperiod
+    )
     return df
 
 
 def compute_bollinger_bands(
     data: pd.DataFrame | pd.Series, price_col: str = "close", timeperiod: int = 20
 ) -> pd.DataFrame | tuple[pd.Series, pd.Series, pd.Series]:
-    """Compute Bollinger Bands using ``ta`` library."""
+    """Compute Bollinger Bands using ``pandas_ta``."""
     if isinstance(data, pd.Series):
-        ind = BollingerBands(data.astype(float), window=timeperiod, window_dev=2)
-        upper = ind.bollinger_hband()
-        middle = ind.bollinger_mavg()
-        lower = ind.bollinger_lband()
-        return upper, middle, lower
+        bb = pta.bbands(data.astype(float), length=timeperiod)
+        return bb[f"BBU_{timeperiod}_2.0"], bb[f"BBM_{timeperiod}_2.0"], bb[f"BBL_{timeperiod}_2.0"]
 
     df = data.copy()
-    ind = BollingerBands(df[price_col].astype(float), window=timeperiod, window_dev=2)
-    df[f"bb_mavg_{timeperiod}"] = ind.bollinger_mavg()
-    df[f"bb_upper_{timeperiod}"] = ind.bollinger_hband()
-    df[f"bb_lower_{timeperiod}"] = ind.bollinger_lband()
+    bb = pta.bbands(df[price_col].astype(float), length=timeperiod)
+    df[f"bb_mavg_{timeperiod}"] = bb[f"BBM_{timeperiod}_2.0"]
+    df[f"bb_upper_{timeperiod}"] = bb[f"BBU_{timeperiod}_2.0"]
+    df[f"bb_lower_{timeperiod}"] = bb[f"BBL_{timeperiod}_2.0"]
     return df
 
 
@@ -98,63 +108,69 @@ def compute_stochastic(
     slowk_period: int = 3,
     slowd_period: int = 3,
 ) -> pd.DataFrame | tuple[pd.Series, pd.Series]:
-    """Compute Stochastic Oscillator using ``ta`` library."""
+    """Compute Stochastic Oscillator using ``pandas_ta``."""
     if isinstance(high, pd.Series) and low is not None and close is not None:
-        df = pd.DataFrame({"high": high, "low": low, "close": close})
-        ind = StochasticOscillator(
-            df["high"].astype(float),
-            df["low"].astype(float),
-            df["close"].astype(float),
-            window=fastk_period,
-            smooth_window=slowk_period,
+        result = pta.stoch(
+            high.astype(float),
+            low.astype(float),
+            close.astype(float),
+            k=fastk_period,
+            d=slowd_period,
+            smooth_k=slowk_period,
         )
-        fastk = ind.stoch()
-        slowd = ind.stoch_signal().rolling(window=slowd_period).mean()
-        return fastk, slowd
+        if result is None:
+            return (high * np.nan, high * np.nan)
+        return result[f"STOCHk_{fastk_period}_{slowk_period}_{slowd_period}"], result[f"STOCHd_{fastk_period}_{slowk_period}_{slowd_period}"]
 
     df = high.copy()
-    ind = StochasticOscillator(
+    result = pta.stoch(
         df["high"].astype(float),
         df["low"].astype(float),
         df["close"].astype(float),
-        window=fastk_period,
-        smooth_window=slowk_period,
+        k=fastk_period,
+        d=slowd_period,
+        smooth_k=slowk_period,
     )
-    df["stoch_k"] = ind.stoch()
-    df["stoch_d"] = ind.stoch_signal().rolling(window=slowd_period).mean()
+    if result is None:
+        df["stoch_k"] = np.nan
+        df["stoch_d"] = np.nan
+    else:
+        df["stoch_k"] = result[f"STOCHk_{fastk_period}_{slowk_period}_{slowd_period}"]
+        df["stoch_d"] = result[f"STOCHd_{fastk_period}_{slowk_period}_{slowd_period}"]
     return df
 
 
 def compute_adx(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """Compute Average Directional Index using ``ta`` library."""
-    ind = ADXIndicator(
+    """Compute Average Directional Index using ``pandas_ta``."""
+    result = pta.adx(
         df["high"].astype(float),
         df["low"].astype(float),
         df["close"].astype(float),
-        window=timeperiod,
+        length=timeperiod,
     )
-    df[f"adx_{timeperiod}"] = ind.adx()
+    if result is None:
+        df[f"adx_{timeperiod}"] = np.nan
+    else:
+        df[f"adx_{timeperiod}"] = result[f"ADX_{timeperiod}"]
     return df
 
 
 def compute_williams_r(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """Compute Williams %R using ``ta`` library."""
-    ind = WilliamsRIndicator(
+    """Compute Williams %R using ``pandas_ta``."""
+    result = pta.willr(
         df["high"].astype(float),
         df["low"].astype(float),
         df["close"].astype(float),
-        lbp=timeperiod,
+        length=timeperiod,
     )
-    df[f"wr_{timeperiod}"] = ind.williams_r()
+    df[f"wr_{timeperiod}"] = result if result is not None else np.nan
     return df
 
 
 def compute_obv(df: pd.DataFrame) -> pd.DataFrame:
-    """Compute On-Balance Volume (OBV) using ``ta`` library."""
-    ind = OnBalanceVolumeIndicator(
-        df["close"].astype(float), df["volume"].astype(float)
-    )
-    df["obv"] = ind.on_balance_volume()
+    """Compute On-Balance Volume (OBV) using ``pandas_ta``."""
+    result = pta.obv(df["close"].astype(float), df["volume"].astype(float))
+    df["obv"] = result if result is not None else np.nan
     return df
 
 
@@ -165,14 +181,23 @@ def detect_doji(
     close: pd.Series | None = None,
     threshold: float = 0.05,
 ) -> pd.DataFrame | pd.Series:
-    """Detect Doji pattern."""
+    """Detect Doji pattern using ``pandas_ta`` with fallback."""
     if isinstance(open, pd.Series) and high is not None and low is not None and close is not None:
+        result = pta.cdl_doji(open.astype(float), high.astype(float), low.astype(float), close.astype(float))
+        if result is not None:
+            return (result != 0).astype(int)
         cond = abs(open - close) <= threshold * (high - low)
         return cond.astype(int)
 
     df = open.copy()
-    doji_cond = abs(df["open"] - df["close"]) <= threshold * (df["high"] - df["low"])
-    df["doji"] = doji_cond.astype(int)
+    result = pta.cdl_doji(
+        df["open"].astype(float), df["high"].astype(float), df["low"].astype(float), df["close"].astype(float)
+    )
+    if result is None:
+        doji_cond = abs(df["open"] - df["close"]) <= threshold * (df["high"] - df["low"])
+        df["doji"] = doji_cond.astype(int)
+    else:
+        df["doji"] = (result != 0).astype(int)
     return df
 
 
@@ -194,6 +219,9 @@ def detect_hammer(
         DataFrame with 'hammer' and 'hanging_man' columns
     """
     if isinstance(open, pd.Series) and high is not None and low is not None and close is not None:
+        pattern = pta.cdl_pattern(open, high, low, close, name="hammer")
+        if pattern is not None:
+            return (pattern.iloc[:, 0] != 0).astype(int)
         body = (close - open).abs()
         lower_shadow = pd.concat([open, close], axis=1).min(axis=1) - low
         total_range = high - low
@@ -216,13 +244,13 @@ def detect_hammer(
 
     hammer_shape = (body_ratio < threshold) & (lower_shadow_ratio > 0.6)
 
-    df["hammer"] = (hammer_shape & (df["close"].shift(1) < df["open"].shift(1))).astype(
-        int
-    )
-
-    df["hanging_man"] = (
-        hammer_shape & (df["close"].shift(1) > df["open"].shift(1))
-    ).astype(int)
+    pattern = pta.cdl_pattern(df["open"], df["high"], df["low"], df["close"], name="hammer")
+    if pattern is not None:
+        df["hammer"] = (pattern.iloc[:, 0] > 0).astype(int)
+        df["hanging_man"] = (pattern.iloc[:, 0] < 0).astype(int)
+    else:
+        df["hammer"] = (hammer_shape & (df["close"].shift(1) < df["open"].shift(1))).astype(int)
+        df["hanging_man"] = (hammer_shape & (df["close"].shift(1) > df["open"].shift(1))).astype(int)
 
     return df
 
@@ -239,8 +267,10 @@ def detect_engulfing(
     Returns:
         DataFrame with 'bullish_engulfing' and 'bearish_engulfing' columns
     """
-    # Previous candle's body
     if isinstance(open, pd.Series) and close is not None:
+        pattern = pta.cdl_pattern(open, high if high is not None else open, low if low is not None else open, close, name="engulfing")
+        if pattern is not None:
+            return (pattern.iloc[:, 0] != 0).astype(int)
         prev_open = open.shift(1)
         prev_close = close.shift(1)
         prev_body_size = abs(prev_close - prev_open)
@@ -268,20 +298,23 @@ def detect_engulfing(
     curr_body_size = abs(df["close"] - df["open"])
 
     # Bullish engulfing: current candle opens below previous close and closes above previous open
-    df["bullish_engulfing"] = (
-        (df["open"] < prev_close)
-        & (df["close"] > prev_open)
-        & (curr_body_size > prev_body_size)
-        & (prev_close < prev_open)  # Previous candle was bearish
-    ).astype(int)
-
-    # Bearish engulfing: current candle opens above previous close and closes below previous open
-    df["bearish_engulfing"] = (
-        (df["open"] > prev_close)
-        & (df["close"] < prev_open)
-        & (curr_body_size > prev_body_size)
-        & (prev_close > prev_open)  # Previous candle was bullish
-    ).astype(int)
+    pattern = pta.cdl_pattern(df["open"], df["high"], df["low"], df["close"], name="engulfing")
+    if pattern is not None:
+        df["bullish_engulfing"] = (pattern.iloc[:, 0] > 0).astype(int)
+        df["bearish_engulfing"] = (pattern.iloc[:, 0] < 0).astype(int)
+    else:
+        df["bullish_engulfing"] = (
+            (df["open"] < prev_close)
+            & (df["close"] > prev_open)
+            & (curr_body_size > prev_body_size)
+            & (prev_close < prev_open)
+        ).astype(int)
+        df["bearish_engulfing"] = (
+            (df["open"] > prev_close)
+            & (df["close"] < prev_open)
+            & (curr_body_size > prev_body_size)
+            & (prev_close > prev_open)
+        ).astype(int)
 
     return df
 
@@ -304,6 +337,9 @@ def detect_shooting_star(
         DataFrame with 'shooting_star' column
     """
     if isinstance(open, pd.Series) and high is not None and low is not None and close is not None:
+        pattern = pta.cdl_pattern(open, high, low, close, name="shootingstar")
+        if pattern is not None:
+            return (pattern.iloc[:, 0] != 0).astype(int)
         body = abs(close - open)
         upper_shadow = high - pd.concat([open, close], axis=1).max(axis=1)
         lower_shadow = pd.concat([open, close], axis=1).min(axis=1) - low
@@ -339,16 +375,18 @@ def detect_shooting_star(
     # 2. Long upper shadow (at least 2x the body)
     # 3. Very small or no lower shadow
     # 4. Appears in uptrend
-    df["shooting_star"] = (
-        (body_ratio < threshold)
-        & (upper_shadow_ratio > 0.6)
-        & (lower_shadow < 0.1 * total_range)
-        & (upper_shadow > 2 * body)
-        & (df["close"].shift(1) > df["open"].shift(1))
-        & (  # Previous candle was bullish
-            df["close"].shift(2) < df["close"].shift(1)
-        )  # Prior trend was upward
-    ).astype(int)
+    pattern = pta.cdl_pattern(df["open"], df["high"], df["low"], df["close"], name="shootingstar")
+    if pattern is not None:
+        df["shooting_star"] = (pattern.iloc[:, 0] != 0).astype(int)
+    else:
+        df["shooting_star"] = (
+            (body_ratio < threshold)
+            & (upper_shadow_ratio > 0.6)
+            & (lower_shadow < 0.1 * total_range)
+            & (upper_shadow > 2 * body)
+            & (df["close"].shift(1) > df["open"].shift(1))
+            & (df["close"].shift(2) < df["close"].shift(1))
+        ).astype(int)
 
     return df
 
@@ -360,6 +398,11 @@ def detect_morning_star(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with 'morning_star' column
     """
+    pattern = pta.cdl_pattern(df["open"], df["high"], df["low"], df["close"], name="morningstar")
+    if pattern is not None:
+        df["morning_star"] = (pattern.iloc[:, 0] != 0).astype(int)
+        return df
+
     # First day: long bearish candle
     first_bearish = (df["open"].shift(2) > df["close"].shift(2)) & (
         abs(df["open"].shift(2) - df["close"].shift(2))
@@ -390,6 +433,11 @@ def detect_evening_star(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with 'evening_star' column
     """
+    pattern = pta.cdl_pattern(df["open"], df["high"], df["low"], df["close"], name="eveningstar")
+    if pattern is not None:
+        df["evening_star"] = (pattern.iloc[:, 0] != 0).astype(int)
+        return df
+
     # First day: long bullish candle
     first_bullish = (df["open"].shift(2) < df["close"].shift(2)) & (
         abs(df["open"].shift(2) - df["close"].shift(2))
@@ -432,7 +480,7 @@ def compute_candle_features(df: pd.DataFrame, advanced: bool = True) -> pd.DataF
     else:
         # Use basic patterns: assign Doji, then apply other patterns
         df = df.copy()
-        df["doji"] = detect_doji(df)
+        df = detect_doji(df)
         df = detect_hammer(df)
         df = detect_engulfing(df)
         df = detect_shooting_star(df)
@@ -493,8 +541,7 @@ def generate_features(
     for w in ma_windows:
         df[f"sma_{w}"] = df["close"].rolling(w).mean()
 
-    rsi_ind = RSIIndicator(df["close"].astype(float), window=rsi_window)
-    df[f"rsi_{rsi_window}"] = rsi_ind.rsi()
+    df[f"rsi_{rsi_window}"] = pta.rsi(df["close"].astype(float), length=rsi_window)
 
     df[f"vol_{vol_window}"] = (
         df["log_return"].rolling(vol_window).std(ddof=0) * np.sqrt(vol_window)
@@ -544,10 +591,8 @@ def generate_features(
     windows.append(max_pattern_window)
 
     max_core_window = max(windows) if windows else 0
-    # Ensure we don't drop all rows for small datasets
     rows_to_drop = min(max_core_window, len(df) - 1) if len(df) > 1 else 0
-    # Preserve all rows; only reset index
-    df = df.reset_index(drop=True)
+    df = df.iloc[rows_to_drop:].reset_index(drop=True)
 
     # Final check: if DataFrame is empty after processing, return at least one row with NaN values
     if df.empty and len(df.columns) > 0:
