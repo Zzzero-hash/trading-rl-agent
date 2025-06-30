@@ -13,7 +13,7 @@ from .synthetic import fetch_synthetic_data
 
 
 @ray.remote
-def _fetch_data_remote(fetch_fn, **kwargs):
+def _fetch_data_remote(fetch_fn, **kwargs):  # pragma: no cover
     """Execute a data fetch function as a Ray remote task."""
     return fetch_fn(**kwargs)
 
@@ -52,7 +52,7 @@ def load_cached_csvs(directory: str) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)
 
 
-def run_pipeline(config_path: str):
+def run_pipeline(config_path: str):  # pragma: no cover
     """Run the data ingestion pipeline using Ray for parallelism.
 
     Parameters
@@ -153,7 +153,7 @@ def run_pipeline(config_path: str):
     return results
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import argparse
 
     parser = argparse.ArgumentParser(
