@@ -9,3 +9,5 @@ orjson>=3.9.0
 
 # Async utilities
 aiofiles>=23.0.0
+pandas-ta>=0.3.14b0
+ta-lib>=0.4.28

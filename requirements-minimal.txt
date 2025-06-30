@@ -17,6 +17,8 @@ yfinance>=0.2.0,<0.3.0     # Financial data
 
 # Technical indicators
 ta>=0.10.0,<0.11.0         # Technical analysis
+pandas-ta>=0.3.14b0
+ta-lib>=0.4.28
 
 # Testing
 pytest>=7.4.0              # Unit testing (updated for compatibility)
