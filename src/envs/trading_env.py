@@ -206,8 +206,21 @@ class TradingEnv(gym.Env):
             else:
                 action_idx = 0  # hold
         else:
-            assert self.action_space.contains(action), "Invalid action"
-            action_idx = action
+            # Gym's Discrete space expects ``int`` actions but frameworks may
+            # produce ``float`` or ``ndarray`` values. Cast gracefully so tests
+            # using floats still work. Map ``-1`` -> sell (2) for compatibility
+            # with older interfaces that used {-1, 0, 1}.
+            if isinstance(action, np.ndarray):
+                if action.size != 1:
+                    raise ValueError("Invalid discrete action shape")
+                action = action.item()
+            if not np.isfinite(action):
+                raise ValueError("Invalid action value")
+            if action == -1:
+                action_idx = 2
+            else:
+                action_idx = int(action)
+            assert self.action_space.contains(action_idx), "Invalid action"
 
         # Check bounds before accessing data
         if self.current_step - 1 >= len(self.data):
