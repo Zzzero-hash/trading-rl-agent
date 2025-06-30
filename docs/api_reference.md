@@ -159,6 +159,15 @@ This section provides detailed API documentation for all modules and classes.
    :show-inheritance:
 ```
 
+## NLP Utilities
+
+```{eval-rst}
+.. automodule:: src.nlp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
 ## Optimization
 
 ### CNN-LSTM Optimization
