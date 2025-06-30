@@ -28,9 +28,11 @@ import yfinance as yf
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent / "src"))
 
-from src.data.features import generate_features
-from src.data.sentiment import get_sentiment_score
-from src.data.synthetic import fetch_synthetic_data, generate_gbm_prices
+from src.data.features import generate_features  # noqa: E402
+from src.data.sentiment import get_sentiment_score  # noqa: E402
+from src.data.synthetic import fetch_synthetic_data, generate_gbm_prices  # noqa: E402
+from src.envs.trader_env import TraderEnv  # noqa: E402
+import traceback  # noqa: E402
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore")
@@ -207,7 +209,7 @@ class AdvancedDatasetBuilder:
                             sentiment_score = get_sentiment_score(symbol, days_back=1)
                             enhanced_data["sentiment"] = sentiment_score
                             enhanced_data["sentiment_magnitude"] = abs(sentiment_score)
-                        except:
+                        except Exception:
                             enhanced_data["sentiment"] = 0.0
                             enhanced_data["sentiment_magnitude"] = 0.0
                     else:
@@ -485,8 +487,6 @@ def main():
         # Test compatibility with training environment
         print("\n🧪 Testing compatibility with training environment...")
         try:
-            from src.envs.trader_env import TraderEnv
-
             env = TraderEnv(
                 [file_paths["training_data"]], window_size=10, initial_balance=10000
             )
@@ -501,8 +501,6 @@ def main():
 
     except Exception as e:
         print(f"❌ Dataset building failed: {e}")
-        import traceback
-
         traceback.print_exc()
         return None
 
