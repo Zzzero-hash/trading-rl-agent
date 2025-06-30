@@ -33,6 +33,12 @@ def fetch_live_data(
         and ``volume`` columns, mirroring the schema of :func:`fetch_historical_data`.
     """
 
+    if yf is None:
+        raise ImportError(
+            "yfinance package is required for fetch_live_data."
+            " Install with `pip install yfinance`."
+        )
+
     interval_map = {
         "day": "1d",
         "hour": "1h",
