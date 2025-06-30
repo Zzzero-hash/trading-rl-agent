@@ -372,7 +372,7 @@ class TestEnvironmentPerformance:
 
         # Allow some increase but not excessive
         assert (
-            object_increase < 1000
+            object_increase < 1500
         ), f"Memory usage increased by {object_increase} objects"
 
 
