@@ -27,7 +27,8 @@ from src.data.features import (
     detect_shooting_star,
     generate_features,
 )
-from src.data.preprocessing import create_sequences, standardize_data
+from src.data.preprocessing import create_sequences
+from sklearn.preprocessing import StandardScaler
 from src.data.synthetic import fetch_synthetic_data
 
 
@@ -296,8 +297,9 @@ class TestDataPreprocessing:
         # Create test data
         data = np.random.randn(100, 5)
 
-        # Test standardization
-        standardized = standardize_data(data)
+        # Test standardization using StandardScaler
+        scaler = StandardScaler()
+        standardized = scaler.fit_transform(data)
 
         # Should have mean ~0 and std ~1
         assert abs(np.mean(standardized)) < 0.1
@@ -414,10 +416,13 @@ class TestDataPipelineIntegration:
             for col in enhanced_data.columns
             if col not in ["open", "high", "low", "close", "volume"]
         ]
-        features = enhanced_data[feature_columns].values
+        features = enhanced_data[feature_columns].copy()
+        datetime_cols = features.select_dtypes(include=["datetime", "datetimetz"]).columns
+        for col in datetime_cols:
+            features[col] = pd.to_datetime(features[col]).view("int64")
 
-        # Should be able to standardize
-        standardized_features = standardize_data(features)
+        # Should be able to standardize using StandardScaler
+        standardized_features = StandardScaler().fit_transform(features.values)
         assert standardized_features.shape == features.shape
 
         # Should be able to create sequences
@@ -450,7 +455,7 @@ class TestDataPipelineIntegration:
             raw_data = fetch_synthetic_data(n_samples=1000)
             enhanced_data = generate_features(raw_data)
             features = enhanced_data.select_dtypes(include=[np.number]).values
-            standardized = standardize_data(features)
+            standardized = StandardScaler().fit_transform(features)
             sequences, targets = create_sequences(standardized, sequence_length=20)
             return sequences, targets
 
