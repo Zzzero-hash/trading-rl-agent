@@ -33,10 +33,10 @@ from tqdm import tqdm
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.data.features import generate_features
-from src.data.forex_sentiment import get_forex_sentiment
-from src.data.historical import fetch_historical_data
-from src.data.synthetic import generate_gbm_prices
+from src.data.features import generate_features  # noqa: E402
+from src.data.forex_sentiment import get_forex_sentiment  # noqa: E402
+from src.data.historical import fetch_historical_data  # noqa: E402
+from src.data.synthetic import generate_gbm_prices  # noqa: E402
 
 # Configure logging
 logging.basicConfig(
