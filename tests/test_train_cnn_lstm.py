@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 import yaml
 
 from src.models.cnn_lstm import CNNLSTMModel
-from src.train_cnn_lstm import (
+from src.training.cnn_lstm import (
     CNNLSTMTrainer,
     SequenceDataset,
     TrainingConfig,
@@ -350,7 +350,7 @@ class TestConfigurationUtils:
         """Test example configuration creation."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Mock the config path to use temp directory
-            with patch("src.train_cnn_lstm.create_example_config") as mock_create:
+            with patch("src.training.cnn_lstm.create_example_config") as mock_create:
                 config_path = Path(temp_dir) / "test_config.yaml"
                 mock_create.return_value = str(config_path)
 
@@ -452,7 +452,7 @@ def mock_sentiment_data():
 class TestSentimentIntegration:
     """Test sentiment analysis integration in training."""
 
-    @patch("src.train_cnn_lstm.SentimentAnalyzer")
+    @patch("src.training.cnn_lstm.SentimentAnalyzer")
     def test_sentiment_feature_integration(
         self, mock_sentiment_analyzer, mock_sentiment_data
     ):
