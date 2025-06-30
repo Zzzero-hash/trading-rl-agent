@@ -17,6 +17,8 @@ gymnasium>=0.28.0,<0.30.0  # RL environments
 # Market data & Technical Analysis
 yfinance>=0.2.0,<0.3.0     # Financial data
 ta>=0.10.0,<0.11.0         # Technical indicators
+pandas-ta>=0.3.14b0
+ta-lib>=0.4.28
 
 # Testing
 pytest>=7.4.0              # Unit testing (updated for compatibility)

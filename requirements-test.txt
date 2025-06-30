@@ -17,6 +17,8 @@ faker>=19.0.0  # Fake data generation
 responses>=0.23.0  # HTTP mocking
 freezegun>=1.2.0  # Time mocking
 testfixtures>=7.2.0  # Test fixtures
+pandas-ta>=0.3.14b0
+ta-lib>=0.4.28
 
 # Performance testing
 memory-profiler>=0.61.0

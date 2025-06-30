@@ -14,4 +14,8 @@ python-dotenv>=0.20.0,<1.1.0  # Environment variables
 pytest>=7.0.0,<8.0.0     # 5MB - Unit testing
 faker>=13.0.0,<25.0.0    # 10MB - Test data generation
 
+# Technical analysis
+pandas-ta>=0.3.14b0
+ta-lib>=0.4.28
+
 # Total: ~111MB - Fast installation and imports
