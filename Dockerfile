@@ -39,12 +39,11 @@ COPY requirements.txt .
 RUN python3 -m pip install --upgrade pip setuptools wheel && \
     python3 -m pip install --no-cache-dir -r requirements.txt --ignore-installed blinker
 
-FROM development AS test
-ENV PYTHONPATH=/workspace
-
-FROM development AS runtime
+# Test stage using installed dependencies
+FROM deps AS test
 WORKDIR /workspace
 COPY --from=deps /usr/local/lib/python3.11/dist-packages /usr/local/lib/python3.11/dist-packages
 COPY --from=deps /usr/local/bin /usr/local/bin
 COPY . .
+ENV PYTHONPATH=/workspace
 ENTRYPOINT ["pytest", "--maxfail=1", "--disable-warnings", "-q"]
