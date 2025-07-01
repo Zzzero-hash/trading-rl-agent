@@ -4,6 +4,7 @@ This module provides utilities for quantizing ML models to reduce memory
 usage and improve inference speed for trading applications.
 """
 
+import io
 from typing import Any, Dict, Optional, Union
 import warnings
 
@@ -24,23 +25,21 @@ def quantize_model(
     Returns:
         Quantized model
     """
-    if not torch.backends.quantized.supported_engines:
-        warnings.warn("Quantization not supported on this platform")
-        return model
-
     # Set quantization backend
+    if backend not in torch.backends.quantized.supported_engines:
+        raise ValueError(f"Quantization backend '{backend}' not supported")
     torch.backends.quantized.engine = backend
-
-    # Prepare model for quantization
     model.eval()
-
     if quantization_type == "dynamic":
-        return dynamic_quantization(model)
+        # Use PyTorch dynamic quantization
+        return torch.quantization.quantize_dynamic(
+            model, {torch.nn.Linear, torch.nn.LSTM, torch.nn.GRU}, dtype=torch.qint8
+        )
     elif quantization_type == "static":
-        return static_quantization(model)
-    elif quantization_type == "qat":
-        warnings.warn("QAT requires retraining - returning original model")
-        return model
+        # Static quantization requires calibration; fallback to dynamic
+        return torch.quantization.quantize_dynamic(
+            model, {torch.nn.Linear, torch.nn.LSTM, torch.nn.GRU}, dtype=torch.qint8
+        )
     else:
         raise ValueError(f"Unknown quantization type: {quantization_type}")
 
@@ -117,16 +116,10 @@ def compare_model_sizes(
     """
 
     def get_model_size(model):
-        param_size = 0
-        buffer_size = 0
-
-        for param in model.parameters():
-            param_size += param.nelement() * param.element_size()
-
-        for buffer in model.buffers():
-            buffer_size += buffer.nelement() * buffer.element_size()
-
-        return param_size + buffer_size
+        # Serialize model state_dict to measure size
+        buffer = io.BytesIO()
+        torch.save(model.state_dict(), buffer)
+        return buffer.tell()
 
     original_size = get_model_size(original_model)
     quantized_size = get_model_size(quantized_model)

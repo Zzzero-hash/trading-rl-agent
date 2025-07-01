@@ -13,7 +13,8 @@ pyyaml>=6.0,<7.0      # Configuration files
 
 # Machine Learning & RL
 ray[rllib]>=2.31.0,<2.47.0  # Distributed RL (minimal extras)
-gymnasium>=0.28.0,<0.30.0  # RL environments
+gymnasium>=0.29.1,<1.2.0  # RL environments
+stable-baselines3>=1.7.0
 
 # Market data & Technical Analysis
 yfinance>=0.2.0,<0.3.0     # Financial data
@@ -40,8 +41,9 @@ matplotlib>=3.5.0,<3.9.0      # Plotting and visualization
 pynvml>=11.0.0,<12.0.0        # NVIDIA GPU monitoring
 optuna>=3.0.0,<4.0.0         # Hyperparameter optimization
 feedparser>=6.0.0,<7.0.0    # RSS feed parsing for news sentiment
+empyrical>=0.5.3
 
 # Add missing dependencies for web requests, HTML parsing, and system monitoring
 requests>=2.28.0,<3.0.0  # HTTP requests for sentiment and data fetching
 beautifulsoup4>=4.11.0,<5.0.0  # HTML parsing for sentiment scraping
-psutil>=5.9.0,<6.0.0  # System monitoring for resource checks
+psutil>=5.9.0,<6.0

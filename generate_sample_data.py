@@ -14,6 +14,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import pandas_ta as ta
 
 # Add src to path for imports
 # (Assumes package installed in environment)
@@ -100,47 +101,45 @@ def generate_sample_price_data(
 def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """Add technical indicators to the price data."""
 
+    # Operate on DataFrame copy
     df = df.copy()
-    close = pd.to_numeric(df["close"], errors="coerce")
-    volume = pd.to_numeric(df["volume"], errors="coerce")
 
-    # Moving averages
-    df["sma_10"] = close.rolling(window=10).mean()
-    df["sma_20"] = close.rolling(window=20).mean()
-    df["sma_50"] = close.rolling(window=50).mean()
+    # Compute indicators via pandas-ta accessor
+    df.ta.sma(length=10, append=True)
+    df.ta.sma(length=20, append=True)
+    df.ta.sma(length=50, append=True)
+    df.ta.ema(length=12, append=True)
+    df.ta.ema(length=26, append=True)
+    df.ta.macd(fast=12, slow=26, signal=9, append=True)
+    df.ta.rsi(length=14, append=True)
+    df.ta.bbands(length=20, std=2, append=True)
 
-    # Exponential moving averages
-    df["ema_12"] = close.ewm(span=12).mean()
-    df["ema_26"] = close.ewm(span=26).mean()
+    # Rename pandas-ta default columns
+    df.rename(
+        columns={
+            "SMA_10": "sma_10",
+            "SMA_20": "sma_20",
+            "SMA_50": "sma_50",
+            "EMA_12": "ema_12",
+            "EMA_26": "ema_26",
+            "MACD_12_26_9": "macd",
+            "MACDs_12_26_9": "macd_signal",
+            "RSI_14": "rsi",
+            "BBM_20_2.0": "bb_middle",
+            "BBU_20_2.0": "bb_upper",
+            "BBL_20_2.0": "bb_lower",
+        },
+        inplace=True,
+    )
 
-    # MACD
-    df["macd"] = df["ema_12"] - df["ema_26"]
-    df["macd_signal"] = df["macd"].ewm(span=9).mean()
-
-    # RSI
-    delta = close.diff()
-    delta = pd.to_numeric(delta, errors="coerce")
-    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-    rs = gain / loss
-    df["rsi"] = 100 - (100 / (1 + rs))
-
-    # Bollinger Bands
-    df["bb_middle"] = close.rolling(window=20).mean()
-    bb_std = close.rolling(window=20).std()
-    df["bb_upper"] = df["bb_middle"] + (bb_std * 2)
-    df["bb_lower"] = df["bb_middle"] - (bb_std * 2)
-    df["bb_position"] = (close - df["bb_lower"]) / (df["bb_upper"] - df["bb_lower"])
-
-    # Volume indicators
-    df["volume_sma"] = volume.rolling(window=20).mean()
-    df["volume_ratio"] = volume / df["volume_sma"]
-
-    # Price changes
-    df["price_change"] = close.pct_change()
-    df["price_change_5"] = close.pct_change(5)
-
-    # Volatility
+    # Compute derived features
+    df["bb_position"] = (df["close"] - df["bb_lower"]) / (
+        df["bb_upper"] - df["bb_lower"]
+    )
+    df["volume_sma"] = ta.sma(df["volume"], length=20)
+    df["volume_ratio"] = df["volume"] / df["volume_sma"]
+    df["price_change"] = df["close"].pct_change()
+    df["price_change_5"] = df["close"].pct_change(5)
     df["volatility"] = df["price_change"].rolling(window=20).std()
 
     return df
