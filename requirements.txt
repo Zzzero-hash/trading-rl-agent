@@ -40,3 +40,8 @@ matplotlib>=3.5.0,<3.9.0      # Plotting and visualization
 pynvml>=11.0.0,<12.0.0        # NVIDIA GPU monitoring
 optuna>=3.0.0,<4.0.0         # Hyperparameter optimization
 feedparser>=6.0.0,<7.0.0    # RSS feed parsing for news sentiment
+
+# Add missing dependencies for web requests, HTML parsing, and system monitoring
+requests>=2.28.0,<3.0.0  # HTTP requests for sentiment and data fetching
+beautifulsoup4>=4.11.0,<5.0.0  # HTML parsing for sentiment scraping
+psutil>=5.9.0,<6.0.0  # System monitoring for resource checks
