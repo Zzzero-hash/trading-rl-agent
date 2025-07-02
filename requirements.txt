@@ -15,6 +15,7 @@ pyyaml>=6.0,<7.0      # Configuration files
 ray[rllib]>=2.31.0,<2.47.0  # Distributed RL (minimal extras)
 gymnasium>=0.29.1,<1.2.0  # RL environments
 stable-baselines3>=1.7.0
+sb3-contrib>=1.7.0
 
 # Market data & Technical Analysis
 yfinance>=0.2.0,<0.3.0     # Financial data
