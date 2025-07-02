@@ -22,7 +22,6 @@ ta>=0.10.0,<0.11.0         # Technical indicators
 pandas-ta>=0.3.14b0
 # TA-Lib Python bindings require the TA-Lib C library to be installed system-wide.
 # On Ubuntu, run: sudo apt-get update && sudo apt-get install -y libta-lib0 libta-lib0-dev
-ta-lib>=0.4.28
 
 # Testing
 pytest>=7.4.0              # Unit testing (updated for compatibility)
