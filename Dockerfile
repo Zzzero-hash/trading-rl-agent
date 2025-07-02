@@ -13,12 +13,12 @@ RUN apt-get update && \
       libssl-dev libgl1 libglib2.0-0 && \
     wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
     tar -xzf ta-lib-0.4.0-src.tar.gz && \
-    cd ta-lib-0.4.0 && ./configure --prefix=/usr && make && make install && cd .. && \
+    cd ta-lib && ./configure --prefix=/usr && make && make install && cd .. && \
     # Symlinks for some build systems (optional, for compatibility)
     ln -s /usr/lib/libta_lib.so /usr/lib/libta-lib.so 2>/dev/null || true && \
     ln -s /usr/lib/libta_lib.a /usr/lib/libta-lib.a 2>/dev/null || true && \
     ldconfig && \
-    rm -rf ta-lib-0.4.0 ta-lib-0.4.0-src.tar.gz && \
+    rm -rf ta-lib ta-lib-0.4.0-src.tar.gz && \
     rm -rf /var/lib/apt/lists/*
 
 # 2. Set python3.11 as default and install base Python tools
