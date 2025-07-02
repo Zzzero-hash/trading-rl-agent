@@ -5,7 +5,7 @@ digraph G {
   CNNLSTMExtractor [label="CNN+LSTM Features\n(src/models/cnn_lstm.py)"];
   TradingEnv [label="TradingEnv\n(src/envs/trading_env.py)"];
   SAC [label="SAC Agent\n(src/agents/sac_agent.py)"];
-  Ensemble [label="Ensemble Agent\n(src/agents/ensemble_agent.py)"];
+  Ensemble [label="Policy Manager\n(src/agents/rllib_weighted_policy.py)"];
   DataIngestion -> FeatureEngineering -> CNNLSTMExtractor -> TradingEnv;
   TradingEnv -> SAC;
   SAC -> Ensemble;
