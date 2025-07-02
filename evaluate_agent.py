@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
-from src.agents.ensemble_agent import EnsembleAgent
+from src.agents.rllib_weighted_policy import WeightedPolicyManager, CallablePolicy
 from src.agents.sac_agent import SACAgent
 from src.agents.td3_agent import TD3Agent
 from src.envs.trading_env import TradingEnv
@@ -58,13 +58,27 @@ def parse_args() -> argparse.Namespace:
 def load_agent(agent_type: str, state_dim: int, action_dim: int, checkpoint: str):
     if agent_type == "sac":
         agent = SACAgent(state_dim=state_dim, action_dim=action_dim)
-    elif agent_type == "td3":
+        agent.load(checkpoint)
+        return agent
+    if agent_type == "td3":
         agent = TD3Agent(state_dim=state_dim, action_dim=action_dim)
-    else:
-        # Ensemble agent combines SAC and TD3 internally
-        agent = EnsembleAgent(state_dim=state_dim, action_dim=action_dim)
-    agent.load(checkpoint)
-    return agent
+        agent.load(checkpoint)
+        return agent
+
+    # Ensemble via RLlib policy manager
+    sac = SACAgent(state_dim=state_dim, action_dim=action_dim)
+    td3 = TD3Agent(state_dim=state_dim, action_dim=action_dim)
+    sac.load(checkpoint)
+    td3.load(checkpoint)
+
+    obs_space = sac.observation_space
+    act_space = sac.action_space
+    policies = {
+        "sac": CallablePolicy(obs_space, act_space, sac.select_action),
+        "td3": CallablePolicy(obs_space, act_space, td3.select_action),
+    }
+    manager = WeightedPolicyManager(policies, {"sac": 0.5, "td3": 0.5})
+    return manager
 
 
 def run_episode(env: TradingEnv, agent) -> list[float]:
