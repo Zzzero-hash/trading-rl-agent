@@ -263,40 +263,36 @@ class TestIndustryStandardMetrics:
 
     def test_sharpe_ratio_calculation(self, sample_returns):
         """Test Sharpe ratio calculation."""
-        from src.evaluation.industry_metrics import IndustryStandardEvaluator
+        from src.utils import metrics
 
-        evaluator = IndustryStandardEvaluator()
-        sharpe = evaluator.calculate_sharpe_ratio(sample_returns, risk_free_rate=0.02)
+        sharpe = metrics.calculate_sharpe_ratio(sample_returns, risk_free_rate=0.02)
 
         assert isinstance(sharpe, float)
         assert not np.isnan(sharpe)
 
     def test_maximum_drawdown_calculation(self, sample_returns):
         """Test maximum drawdown calculation."""
-        from src.evaluation.industry_metrics import IndustryStandardEvaluator
+        from src.utils import metrics
 
-        evaluator = IndustryStandardEvaluator()
-        max_dd = evaluator.calculate_max_drawdown(sample_returns)
+        max_dd = metrics.calculate_max_drawdown(sample_returns)
 
         assert isinstance(max_dd, float)
         assert max_dd <= 0  # Drawdown should be negative or zero
 
     def test_sortino_ratio_calculation(self, sample_returns):
         """Test Sortino ratio calculation."""
-        from src.evaluation.industry_metrics import IndustryStandardEvaluator
+        from src.utils import metrics
 
-        evaluator = IndustryStandardEvaluator()
-        sortino = evaluator.calculate_sortino_ratio(sample_returns, risk_free_rate=0.02)
+        sortino = metrics.calculate_sortino_ratio(sample_returns, risk_free_rate=0.02)
 
         assert isinstance(sortino, float)
         assert not np.isnan(sortino)
 
     def test_var_calculation(self, sample_returns):
         """Test Value at Risk calculation."""
-        from src.evaluation.industry_metrics import IndustryStandardEvaluator
+        from src.utils import metrics
 
-        evaluator = IndustryStandardEvaluator()
-        var_95 = evaluator.calculate_var(sample_returns, confidence=0.95)
+        var_95 = metrics.calculate_var(sample_returns, confidence=0.95)
 
         assert isinstance(var_95, float)
         assert var_95 <= 0  # VaR should be negative
@@ -305,10 +301,9 @@ class TestIndustryStandardMetrics:
         self, sample_returns, sample_benchmark_returns
     ):
         """Test Information ratio calculation."""
-        from src.evaluation.industry_metrics import IndustryStandardEvaluator
+        from src.utils import metrics
 
-        evaluator = IndustryStandardEvaluator()
-        info_ratio = evaluator.calculate_information_ratio(
+        info_ratio = metrics.calculate_information_ratio(
             sample_returns, sample_benchmark_returns
         )
 
@@ -319,10 +314,9 @@ class TestIndustryStandardMetrics:
         self, sample_returns, sample_benchmark_returns
     ):
         """Test comprehensive metrics calculation."""
-        from src.evaluation.industry_metrics import IndustryStandardEvaluator
+        from src.utils import metrics
 
-        evaluator = IndustryStandardEvaluator()
-        metrics = evaluator.calculate_comprehensive_metrics(
+        metrics_dict = metrics.calculate_comprehensive_metrics(
             sample_returns, sample_benchmark_returns
         )
 
@@ -343,8 +337,8 @@ class TestIndustryStandardMetrics:
         ]
 
         for metric in expected_metrics:
-            assert metric in metrics
-            assert isinstance(metrics[metric], (int, float))
+            assert metric in metrics_dict
+            assert isinstance(metrics_dict[metric], (int, float))
 
 
 class TestRiskManagement:
