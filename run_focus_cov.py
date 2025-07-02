@@ -7,7 +7,7 @@ files = [
     "src/agents/trainer.py",
     "src/data/preprocessing.py",
     "src/data/features.py",
-    "src/optimization/model_summary.py",
+    "src/optimization/model_utils.py",
 ]
 
 cov = coverage.Coverage(source=["src"])

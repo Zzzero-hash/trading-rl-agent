@@ -191,7 +191,7 @@ This section provides detailed API documentation for all modules and classes.
 ### Model Summary
 
 ```{eval-rst}
-.. automodule:: src.optimization.model_summary
+.. automodule:: src.optimization.model_utils
    :members:
    :undoc-members:
    :show-inheritance:

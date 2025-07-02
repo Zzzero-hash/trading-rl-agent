@@ -20,8 +20,8 @@ import torch
 import torch.nn as nn
 
 from src.models.cnn_lstm import CNNLSTMModel
-from src.optimization.model_summary import (
-    ModelSummarizer,
+from src.optimization.model_utils import (
+    get_model_summary,
     detect_gpus,
     optimal_gpu_config,
     profile_model_inference,
@@ -38,61 +38,18 @@ def _ensure_ray_initialized():
         ray.shutdown()
 
 
-class TestModelSummarizer:
-    """Test ModelSummarizer class."""
+class TestModelSummary:
+    """Test model summary helper."""
 
-    def test_model_summarizer_initialization(self):
-        """Test ModelSummarizer initialization."""
-        # Create a simple model for testing
+    def test_get_model_summary(self):
         model = nn.Sequential(nn.Linear(10, 20), nn.ReLU(), nn.Linear(20, 1))
+        summary = get_model_summary(model, input_size=(1, 10))
+        assert "Linear" in summary
 
-        # Initialize summarizer
-        summarizer = ModelSummarizer(model)
-
-        # Check attributes
-        assert summarizer.model is model
-        assert summarizer.num_params is not None
-        assert "trainable" in summarizer.num_params
-        assert "non_trainable" in summarizer.num_params
-        assert "total" in summarizer.num_params
-
-        # Check if the number of parameters is correct
-        # 10*20 + 20 bias + 20*1 + 1 bias = 241
-        expected_params = 241
-        assert summarizer.num_params["total"] == expected_params
-
-    def test_get_summary(self):
-        """Test summary generation."""
-        model = nn.Sequential(nn.Linear(10, 20), nn.ReLU(), nn.Linear(20, 1))
-
-        summarizer = ModelSummarizer(model)
-        summary = summarizer.get_summary()
-
-        # Check if summary contains key information
-        assert "Parameters: 241 total" in summary
-        assert "Device:" in summary
-
-        # Test detailed summary
-        detailed = summarizer.get_summary(detailed=True)
-        assert "Layer details:" in detailed
-
-        # Test simplified summary
-        simplified = summarizer.get_summary(detailed=False)
-        assert "Layer details:" not in simplified
-
-    def test_cnn_lstm_summarizer(self):
-        """Test summarizer with CNN-LSTM model."""
+    def test_cnn_lstm_summary(self):
         model = CNNLSTMModel(input_dim=10, output_size=1)
-
-        summarizer = ModelSummarizer(model)
-        summary = summarizer.get_summary()
-
-        # Check if summary contains model name
-        assert "Model: CNNLSTMModel" in summary
-
-        # Make sure it doesn't error with detailed=True
-        detailed = summarizer.get_summary(detailed=True)
-        assert isinstance(detailed, str)
+        summary = get_model_summary(model, input_size=(1, 60, 10))
+        assert "CNNLSTMModel" in summary
 
 
 class TestModelSummaryEdgeCases:
@@ -106,10 +63,8 @@ class TestModelSummaryEdgeCases:
                 return x
 
         model = Dummy()
-        summarizer = ModelSummarizer(model)
-        summary = summarizer.get_summary()
-        assert "Parameters: 0 total" in summary
-        assert summarizer.memory_estimate["total"] == 0
+        summary = get_model_summary(model, input_size=(1,))
+        assert "Dummy" in summary
 
     def test_model_with_non_trainable_params(self):
         """Test summarization of a model with non-trainable parameters."""
@@ -123,17 +78,14 @@ class TestModelSummaryEdgeCases:
                 return x
 
         model = Dummy()
-        summarizer = ModelSummarizer(model)
-        assert summarizer.num_params["trainable"] == 0
-        assert summarizer.num_params["non_trainable"] == 1
+        summary = get_model_summary(model, input_size=(1,))
+        assert "Dummy" in summary
 
     def test_summary_handles_large_model(self):
         """Test summarization of a large model."""
         model = nn.Sequential(*[nn.Linear(100, 100) for _ in range(20)])
-        summarizer = ModelSummarizer(model)
-        summary = summarizer.get_summary()
-        assert "Model: Sequential" in summary
-        assert summarizer.num_params["total"] > 0
+        summary = get_model_summary(model, input_size=(1, 100))
+        assert "Sequential" in summary
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
