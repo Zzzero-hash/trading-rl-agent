@@ -146,7 +146,7 @@ class TradingRLCleaner:
             "__init__.py",
             "cnn_lstm_optimization.py",
             "rl_optimization.py",
-            "model_summary.py",
+            "model_utils.py",
         ]
 
         for file in opt_dir.iterdir():
@@ -164,7 +164,7 @@ class TradingRLCleaner:
 ## Core Files
 - `src/optimization/cnn_lstm_optimization.py` - Main CNN-LSTM hyperparameter optimization
 - `src/optimization/rl_optimization.py` - RL agent hyperparameter optimization
-- `src/optimization/model_summary.py` - Model analysis and profiling utilities
+- `src/optimization/model_utils.py` - Model analysis and profiling utilities
 
 ## Usage
 ```python
@@ -177,9 +177,8 @@ from src.optimization.rl_optimization import optimize_sac_hyperparams
 results = optimize_sac_hyperparams(env_config, num_samples=10)
 
 # Model analysis
-from src.optimization.model_summary import ModelSummarizer
-summarizer = ModelSummarizer(model)
-print(summarizer.get_summary())
+from src.optimization.model_utils import get_model_summary
+print(get_model_summary(model, input_size=(1, 10)))
 ```
 
 ## Configuration
