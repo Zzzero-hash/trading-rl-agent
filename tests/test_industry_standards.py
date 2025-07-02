@@ -283,7 +283,7 @@ class TestIndustryStandardMetrics:
         """Test Sortino ratio calculation."""
         from src.utils import metrics
 
-        sortino = metrics.calculate_sortino_ratio(sample_returns, risk_free_rate=0.02)
+        sortino = metrics.calculate_sortino_ratio(sample_returns, target_return=0.02)
 
         assert isinstance(sortino, float)
         assert not np.isnan(sortino)
