@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +20,9 @@ from torchinfo import summary
 logger = logging.getLogger(__name__)
 
 
-def get_model_summary(model: nn.Module, input_size: tuple[int, ...], **kwargs: Any) -> str:
+def get_model_summary(
+    model: nn.Module, input_size: tuple[int, ...], **kwargs: Any
+) -> str:
     """Return a summary of the model using ``torchinfo.summary``."""
     return str(summary(model, input_size=input_size, **kwargs))
 
@@ -35,7 +37,11 @@ def profile_model_inference(
 ) -> dict[str, Any]:
     """Profile model inference performance using ``torch.utils.benchmark``."""
     model.eval()
-    device = next(model.parameters()).device if any(model.parameters()) else torch.device("cpu")
+    device = (
+        next(model.parameters()).device
+        if any(model.parameters())
+        else torch.device("cpu")
+    )
     x = torch.randn(batch_size, sequence_length, num_features, device=device)
     with torch.no_grad():
         for _ in range(num_warmup):
@@ -74,6 +80,7 @@ def profile_model_inference(
 # The GPU utilities below are copied from the former ``model_summary`` module
 # to maintain API compatibility.
 
+
 def detect_gpus() -> dict[str, Any]:
     """Detect available GPU devices and their capabilities."""
     gpu_info = {"available": torch.cuda.is_available(), "count": 0, "devices": []}
@@ -103,11 +110,15 @@ def detect_gpus() -> dict[str, Any]:
             )
             try:
                 util = pynvml.nvmlDeviceGetUtilizationRates(handle)
-                dev.update({"gpu_utilization": util.gpu, "memory_utilization": util.memory})
+                dev.update(
+                    {"gpu_utilization": util.gpu, "memory_utilization": util.memory}
+                )
             except Exception:
                 pass
             try:
-                temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+                temp = pynvml.nvmlDeviceGetTemperature(
+                    handle, pynvml.NVML_TEMPERATURE_GPU
+                )
                 dev["temperature"] = temp
             except Exception:
                 pass
@@ -125,7 +136,11 @@ def optimal_gpu_config(
 ) -> dict[str, Any]:
     """Determine an approximate optimal GPU configuration."""
     gpu_info = detect_gpus()
-    rec = {"use_gpu": gpu_info["available"] and gpu_info["count"] > 0, "recommended_batch_size": batch_size, "mixed_precision": False}
+    rec = {
+        "use_gpu": gpu_info["available"] and gpu_info["count"] > 0,
+        "recommended_batch_size": batch_size,
+        "mixed_precision": False,
+    }
     if not rec["use_gpu"]:
         rec["reason"] = "No GPUs available"
         return rec
@@ -134,9 +149,16 @@ def optimal_gpu_config(
     optimizer_memory_mb = model_params * 8 / (1024 * 1024)
     activation_factor = 2.0
     activation_memory_mb = (
-        batch_size * sequence_length * feature_dim * 4 * activation_factor / (1024 * 1024)
+        batch_size
+        * sequence_length
+        * feature_dim
+        * 4
+        * activation_factor
+        / (1024 * 1024)
     )
-    total_memory_mb = param_memory_mb + grad_memory_mb + optimizer_memory_mb + activation_memory_mb
+    total_memory_mb = (
+        param_memory_mb + grad_memory_mb + optimizer_memory_mb + activation_memory_mb
+    )
     best_gpu = None
     max_free = 0
     for dev in gpu_info["devices"]:
@@ -148,7 +170,9 @@ def optimal_gpu_config(
             {
                 "gpu_index": best_gpu["index"],
                 "gpu_name": best_gpu["name"],
-                "gpu_memory_free_mb": best_gpu.get("memory_free", best_gpu["total_memory"]),
+                "gpu_memory_free_mb": best_gpu.get(
+                    "memory_free", best_gpu["total_memory"]
+                ),
                 "estimated_memory_required_mb": total_memory_mb,
             }
         )
@@ -163,7 +187,9 @@ def optimal_gpu_config(
                 max_batch = 2 ** int(np.log2(max_batch))
                 max_batch = max(1, max_batch)
                 rec["recommended_batch_size"] = max_batch
-                rec["reason"] = f"Using mixed precision and reduced batch size ({max_batch}) due to memory constraints"
+                rec["reason"] = (
+                    f"Using mixed precision and reduced batch size ({max_batch}) due to memory constraints"
+                )
             else:
                 rec["reason"] = "Using mixed precision due to memory constraints"
         else:
@@ -188,7 +214,9 @@ def run_hyperparameter_optimization(
         search_alg = None
     else:
         search_alg = OptunaSearch(metric=metric, mode=mode)
-    scheduler = ASHAScheduler(max_t=max_epochs_per_trial, grace_period=1, reduction_factor=2)
+    scheduler = ASHAScheduler(
+        max_t=max_epochs_per_trial, grace_period=1, reduction_factor=2
+    )
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     experiment_name = f"hparam_opt_{timestamp}"
     output_path = Path(output_dir) / experiment_name
@@ -210,9 +238,7 @@ def run_hyperparameter_optimization(
             run_kwargs["search_alg"] = search_alg
         analysis = tune.run(train_fn, **run_kwargs)
     except Exception as exc:
-        if "fail" in str(exc):
-            raise exc
-        raise RuntimeError(str(exc))
+        raise RuntimeError(f"Hyperparameter optimization failed: {exc}") from exc
     best_config = analysis.get_best_config(metric=metric, mode=mode)
     logger.info("Best configuration: %s", best_config)
     best_trial = analysis.get_best_trial(metric=metric, mode=mode)
@@ -238,7 +264,11 @@ def run_hyperparameter_optimization(
         if not df.empty:
             plt.figure(figsize=(10, 6))
             for trial_id, trial_df in df.groupby("trial_id"):
-                plt.plot(trial_df["training_iteration"], trial_df[metric], label=f"Trial {trial_id}")
+                plt.plot(
+                    trial_df["training_iteration"],
+                    trial_df[metric],
+                    label=f"Trial {trial_id}",
+                )
             plt.xlabel("Iteration")
             plt.ylabel(metric)
             plt.title(f"Hyperparameter Optimization - {metric} vs Iteration")
