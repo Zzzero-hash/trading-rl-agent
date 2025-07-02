@@ -39,7 +39,7 @@ This section provides detailed API documentation for all modules and classes.
 ### Ensemble Agent
 
 ```{eval-rst}
-.. automodule:: src.agents.ensemble_agent
+.. automodule:: src.agents.rllib_weighted_policy
    :members:
    :undoc-members:
    :show-inheritance:
