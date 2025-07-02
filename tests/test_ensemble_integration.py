@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 from src.agents.configs import SACConfig, TD3Config
-from src.agents.ensemble_agent import EnsembleAgent
+from src.agents.rllib_weighted_policy import WeightedPolicyManager, CallablePolicy
 from src.agents.sac_agent import SACAgent
 from src.agents.td3_agent import TD3Agent
 
@@ -19,7 +19,7 @@ from src.agents.td3_agent import TD3Agent
 def test_ensemble_integration():
     """Test ensemble with TD3 and SAC agents."""
 
-    pytest.skip("EnsembleAgent is a stub implementation")
+    pytest.skip("WeightedPolicyManager example test disabled")
 
     print("🧪 Testing Ensemble Integration...")
 
@@ -51,7 +51,11 @@ def test_ensemble_integration():
 
     # Create ensemble
     print("🤝 Creating ensemble agent...")
-    ensemble = EnsembleAgent({"td3": td3_agent, "sac": sac_agent})
+    policies = {
+        "td3": CallablePolicy(td3_agent.observation_space, td3_agent.action_space, td3_agent.select_action),
+        "sac": CallablePolicy(sac_agent.observation_space, sac_agent.action_space, sac_agent.select_action),
+    }
+    ensemble = WeightedPolicyManager(policies, {"td3": 0.5, "sac": 0.5})
 
     print(f"✅ Ensemble created with {len(ensemble.agents)} agents")
 

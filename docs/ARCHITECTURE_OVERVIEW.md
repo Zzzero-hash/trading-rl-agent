@@ -274,10 +274,9 @@ def get_final_action(rl_action, cnn_lstm_confidence):
 
 This hybrid architecture successfully demonstrates how supervised learning can enhance reinforcement learning for financial applications, providing both improved performance and better risk management through uncertainty quantification.
 
-- **Ensemble Agent** – [`src/agents/ensemble_agent.py`](../src/agents/ensemble_agent.py)
-  - Combines SAC outputs with the optional TD3 experimental agent.
-  - Designed to reduce variance and improve stability.
-  - Can be extended to include additional models.
-  - Raises an error if any sub-agent fails to initialize.
+- **Weighted Policy Manager** – [`src/agents/rllib_weighted_policy.py`](../src/agents/rllib_weighted_policy.py)
+  - Uses RLlib's multi-agent utilities for policy weighting.
+  - Supports dynamic weight updates during training.
+  - Can ensemble any number of RLlib compatible policies.
 
 The agents consume observations from `TradingEnv`, take actions, and optionally contribute to ensemble decisions. This modular setup makes it straightforward to swap out or update individual components while keeping the overall pipeline intact.
