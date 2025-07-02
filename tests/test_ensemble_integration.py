@@ -17,7 +17,11 @@ from src.agents.td3_agent import TD3Agent
 
 
 def test_ensemble_integration():
-    """Test ensemble with TD3 and SAC agents."""
+    """
+    Runs an integration test for an ensemble of TD3 and SAC reinforcement learning agents using a weighted policy manager.
+    
+    The test verifies agent instantiation, action selection, experience storage, training, and performance tracking within the ensemble. Returns True if all steps complete successfully.
+    """
 
     pytest.skip("WeightedPolicyManager example test disabled")
 

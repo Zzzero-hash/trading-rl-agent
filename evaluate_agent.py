@@ -56,6 +56,20 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_agent(agent_type: str, state_dim: int, action_dim: int, checkpoint: str):
+    """
+    Load and return a trading agent or an ensemble policy manager from a checkpoint.
+    
+    Depending on the specified agent type, this function loads either a SAC agent, a TD3 agent, or an ensemble combining both. For the ensemble, both agents are loaded from the same checkpoint and combined using a weighted policy manager with equal weights.
+    
+    Parameters:
+        agent_type (str): The type of agent to load ("sac", "td3", or "ensemble").
+        state_dim (int): Dimension of the observation/state space.
+        action_dim (int): Dimension of the action space.
+        checkpoint (str): Path to the saved agent checkpoint.
+    
+    Returns:
+        An initialized agent instance or a weighted policy manager for ensemble mode.
+    """
     if agent_type == "sac":
         agent = SACAgent(state_dim=state_dim, action_dim=action_dim)
         agent.load(checkpoint)
@@ -82,6 +96,16 @@ def load_agent(agent_type: str, state_dim: int, action_dim: int, checkpoint: str
 
 
 def run_episode(env: TradingEnv, agent) -> list[float]:
+    """
+    Run a single episode in the trading environment using the specified agent and collect rewards.
+    
+    Parameters:
+        env (TradingEnv): The trading environment to run the episode in.
+        agent: The agent with a `select_action` method used to choose actions.
+    
+    Returns:
+        list[float]: A list of rewards collected at each step of the episode.
+    """
     state, _ = env.reset()
     rewards: list[float] = []
     done = False
