@@ -8,7 +8,7 @@ This project combines **CNN+LSTM market intelligence** with **reinforcement lear
 
 - **FinRL Foundation**: Industry-standard RL trading framework
 - **Ray RLlib**: Distributed training used by Uber, Shopify, major hedge funds
-- **Professional Data**: Alpaca support with placeholders for Bloomberg, Refinitiv, and Polygon.io
+- **Professional Data**: yfinance support with placeholders for Bloomberg, Refinitiv, and Polygon.io
 - **Risk Management**: Position limits with experimental VaR and circuit breaker components
 - **MLOps Governance**: Model versioning, A/B testing, automated retraining
 - **Regulatory Compliance**: MiFID II, audit trails, performance attribution
@@ -51,23 +51,21 @@ production_state = {
 
 ## ✅ **Production Readiness Status**
 
-| Component                  | Status        | Industry Standard               |
-| -------------------------- | ------------- | ------------------------------- |
-| **Market Data Pipeline**   | ✅ Production | Kafka + Spark real-time         |
-| **CNN+LSTM Intelligence**  | ✅ Production | 1.37M records, 97.78% quality   |
-| **RL Optimization**        | ✅ Production | FinRL + Ray RLlib               |
+| Component                  | Status          | Industry Standard                                 |
+| -------------------------- | --------------- | ------------------------------------------------- |
+| **Market Data Pipeline**   | ✅ Production   | Kafka + Spark real-time                           |
+| **CNN+LSTM Intelligence**  | ✅ Production   | 1.37M records, 97.78% quality                     |
+| **RL Optimization**        | ✅ Production   | FinRL + Ray RLlib                                 |
 | **Risk Management**        | 🚧 Experimental | Position limits; VaR and circuit breakers planned |
-| **MLOps Pipeline**         | ✅ Production | MLflow + Kubernetes             |
-| **Professional Data**      | 🚧 In progress | Alpaca implemented; Bloomberg planned |
-| **Backtesting Engine**     | ✅ Production | Transaction costs, slippage     |
-| **Performance Monitoring** | ✅ Production | Prometheus + Grafana            |
+| **MLOps Pipeline**         | ✅ Production   | MLflow + Kubernetes                               |
+| **Professional Data**      | 🚧 In progress  | Alpaca implemented; Bloomberg planned             |
+| **Backtesting Engine**     | ✅ Production   | Transaction costs, slippage                       |
+| **Performance Monitoring** | ✅ Production   | Prometheus + Grafana                              |
 
-*The table above is illustrative and reflects target capabilities rather than finalized features.*
-
+_The table above is illustrative and reflects target capabilities rather than finalized features._
 
 **SLA**: 99.9% uptime (target) | **Latency**: <100ms decisions | **Tests**: ~733 total
-*Note: sample data is used in examples; metrics are illustrative.*
-
+_Note: sample data is used in examples; metrics are illustrative._
 
 ## 🚀 Enterprise Quick Start
 
@@ -150,7 +148,7 @@ python src/monitoring/dashboard.py
 
 ## 📊 Performance Benchmarks
 
-*The metrics below are illustrative targets and will be validated with future benchmark scripts.*
+_The metrics below are illustrative targets and will be validated with future benchmark scripts._
 
 ### CNN+LSTM Model
 
@@ -170,7 +168,7 @@ python src/monitoring/dashboard.py
 - **Test Fixtures**: Fixed and optimized for fast execution
 - **Data Quality**: 97.78% complete with balanced labels
 - **Phase 2 Status**: Environment integration complete, core functionality working
-*Metrics in this section are illustrative.*
+  _Metrics in this section are illustrative._
 
 ## 📁 Project Structure
 
