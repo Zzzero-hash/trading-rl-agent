@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="7.556" timestamp="2025-07-02T20:17:00.245136+00:00" hostname="ca3190311e25"><testcase classname="" name="tests.focused.test_dataclasses_trainer" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_dataclasses_trainer.py'.
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="8.521" timestamp="2025-07-03T02:45:38.009268+00:00" hostname="0cb157972b5d"><testcase classname="" name="tests.focused.test_dataclasses_trainer" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_dataclasses_trainer.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
 /usr/lib/python3.11/importlib/__init__.py:126: in import_module
@@ -16,7 +16,19 @@ src/data/features.py:11: in &lt;module&gt;
     import talib
 /usr/local/lib/python3.11/dist-packages/talib/__init__.py:109: in &lt;module&gt;
     from ._ta_lib import (
-E   ImportError: /usr/local/lib/python3.11/dist-packages/talib/_ta_lib.cpython-311-x86_64-linux-gnu.so: undefined symbol: TA_AVGDEV_Lookback</error></testcase><testcase classname="" name="tests.focused.test_pipeline_cached" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_pipeline_cached.py'.
+E   ImportError: /usr/local/lib/python3.11/dist-packages/talib/_ta_lib.cpython-311-x86_64-linux-gnu.so: undefined symbol: TA_AVGDEV_Lookback</error></testcase><testcase classname="" name="tests.focused.test_optimization_utils" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_optimization_utils.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/focused/test_optimization_utils.py:2: in &lt;module&gt;
+    import src.optimization.model_utils as mu
+src/optimization/__init__.py:16: in &lt;module&gt;
+    from .model_utils import (
+src/optimization/model_utils.py:18: in &lt;module&gt;
+    from torchinfo import summary
+E   ModuleNotFoundError: No module named 'torchinfo'</error></testcase><testcase classname="" name="tests.focused.test_pipeline_cached" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_pipeline_cached.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
 /usr/lib/python3.11/importlib/__init__.py:126: in import_module
@@ -50,24 +62,6 @@ Traceback:
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 tests/focused/test_trading_env_additional.py:5: in &lt;module&gt;
     from src.envs.trading_env import TradingEnv
-src/envs/trading_env.py:11: in &lt;module&gt;
-    from src.data.features import generate_features
-src/data/features.py:11: in &lt;module&gt;
-    import talib
-/usr/local/lib/python3.11/dist-packages/talib/__init__.py:109: in &lt;module&gt;
-    from ._ta_lib import (
-E   ImportError: /usr/local/lib/python3.11/dist-packages/talib/_ta_lib.cpython-311-x86_64-linux-gnu.so: undefined symbol: TA_AVGDEV_Lookback</error></testcase><testcase classname="" name="tests.focused.test_trainer_basic" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_trainer_basic.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-/usr/lib/python3.11/importlib/__init__.py:126: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/focused/test_trainer_basic.py:4: in &lt;module&gt;
-    from src.agents import trainer as trainer_module
-src/agents/__init__.py:6: in &lt;module&gt;
-    from .trainer import Trainer
-src/agents/trainer.py:8: in &lt;module&gt;
-    from src.envs.trading_env import register_env
 src/envs/trading_env.py:11: in &lt;module&gt;
     from src.data.features import generate_features
 src/data/features.py:11: in &lt;module&gt;
