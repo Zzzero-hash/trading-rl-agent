@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.preprocessing import StandardScaler
 import torch
 
 # Import data utilities
@@ -28,7 +29,6 @@ from src.data.features import (
     generate_features,
 )
 from src.data.preprocessing import create_sequences
-from sklearn.preprocessing import StandardScaler
 from src.data.synthetic import fetch_synthetic_data
 
 
@@ -417,7 +417,9 @@ class TestDataPipelineIntegration:
             if col not in ["open", "high", "low", "close", "volume"]
         ]
         features = enhanced_data[feature_columns].copy()
-        datetime_cols = features.select_dtypes(include=["datetime", "datetimetz"]).columns
+        datetime_cols = features.select_dtypes(
+            include=["datetime", "datetimetz"]
+        ).columns
         for col in datetime_cols:
             features[col] = pd.to_datetime(features[col]).view("int64")
 

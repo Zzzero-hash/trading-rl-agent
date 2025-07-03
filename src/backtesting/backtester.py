@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Callable, Sequence
+from collections.abc import Sequence
+from typing import Callable
 
-import pandas as pd
 from backtesting import Backtest, Strategy
+import pandas as pd
 
 
 class Backtester:
@@ -29,12 +30,15 @@ class Backtester:
             Results returned by :meth:`backtesting.Backtest.run`.
         """
 
-        df = pd.DataFrame({
-            "Open": prices,
-            "High": prices,
-            "Low": prices,
-            "Close": prices,
-        }, index=pd.RangeIndex(len(prices)))
+        df = pd.DataFrame(
+            {
+                "Open": prices,
+                "High": prices,
+                "Low": prices,
+                "Close": prices,
+            },
+            index=pd.RangeIndex(len(prices)),
+        )
 
         latency_steps = int(self.latency_seconds)
         slippage = self.slippage_pct
@@ -47,7 +51,11 @@ class Backtester:
             def next(self):
                 if latency_steps and self.i - latency_steps < 0:
                     return
-                price_obs = self.data.Close[-latency_steps - 1] if latency_steps else self.data.Close[-1]
+                price_obs = (
+                    self.data.Close[-latency_steps - 1]
+                    if latency_steps
+                    else self.data.Close[-1]
+                )
                 action = policy_fn(price_obs)
                 if action == "buy":
                     self.buy()

@@ -2,14 +2,14 @@ import numpy as np
 
 from src.utils.rewards import (
     compute_reward,
-    simple_profit_reward,
-    risk_adjusted_reward,
-    drawdown_penalty_reward,
-    sharpe_based_reward,
-    portfolio_diversification_reward,
-    transaction_cost_penalty,
-    momentum_reward,
     custom_trading_reward,
+    drawdown_penalty_reward,
+    momentum_reward,
+    portfolio_diversification_reward,
+    risk_adjusted_reward,
+    sharpe_based_reward,
+    simple_profit_reward,
+    transaction_cost_penalty,
 )
 
 
@@ -74,7 +74,8 @@ def test_custom_trading_reward():
         diversification_bonus=0.02,
     )
     expected = (
-        0.1 - 0.05
+        0.1
+        - 0.05
         - 0.1 * 0.02
         - 0.0
         - 0.01

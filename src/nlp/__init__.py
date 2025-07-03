@@ -58,7 +58,7 @@ def score_social_sentiment(symbol: str, days_back: int = 1) -> float:
     return _aggregate_sentiment(data, days_back)
 
 
-def get_sentiment_scores(symbol: str, days_back: int = 1) -> Dict[str, float]:
+def get_sentiment_scores(symbol: str, days_back: int = 1) -> dict[str, float]:
     """Return news, social and overall sentiment scores for ``symbol``.
 
     The overall score is computed from all available sentiment data using the

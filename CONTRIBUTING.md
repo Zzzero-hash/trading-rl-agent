@@ -410,11 +410,13 @@ python run_comprehensive_tests.py
    - Update documentation
 
 4. **Run linting**
+
    ```bash
    flake8 src/ tests/
    ```
 
 5. **Test your changes**
+
    ```bash
    python run_comprehensive_tests.py
    ```

@@ -1,9 +1,15 @@
 import numpy as np
 import pandas as pd
-import torch
 import pytest
+import torch
 
-from src.supervised_model import _to_tensor, evaluate_model, predict_features, ModelConfig, TrendPredictor
+from src.supervised_model import (
+    ModelConfig,
+    TrendPredictor,
+    _to_tensor,
+    evaluate_model,
+    predict_features,
+)
 
 
 def test_to_tensor_various_types():

@@ -3,16 +3,15 @@ Tests for the CNN-LSTM Training Pipeline.
 Tests training functionality, data preparation, and model integration.
 """
 
+from pathlib import Path
+import tempfile
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
 import pytest
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-from pathlib import Path
-import tempfile
-from unittest.mock import MagicMock, patch
-
-
 import yaml
 
 from src.models.cnn_lstm import CNNLSTMModel

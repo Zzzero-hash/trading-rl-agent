@@ -32,7 +32,7 @@ Production-ready hybrid CNN+LSTM + Reinforcement Learning system for algorithmic
 - **Advanced Dataset**: 1.37M records with 78 engineered features
 - **Framework**: Ray RLlib with SAC/FinRL integration (custom TD3 for experiments)
 
-*The above status metrics are illustrative and based on sample runs.*
+_The above status metrics are illustrative and based on sample runs._
 
 ## 🎯 Quick Navigation
 
@@ -72,7 +72,7 @@ Documentation references automated tools in [`../scripts/`](../scripts/):
 - ✅ Hybrid CNN+LSTM + RL architecture
 - ✅ Real-time trading capabilities
 
-*This summary is illustrative and based on sample configurations.*
+_This summary is illustrative and based on sample configurations._
 
 ## 🧪 Test Suite Requirements
 

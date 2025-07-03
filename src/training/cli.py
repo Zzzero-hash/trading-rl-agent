@@ -1,13 +1,12 @@
 import argparse
 
-from . import rl, cnn_lstm
 from src.agents.tune import run_tune
+
+from . import cnn_lstm, rl
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(
-        description="Unified training entry point"
-    )
+    parser = argparse.ArgumentParser(description="Unified training entry point")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     rl_parser = subparsers.add_parser("rl", help="Train reinforcement learning agent")
@@ -22,7 +21,9 @@ def main(argv=None):
     cnn_parser.add_argument("config", help="Path to training YAML config")
 
     tune_parser = subparsers.add_parser("tune", help="Run Ray Tune sweep")
-    tune_parser.add_argument("configs", nargs="+", help="One or more YAML files defining search space")
+    tune_parser.add_argument(
+        "configs", nargs="+", help="One or more YAML files defining search space"
+    )
 
     args = parser.parse_args(argv)
 

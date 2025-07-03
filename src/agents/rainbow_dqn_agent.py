@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import numpy as np
-from gymnasium import spaces
 import gymnasium as gym
+from gymnasium import spaces
+import numpy as np
 from sb3_contrib import QRDQN
 
 

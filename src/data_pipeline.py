@@ -116,10 +116,9 @@ def generate_features(df: pd.DataFrame, cfg: PipelineConfig) -> pd.DataFrame:
                 batch[f"mom_{w}"] = batch["close"].diff(w)
             rsi_ind = RSIIndicator(batch["close"].astype(float), window=cfg.rsi_window)
             batch[f"rsi_{cfg.rsi_window}"] = rsi_ind.rsi()
-            batch[f"vol_{cfg.vol_window}"] = (
-                batch["log_return"].rolling(cfg.vol_window).std(ddof=0)
-                * np.sqrt(cfg.vol_window)
-            )
+            batch[f"vol_{cfg.vol_window}"] = batch["log_return"].rolling(
+                cfg.vol_window
+            ).std(ddof=0) * np.sqrt(cfg.vol_window)
             return batch
 
         ds = ds.map_batches(apply_basic_features)
@@ -133,10 +132,9 @@ def generate_features(df: pd.DataFrame, cfg: PipelineConfig) -> pd.DataFrame:
             df[f"mom_{w}"] = df["close"].diff(w)
         rsi_ind = RSIIndicator(df["close"].astype(float), window=cfg.rsi_window)
         df[f"rsi_{cfg.rsi_window}"] = rsi_ind.rsi()
-        df[f"vol_{cfg.vol_window}"] = (
-            df["log_return"].rolling(cfg.vol_window).std(ddof=0)
-            * np.sqrt(cfg.vol_window)
-        )
+        df[f"vol_{cfg.vol_window}"] = df["log_return"].rolling(cfg.vol_window).std(
+            ddof=0
+        ) * np.sqrt(cfg.vol_window)
 
     return df
 
