@@ -1,6 +1,6 @@
 digraph G {
   rankdir=LR;
-  DataIngestion [label="Data Ingestion\n(build_advanced_dataset.py)"];
+  DataIngestion [label="Data Ingestion\n(finrl_data_loader.py)"];
   FeatureEngineering [label="Feature Engineering\n(src/data/features.py)"];
   CNNLSTMExtractor [label="CNN+LSTM Features\n(src/models/cnn_lstm.py)"];
   TradingEnv [label="TradingEnv\n(src/envs/trading_env.py)"];

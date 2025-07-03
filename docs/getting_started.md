@@ -34,11 +34,11 @@ pytest
 
 ## Quick Start Tutorial
 
-### 1. Generate Production Dataset
+### 1. Generate Data
 
 ```bash
-# Generate the full 1.37M record production dataset
-python build_advanced_dataset.py
+# Load market data using FinRL
+python ../finrl_data_loader.py --config ../configs/finrl_real_data.yaml
 
 # This creates:
 # - Advanced feature engineering (78 technical indicators)
@@ -54,9 +54,9 @@ from src.envs.trading_env import TradingEnv
 from src.agents.sac_agent import SACAgent
 from src.models.cnn_lstm_model import CNNLSTMModel
 
-# Load production dataset
+# Load data generated via FinRL
 env = TradingEnv(
-    data_paths=["data/advanced_trading_dataset_*.csv"],
+    data_paths=["data/finrl_real_sample.csv"],
     initial_balance=10000,
     window_size=50,
     transaction_cost=0.001,

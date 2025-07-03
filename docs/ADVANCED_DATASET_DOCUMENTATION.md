@@ -227,20 +227,21 @@ enhanced_live_data = generate_features(
 ### Extending the Dataset
 
 ```python
-from build_production_dataset import AdvancedDatasetBuilder
+from finrl_data_loader import load_real_data
+import yaml
 
 # Custom configuration
 config = {
-    "symbols": {
-        "stocks": ["YOUR_SYMBOL"],
-        "forex": ["YOUR_FOREX_PAIR=X"],
-        "crypto": ["YOUR_CRYPTO-USD"]
-    }
+    "tickers": ["YOUR_SYMBOL"],
+    "start_date": "2024-01-01",
+    "end_date": "2024-06-30",
+    "tech_indicators": ["macd", "rsi_30"],
+    "output": "data/custom_dataset.csv",
 }
+with open("custom_config.yaml", "w") as f:
+    yaml.dump(config, f)
 
-# Build extended dataset
-builder = AdvancedDatasetBuilder(config)
-file_paths = builder.build_dataset()
+file_paths = load_real_data("custom_config.yaml")
 ```
 
 ## Performance Validation

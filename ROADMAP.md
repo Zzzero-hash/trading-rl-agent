@@ -149,7 +149,7 @@ All core functionality working - environment testing framework complete!
 
 ### **Current Capabilities**
 
-1. **Data Generation**: `build_production_dataset.py` → Advanced dataset creation
+1. **Data Generation**: `finrl_data_loader.py` → Load real or synthetic data
 2. **CNN+LSTM Optimization**: `cnn_lstm_hparam_clean.ipynb` → Interactive optimization
 3. **Model Training**: `src/train_cnn_lstm.py` → Supervised learning pipeline
 4. **RL Training**: `src/agents/` → Hybrid RL agent training
