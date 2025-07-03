@@ -1,199 +1,172 @@
 #!/usr/bin/env python3
-"""
-Unified CLI for Trading RL System.
-
-Subcommands:
-  generate-data   Load data via FinRL utilities
-  train           Train RL or CNN-LSTM models
-  backtest        Run backtests using Backtester
-  serve           Serve predictor deployment with Ray Serve
-  evaluate        Evaluate a trained RL agent
-"""
-import argparse
+"""Unified CLI for Trading RL System using Typer."""
+import ast
 import importlib
-import sys
+from typing import List
 
 import pandas as pd
+import typer
 
-# import modules for commands
-from finrl_data_loader import main as _data_main
-from evaluate_agent import main as _evaluate_agent_main
+from evaluate_agent import main as eval_main
+from finrl_data_loader import load_real_data, load_synthetic_data
 from src.backtesting import Backtester
-from src.main import main as _trainer_main
+from src.training.cnn_lstm import CNNLSTMTrainer
+from src.training.rl import main as rl_main
+
+# Module-level default options to avoid function calls in defaults
+GEN_DATA_CONFIG = typer.Option(..., help="Path to data config YAML")
+GEN_DATA_SYNTHETIC = typer.Option(False, help="Generate synthetic data")
+
+TRAIN_TYPE = typer.Option(
+    ..., "--type", "-t", help="Type of training: 'rl' or 'cnn-lstm'"
+)
+TRAIN_CONFIGS = typer.Argument(
+    ..., help="Config files for training (1 for cnn-lstm, 2 for rl)"
+)
+TRAIN_NUM_WORKERS = typer.Option(0, help="Number of parallel workers for RL training")
+TRAIN_NUM_GPUS = typer.Option(0, help="Number of GPUs for RL training")
+
+BT_DATA = typer.Option(..., help="CSV file with price data")
+BT_PRICE_COLUMN = typer.Option("close", help="Column for price series")
+BT_SLIPPAGE_PCT = typer.Option(0.0, help="Slippage percentage")
+BT_LATENCY = typer.Option(0.0, help="Latency in seconds")
+BT_POLICY = typer.Option(
+    "lambda p: 'hold'", help="Policy as lambda string or module:func"
+)
+
+SERVE_PREDICTOR_PATH = typer.Option(None, help="Path to predictor model checkpoint")
+
+EVAL_DATA = typer.Option(..., help="CSV dataset for evaluation")
+EVAL_CHECKPOINT = typer.Option(..., help="Agent checkpoint path")
+EVAL_AGENT = typer.Option("sac", "--agent", "-a", help="Agent type to load")
+EVAL_OUTPUT = typer.Option("results/evaluation.json", help="Path to save metrics JSON")
+EVAL_WINDOW_SIZE = typer.Option(50, help="Observation window size")
+app = typer.Typer()
 
 
-def _cmd_generate_data(args):
-    # Delegate to finrl_data_loader.main
-    sys.argv = ["finrl_data_loader", "--config", args.config]
-    if args.synthetic:
-        sys.argv.append("--synthetic")
-    _data_main()
-
-
-def _cmd_train(args):
-    if args.type == "cnn-lstm":
-        from src.training.cnn_lstm import CNNLSTMTrainer
-
-        trainer = CNNLSTMTrainer()
-        trainer.train_from_config(args.configs[0])
+# generate-data command
+@app.command(help="Load data via FinRL")
+def generate_data(
+    config: str = GEN_DATA_CONFIG,
+    synthetic: bool = GEN_DATA_SYNTHETIC,
+):
+    """Generate or load market data using FinRL utilities."""
+    if synthetic:
+        df = load_synthetic_data(config)
     else:
-        # RL training
-        # Set sys.argv for rl_main if it expects command-line arguments
-        import sys
+        df = load_real_data(config)
+    typer.echo(df.head())
 
-        from src.training.rl import main as rl_main
+
+# train command
+@app.command(help="Train models")
+def train(
+    type: str = TRAIN_TYPE,
+    configs: list[str] = TRAIN_CONFIGS,
+    num_workers: int = TRAIN_NUM_WORKERS,
+    num_gpus: int = TRAIN_NUM_GPUS,
+):
+    """Train RL or CNN-LSTM models based on config."""
+    if type == "cnn-lstm":
+        trainer = CNNLSTMTrainer()
+        trainer.train_from_config(configs[0])
+    else:
+        import sys
 
         sys.argv = [
             "rl_main",
             "--data",
-            args.configs[0],
+            configs[0],
             "--model-path",
-            args.configs[1],
+            configs[1],
             "--num-workers",
-            str(args.num_workers),
+            str(num_workers),
             "--num-gpus",
-            str(args.num_gpus),
+            str(num_gpus),
         ]
         rl_main()
 
 
-def _load_policy(policy_str: str):
-    """Load a policy function specified as 'module:func_name'."""
+# backtest command
+@app.command(help="Run backtests using Backtester")
+def backtest(
+    data: str = BT_DATA,
+    price_column: str = BT_PRICE_COLUMN,
+    slippage_pct: float = BT_SLIPPAGE_PCT,
+    latency: float = BT_LATENCY,
+    policy: str = BT_POLICY,
+):
+    """Backtest a trading policy on historical data."""
+    df = pd.read_csv(data)
+    prices = df[price_column].tolist()
     try:
-        module_name, func_name = policy_str.split(":", 1)
-    except ValueError:
-        raise ValueError("Policy must be specified as 'module:func_name'")
-    try:
+        module_name, func_name = policy.split(":", 1)
         module = importlib.import_module(module_name)
-        func = getattr(module, func_name)
-    except Exception as err:
-        raise ValueError(f"Cannot load policy '{policy_str}': {err}")
-    if not callable(func):
-        raise ValueError(
-            f"Policy '{func_name}' in module '{module_name}' is not callable"
-        )
-    return func
+        policy_func = getattr(module, func_name)
+    except Exception:
+        # Safely evaluate simple literal expressions (e.g., predefined lambdas not supported here)
+        try:
+            policy_func = ast.literal_eval(policy)
+        except Exception as err:
+            typer.secho(f"Invalid policy expression: {err}", fg=typer.colors.RED)
+            raise typer.Exit(code=1)
+    bt = Backtester(slippage_pct=slippage_pct, latency_seconds=latency)
+    results = bt.run_backtest(prices=prices, policy=policy_func)
+    typer.echo(results)
 
 
-def _cmd_backtest(args):
-    df = pd.read_csv(args.data)
-    prices = df[args.price_column].tolist()
-    # Load user-provided policy function
+# serve command
+@app.command(help="Serve predictor deployment with Ray Serve")
+def serve(
+    predictor_path: str = SERVE_PREDICTOR_PATH,
+):
+    """Start a Ray Serve deployment for inference."""
     try:
-        policy = _load_policy(args.policy)
-    except ValueError as err:
-        print(f"Invalid policy: {err}")
-        sys.exit(1)
-    bt = Backtester(slippage_pct=args.slippage_pct, latency_seconds=args.latency)
-    results = bt.run_backtest(prices=prices, policy=policy)
-    print(results)
+        from ray import serve as ray_serve
 
-
-def _cmd_serve(args):
-    try:
-        from ray import serve
-
-        # Use deployment_graph to get predictor deployment
         from src.serve_deployment import deployment_graph
     except ImportError:
-        print("Ray Serve is not installed or src.serve_deployment missing.")
-        sys.exit(1)
-    # Build deployment graph and run the predictor deployment
-    graph = deployment_graph(args.predictor_path)
-    serve.run(graph["predictor"])
+        typer.secho(
+            "Ray Serve is not installed or src.serve_deployment missing.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=1)
+    graph = deployment_graph(predictor_path)
+    ray_serve.run(graph["predictor"])
 
 
-def _cmd_evaluate(args):
-    argv = [
+# evaluate command
+@app.command(help="Evaluate a trained RL agent")
+def evaluate(
+    data: str = EVAL_DATA,
+    checkpoint: str = EVAL_CHECKPOINT,
+    agent: str = EVAL_AGENT,
+    output: str = EVAL_OUTPUT,
+    window_size: int = EVAL_WINDOW_SIZE,
+):
+    """Evaluate an RL agent and report performance metrics."""
+    import sys
+
+    sys.argv = [
+        "evaluate_agent",
         "--data",
-        args.data,
+        data,
         "--checkpoint",
-        args.checkpoint,
+        checkpoint,
         "--agent",
-        args.agent,
+        agent,
         "--output",
-        args.output,
+        output,
         "--window-size",
-        str(args.window_size),
+        str(window_size),
     ]
-    _evaluate_agent_main()
+    eval_main()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Unified CLI for Trading RL System")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    # generate-data
-    p_gen = subparsers.add_parser("generate-data", help="Load data via FinRL")
-    p_gen.add_argument("--config", required=True, help="Path to data config YAML")
-    p_gen.add_argument(
-        "--synthetic", action="store_true", help="Generate synthetic data"
-    )
-    p_gen.set_defaults(func=_cmd_generate_data)
-
-    # train
-    p_train = subparsers.add_parser("train", help="Train models")
-    p_train.add_argument(
-        "--type",
-        choices=["rl", "cnn-lstm"],
-        required=True,
-        help="Type of training: 'rl' or 'cnn-lstm'",
-    )
-    p_train.add_argument("configs", nargs="+", help="Config files for training")
-    p_train.add_argument(
-        "--num-workers",
-        type=int,
-        default=0,
-        help="Number of parallel workers for RL training",
-    )
-    p_train.add_argument(
-        "--num-gpus", type=int, default=0, help="Number of GPUs for RL training"
-    )
-    p_train.set_defaults(func=_cmd_train)
-
-    # backtest
-    p_bt = subparsers.add_parser("backtest", help="Run backtest using Backtester")
-    p_bt.add_argument("--data", required=True, help="CSV file with price data")
-    p_bt.add_argument("--price-column", default="close", help="Column for price series")
-    p_bt.add_argument(
-        "--slippage-pct", type=float, default=0.0, help="Slippage percentage"
-    )
-    p_bt.add_argument("--latency", type=float, default=0.0, help="Latency in seconds")
-    p_bt.add_argument(
-        "--policy",
-        default="lambda p: 'hold'",
-        help="Policy as lambda string, e.g., \"lambda p: 'buy' if p>1 else 'sell'\"",
-    )
-    p_bt.set_defaults(func=_cmd_backtest)
-
-    # serve
-    p_serve = subparsers.add_parser("serve", help="Serve predictor deployment")
-    p_serve.add_argument(
-        "--predictor-path", default=None, help="Path to predictor model checkpoint"
-    )
-    p_serve.set_defaults(func=_cmd_serve)
-
-    # evaluate
-    p_eval = subparsers.add_parser("evaluate", help="Evaluate a trained RL agent")
-    p_eval.add_argument("--data", required=True, help="CSV dataset for evaluation")
-    p_eval.add_argument("--checkpoint", required=True, help="Agent checkpoint path")
-    p_eval.add_argument(
-        "--agent",
-        choices=["sac", "td3", "ensemble"],
-        default="sac",
-        help="Agent type to load",
-    )
-    p_eval.add_argument(
-        "--output", default="results/evaluation.json", help="Path to save metrics JSON"
-    )
-    p_eval.add_argument(
-        "--window-size", type=int, default=50, help="Observation window size"
-    )
-    p_eval.set_defaults(func=_cmd_evaluate)
-
-    args = parser.parse_args()
-    args.func(args)
+    """Entry point for console_scripts"""
+    app()
 
 
 if __name__ == "__main__":
-    main()
+    app()
