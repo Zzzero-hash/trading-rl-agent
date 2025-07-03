@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="5.343" timestamp="2025-07-03T15:50:56.482349+00:00" hostname="ca3190311e25"><testcase classname="" name="tests.focused.test_dataclasses_trainer" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_dataclasses_trainer.py'.
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="5.622" timestamp="2025-07-03T20:47:43.118033+00:00" hostname="ca3190311e25"><testcase classname="" name="tests.focused.test_dataclasses_trainer" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_dataclasses_trainer.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
-src/envs/finrl_trading_env.py:9: in &lt;module&gt;
+src/envs/finrl_trading_env.py:17: in &lt;module&gt;
     from finrl.env.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
 E   ModuleNotFoundError: No module named 'finrl'
 
@@ -15,7 +15,7 @@ src/agents/__init__.py:6: in &lt;module&gt;
     from .trainer import Trainer
 src/agents/trainer.py:8: in &lt;module&gt;
     from src.envs.finrl_trading_env import register_env
-src/envs/finrl_trading_env.py:11: in &lt;module&gt;
+src/envs/finrl_trading_env.py:19: in &lt;module&gt;
     from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
 E   ModuleNotFoundError: No module named 'finrl'</error></testcase><testcase classname="" name="tests.focused.test_optimization_utils" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_optimization_utils.py'.
 Hint: make sure your test modules/packages have valid Python names.
@@ -58,7 +58,7 @@ src/data/features.py:11: in &lt;module&gt;
 E   ImportError: /usr/local/lib/python3.11/dist-packages/talib/_ta_lib.cpython-311-x86_64-linux-gnu.so: undefined symbol: TA_AVGDEV_Lookback</error></testcase><testcase classname="" name="tests.focused.test_trading_env_additional" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_trading_env_additional.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
-src/envs/finrl_trading_env.py:9: in &lt;module&gt;
+src/envs/finrl_trading_env.py:17: in &lt;module&gt;
     from finrl.env.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
 E   ModuleNotFoundError: No module named 'finrl'
 
@@ -68,6 +68,6 @@ During handling of the above exception, another exception occurred:
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 tests/focused/test_trading_env_additional.py:5: in &lt;module&gt;
     from src.envs.finrl_trading_env import TradingEnv
-src/envs/finrl_trading_env.py:11: in &lt;module&gt;
+src/envs/finrl_trading_env.py:19: in &lt;module&gt;
     from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
 E   ModuleNotFoundError: No module named 'finrl'</error></testcase></testsuite></testsuites>
