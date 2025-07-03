@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+
 from src.envs.trader_env import TraderEnv, env_creator, register_env
 
 

@@ -135,7 +135,9 @@ class TestDataPreprocessingComprehensive:
             from ta.momentum import RSIIndicator
 
             # Test log returns
-            returns = np.log(sample_market_data["close"] / sample_market_data["close"].shift(1))
+            returns = np.log(
+                sample_market_data["close"] / sample_market_data["close"].shift(1)
+            )
             assert isinstance(returns, pd.Series)
             assert len(returns) == len(sample_market_data)
             assert not np.any(np.isinf(returns.dropna()))

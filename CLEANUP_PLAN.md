@@ -13,7 +13,7 @@ Complete the development of a production-ready hybrid trading system that combin
 - **Advanced Dataset**: optional multi-million record dataset; sample data included
 - **Production Infrastructure**: Ray Tune optimization, testing, documentation
 - **Ongoing Maintenance**: automated linting and reviews
-*Sample data is used; metrics are illustrative.*
+  _Sample data is used; metrics are illustrative._
 
 ## 🏗️ **Architecture Overview**
 

@@ -373,7 +373,7 @@ def compute_reward(reward_type: str, *args, **kwargs) -> float:
         Computed reward value.
     """
 
-    dispatch_map: Dict[str, Callable[..., float]] = {
+    dispatch_map: dict[str, Callable[..., float]] = {
         "simple_profit": simple_profit_reward,
         "profit": simple_profit_reward,
         "risk_adjusted": risk_adjusted_reward,

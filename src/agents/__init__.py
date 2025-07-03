@@ -9,4 +9,10 @@ from .sac_agent import SACAgent
 from .rainbow_dqn_agent import RainbowDQNAgent
 from .rllib_weighted_policy import WeightedPolicyManager
 
-__all__ = ["Trainer", "SACAgent", "TD3Agent", "RainbowDQNAgent", "WeightedPolicyManager"]
+__all__ = [
+    "Trainer",
+    "SACAgent",
+    "TD3Agent",
+    "RainbowDQNAgent",
+    "WeightedPolicyManager",
+]

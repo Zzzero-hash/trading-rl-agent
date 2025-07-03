@@ -7,8 +7,8 @@ Includes risk-adjusted returns, drawdown analysis, and portfolio metrics.
 
 """Convenience wrappers around the ``empyrical`` statistics library."""
 
-import numpy as np
 import empyrical as _empyrical
+import numpy as np
 
 TRADING_DAYS_PER_YEAR = 252
 
@@ -150,9 +150,7 @@ def calculate_comprehensive_metrics(
                 "information_ratio": calculate_information_ratio(
                     returns, benchmark_returns
                 ),
-                "tracking_error": calculate_tracking_error(
-                    returns, benchmark_returns
-                ),
+                "tracking_error": calculate_tracking_error(returns, benchmark_returns),
                 "beta": calculate_beta(returns, benchmark_returns),
             }
         )

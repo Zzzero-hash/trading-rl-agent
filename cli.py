@@ -18,7 +18,7 @@ import pandas as pd
 # import modules for commands
 from build_datasets import main as _build_dataset_main
 from evaluate_agent import main as _evaluate_agent_main
-from src.eval import Backtester
+from src.backtesting import Backtester
 from src.main import main as _trainer_main
 
 

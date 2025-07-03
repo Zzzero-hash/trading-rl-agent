@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 import pytest
+from ta.momentum import RSIIndicator
 
 from src.data.features import add_sentiment, generate_features
-from ta.momentum import RSIIndicator
 
 
 def test_compute_log_returns():
