@@ -1,5 +1,7 @@
 # Trading RL Agent
 
+[![Coverage Status](https://codecov.io/gh/Zzzero-hash/trading-rl-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/Zzzero-hash/trading-rl-agent)
+
 A research-focused system combining CNN+LSTM market intelligence with reinforcement learning (RL) optimization.
 _Current status: core functionality validated, environment testing framework complete, and all tests passing._
 
