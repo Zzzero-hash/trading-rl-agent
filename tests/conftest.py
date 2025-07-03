@@ -93,7 +93,11 @@ def finrl_trading_env(finrl_sample_data):
         from tests.test_data_utils import get_dynamic_test_config
 
         cfg = get_dynamic_test_config(
-            {"include_features": False, "continuous_actions": False}
+            {
+                "include_features": False,
+                "continuous_actions": False,
+                "reward_type": "profit",
+            }
         )
         env = TradingEnv(cfg)
 
