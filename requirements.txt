@@ -52,7 +52,7 @@ backtesting>=0.6.4
 # FinRL & related dependencies
 finrl>=0.3.7
 alpaca-py>=0.4.0
-alpaca-trade-api>=2.3.0
+alpaca-trade-api>=2.3.0,<3.1.1
 ccxt>=1.66.32
 stockstats>=0.4.0
 TA-Lib>=0.4.28        # Required by FinRL & local tests (`import talib`)
