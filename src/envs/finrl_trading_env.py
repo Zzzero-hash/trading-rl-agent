@@ -56,7 +56,16 @@ class TradingEnv(_FinRLTradingEnv):
             tech_indicator_list=tech_indicators,
         )
 
+    def reset(self, **kwargs) -> tuple:
+        obs = super().reset(**kwargs)
+        info = {}  # Add any additional metadata if needed
+        return obs, info
 
+    def step(self, action: Any) -> tuple:
+        obs, reward, done, info = super().step(action)
+        terminated = done  # Gymnasium uses `terminated` instead of `done`
+        truncated = False  # Add logic for truncation if applicable
+        return obs, reward, terminated, truncated, info
 def env_creator(env_cfg: Dict[str, Any] | None = None) -> TradingEnv:
     return TradingEnv(env_cfg)
 
