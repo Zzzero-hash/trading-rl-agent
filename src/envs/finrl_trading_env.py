@@ -97,6 +97,7 @@ class TradingEnv(_FinRLTradingEnv):
             mean_r = arr.mean()
             vol = arr.std()
             reward = float(mean_r - self.risk_penalty * vol)
+            reward *= self.reward_scaling
 
         return obs, float(reward), done, truncated, info
 def env_creator(env_cfg: Dict[str, Any] | None = None) -> TradingEnv:
