@@ -47,3 +47,4 @@ empyrical>=0.5.3
 requests>=2.28.0,<3.0.0  # HTTP requests for sentiment and data fetching
 beautifulsoup4>=4.11.0,<5.0.0  # HTML parsing for sentiment scraping
 psutil>=5.9.0,<6.0
+backtesting>=0.6.4
