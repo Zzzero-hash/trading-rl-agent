@@ -13,15 +13,29 @@ from src.data.synthetic import generate_gbm_prices
 
 def load_real_data(config_path: str) -> pd.DataFrame:
     """Load real market data using FinRL's DataProcessor."""
-    with open(config_path, "r") as f:
-        cfg = yaml.safe_load(f)
-    dp = DataProcessor(data_source=cfg.get("data_source", "yahoofinance"))
-    df = dp.download_data(
-        ticker_list=cfg.get("tickers", []),
-        start_date=cfg.get("start_date"),
-        end_date=cfg.get("end_date"),
-        time_interval=cfg.get("time_interval", "1D"),
-    )
+    try:
+        with open(config_path, "r") as f:
+            cfg = yaml.safe_load(f)
+    except (FileNotFoundError, yaml.YAMLError) as e:
+        raise ValueError(f"Failed to load config file {config_path}: {e}")
+
+    # Validate required fields
+    required_fields = ["tickers", "start_date", "end_date"]
+    for field in required_fields:
+        if not cfg.get(field):
+            raise ValueError(f"Missing required config field: {field}")
+
+    try:
+        dp = DataProcessor(data_source=cfg.get("data_source", "yahoofinance"))
+        df = dp.download_data(
+            ticker_list=cfg.get("tickers", []),
+            start_date=cfg.get("start_date"),
+            end_date=cfg.get("end_date"),
+            time_interval=cfg.get("time_interval", "1D"),
+        )
+    except Exception as e:
+        raise RuntimeError(f"Failed to download data: {e}")
+
     fe = FeatureEngineer(
         use_technical_indicator=True,
         tech_indicator_list=cfg.get("tech_indicators", []),
