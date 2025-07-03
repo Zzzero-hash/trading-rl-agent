@@ -51,10 +51,18 @@ class WeightedEnsembleAgent:
     """Simple ensemble agent using RLlib's policy mapping utilities."""
 
     def __init__(self, policies: Dict[str, Policy], weights: Dict[str, float]):
+        # Validate that weights.keys() matches policies.keys()
+        if set(weights.keys()) != set(policies.keys()):
+            raise ValueError("Mismatch between policies and weights keys.")
+        
+        # Normalize weights to ensure they sum to 1
+        total = sum(weights.values()) or 1.0
+        normalized_weights = {k: v / total for k, v in weights.items()}
+        
         self.policy_map: PolicyMap = PolicyMap()
         for name, policy in policies.items():
             self.policy_map[name] = policy
-        self.mapping_fn = weighted_policy_mapping(weights)
+        self.mapping_fn = weighted_policy_mapping(normalized_weights)
 
     def select_action(self, obs: np.ndarray) -> np.ndarray:
         policy_id = self.mapping_fn("agent0")
