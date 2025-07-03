@@ -3,6 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Iterable
 
+import numpy as np
+try:
+    import empyrical
+except ImportError as e:
+    raise ImportError(
+        "The 'empyrical' library is required but not installed. Please install it using 'pip install empyrical'."
+    ) from e
+
 import pandas as pd
 
 try:  # FinRL 0.4+
@@ -41,6 +49,11 @@ class TradingEnv(_FinRLTradingEnv):
         stock_dim = df["tic"].nunique()
         hmax = int(cfg.get("hmax", 1))
         initial_amount = float(cfg.get("initial_balance", 10_000))
+        valid_reward_types = ["profit", "sharpe", "risk_adjusted"]
+        self.reward_type = cfg.get("reward_type", "profit")
+        if self.reward_type not in valid_reward_types:
+            raise ValueError(f"Invalid reward_type: {self.reward_type}. Must be one of {valid_reward_types}")
+        self.risk_penalty = float(cfg.get("risk_penalty", 0.1))
         num_stock_shares = cfg.get("num_stock_shares", [0] * stock_dim)
         buy_cost_pct = cfg.get("buy_cost_pct", [0.001] * stock_dim)
         sell_cost_pct = cfg.get("sell_cost_pct", [0.001] * stock_dim)
@@ -63,16 +76,33 @@ class TradingEnv(_FinRLTradingEnv):
             tech_indicator_list=tech_indicators,
         )
 
+        self._return_history: list[float] = []
+
     def reset(self, **kwargs) -> tuple:
+        self._return_history = []
         obs = super().reset(**kwargs)
-        info = {}  # Add any additional metadata if needed
+        info = {}
         return obs, info
 
     def step(self, action: Any) -> tuple:
-        obs, reward, done, info = super().step(action)
-        terminated = done  # Gymnasium uses `terminated` instead of `done`
-        truncated = False  # Add logic for truncation if applicable
-        return obs, reward, terminated, truncated, info
+        obs, reward, done, truncated, info = super().step(action)
+
+        if self.reward_type == "sharpe":
+            self._return_history.append(float(reward))
+            if len(self._return_history) > 1 and np.std(self._return_history) != 0:
+                sharpe = empyrical.sharpe_ratio(np.array(self._return_history))
+                reward = float(sharpe) if np.isfinite(sharpe) else 0.0
+            else:
+                reward = 0.0
+        elif self.reward_type == "risk_adjusted":
+            self._return_history.append(float(reward))
+            arr = np.array(self._return_history)
+            mean_r = arr.mean()
+            vol = arr.std()
+            reward = float(mean_r - self.risk_penalty * vol)
+            reward *= self.reward_scaling
+
+        return obs, float(reward), done, truncated, info
 def env_creator(env_cfg: Dict[str, Any] | None = None) -> TradingEnv:
     return TradingEnv(env_cfg)
 
