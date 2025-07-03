@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Sequence, Dict
 
 import numpy as np
-from riskfolio.src import RiskFunctions
+from riskfolio import RiskFunctions
 
 
 @dataclass
