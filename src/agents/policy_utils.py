@@ -20,9 +20,13 @@ class CallablePolicy(Policy):
 
     def compute_actions(self, obs_batch, **kwargs):
         actions = [self.func(obs) for obs in obs_batch]
-        actions_array = np.asarray(actions)
-        if actions_array.ndim == 1 and len(obs_batch) > 1:
-            actions_array = actions_array.reshape(len(obs_batch), -1)
+        # Ensure consistent 2D array shape: (batch_size, action_dim)
+        actions_array = np.array(actions)
+        if actions_array.ndim == 1:
+            # Wrap 1D output into a column vector
+            actions_array = actions_array.reshape(-1, 1)
+        elif actions_array.ndim > 2:
+            raise ValueError(f"Actions must be 1D or 2D, got {actions_array.ndim}D")
         return actions_array, [], {}
 
 
