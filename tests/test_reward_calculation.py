@@ -26,11 +26,11 @@ def test_reward_computation_buy_hold_sell(tmp_path):
 
     env.reset()
 
-    _, reward_buy, *_ = env.step(np.array([0]))
+    _, reward_buy, *_ = env.step(np.array([1.0]))
     assert isinstance(reward_buy, (int, float, np.floating))
 
     _, reward_hold, *_ = env.step(np.array([0]))
     assert isinstance(reward_hold, (int, float, np.floating))
 
-    _, reward_sell, *_ = env.step(np.array([0]))
+    _, reward_sell, *_ = env.step(np.array([-1.0]))
     assert isinstance(reward_sell, (int, float, np.floating))
