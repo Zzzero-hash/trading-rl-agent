@@ -532,7 +532,7 @@ class TestDataPipelineIntegration:
         """Test preprocessing integration with trading environment."""
         try:
             from src.data.features import generate_features
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             # Preprocess data
             features_df = generate_features(sample_market_data.copy())

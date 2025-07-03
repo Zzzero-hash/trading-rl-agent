@@ -4,7 +4,7 @@ import ray
 from ray import tune
 import yaml
 
-from src.envs.trading_env import register_env
+from src.envs.finrl_trading_env import register_env
 
 
 def _convert_value(value):
