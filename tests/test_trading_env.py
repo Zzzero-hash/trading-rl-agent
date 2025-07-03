@@ -1,84 +1,45 @@
-import gymnasium as gym
 import numpy as np
 import pandas as pd
 import pytest
 
-from src.envs.trading_env import TradingEnv, env_creator, register_env
+from src.envs.finrl_trading_env import TradingEnv, env_creator, register_env
 
 
 @pytest.fixture
 def sample_csv(tmp_path):
-    data = pd.DataFrame(
-        {
-            "open": [1.0] * 60,
-            "high": [1.0] * 60,
-            "low": [1.0] * 60,
-            "close": np.linspace(1.0, 2.0, 60),
-            "volume": [1.0] * 60,
-        }
-    )
-    csv = tmp_path / "data.csv"
-    data.to_csv(csv, index=False)
-    return str(csv)
+    df = pd.DataFrame({
+        "open": [1.0, 2.0, 3.0],
+        "high": [1.0, 2.0, 3.0],
+        "low": [1.0, 2.0, 3.0],
+        "close": [1.0, 2.0, 3.0],
+        "volume": [1.0, 1.0, 1.0],
+    })
+    path = tmp_path / "data.csv"
+    df.to_csv(path, index=False)
+    return str(path)
 
 
 @pytest.fixture(params=["dict", "kwargs"])
 def env(sample_csv, request):
+    cfg = {"dataset_paths": [sample_csv]}
     if request.param == "dict":
-        cfg = {"dataset_paths": [sample_csv], "window_size": 10}
         return TradingEnv(cfg)
-    return TradingEnv(dataset_paths=[sample_csv], window_size=10)
+    return TradingEnv(**cfg)
 
 
-def test_reset_returns_observation(env):
+def test_reset_and_step(env):
     obs, info = env.reset()
-    assert obs.shape == (10, env.data.shape[1])
-    assert env.current_step == env.window_size
-    assert info == {}
-
-
-def test_step_changes_balance(env):
-    env.reset()
-    _, reward, _, _, info = env.step(1)
-    assert isinstance(reward, float)
     assert isinstance(info, dict)
-    assert info["balance"] == env.balance
+    result = env.step(np.zeros(env.action_space.shape))
+    assert len(result) == 5
 
 
 def test_env_creator(sample_csv):
-    cfg = {"dataset_paths": [sample_csv], "window_size": 5}
-    env = env_creator(cfg)
+    env = env_creator({"dataset_paths": [sample_csv]})
     assert isinstance(env, TradingEnv)
-    assert env.window_size == 5
 
 
 def test_register_env(sample_csv):
-    cfg = {"dataset_paths": [sample_csv], "window_size": 5}
-    try:
-        register_env()
-    except Exception:
-        # registration may fail if ray not initialized
-        pass
-    env = env_creator(cfg)
-    assert env.action_space.n == 3
-
-
-def test_init_via_kwargs_sets_window_size(sample_csv):
-    """Regression test: ensure kwargs are respected."""
-    env = TradingEnv(dataset_paths=[sample_csv], window_size=7)
-    obs, _ = env.reset()
-    assert env.window_size == 7
-    assert obs.shape[0] == 7
-
-
-def test_step_increments_current_step(env):
-    """Regression test for correct step transitions."""
-    env.reset()
-    start = env.current_step
-    obs, reward, done, truncated, info = env.step(0)
-    assert env.current_step == start + 1
-    assert isinstance(done, bool)
-    assert isinstance(truncated, bool)
-    assert isinstance(info, dict)
-    if not done and hasattr(obs, "shape"):
-        assert obs.shape[0] == env.window_size
+    register_env()
+    env = env_creator({"dataset_paths": [sample_csv]})
+    assert isinstance(env, TradingEnv)

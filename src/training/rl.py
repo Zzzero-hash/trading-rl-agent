@@ -7,9 +7,8 @@ from pathlib import Path
 
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.models import ModelCatalog
-from ray.tune.registry import register_env
 
-from src.envs.trading_env import TradingEnv
+from src.envs.finrl_trading_env import TradingEnv, register_env
 from src.models.concat_model import ConcatModel
 from src.utils.cluster import get_available_devices, init_ray
 

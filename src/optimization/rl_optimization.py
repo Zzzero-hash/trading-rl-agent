@@ -36,7 +36,7 @@ from ray.tune.registry import register_env
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
 
-from src.envs.trading_env import TradingEnv
+from src.envs.finrl_trading_env import TradingEnv
 from src.models.concat_model import ConcatModel
 from src.utils.cluster import get_available_devices, init_ray
 
