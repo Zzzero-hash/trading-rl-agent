@@ -50,13 +50,26 @@ def load_real_data(config_path: str) -> pd.DataFrame:
 
 def load_synthetic_data(config_path: str) -> pd.DataFrame:
     """Generate synthetic data and apply FinRL feature engineering."""
-    with open(config_path, "r") as f:
-        cfg = yaml.safe_load(f)
+    try:
+        with open(config_path, "r") as f:
+            cfg = yaml.safe_load(f)
+    except (FileNotFoundError, yaml.YAMLError) as e:
+        raise ValueError(f"Failed to load config file {config_path}: {e}")
+
     synth = cfg.get("synthetic", {})
     n_days = synth.get("n_days", 100)
     mu = synth.get("mu", 0.0002)
     sigma = synth.get("sigma", 0.01)
     n_symbols = synth.get("n_symbols", 1)
+
+    # Validate parameters
+    if not isinstance(n_days, int) or n_days <= 0:
+        raise ValueError("n_days must be a positive integer")
+    if not isinstance(n_symbols, int) or n_symbols <= 0:
+        raise ValueError("n_symbols must be a positive integer")
+    if sigma <= 0:
+        raise ValueError("sigma must be positive")
+
     frames: List[pd.DataFrame] = []
     for i in range(n_symbols):
         df = generate_gbm_prices(n_days, mu=mu, sigma=sigma)
