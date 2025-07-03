@@ -43,7 +43,7 @@ from src.agents.sac_agent import SACAgent
 
 # Initialize hybrid environment with production dataset
 env = TradingEnv(
-    data_paths=['data/advanced_trading_dataset_*.csv'],
+    data_paths=['data/finrl_real_sample.csv'],
     use_cnn_lstm_features=True,
     window_size=50
 )

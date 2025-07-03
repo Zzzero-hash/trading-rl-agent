@@ -43,7 +43,6 @@ trading-rl-agent/
 │   └── deployment/       # Serving configurations
 ├── tests/                # Unit and integration tests
 ├── cnn_lstm_hparam_clean.ipynb  # Hyperparameter tuning notebook
-├── build_production_dataset.py  # Dataset generation script
 └── data/                 # Sample datasets
 ```
 
@@ -83,7 +82,7 @@ tune.Tuner("SAC", param_space=config, stop={"training_iteration": 10}).fit()
 ### Backtest with Sample Data
 
 ```bash
-python build_production_dataset.py --symbols AAPL,MSFT --start 2024-01-01
+python finrl_data_loader.py --config configs/finrl_real_data.yaml
 python src/train_finrl_agent.py --agent sac --data sample --backtesting realistic
 ```
 
