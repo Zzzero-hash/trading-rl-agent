@@ -46,6 +46,7 @@ async def disconnect(nc: NATS) -> None:
 
 async def publish(nc: NATS, subject: str, data: dict[str, Any]) -> None:
     """Publish a JSON-encoded message to a subject."""
+    data = data.copy()  # Create a shallow copy to avoid mutating the caller's dictionary
     if "timestamp" not in data:
         data["timestamp"] = datetime.utcnow().isoformat()
     message = json.dumps(data).encode()
