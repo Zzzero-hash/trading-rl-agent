@@ -539,7 +539,7 @@ def integration_environment(sample_csv_path, trading_env_config):
     mocks = {}
 
     try:
-        from src.envs.trading_env import TradingEnv
+        from src.envs.finrl_trading_env import TradingEnv
 
         trading_env_config["dataset_paths"] = [sample_csv_path]
         env = TradingEnv(**trading_env_config)

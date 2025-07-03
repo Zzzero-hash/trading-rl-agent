@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.envs.trading_env import TradingEnv
+from src.envs.finrl_trading_env import TradingEnv
 
 
 def make_env(tmp_path, **overrides):

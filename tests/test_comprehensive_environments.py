@@ -12,8 +12,7 @@ import pandas as pd
 import pytest
 import torch
 
-from src.envs.trader_env import TraderEnv
-from src.envs.trading_env import TradingEnv
+from src.envs.finrl_trading_env import TradingEnv
 from tests.test_data_utils import get_dynamic_test_config
 
 
@@ -265,32 +264,6 @@ class TestEnvironmentEdgeCases:
             assert "inf" in str(e).lower() or "nan" in str(e).lower()
 
 
-class TestMultiEnvironmentComparison:
-    """Test consistency across different environment implementations."""
-
-    def test_trading_env_vs_trader_env_compatibility(self, sample_csv_file):
-        """Test compatibility between TradingEnv and TraderEnv."""
-        # Create both environments with similar configs
-        trading_config = {
-            "dataset_paths": [sample_csv_file],
-            "window_size": 10,
-            "initial_balance": 10000,
-            "transaction_cost": 0.001,
-        }
-
-        trading_env = TradingEnv(trading_config)
-        trader_env = TraderEnv([sample_csv_file], window_size=10, initial_balance=10000)
-
-        # Both should reset successfully
-        trading_obs, _ = trading_env.reset()
-        trader_obs, _ = trader_env.reset()
-
-        # Both should step successfully
-        trading_result = trading_env.step(0)
-        trader_result = trader_env.step(0)
-
-        # Results should have same structure
-        assert len(trading_result) == len(trader_result) == 5
 
         # Rewards should be numeric
         assert isinstance(trading_result[1], (int, float))
