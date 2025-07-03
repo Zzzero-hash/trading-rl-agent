@@ -56,3 +56,4 @@ alpaca-trade-api>=2.3.0,<3.1.1
 ccxt>=1.66.32
 stockstats>=0.4.0
 TA-Lib>=0.4.28        # Required by FinRL & local tests (`import talib`)
+urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
