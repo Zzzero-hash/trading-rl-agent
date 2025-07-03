@@ -156,7 +156,7 @@ This testing framework ensures production reliability and provides confidence fo
 - **Data Features**: Technical indicators, candlestick patterns, feature engineering
 - **Agent Components**: Action selection, training loops, save/load functionality
 - **Environment Logic**: Reset, step, observation/action spaces
-- **Utility Functions**: Metrics, rewards, quantization, normalization
+- **Utility Functions**: Metrics, rewards, normalization, PyTorch quantization
 - **Configuration**: YAML loading, parameter validation
 
 **Example Usage**:
