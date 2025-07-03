@@ -130,7 +130,22 @@ def test_evaluate_model_returns_metrics():
     obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
     model, _ = ray.get(obj_ref)
     metrics = evaluate_model(model, x, y)
-    assert "accuracy" in metrics
+
+    # Manually compute expected metrics using the original logic
+    with torch.no_grad():
+        preds = model(torch.tensor(x))
+    predicted = (preds > 0.5).float().numpy().reshape(-1)
+    y_true = y.reshape(-1)
+    correct = (predicted == y_true).mean()
+    tp = ((predicted == 1) & (y_true == 1)).sum()
+    fp = ((predicted == 1) & (y_true == 0)).sum()
+    fn = ((predicted == 0) & (y_true == 1)).sum()
+    precision = tp / (tp + fp + 1e-8)
+    recall = tp / (tp + fn + 1e-8)
+
+    assert metrics["accuracy"] == pytest.approx(correct)
+    assert metrics["precision"] == pytest.approx(precision)
+    assert metrics["recall"] == pytest.approx(recall)
 
 
 def test_select_best_model(tmp_path):
