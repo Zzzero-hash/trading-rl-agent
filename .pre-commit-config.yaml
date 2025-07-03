@@ -115,12 +115,6 @@ repos:
         files: \.ipynb$
         require_serial: false
 
-      - id: check-requirements
-        name: Check requirements files
-        entry: python scripts/check_requirements.py
-        language: system
-        files: requirements.*\.txt$
-        pass_filenames: false
 
       - id: run-tests
         name: Run unit tests
@@ -129,9 +123,9 @@ repos:
         pass_filenames: false
         stages: [manual]
 
-      - id: security-check
+      - id: pip-audit
         name: Security vulnerability check
-        entry: safety scan --json
+        entry: pip-audit -r requirements.txt -f json
         language: system
         pass_filenames: false
         stages: [manual]
@@ -145,5 +139,5 @@ ci:
     for more information, see https://pre-commit.ci
   autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
   autoupdate_schedule: weekly
-  skip: [run-tests, security-check] # Skip only manual hooks
+  skip: [run-tests, pip-audit] # Skip only manual hooks
   submodules: false
