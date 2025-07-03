@@ -27,7 +27,7 @@ This section provides detailed API documentation for all modules and classes.
 
 ### TD3 Agent
 
-*Experimental: maintained only for custom research and testing*
+_Experimental: maintained only for custom research and testing_
 
 ```{eval-rst}
 .. automodule:: src.agents.td3_agent
@@ -152,11 +152,10 @@ This section provides detailed API documentation for all modules and classes.
 
 ### Quantization
 
+This project relies on PyTorch's built-in dynamic quantization utilities.
+
 ```{eval-rst}
-.. automodule:: src.utils.quantization
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. autofunction:: torch.quantization.quantize_dynamic
 ```
 
 ## NLP Utilities
