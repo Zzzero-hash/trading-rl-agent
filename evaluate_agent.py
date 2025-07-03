@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
-from src.agents.rllib_weighted_policy import CallablePolicy, WeightedPolicyManager
+from src.agents.policy_utils import CallablePolicy, WeightedEnsembleAgent
 from src.agents.sac_agent import SACAgent
 from src.agents.td3_agent import TD3Agent
 from src.envs.trading_env import TradingEnv
@@ -65,7 +65,7 @@ def load_agent(agent_type: str, state_dim: int, action_dim: int, checkpoint: str
         agent.load(checkpoint)
         return agent
 
-    # Ensemble via RLlib policy manager
+    # Ensemble via RLlib policy mapping
     sac = SACAgent(state_dim=state_dim, action_dim=action_dim)
     td3 = TD3Agent(state_dim=state_dim, action_dim=action_dim)
     sac.load(checkpoint)
@@ -77,8 +77,7 @@ def load_agent(agent_type: str, state_dim: int, action_dim: int, checkpoint: str
         "sac": CallablePolicy(obs_space, act_space, sac.select_action),
         "td3": CallablePolicy(obs_space, act_space, td3.select_action),
     }
-    manager = WeightedPolicyManager(policies, {"sac": 0.5, "td3": 0.5})
-    return manager
+    return WeightedEnsembleAgent(policies, {"sac": 0.5, "td3": 0.5})
 
 
 def run_episode(env: TradingEnv, agent) -> list[float]:
