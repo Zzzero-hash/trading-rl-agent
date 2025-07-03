@@ -3,7 +3,7 @@
 Unified CLI for Trading RL System.
 
 Subcommands:
-  generate-data   Generate datasets using build_datasets script
+  generate-data   Load data via FinRL utilities
   train           Train RL or CNN-LSTM models
   backtest        Run backtests using Backtester
   serve           Serve predictor deployment with Ray Serve
@@ -16,18 +16,18 @@ import sys
 import pandas as pd
 
 # import modules for commands
-from build_datasets import main as _build_dataset_main
+from finrl_data_loader import main as _data_main
 from evaluate_agent import main as _evaluate_agent_main
 from src.backtesting import Backtester
 from src.main import main as _trainer_main
 
 
 def _cmd_generate_data(args):
-    # Construct sys.argv for build_datasets.main
-    sys.argv = ["build_datasets", "--config", args.config]
-    if args.to_csv:
-        sys.argv.append("--to-csv")
-    _build_dataset_main()
+    # Delegate to finrl_data_loader.main
+    sys.argv = ["finrl_data_loader", "--config", args.config]
+    if args.synthetic:
+        sys.argv.append("--synthetic")
+    _data_main()
 
 
 def _cmd_train(args):
@@ -124,9 +124,11 @@ def main():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # generate-data
-    p_gen = subparsers.add_parser("generate-data", help="Generate datasets")
-    p_gen.add_argument("--config", required=True, help="Path to dataset config YAML")
-    p_gen.add_argument("--to-csv", action="store_true", help="Output CSV files")
+    p_gen = subparsers.add_parser("generate-data", help="Load data via FinRL")
+    p_gen.add_argument("--config", required=True, help="Path to data config YAML")
+    p_gen.add_argument(
+        "--synthetic", action="store_true", help="Generate synthetic data"
+    )
     p_gen.set_defaults(func=_cmd_generate_data)
 
     # train

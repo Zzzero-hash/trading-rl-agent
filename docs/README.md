@@ -102,8 +102,8 @@ pip install -r requirements-test.txt
 # Install dependencies
 pip install -r requirements.txt
 
-# Generate production dataset
-python build_advanced_dataset.py
+# Generate data via FinRL
+python ../finrl_data_loader.py --config ../configs/finrl_real_data.yaml
 
 # Run comprehensive tests
 pytest tests/ -v
