@@ -24,6 +24,8 @@ from dataclasses import asdict, dataclass, field
 import logging
 from typing import Any, Dict, List, Tuple
 
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+
 import numpy as np
 import ray
 import torch
@@ -327,13 +329,12 @@ def evaluate_model(
         pred = model(x)
     if model.task == "classification":
         predicted = (pred > 0.5).float()
-        correct = (predicted == y).all(dim=1).float().mean().item()
-        tp = ((predicted == 1) & (y == 1)).sum().item()
-        fp = ((predicted == 1) & (y == 0)).sum().item()
-        fn = ((predicted == 0) & (y == 1)).sum().item()
-        precision = tp / (tp + fp + 1e-8)
-        recall = tp / (tp + fn + 1e-8)
-        return {"accuracy": correct, "precision": precision, "recall": recall}
+        y_true = y.cpu().numpy().reshape(-1)
+        y_pred = predicted.cpu().numpy().reshape(-1)
+        acc = accuracy_score(y_true, y_pred)
+        precision = precision_score(y_true, y_pred, zero_division=0)
+        recall = recall_score(y_true, y_pred, zero_division=0)
+        return {"accuracy": acc, "precision": precision, "recall": recall}
     else:
         mse = torch.mean((pred - y) ** 2).item()
         mae = torch.mean(torch.abs(pred - y)).item()
