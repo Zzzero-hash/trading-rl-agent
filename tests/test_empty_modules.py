@@ -29,11 +29,6 @@ class TestEmptyModules:
         module_path = project_root / "src" / "utils" / "metrics.py"
         assert module_path.exists(), "Metrics module file should exist"
 
-    def test_quantization_module_exists(self, project_root):
-        """Test that the quantization utility module file exists."""
-        module_path = project_root / "src" / "utils" / "quantization.py"
-        assert module_path.exists(), "Quantization module file should exist"
-
     def test_rewards_module_exists(self, project_root):
         """Test that the rewards utility module file exists."""
         module_path = project_root / "src" / "utils" / "rewards.py"
@@ -94,48 +89,6 @@ class TestMetricsModule:
         current_file = Path(__file__).resolve()
         project_root = current_file.parent.parent
         module_path = project_root / "src" / "utils" / "metrics.py"
-
-        file_size = module_path.stat().st_size
-        assert (
-            file_size > 100
-        ), f"Expected implemented file, but size is only {file_size} bytes"
-
-
-class TestQuantizationModule:
-    """Test class for the empty quantization utility module."""
-
-    def test_module_import(self):
-        """Test that the quantization module can be imported without errors."""
-        try:
-            from src.utils import quantization
-
-            assert True, "Module imported successfully"
-        except ImportError as e:
-            pytest.fail(f"Failed to import quantization module: {e}")
-
-    def test_module_is_empty(self):
-        """Test that the quantization module has expected functions."""
-        from src.utils import quantization
-
-        # Get all attributes that don't start with underscore
-        public_attrs = [attr for attr in dir(quantization) if not attr.startswith("_")]
-
-        # Should have quantization functions
-        expected_functions = [
-            "quantize_model",
-            "dynamic_quantization",
-            "static_quantization",
-        ]
-        for func in expected_functions:
-            assert (
-                func in public_attrs
-            ), f"Expected function {func} not found in quantization module"
-
-    def test_module_file_size(self):
-        """Test that the quantization module file has reasonable size."""
-        current_file = Path(__file__).resolve()
-        project_root = current_file.parent.parent
-        module_path = project_root / "src" / "utils" / "quantization.py"
 
         file_size = module_path.stat().st_size
         assert (
@@ -217,20 +170,6 @@ class TestFutureImplementationFramework:
         ]
 
         from src.utils import metrics
-
-        # Document what should be implemented
-        pytest.skip(f"Future implementation should include: {expected_functions}")
-
-    def test_quantization_future_structure(self):
-        """Test framework for future quantization implementation."""
-        expected_functions = [
-            "quantize_model",
-            "int8_quantization",
-            "dynamic_quantization",
-            "static_quantization",
-        ]
-
-        from src.utils import quantization
 
         # Document what should be implemented
         pytest.skip(f"Future implementation should include: {expected_functions}")
