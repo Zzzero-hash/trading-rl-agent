@@ -23,8 +23,15 @@ class TradingEnv(_FinRLTradingEnv):
         if not data_paths:
             raise ValueError("dataset_paths is required")
 
-        frames = [pd.read_csv(p) for p in data_paths]
-        df = pd.concat(frames, ignore_index=True)
+        try:
+            frames = [pd.read_csv(p) for p in data_paths]
+            df = pd.concat(frames, ignore_index=True)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f"Could not find data file: {e}")
+        except pd.errors.EmptyDataError as e:
+            raise ValueError(f"Empty or invalid CSV data: {e}")
+        except Exception as e:
+            raise ValueError(f"Error reading CSV data: {e}")
 
         if "tic" not in df.columns:
             df["tic"] = cfg.get("symbol", "TIC")
