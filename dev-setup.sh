@@ -58,4 +58,14 @@ if [ "$0" = "${BASH_SOURCE[0]}" ]; then
     echo "💡 Or restart your terminal/shell"
 fi
 
+# Install and configure pre-commit hooks
+if ! command -v pre-commit &> /dev/null; then
+    echo "📦 Installing pre-commit"
+    pip install pre-commit
+fi
+if [ ! -f .git/hooks/pre-commit ]; then
+    echo "🔧 Installing Git hooks via pre-commit"
+    pre-commit install
+fi
+
 echo "🎉 Development environment setup complete!"

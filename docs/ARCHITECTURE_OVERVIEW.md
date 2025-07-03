@@ -57,7 +57,7 @@ REDIS_URL=redis://trading-redis:6379
 
 ## 🏗️ Production Architecture Components
 
-### **Tier 1: CNN+LSTM Market Prototype** 
+### **Tier 1: CNN+LSTM Market Prototype**
 
 #### **Model Architecture** ([`src/models/cnn_lstm.py`](../src/models/cnn_lstm.py))
 

@@ -4,7 +4,7 @@
 # Core numerical computing
 # NOTE: torch>=2.3.0 requires Python 3.11+ and CUDA 12.x. For Python 3.10 and CUDA 11.8, use torch<2.3.0.
 numpy>=1.21.0,<2.0.0  # Fix compatibility with wandb and ray
-torch>=2.3.0,<2.4.0  # PyTorch for neural networks, CUDA 12.x, Python 3.11+
+torch>=1.12.0,<2.3.0  # PyTorch for neural networks, maintain Python 3.10 compatibility
 scipy>=1.7.0,<1.12.0  # Scientific computing
 
 # Data handling
@@ -47,3 +47,12 @@ empyrical>=0.5.3
 requests>=2.28.0,<3.0.0  # HTTP requests for sentiment and data fetching
 beautifulsoup4>=4.11.0,<5.0.0  # HTML parsing for sentiment scraping
 psutil>=5.9.0,<6.0
+backtesting>=0.6.4
+
+# FinRL & related dependencies
+finrl>=0.3.7
+alpaca-py>=0.4.0
+alpaca-trade-api>=2.3.0,<3.1.1
+ccxt>=1.66.32
+stockstats>=0.4.0
+TA-Lib>=0.4.28        # Required by FinRL & local tests (`import talib`)

@@ -158,8 +158,9 @@ def multi_symbol_data():
 @pytest.fixture
 def sample_csv_path(tmp_path):
     """Create a temporary CSV file with ``TestDataManager``."""
-    from tests.test_data_utils import TestDataManager
     import pandas as pd
+
+    from tests.test_data_utils import TestDataManager
 
     manager = TestDataManager(str(tmp_path))
     df = manager.generate_synthetic_dataset()
@@ -175,8 +176,9 @@ def sample_csv_path(tmp_path):
 @pytest.fixture(scope="session")
 def sample_csv_path_session(tmp_path_factory):
     """Session-scoped CSV path generated with ``TestDataManager``."""
-    from tests.test_data_utils import TestDataManager
     import pandas as pd
+
+    from tests.test_data_utils import TestDataManager
 
     data_dir = tmp_path_factory.mktemp("data")
     manager = TestDataManager(str(data_dir))

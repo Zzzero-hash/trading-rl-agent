@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from ta.volume import OnBalanceVolumeIndicator
 
 from src.data.features import (
     compute_adx,
@@ -12,7 +13,6 @@ from src.data.features import (
     compute_stochastic,
     compute_williams_r,
 )
-from ta.volume import OnBalanceVolumeIndicator
 
 
 def test_compute_ema_constant():
@@ -133,7 +133,9 @@ def test_compute_obv_constant_and_trend():
     # Increasing close => OBV increases cumulatively by volume
     df2 = pd.DataFrame({"close": np.arange(n), "volume": volumes})
     df_obv2 = compute_obv(df2.copy())
-    expected = OnBalanceVolumeIndicator(
-        df2["close"], df2["volume"]
-    ).on_balance_volume().values[1:]
+    expected = (
+        OnBalanceVolumeIndicator(df2["close"], df2["volume"])
+        .on_balance_volume()
+        .values[1:]
+    )
     assert np.array_equal(df_obv2["obv"].iloc[1:].values, expected)

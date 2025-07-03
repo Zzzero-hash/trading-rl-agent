@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import numpy as np
-from gymnasium import spaces
 import gymnasium as gym
+from gymnasium import spaces
+import numpy as np
 from stable_baselines3 import TD3
 
 
@@ -33,7 +33,13 @@ class DummyEnv(gym.Env):
 class TD3Agent:
     """Wrapper around :class:`stable_baselines3.TD3`."""
 
-    def __init__(self, config: dict | None = None, state_dim: int = 10, action_dim: int = 3, device: str = "cpu"):
+    def __init__(
+        self,
+        config: dict | None = None,
+        state_dim: int = 10,
+        action_dim: int = 3,
+        device: str = "cpu",
+    ):
         config = config or {}
         self.state_dim = state_dim
         self.action_dim = action_dim

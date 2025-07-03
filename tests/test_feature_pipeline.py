@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+
 from src.data.features import generate_features
 from src.data.synthetic import generate_gbm_prices
 

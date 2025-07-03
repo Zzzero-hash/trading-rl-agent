@@ -100,7 +100,7 @@ else:
 
 ## Dataset Statistics
 
-*The following figures are illustrative and generated from sample data.*
+_The following figures are illustrative and generated from sample data._
 
 ### Final Dataset Characteristics
 
@@ -262,7 +262,7 @@ file_paths = builder.build_dataset()
 - ✅ **Balance:** Target classes reasonably balanced
 - ✅ **Uniqueness:** No duplicate rows
 
-*Metrics in the performance validation section are illustrative and based on example runs.*
+_Metrics in the performance validation section are illustrative and based on example runs._
 
 ### Live Data Compatibility
 

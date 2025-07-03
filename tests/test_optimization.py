@@ -21,8 +21,8 @@ import torch.nn as nn
 
 from src.models.cnn_lstm import CNNLSTMModel
 from src.optimization.model_utils import (
-    get_model_summary,
     detect_gpus,
+    get_model_summary,
     optimal_gpu_config,
     profile_model_inference,
     run_hyperparameter_optimization,
