@@ -79,11 +79,26 @@ We provide multiple setup options for different development needs:
 ### Development Tools
 
 - **Python**: 3.9+ (3.12 recommended)
-- **Package Manager**: pip with requirements files
+- **Package Manager**: pip with pip-tools
 - **Testing**: pytest with comprehensive test suite
 - **Code Quality**: black, isort, flake8, mypy
 - **Documentation**: Sphinx with autodoc
 - **Version Control**: Git with pre-commit hooks
+
+### Dependency Management
+
+Manage dependencies with [pip-tools](https://github.com/jazzband/pip-tools):
+
+```bash
+# Update requirements.txt from requirements.in
+pip-compile requirements.in
+
+# Install dependencies
+pip-sync requirements.txt
+
+# Check for known vulnerabilities
+pip-audit -r requirements.txt
+```
 
 ### IDE Configuration
 
