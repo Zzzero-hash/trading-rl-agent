@@ -1,0 +1,62 @@
+from __future__ import annotations
+
+import random
+from typing import Callable, Dict
+
+from gymnasium import spaces
+import numpy as np
+from ray.rllib.policy.policy import Policy
+from ray.rllib.policy.policy_map import PolicyMap
+
+
+class CallablePolicy(Policy):
+    """Wrap a callable into an RLlib Policy."""
+
+    def __init__(self, obs_space: spaces.Space, action_space: spaces.Space, func: Callable):
+        super().__init__(obs_space, action_space, {})
+        if not callable(func):
+            raise ValueError("func must be a callable")
+        self.func = func
+
+    def compute_actions(self, obs_batch, **kwargs):
+        actions = [self.func(obs) for obs in obs_batch]
+        actions_array = np.asarray(actions)
+        if actions_array.ndim == 1 and len(obs_batch) > 1:
+            actions_array = actions_array.reshape(len(obs_batch), -1)
+        return actions_array, [], {}
+
+
+def weighted_policy_mapping(weights: Dict[str, float]):
+    """Create a policy mapping function with normalized weights."""
+    total = sum(weights.values()) or 1.0
+    norm_weights = {k: v / total for k, v in weights.items()}
+    items = list(norm_weights.items())
+    cumulative = []
+    cum = 0.0
+    for _, w in items:
+        cum += w
+        cumulative.append(cum)
+
+    def mapping_fn(agent_id: str, episode=None, worker=None, **kwargs) -> str:
+        r = random.random()
+        for (name, _), threshold in zip(items, cumulative):
+            if r <= threshold:
+                return name
+        return items[-1][0]
+
+    return mapping_fn
+
+
+class WeightedEnsembleAgent:
+    """Simple ensemble agent using RLlib's policy mapping utilities."""
+
+    def __init__(self, policies: Dict[str, Policy], weights: Dict[str, float]):
+        self.policy_map: PolicyMap = PolicyMap()
+        for name, policy in policies.items():
+            self.policy_map[name] = policy
+        self.mapping_fn = weighted_policy_mapping(weights)
+
+    def select_action(self, obs: np.ndarray) -> np.ndarray:
+        policy_id = self.mapping_fn("agent0")
+        action, _, _ = self.policy_map[policy_id].compute_single_action(obs)
+        return action
