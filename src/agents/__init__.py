@@ -7,12 +7,14 @@ from .trainer import Trainer
 from .td3_agent import TD3Agent
 from .sac_agent import SACAgent
 from .rainbow_dqn_agent import RainbowDQNAgent
-from .rllib_weighted_policy import WeightedPolicyManager
+from .policy_utils import CallablePolicy, WeightedEnsembleAgent, weighted_policy_mapping
 
 __all__ = [
     "Trainer",
     "SACAgent",
     "TD3Agent",
     "RainbowDQNAgent",
-    "WeightedPolicyManager",
+    "CallablePolicy",
+    "WeightedEnsembleAgent",
+    "weighted_policy_mapping",
 ]
