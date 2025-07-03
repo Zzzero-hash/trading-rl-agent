@@ -132,15 +132,6 @@ _Experimental: maintained only for custom research and testing_
    :show-inheritance:
 ```
 
-### Rewards
-
-```{eval-rst}
-.. automodule:: src.utils.rewards
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
-
 ### Cluster Management
 
 ```{eval-rst}
