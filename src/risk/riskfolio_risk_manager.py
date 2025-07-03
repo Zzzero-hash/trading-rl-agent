@@ -23,7 +23,11 @@ class RiskfolioRiskManager:
 
     def calculate_risk(self, returns: Sequence[float]) -> Dict[str, float]:
         """Calculate portfolio risk metrics using historical VaR."""
+        if len(returns) == 0:
+            raise ValueError("Returns sequence cannot be empty")
         arr = np.asarray(returns, dtype=float)
+        if arr.size == 0 or np.all(np.isnan(arr)):
+            raise ValueError("Returns must contain valid numerical data")
         var = RiskFunctions.VaR_Hist(arr, alpha=self.config.var_alpha)
         return {"var": float(var)}
 
