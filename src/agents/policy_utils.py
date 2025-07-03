@@ -35,6 +35,9 @@ def weighted_policy_mapping(weights: Dict[str, float]):
     total = sum(weights.values()) or 1.0
     norm_weights = {k: v / total for k, v in weights.items()}
 
+    if not norm_weights:
+        raise ValueError("Weights dictionary cannot be empty")
+
     # Pre-compute the choices and weights for efficiency
     choices, wts = zip(*norm_weights.items())
 
