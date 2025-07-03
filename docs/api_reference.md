@@ -36,10 +36,10 @@ _Experimental: maintained only for custom research and testing_
    :show-inheritance:
 ```
 
-### Ensemble Agent
+### Ensemble Utilities
 
 ```{eval-rst}
-.. automodule:: src.agents.rllib_weighted_policy
+.. automodule:: src.agents.policy_utils
    :members:
    :undoc-members:
    :show-inheritance:
