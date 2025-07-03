@@ -55,7 +55,8 @@ class Backtester:
                     self.sell()
 
         bt = Backtest(df, PolicyStrategy, commission=slippage)
-        return bt.run()
+        stats = bt.run()
+        return pd.Series(stats._stats)
 
     def apply_slippage(self, price: float) -> float:
         """Apply the configured slippage percentage to ``price``."""
