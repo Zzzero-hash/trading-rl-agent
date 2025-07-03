@@ -28,19 +28,19 @@ All pre-commit hooks are now passing successfully! The configuration balances co
 - Added F824 (unused global statements) to ignore list for notebooks
 - This handles common patterns in Jupyter notebooks where global variables are declared but may appear unused
 
-### 4. Python Compatibility
+### 4. Dependency Management
 
-- Fixed type annotations in `scripts/check_requirements.py` to use `Set[str]` instead of `set[str]` for Python 3.9 compatibility
+- Removed legacy `scripts/check_requirements.py` in favor of `pip-compile` and `pip-sync`
 
-### 5. Safety Security Checks
+### 5. Security Checks
 
-- Updated from deprecated `safety check` to new `safety scan` command
+- Replaced `safety scan` with `pip-audit` for vulnerability scanning
 - Installed missing pytest plugins for comprehensive testing
 
 ### 6. Manual Hook Dependencies
 
 - Installed missing pytest plugins: pytest-asyncio, pytest-benchmark, pytest-cov, pytest-mock, pytest-timeout, pytest-xdist
-- Updated safety tool for security scanning
+- Updated pip-audit tool for security scanning
 
 ## Usage
 
@@ -87,12 +87,12 @@ The following hooks are configured and **all passing**:
 4. **Python linting**: flake8, mypy, bandit, pydocstyle, pyupgrade
 5. **Documentation**: prettier for YAML/Markdown/JSON files
 6. **Notebooks**: nbqa-black, nbqa-isort, nbqa-flake8, clear outputs
-7. **Project-specific**: requirements consistency check
+7. **Project-specific**: dependency compilation with pip-tools
 
 ### Manual hooks (run only when explicitly requested):
 
 1. **Testing**: Full unit test suite with pytest
-2. **Security**: Vulnerability scanning with safety
+2. **Security**: Vulnerability scanning with pip-audit
 
 ## Configuration Files
 
