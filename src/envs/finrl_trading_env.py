@@ -49,7 +49,10 @@ class TradingEnv(_FinRLTradingEnv):
         stock_dim = df["tic"].nunique()
         hmax = int(cfg.get("hmax", 1))
         initial_amount = float(cfg.get("initial_balance", 10_000))
+        valid_reward_types = ["profit", "sharpe", "risk_adjusted"]
         self.reward_type = cfg.get("reward_type", "profit")
+        if self.reward_type not in valid_reward_types:
+            raise ValueError(f"Invalid reward_type: {self.reward_type}. Must be one of {valid_reward_types}")
         self.risk_penalty = float(cfg.get("risk_penalty", 0.1))
         num_stock_shares = cfg.get("num_stock_shares", [0] * stock_dim)
         buy_cost_pct = cfg.get("buy_cost_pct", [0.001] * stock_dim)
