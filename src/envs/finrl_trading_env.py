@@ -4,7 +4,12 @@ from pathlib import Path
 from typing import Any, Dict, Iterable
 
 import numpy as np
-import empyrical
+try:
+    import empyrical
+except ImportError as e:
+    raise ImportError(
+        "The 'empyrical' library is required but not installed. Please install it using 'pip install empyrical'."
+    ) from e
 
 import pandas as pd
 
