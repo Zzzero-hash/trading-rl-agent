@@ -1,6 +1,7 @@
+import sys
+
 import coverage
 import pytest
-import sys
 
 files = [
     "src/agents/configs.py",

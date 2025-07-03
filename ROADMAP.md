@@ -18,7 +18,7 @@ _Environment testing framework complete with 28 environment tests covering key s
 - **Dataset**: optional dataset with over a million records; sample data available
 - **Hyperparameter Optimization**: Ray Tune + Optuna distributed search
 - **Training Pipeline**: Production-ready with uncertainty quantification
-*Metrics and dataset sizes are illustrative; examples rely on sample data.*
+  _Metrics and dataset sizes are illustrative; examples rely on sample data._
 
 #### 🤖 Tier 2: Reinforcement Learning ✅
 

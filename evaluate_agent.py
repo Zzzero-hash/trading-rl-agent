@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
-from src.agents.rllib_weighted_policy import WeightedPolicyManager, CallablePolicy
+from src.agents.rllib_weighted_policy import CallablePolicy, WeightedPolicyManager
 from src.agents.sac_agent import SACAgent
 from src.agents.td3_agent import TD3Agent
 from src.envs.trading_env import TradingEnv

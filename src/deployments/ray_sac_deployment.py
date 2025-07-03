@@ -31,7 +31,9 @@ if RAY_AVAILABLE and serve:
     class SACServeDeployment:
         """Ray Serve deployment for SAC agent."""
 
-        def __init__(self, model_path: Optional[str] = None, config: Optional[dict] = None):
+        def __init__(
+            self, model_path: Optional[str] = None, config: Optional[dict] = None
+        ):
             self.config = config or get_agent_config("enhanced_sac")
             self.state_dim = self.config.get("state_dim", 10)
             self.action_dim = self.config.get("action_dim", 3)
@@ -78,7 +80,9 @@ if RAY_AVAILABLE and serve:
                     "error": str(e),
                 }
 
-    def create_sac_deployment_graph(model_path: Optional[str] = None, config: Optional[dict] = None):
+    def create_sac_deployment_graph(
+        model_path: Optional[str] = None, config: Optional[dict] = None
+    ):
         """Create SAC deployment graph for Ray Serve."""
         return SACServeDeployment.bind(model_path, config)
 
@@ -93,12 +97,15 @@ if RAY_AVAILABLE and serve:
         serve.run(deployment, name=deployment_name)
         print(f"✅ SAC model deployed as '{deployment_name}'")
         return deployment
+
 else:
 
     class SACServeDeployment:
         """Fallback SAC deployment when Ray is unavailable."""
 
-        def __init__(self, model_path: Optional[str] = None, config: Optional[dict] = None):
+        def __init__(
+            self, model_path: Optional[str] = None, config: Optional[dict] = None
+        ):
             print("⚠️ Ray not available - using fallback SAC deployment")
             self.agent = SACAgent(state_dim=10, action_dim=3, config=None)
 
@@ -107,7 +114,9 @@ else:
             action = self.agent.select_action(observation, evaluate=True)
             return {"action": action.tolist(), "status": "fallback"}
 
-    def create_sac_deployment_graph(model_path: Optional[str] = None, config: Optional[dict] = None):
+    def create_sac_deployment_graph(
+        model_path: Optional[str] = None, config: Optional[dict] = None
+    ):
         return SACServeDeployment(model_path, config)
 
     def deploy_sac_model(

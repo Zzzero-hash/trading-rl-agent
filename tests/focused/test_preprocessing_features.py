@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.data.preprocessing import preprocess_trading_data
 from src.data.features import compute_bollinger_bands, compute_macd
+from src.data.preprocessing import preprocess_trading_data
 
 
 def test_normalize_invalid_method():

@@ -6,13 +6,15 @@ from src.envs.trading_env import TradingEnv
 
 
 def make_env(tmp_path, **overrides):
-    df = pd.DataFrame({
-        "open": np.arange(6, dtype=float),
-        "high": np.arange(6, dtype=float) + 1,
-        "low": np.arange(6, dtype=float) - 1,
-        "close": np.arange(6, dtype=float),
-        "volume": np.ones(6),
-    })
+    df = pd.DataFrame(
+        {
+            "open": np.arange(6, dtype=float),
+            "high": np.arange(6, dtype=float) + 1,
+            "low": np.arange(6, dtype=float) - 1,
+            "close": np.arange(6, dtype=float),
+            "volume": np.ones(6),
+        }
+    )
     csv = tmp_path / "prices.csv"
     df.to_csv(csv, index=False)
     cfg = {"dataset_paths": [str(csv)], "window_size": 2}

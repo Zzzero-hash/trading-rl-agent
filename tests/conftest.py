@@ -89,10 +89,12 @@ def finrl_trading_env(finrl_sample_data):
 
     except ImportError:
         # Fallback to simple TradingEnv using synthetic data
-        from tests.test_data_utils import get_dynamic_test_config
         from src.envs.trading_env import TradingEnv
+        from tests.test_data_utils import get_dynamic_test_config
 
-        cfg = get_dynamic_test_config({"include_features": False, "continuous_actions": False})
+        cfg = get_dynamic_test_config(
+            {"include_features": False, "continuous_actions": False}
+        )
         env = TradingEnv(cfg)
 
         yield env
@@ -107,8 +109,9 @@ def finrl_trading_env(finrl_sample_data):
 @pytest.fixture
 def sample_csv_file(tmp_path):
     """Provide a sample CSV file using ``TestDataManager`` utilities."""
-    from tests.test_data_utils import TestDataManager
     import pandas as pd
+
+    from tests.test_data_utils import TestDataManager
 
     manager = TestDataManager(str(tmp_path))
     df = manager.generate_synthetic_dataset()

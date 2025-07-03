@@ -10,8 +10,6 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
-
-
 def create_sequences(
     data: Union[np.ndarray, pd.DataFrame],
     sequence_length: int,
@@ -55,8 +53,6 @@ def create_sequences(
     sequences_arr = np.array(sequences)
     targets_arr = np.array(sequence_targets).reshape(-1, 1)
     return sequences_arr, targets_arr
-
-
 
 
 def preprocess_trading_data(

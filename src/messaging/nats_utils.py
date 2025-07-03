@@ -7,10 +7,11 @@ client directly without an additional wrapper class.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Callable, Optional
 
 from nats.aio.client import Client as NATS
 
@@ -46,7 +47,9 @@ async def disconnect(nc: NATS) -> None:
 
 async def publish(nc: NATS, subject: str, data: dict[str, Any]) -> None:
     """Publish a JSON-encoded message to a subject."""
-    data = data.copy()  # Create a shallow copy to avoid mutating the caller's dictionary
+    data = (
+        data.copy()
+    )  # Create a shallow copy to avoid mutating the caller's dictionary
     if "timestamp" not in data:
         data["timestamp"] = datetime.utcnow().isoformat()
     message = json.dumps(data).encode()
@@ -58,7 +61,7 @@ async def subscribe(
     nc: NATS,
     subject: str,
     callback: Callable[[dict[str, Any]], Awaitable[None]],
-    queue: Optional[str] = None,
+    queue: str | None = None,
 ) -> None:
     """Subscribe to a subject and process messages with ``callback``."""
 

@@ -41,6 +41,7 @@ except ImportError:
         "Twitter sentiment will be skipped."
     )
 
+
 def generate_synthetic(symbols, days, volatility, scenarios_per_symbol):
     dfs = []
     for symbol in symbols:

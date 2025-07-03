@@ -95,7 +95,7 @@ The evaluation system calculates comprehensive trading performance metrics:
 
 ### Sample Output
 
-*The JSON snippet below contains illustrative metrics produced from sample data.*
+_The JSON snippet below contains illustrative metrics produced from sample data._
 
 ```json
 {

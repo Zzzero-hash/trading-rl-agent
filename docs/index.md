@@ -63,4 +63,4 @@ agent.train(env, episodes=1000)
 - ✅ **Hybrid CNN+LSTM + SAC** architecture production-ready
 - ✅ **Ray RLlib 2.38.0+** compatibility (SAC with **FinRL** integration; custom TD3 retained for experimentation)
 - ✅ **Automated quality checks** integrated
-*Metrics are illustrative and rely on sample data.*
+  _Metrics are illustrative and rely on sample data._
