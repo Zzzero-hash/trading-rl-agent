@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -67,9 +67,9 @@ def profile_model_inference(
             info = pynvml.nvmlDeviceGetMemoryInfo(handle)
             metrics.update(
                 {
-                    "gpu_memory_total_mb": info.total / (1024 * 1024),
-                    "gpu_memory_used_mb": info.used / (1024 * 1024),
-                    "gpu_memory_free_mb": info.free / (1024 * 1024),
+                    "gpu_memory_total_mb": int(info.total) / (1024 * 1024),
+                    "gpu_memory_used_mb": int(info.used) / (1024 * 1024),
+                    "gpu_memory_free_mb": int(info.free) / (1024 * 1024),
                 }
             )
         except Exception as exc:  # pragma: no cover - optional GPU info
@@ -104,8 +104,8 @@ def detect_gpus() -> dict[str, Any]:
             mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
             dev.update(
                 {
-                    "memory_used": mem.used / (1024 * 1024),
-                    "memory_free": mem.free / (1024 * 1024),
+                    "memory_used": int(mem.used) / (1024 * 1024),
+                    "memory_free": int(mem.free) / (1024 * 1024),
                 }
             )
             try:
@@ -198,7 +198,7 @@ def optimal_gpu_config(
 
 
 def run_hyperparameter_optimization(
-    train_fn: callable,
+    train_fn: Callable,
     config_space: dict[str, Any],
     num_samples: int = 10,
     max_epochs_per_trial: int = 10,
