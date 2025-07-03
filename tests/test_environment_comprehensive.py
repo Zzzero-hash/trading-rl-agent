@@ -92,7 +92,7 @@ class TestTradingEnvironmentComprehensive:
     ):
         """Test environment initialization with various configurations."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             for config_name, config in environment_configs.items():
                 config["dataset_paths"] = [comprehensive_market_data]
@@ -123,7 +123,7 @@ class TestTradingEnvironmentComprehensive:
     ):
         """Test environment reset functionality comprehensively."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             config = environment_configs["basic"]
             config["dataset_paths"] = [comprehensive_market_data]
@@ -155,7 +155,7 @@ class TestTradingEnvironmentComprehensive:
     ):
         """Test environment step functionality with different action types."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             config = environment_configs["basic"]
             config["dataset_paths"] = [comprehensive_market_data]
@@ -194,7 +194,7 @@ class TestTradingEnvironmentComprehensive:
     ):
         """Test complete episode execution."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             config = environment_configs["basic"]
             config["dataset_paths"] = [comprehensive_market_data]
@@ -235,7 +235,7 @@ class TestTradingEnvironmentComprehensive:
     ):
         """Test observation consistency across steps."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             config = environment_configs["basic"]
             config["dataset_paths"] = [comprehensive_market_data]
@@ -278,7 +278,7 @@ class TestTradingEnvironmentComprehensive:
     def test_environment_edge_cases(self, tmp_path):
         """Test environment behavior with edge cases."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             # Test with minimal data
             minimal_data = pd.DataFrame(
@@ -345,7 +345,7 @@ class TestTradingEnvironmentComprehensive:
     def test_environment_performance(self, comprehensive_market_data, memory_monitor):
         """Test environment performance and memory usage."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             config = {
                 "dataset_paths": [comprehensive_market_data],
@@ -406,7 +406,7 @@ class TestEnvironmentIntegration:
     def test_environment_agent_interface(self, sample_csv_path, mock_agent):
         """Test environment compatibility with agents."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             env = TradingEnv(
                 dataset_paths=[sample_csv_path], window_size=10, initial_balance=10000
@@ -455,7 +455,7 @@ class TestEnvironmentIntegration:
     def test_environment_model_integration(self, sample_csv_path, mock_model):
         """Test environment integration with predictive models."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             env = TradingEnv(
                 dataset_paths=[sample_csv_path], window_size=10, initial_balance=10000
@@ -495,7 +495,7 @@ class TestEnvironmentStressTests:
     def test_long_episode_stability(self, comprehensive_market_data):
         """Test environment stability over long episodes."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             env = TradingEnv(
                 dataset_paths=[comprehensive_market_data],
@@ -540,7 +540,7 @@ class TestEnvironmentStressTests:
     def test_memory_leak_prevention(self, comprehensive_market_data, memory_monitor):
         """Test that environment doesn't have memory leaks."""
         try:
-            from src.envs.trading_env import TradingEnv
+            from src.envs.finrl_trading_env import TradingEnv
 
             initial_memory = memory_monitor["initial"]
 

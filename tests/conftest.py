@@ -89,7 +89,7 @@ def finrl_trading_env(finrl_sample_data):
 
     except ImportError:
         # Fallback to simple TradingEnv using synthetic data
-        from src.envs.trading_env import TradingEnv
+        from src.envs.finrl_trading_env import TradingEnv
         from tests.test_data_utils import get_dynamic_test_config
 
         cfg = get_dynamic_test_config(

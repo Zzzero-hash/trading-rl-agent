@@ -14,7 +14,7 @@ import torch.nn as nn
 
 from src.agents.configs import TD3Config
 from src.agents.td3_agent import TD3Agent
-from src.envs.trading_env import TradingEnv
+from src.envs.finrl_trading_env import TradingEnv
 
 
 @pytest.fixture(autouse=True)
