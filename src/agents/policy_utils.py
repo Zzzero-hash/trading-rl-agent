@@ -31,22 +31,15 @@ class CallablePolicy(Policy):
 
 
 def weighted_policy_mapping(weights: Dict[str, float]):
-    """Create a policy mapping function with normalized weights."""
+    """Create a policy mapping function using normalized weights."""
     total = sum(weights.values()) or 1.0
     norm_weights = {k: v / total for k, v in weights.items()}
-    items = list(norm_weights.items())
-    cumulative = []
-    cum = 0.0
-    for _, w in items:
-        cum += w
-        cumulative.append(cum)
+
+    # Pre-compute the choices and weights for efficiency
+    choices, wts = zip(*norm_weights.items())
 
     def mapping_fn(agent_id: str, episode=None, worker=None, **kwargs) -> str:
-        r = random.random()
-        for (name, _), threshold in zip(items, cumulative):
-            if r <= threshold:
-                return name
-        return items[-1][0]
+        return random.choices(choices, weights=wts, k=1)[0]
 
     return mapping_fn
 
