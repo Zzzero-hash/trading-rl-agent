@@ -57,7 +57,7 @@ class Backtester:
                 price_obs = (
                     self.data.close[-self.latency - 1]
                     if self.latency
-                    else self.data.close[0]
+                    else self.data.close[-1]
                 )
                 action = self.policy(price_obs)
                 if action == "buy":
