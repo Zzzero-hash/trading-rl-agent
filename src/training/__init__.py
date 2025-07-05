@@ -7,7 +7,6 @@ interface to launch training or Ray Tune sweeps.
 
 from .cnn_lstm import (
     CNNLSTMTrainer,
-    SequenceDataset,
     TrainingConfig,
     create_example_config,
 )
@@ -15,7 +14,6 @@ from . import rl
 
 __all__ = [
     "CNNLSTMTrainer",
-    "SequenceDataset",
     "TrainingConfig",
     "create_example_config",
     "rl",
