@@ -140,7 +140,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         return self.train_dataset.to_dataloader(
-            train=True, batch_size=self.config.batch_size, shuffle=False
+            train=True, batch_size=self.config.batch_size, shuffle=True
         )
 
     def val_dataloader(self):
