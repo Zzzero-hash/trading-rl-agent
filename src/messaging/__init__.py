@@ -1,5 +1,6 @@
 """Messaging utilities for NATS."""
 
-from .nats_utils import connect, disconnect, publish, subscribe
+from nats import connect
+from .nats_utils import NATS
 
-__all__ = ["connect", "disconnect", "publish", "subscribe"]
+__all__ = ["connect", "NATS"]
