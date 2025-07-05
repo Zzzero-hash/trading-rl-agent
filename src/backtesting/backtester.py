@@ -42,7 +42,7 @@ class Backtester:
             index=pd.date_range("2000-01-01", periods=len(prices)),
         )
 
-        latency_steps = int(self.latency_seconds)
+        latency_steps = round(self.latency_seconds)
 
         class PolicyStrategy(bt.Strategy):
             params = dict(policy=None, latency=0)
