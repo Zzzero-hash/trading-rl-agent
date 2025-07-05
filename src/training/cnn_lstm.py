@@ -7,10 +7,10 @@ and regression tasks for market prediction.
 Example usage:
 >>> from src.training.cnn_lstm import CNNLSTMTrainer, TrainingConfig
 >>> trainer = CNNLSTMTrainer()
->>> model, history = trainer.train_from_config('src/configs/training/cnn_lstm_train.yaml')
+>>> model = trainer.train_from_config('src/configs/training/cnn_lstm_train.yaml')
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import logging
 import os
 from pathlib import Path
@@ -23,12 +23,13 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
+import pytorch_lightning as pl
+from pytorch_forecasting import TimeSeriesDataSet
 import yaml
 
 from src.data.features import generate_features
 from src.data.sentiment import SentimentAnalyzer, SentimentConfig
-from src.models.cnn_lstm import CNNLSTMConfig, CNNLSTMModel
+from src.models.cnn_lstm import CNNLSTMModel
 
 
 # Define a simple load_data function if not available
@@ -93,54 +94,110 @@ class TrainingConfig:
     validate_interval: int = 5
 
 
-class SequenceDataset:
-    """Dataset for creating sequences from time series data."""
+class TimeSeriesDataModule(pl.LightningDataModule):
+    """Lightning DataModule using ``TimeSeriesDataSet`` for sequence generation."""
 
-    def __init__(
-        self,
-        features: np.ndarray,
-        targets: np.ndarray,
-        sequence_length: int,
-        prediction_horizon: int = 1,
-    ):
+    def __init__(self, features: np.ndarray, targets: np.ndarray, config: TrainingConfig):
+        super().__init__()
         self.features = features
         self.targets = targets
-        self.sequence_length = sequence_length
-        self.prediction_horizon = prediction_horizon
+        self.config = config
 
-        # Create sequences
-        self.sequences, self.sequence_targets = self._create_sequences()
+    def setup(self, stage: Optional[str] = None):
+        df = pd.DataFrame(
+            self.features, columns=[f"f{i}" for i in range(self.features.shape[1])]
+        )
+        df["target"] = self.targets
+        df["time_idx"] = np.arange(len(df))
+        df["group"] = 0
 
-    def _create_sequences(self) -> tuple[np.ndarray, np.ndarray]:
-        """Create sequences from the raw data."""
-        sequences = []
-        targets = []
+        self.dataset = TimeSeriesDataSet(
+            df,
+            time_idx="time_idx",
+            target="target",
+            group_ids=["group"],
+            max_encoder_length=self.config.sequence_length,
+            max_prediction_length=self.config.prediction_horizon,
+            time_varying_unknown_reals=[f"f{i}" for i in range(self.features.shape[1])],
+            target_normalizer=None,
+        )
 
-        for i in range(
-            len(self.features) - self.sequence_length - self.prediction_horizon + 1
-        ):
-            # Input sequence
-            seq = self.features[i : i + self.sequence_length]
+        n = len(df)
+        train_end = int(n * self.config.train_split)
+        val_end = int(n * (self.config.train_split + self.config.val_split))
 
-            # Target (could be next value, price change, etc.)
-            if self.prediction_horizon == 1:
-                target = self.targets[i + self.sequence_length]
-            else:
-                # For multi-step prediction, take the last value
-                target = self.targets[
-                    i + self.sequence_length + self.prediction_horizon - 1
-                ]
+        self.train_dataset = TimeSeriesDataSet.from_dataset(
+            self.dataset, df[df["time_idx"] < train_end], stop_randomization=True
+        )
+        self.val_dataset = TimeSeriesDataSet.from_dataset(
+            self.dataset,
+            df[(df["time_idx"] >= train_end) & (df["time_idx"] < val_end)],
+            stop_randomization=True,
+        )
+        self.test_dataset = TimeSeriesDataSet.from_dataset(
+            self.dataset, df[df["time_idx"] >= val_end], stop_randomization=True
+        )
 
-            sequences.append(seq)
-            targets.append(target)
+    def train_dataloader(self):
+        return self.train_dataset.to_dataloader(
+            train=True, batch_size=self.config.batch_size, shuffle=True
+        )
 
-        return np.array(sequences), np.array(targets)
+    def val_dataloader(self):
+        return self.val_dataset.to_dataloader(
+            train=False, batch_size=self.config.batch_size, shuffle=False
+        )
 
-    def __len__(self):
-        return len(self.sequences)
+    def test_dataloader(self):
+        return self.test_dataset.to_dataloader(
+            train=False, batch_size=self.config.batch_size, shuffle=False
+        )
 
-    def __getitem__(self, idx):
-        return self.sequences[idx], self.sequence_targets[idx]
+
+class CNNLSTMLightning(pl.LightningModule):
+    """Lightning module wrapping :class:`CNNLSTMModel`."""
+
+    def __init__(self, input_dim: int, config: TrainingConfig, model_cfg: Optional[dict[str, Any]] = None):
+        super().__init__()
+        cfg = model_cfg or config.model_config or {
+            "cnn_filters": [64, 128],
+            "cnn_kernel_sizes": [3, 5],
+            "lstm_units": 256,
+            "dropout": 0.2,
+        }
+        self.model = CNNLSTMModel(
+            input_dim=input_dim,
+            output_size=cfg.get("output_size", 3),
+            config=cfg,
+            use_attention=cfg.get("use_attention", config.use_attention),
+        )
+        self.config = config
+        self.criterion = nn.CrossEntropyLoss()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.model(x)
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        y = y.long()
+        out = self(x)
+        loss = self.criterion(out, y)
+        acc = (torch.argmax(out, dim=1) == y).float().mean()
+        self.log("train_loss", loss, on_epoch=True)
+        self.log("train_acc", acc, on_epoch=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y = y.long()
+        out = self(x)
+        loss = self.criterion(out, y)
+        acc = (torch.argmax(out, dim=1) == y).float().mean()
+        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_acc", acc, prog_bar=True)
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=self.config.learning_rate)
 
 
 class CNNLSTMTrainer:
@@ -150,8 +207,6 @@ class CNNLSTMTrainer:
         load_dotenv()
         self.config = config or TrainingConfig()
         self.model = None
-        self.optimizer = None
-        self.criterion = None
         self.scaler = None
         self.sentiment_analyzer = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -349,75 +404,18 @@ class CNNLSTMTrainer:
                     sentiment_df[f"forex_sentiment_{pair}_abs"] = 0.0
         return sentiment_df
 
-    def create_data_loaders(
+    def create_data_module(
         self, features: np.ndarray, targets: np.ndarray
-    ) -> tuple[DataLoader, DataLoader, DataLoader]:
-        """Create train/validation/test data loaders."""
+    ) -> TimeSeriesDataModule:
+        """Create a :class:`TimeSeriesDataModule` from arrays."""
 
-        # Split data chronologically
-        n_samples = len(features)
-        train_end = int(n_samples * self.config.train_split)
-        val_end = int(n_samples * (self.config.train_split + self.config.val_split))
-
-        train_features, train_targets = features[:train_end], targets[:train_end]
-        val_features, val_targets = (
-            features[train_end:val_end],
-            targets[train_end:val_end],
-        )
-        test_features, test_targets = features[val_end:], targets[val_end:]
-
-        # Create sequence datasets
-        train_dataset = SequenceDataset(
-            train_features,
-            train_targets,
-            self.config.sequence_length,
-            self.config.prediction_horizon,
-        )
-        val_dataset = SequenceDataset(
-            val_features,
-            val_targets,
-            self.config.sequence_length,
-            self.config.prediction_horizon,
-        )
-        test_dataset = SequenceDataset(
-            test_features,
-            test_targets,
-            self.config.sequence_length,
-            self.config.prediction_horizon,
-        )
-
-        # Create data loaders
-        train_loader = DataLoader(
-            TensorDataset(
-                torch.FloatTensor(train_dataset.sequences),
-                torch.FloatTensor(train_dataset.sequence_targets),
-            ),
-            batch_size=self.config.batch_size,
-            shuffle=False,  # Keep temporal order
-        )
-
-        val_loader = DataLoader(
-            TensorDataset(
-                torch.FloatTensor(val_dataset.sequences),
-                torch.FloatTensor(val_dataset.sequence_targets),
-            ),
-            batch_size=self.config.batch_size,
-            shuffle=False,
-        )
-
-        test_loader = DataLoader(
-            TensorDataset(
-                torch.FloatTensor(test_dataset.sequences),
-                torch.FloatTensor(test_dataset.sequence_targets),
-            ),
-            batch_size=self.config.batch_size,
-            shuffle=False,
-        )
-
+        module = TimeSeriesDataModule(features, targets, self.config)
+        module.setup()
         logger.info(
-            f"Created data loaders: train={len(train_loader)}, val={len(val_loader)}, test={len(test_loader)}"
+            "Created datamodule with %d training batches",
+            len(module.train_dataloader()),
         )
-        return train_loader, val_loader, test_loader
+        return module
 
     def initialize_model(
         self, input_dim: int, model_config: Optional[dict[str, Any]] = None
@@ -436,23 +434,8 @@ class CNNLSTMTrainer:
             else:
                 model_config = self.config.model_config
 
-        # Create model
-        self.model = CNNLSTMModel(
-            input_dim=input_dim,
-            output_size=model_config.get(
-                "output_size", 3
-            ),  # 3 classes: Hold, Buy, Sell
-            config=model_config,
-            use_attention=model_config.get("use_attention", self.config.use_attention),
-        ).to(self.device)
-
-        # Initialize optimizer and loss function
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(), lr=self.config.learning_rate
-        )
-
-        # Use CrossEntropyLoss for classification (labels 0, 1, 2)
-        self.criterion = nn.CrossEntropyLoss()
+        # Create Lightning module
+        self.model = CNNLSTMLightning(input_dim, self.config, model_config)
 
         # Log input_dim for debugging
         logger.info(f"Initializing model with input_dim={input_dim}")
@@ -462,111 +445,26 @@ class CNNLSTMTrainer:
             f"Initialized model with {sum(p.numel() for p in self.model.parameters())} parameters"
         )
 
-    def train_epoch(self, train_loader: DataLoader) -> float:
-        """Train for one epoch."""
-        self.model.train()
-        total_loss = 0.0
-
-        for batch_idx, (data, target) in enumerate(train_loader):
-            data, target = (
-                data.to(self.device),
-                target.to(self.device).long(),
-            )  # Convert to long for classification
-
-            self.optimizer.zero_grad()
-            output = self.model(data)  # Don't squeeze for classification
-            loss = self.criterion(output, target)
-            loss.backward()
-            self.optimizer.step()
-
-            total_loss += loss.item()
-
-            if batch_idx % self.config.log_interval == 0:
-                logger.debug(
-                    f"Batch {batch_idx}/{len(train_loader)}, Loss: {loss.item():.6f}"
+    def fit(self, datamodule: TimeSeriesDataModule) -> None:
+        """Train the model using PyTorch Lightning."""
+        callbacks = []
+        if self.config.early_stopping_patience > 0:
+            callbacks.append(
+                pl.callbacks.EarlyStopping(
+                    monitor="val_loss",
+                    patience=self.config.early_stopping_patience,
+                    mode="min",
                 )
+            )
 
-        return total_loss / len(train_loader)
-
-    def validate(self, val_loader: DataLoader) -> tuple[float, float]:
-        """Validate the model."""
-        self.model.eval()
-        total_loss = 0.0
-        predictions = []
-        actuals = []
-
-        with torch.no_grad():
-            for data, target in val_loader:
-                data, target = (
-                    data.to(self.device),
-                    target.to(self.device).long(),
-                )  # Convert to long for classification
-                output = self.model(data)  # Don't squeeze for classification
-                loss = self.criterion(output, target)
-                total_loss += loss.item()
-
-                # Get predicted classes for classification accuracy
-                predicted_classes = torch.argmax(output, dim=1)
-                predictions.extend(predicted_classes.cpu().numpy())
-                actuals.extend(target.cpu().numpy())
-
-        avg_loss = total_loss / len(val_loader)
-
-        # Calculate accuracy as performance metric for classification
-        predictions = np.array(predictions)
-        actuals = np.array(actuals)
-        accuracy = np.mean(predictions == actuals) if len(predictions) > 0 else 0.0
-
-        return avg_loss, accuracy
-
-    def train(
-        self, train_loader: DataLoader, val_loader: DataLoader
-    ) -> dict[str, list[float]]:
-        """Full training loop with early stopping."""
-        history = {
-            "train_loss": [],
-            "val_loss": [],
-            "val_accuracy": [],  # Changed from correlation to accuracy
-        }
-
-        best_val_loss = float("inf")
-        patience_counter = 0
-
-        for epoch in range(self.config.epochs):
-            # Train
-            train_loss = self.train_epoch(train_loader)
-            history["train_loss"].append(train_loss)
-
-            # Validate
-            if epoch % self.config.validate_interval == 0:
-                val_loss, val_acc = self.validate(
-                    val_loader
-                )  # Changed from val_corr to val_acc
-                history["val_loss"].append(val_loss)
-                history["val_accuracy"].append(
-                    val_acc
-                )  # Changed from correlation to accuracy
-
-                logger.info(
-                    f"Epoch {epoch}: Train Loss={train_loss:.6f}, Val Loss={val_loss:.6f}, Val Acc={val_acc:.4f}"
-                )  # Updated logging
-
-                # Early stopping
-                if val_loss < best_val_loss:
-                    best_val_loss = val_loss
-                    patience_counter = 0
-
-                    # Save best model
-                    if self.config.save_model:
-                        self._save_model()
-                else:
-                    patience_counter += 1
-
-                if patience_counter >= self.config.early_stopping_patience:
-                    logger.info(f"Early stopping at epoch {epoch}")
-                    break
-
-        return history
+        trainer = pl.Trainer(
+            max_epochs=self.config.epochs,
+            logger=False,
+            enable_checkpointing=False,
+            callbacks=callbacks,
+            accelerator="auto",
+        )
+        trainer.fit(self.model, datamodule=datamodule)
 
     def _save_model(self):
         """Save the model and scaler."""
@@ -577,9 +475,9 @@ class CNNLSTMTrainer:
         # Save model
         torch.save(
             {
-                "model_state_dict": self.model.state_dict(),
+                "model_state_dict": self.model.model.state_dict(),
                 "config": self.config,
-                "input_dim": self.model.input_dim,
+                "input_dim": self.model.model.input_dim,
             },
             self.config.model_save_path,
         )
@@ -596,7 +494,7 @@ class CNNLSTMTrainer:
 
     def train_from_config(
         self, config_path: str
-    ) -> tuple[CNNLSTMModel, dict[str, list[float]]]:
+    ) -> CNNLSTMModel:
         """Train model from YAML configuration file."""
         with open(config_path) as f:
             config_dict = yaml.safe_load(f)
@@ -614,19 +512,17 @@ class CNNLSTMTrainer:
         symbols = data_config.get("symbols", ["AAPL"])
         features, targets = self.prepare_data(df, symbols)
 
-        # Create data loaders
-        train_loader, val_loader, test_loader = self.create_data_loaders(
-            features, targets
-        )
+        # Create datamodule
+        datamodule = self.create_data_module(features, targets)
 
         # Initialize model with config from YAML
         model_config = config_dict.get("model", {})
         self.initialize_model(features.shape[1], model_config)
 
         # Train
-        history = self.train(train_loader, val_loader)
+        self.fit(datamodule)
 
-        return self.model, history
+        return self.model
 
 
 # Example training configuration
@@ -674,10 +570,7 @@ if __name__ == "__main__":
     # Train model
     trainer = CNNLSTMTrainer()
     try:
-        model, history = trainer.train_from_config(config_path)
+        model = trainer.train_from_config(config_path)
         print("Training completed successfully!")
-        print(f"Final train loss: {history['train_loss'][-1]:.6f}")
-        if history["val_loss"]:
-            print(f"Final val loss: {history['val_loss'][-1]:.6f}")
     except Exception as e:
         print(f"Training failed: {e}")

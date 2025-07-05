@@ -11,15 +11,15 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from torch.utils.data import DataLoader, TensorDataset
+
 import yaml
 
 from src.models.cnn_lstm import CNNLSTMModel
 from src.training.cnn_lstm import (
     CNNLSTMTrainer,
-    SequenceDataset,
     TrainingConfig,
     create_example_config,
+    TimeSeriesDataModule,
 )
 
 pytestmark = pytest.mark.integration
@@ -62,51 +62,23 @@ class TestTrainingConfig:
         assert config.use_attention is False
 
 
-class TestSequenceDataset:
-    """Test SequenceDataset class."""
+class TestTimeSeriesDataModule:
+    """Test Lightning DataModule for sequence creation."""
 
-    def test_sequence_dataset_creation(self):
-        """Test creating sequences from time series data."""
-        # Create sample data
-        features = np.random.randn(100, 5)  # 100 timesteps, 5 features
-        targets = np.random.randn(100)  # 100 target values
+    def test_dataloader_shapes(self):
+        features = np.random.randn(50, 4)
+        targets = np.random.randint(0, 3, size=50)
 
-        dataset = SequenceDataset(
-            features, targets, sequence_length=10, prediction_horizon=1
-        )
+        config = TrainingConfig(sequence_length=5, prediction_horizon=1, batch_size=8)
+        dm = TimeSeriesDataModule(features, targets, config)
+        dm.setup()
 
-        assert len(dataset) == 90  # 100 - 10 + 1 - 1 = 90
-        assert dataset.sequences.shape == (90, 10, 5)  # (samples, seq_len, features)
-        assert dataset.sequence_targets.shape == (90,)
-
-    def test_sequence_dataset_multi_step_prediction(self):
-        """Test multi-step prediction horizon."""
-        features = np.random.randn(50, 3)
-        targets = np.random.randn(50)
-
-        dataset = SequenceDataset(
-            features, targets, sequence_length=5, prediction_horizon=3
-        )
-
-        expected_samples = 50 - 5 - 3 + 1  # 43
-        assert len(dataset) == expected_samples
-        assert dataset.sequences.shape == (expected_samples, 5, 3)
-
-    def test_sequence_dataset_indexing(self):
-        """Test dataset indexing."""
-        features = np.arange(20).reshape(20, 1).astype(float)  # Simple sequence
-        targets = np.arange(20).astype(float)
-
-        dataset = SequenceDataset(
-            features, targets, sequence_length=3, prediction_horizon=1
-        )
-
-        seq, target = dataset[0]
-        expected_seq = features[0:3]  # First 3 timesteps
-        expected_target = targets[3]  # 4th timestep
-
-        np.testing.assert_array_equal(seq, expected_seq)
-        assert target == expected_target
+        train_loader = dm.train_dataloader()
+        batch = next(iter(train_loader))
+        x, y = batch
+        assert x.shape[1] == config.sequence_length
+        assert x.shape[2] == features.shape[1]
+        assert len(y) == x.shape[0]
 
 
 class TestCNNLSTMTrainer:
@@ -127,7 +99,6 @@ class TestCNNLSTMTrainer:
         """Test trainer initialization."""
         assert self.trainer.config == self.config
         assert self.trainer.model is None
-        assert self.trainer.optimizer is None
         assert torch.cuda.is_available() or self.trainer.device == torch.device("cpu")
 
     def test_trainer_with_sentiment(self):
@@ -195,24 +166,17 @@ class TestCNNLSTMTrainer:
         assert trainer_norm.scaler is not None
         assert trainer_no_norm.scaler is None
 
-    def test_create_data_loaders(self):
-        """Test data loader creation."""
+    def test_create_datamodule(self):
+        """Test datamodule creation."""
         features = np.random.randn(50, 8)
-        targets = np.random.randn(50)
+        targets = np.random.randint(0, 3, 50)
 
-        train_loader, val_loader, test_loader = self.trainer.create_data_loaders(
-            features, targets
-        )
-
-        assert len(train_loader) > 0
-        assert len(val_loader) > 0
-        assert len(test_loader) > 0
-
-        # Check batch shape
-        for batch_data, batch_targets in train_loader:
-            assert batch_data.shape[1] == self.config.sequence_length
-            assert batch_data.shape[2] == features.shape[1]
-            break
+        dm = self.trainer.create_data_module(features, targets)
+        loader = dm.train_dataloader()
+        batch = next(iter(loader))
+        data, target = batch
+        assert data.shape[1] == self.config.sequence_length
+        assert data.shape[2] == features.shape[1]
 
     def test_initialize_model(self):
         """Test model initialization."""
@@ -220,48 +184,10 @@ class TestCNNLSTMTrainer:
         self.trainer.initialize_model(input_dim)
 
         assert self.trainer.model is not None
-        assert isinstance(self.trainer.model, CNNLSTMModel)
-        assert self.trainer.optimizer is not None
-        assert self.trainer.criterion is not None
-        assert self.trainer.model.input_dim == input_dim
+        assert hasattr(self.trainer.model, "model")
+        assert isinstance(self.trainer.model.model, CNNLSTMModel)
+        assert self.trainer.model.model.input_dim == input_dim
 
-    def test_train_epoch(self):
-        """Test single epoch training."""
-        # Initialize model
-        input_dim = 6
-        self.trainer.initialize_model(input_dim)
-
-        # Create dummy data loader with proper classification targets (0, 1, 2)
-        features = torch.randn(20, self.config.sequence_length, input_dim)
-        targets = torch.randint(0, 3, (20,))  # Classification targets: 0, 1, 2
-        dataset = TensorDataset(features, targets)
-        loader = DataLoader(dataset, batch_size=4)
-
-        # Train one epoch
-        loss = self.trainer.train_epoch(loader)
-
-        assert isinstance(loss, float)
-        assert loss >= 0  # Loss should be non-negative
-
-    def test_validate(self):
-        """Test model validation."""
-        # Initialize model
-        input_dim = 6
-        self.trainer.initialize_model(input_dim)
-
-        # Create dummy validation data with proper classification targets (0, 1, 2)
-        features = torch.randn(16, self.config.sequence_length, input_dim)
-        targets = torch.randint(0, 3, (16,))  # Classification targets: 0, 1, 2
-        dataset = TensorDataset(features, targets)
-        loader = DataLoader(dataset, batch_size=4)
-
-        # Validate
-        val_loss, val_corr = self.trainer.validate(loader)
-
-        assert isinstance(val_loss, float)
-        assert isinstance(val_corr, float)
-        assert val_loss >= 0
-        assert -1.0 <= val_corr <= 1.0
 
     @patch("torch.save")
     def test_save_model(self, mock_torch_save):
@@ -326,21 +252,15 @@ class TestTrainingIntegration:
         features, targets = trainer.prepare_data(df)
         assert features.shape[0] > 10  # Should have enough data after cleaning
 
-        # Create data loaders
-        train_loader, val_loader, test_loader = trainer.create_data_loaders(
-            features, targets
-        )
+        # Create datamodule
+        datamodule = trainer.create_data_module(features, targets)
 
         # Initialize model
         trainer.initialize_model(features.shape[1])
 
-        # Train
-        history = trainer.train(train_loader, val_loader)
-
-        assert "train_loss" in history
-        assert "val_loss" in history
-        assert len(history["train_loss"]) > 0
-        assert all(isinstance(loss, float) for loss in history["train_loss"])
+        # Train using Lightning
+        trainer.fit(datamodule)
+        assert trainer.model is not None
 
 
 class TestConfigurationUtils:
