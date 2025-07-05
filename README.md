@@ -86,6 +86,23 @@ python finrl_data_loader.py --config configs/finrl_real_data.yaml
 python src/train_finrl_agent.py --agent sac --data sample --backtesting realistic
 ```
 
+### Messaging Example
+
+```python
+import asyncio
+from messaging import connect
+
+
+async def main():
+    async with connect(servers=["nats://localhost:4222"]) as nc:
+        await nc.publish("trades.buy", b"{\"symbol\": \"AAPL\"}")
+        await nc.subscribe("trades.*", cb=lambda msg: print(msg.data))
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
 ---
 
 ## 🔍 Current Status
