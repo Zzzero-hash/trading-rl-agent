@@ -10,7 +10,7 @@ Example usage:
 >>> model = trainer.train_from_config('src/configs/training/cnn_lstm_train.yaml')
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import logging
 import os
 from pathlib import Path
