@@ -1,4 +1,4 @@
-"""Backtesting utilities using backtesting.py."""
+"""Backtesting utilities built on :mod:`backtrader`."""
 
 from .backtester import Backtester
 
