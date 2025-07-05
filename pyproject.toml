@@ -35,7 +35,7 @@ known_first_party = ["src"]
 known_third_party = [
     "numpy", "pandas", "torch", "ray", "gymnasium", "yfinance",
     "ta", "scipy", "matplotlib", "seaborn", "plotly", "pytest",
-    "pyyaml", "tqdm", "wandb", "optuna", "sklearn", "backtesting"
+    "pyyaml", "tqdm", "wandb", "optuna", "sklearn", "backtrader"
 ]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 skip_glob = ["*/__init__.py"]

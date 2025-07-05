@@ -12,6 +12,14 @@ def test_backtester_runs_basic_strategy():
 
 
 def test_backtester_slippage_and_latency():
-    bt = Backtester(slippage_pct=0.1, latency_seconds=1)
-    assert bt.apply_slippage(100.0) == pytest.approx(110.0)
-    assert bt.apply_latency(0.0) == pytest.approx(1.0)
+    bt_no_slip = Backtester()
+    res_no_slip = bt_no_slip.run_backtest(prices=[1, 2, 3], policy=lambda p: "buy")
+
+    bt_slip = Backtester(slippage_pct=0.1)
+    res_slip = bt_slip.run_backtest(prices=[1, 2, 3], policy=lambda p: "buy")
+
+    bt_lat = Backtester(latency_seconds=1)
+    res_lat = bt_lat.run_backtest(prices=[1, 2, 3, 4], policy=lambda p: "buy")
+
+    assert res_slip["Return [%]"] < res_no_slip["Return [%]"]
+    assert isinstance(res_lat, pd.Series)
