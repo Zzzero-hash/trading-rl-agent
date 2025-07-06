@@ -7,9 +7,8 @@ Includes risk-adjusted returns, drawdown analysis, and portfolio metrics.
 
 """Convenience wrappers around the ``empyrical`` statistics library."""
 
-import importlib
-
 import empyrical as _empyrical
+import importlib
 import numpy as np
 import pandas as pd
 
@@ -18,7 +17,7 @@ import pandas as pd
 # ``importlib`` which still triggers the package ``__init__`` but ensures the
 # dependency is available when this file is imported through the project's
 # requirements.
-# Removed global import of QuantStats. Lazy loading will be implemented in relevant functions.
+qs_stats = importlib.import_module("quantstats.stats")
 
 TRADING_DAYS_PER_YEAR = 252
 
