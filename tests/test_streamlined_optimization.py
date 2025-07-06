@@ -28,17 +28,18 @@ def test_optimization():
             features=features, targets=targets, num_samples=2, max_epochs_per_trial=5
         )
 
+        assert results.get("method") == "optuna"
         print("✅ Optimization test successful!")
         print(f"   • Best score: {results['best_score']:.4f}")
         print(f"   • Best config: {results['best_config']}")
 
-        return True
+        assert isinstance(results["best_score"], float)
+        assert isinstance(results["best_config"], dict)
 
     except Exception as e:
         print(f"❌ Test failed: {e}")
-        return False
+        raise
 
 
 if __name__ == "__main__":
-    success = test_optimization()
-    exit(0 if success else 1)
+    test_optimization()
