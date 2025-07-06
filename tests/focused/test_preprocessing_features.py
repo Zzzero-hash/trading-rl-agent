@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from src.data.features import compute_bollinger_bands, compute_macd
-from src.data.preprocessing import preprocess_trading_data
+from src.data.preprocessing import preprocess_trading_data, create_sequences
 
 
 def test_normalize_invalid_method():
@@ -43,3 +43,25 @@ def test_feature_generators_basic():
     assert upper.isna().iloc[:2].all()
     macd_df = compute_macd(data.copy(), price_col="close")
     assert {"macd_line", "macd_signal", "macd_hist"}.issubset(macd_df.columns)
+
+
+def test_create_sequences_stride_dataframe():
+    df = pd.DataFrame(
+        {
+            "f1": np.arange(6, dtype=float),
+            "f2": np.arange(10, 16, dtype=float),
+            "target": np.arange(20, 26, dtype=float),
+        }
+    )
+    seq, tgt = create_sequences(df, sequence_length=2, target_column="target", stride=2)
+
+    expected_seq = np.array(
+        [
+            [[0.0, 10.0], [1.0, 11.0]],
+            [[2.0, 12.0], [3.0, 13.0]],
+        ]
+    )
+    expected_tgt = np.array([[22.0], [24.0]])
+
+    assert np.array_equal(seq, expected_seq)
+    assert np.array_equal(tgt, expected_tgt)

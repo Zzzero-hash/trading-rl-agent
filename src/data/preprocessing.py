@@ -8,6 +8,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from numpy.lib.stride_tricks import sliding_window_view
 
 
 def create_sequences(
@@ -30,28 +31,28 @@ def create_sequences(
     """
     if isinstance(data, pd.DataFrame):
         if target_column and target_column in data.columns:
-            features = data.drop(columns=[target_column]).values
-            targets = data[target_column].values
+            features = data.drop(columns=[target_column]).to_numpy()
+            targets = data[target_column].to_numpy()
         else:
-            features = data.values
-            targets = data.values[:, -1]  # Use last column as target
+            features = data.to_numpy()
+            targets = data.to_numpy()[:, -1]  # Use last column as target
     else:
-        features = data
+        features = np.asarray(data)
         targets = data[:, -1] if data.ndim > 1 else data
 
-    sequences = []
-    sequence_targets = []
+    features = np.asarray(features)
+    targets = np.asarray(targets)
 
-    # Create sequences and next-step targets
-    for i in range(0, len(features) - sequence_length, stride):
-        seq = features[i : i + sequence_length]
-        # target is the next value after the sequence
-        target = targets[i + sequence_length]
-        sequences.append(seq)
-        sequence_targets.append(target)
+    if len(features) <= sequence_length:
+        seq_shape = (0, sequence_length, features.shape[1]) if features.ndim > 1 else (0, sequence_length)
+        return np.empty(seq_shape), np.empty((0, 1))
 
-    sequences_arr = np.array(sequences)
-    targets_arr = np.array(sequence_targets).reshape(-1, 1)
+    windows = sliding_window_view(features, sequence_length, axis=0)[:-1]
+    if features.ndim > 1:
+        windows = windows.transpose(0, 2, 1)
+
+    sequences_arr = windows[::stride]
+    targets_arr = targets[sequence_length:][::stride].reshape(-1, 1)
     return sequences_arr, targets_arr
 
 
