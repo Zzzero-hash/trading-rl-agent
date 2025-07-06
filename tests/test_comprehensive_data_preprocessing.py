@@ -9,6 +9,8 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+
+pytest.importorskip("talib")
 from sklearn.preprocessing import StandardScaler
 import torch
 
