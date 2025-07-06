@@ -7,10 +7,28 @@ Includes risk-adjusted returns, drawdown analysis, and portfolio metrics.
 
 """Convenience wrappers around the ``empyrical`` statistics library."""
 
+import importlib
+
 import empyrical as _empyrical
 import numpy as np
+import pandas as pd
+
+# QuantStats requires IPython even when only using the stats module. To avoid
+# import errors when IPython is not installed, we lazily import the module using
+# ``importlib`` which still triggers the package ``__init__`` but ensures the
+# dependency is available when this file is imported through the project's
+# requirements.
+qs_stats = importlib.import_module("quantstats.stats")
 
 TRADING_DAYS_PER_YEAR = 252
+
+
+def _to_series(returns) -> pd.Series:
+    """Convert input to a pandas Series with a DatetimeIndex."""
+    series = pd.Series(returns)
+    if not isinstance(series.index, pd.DatetimeIndex):
+        series.index = pd.date_range("1970-01-01", periods=len(series))
+    return series
 
 
 def calculate_sharpe_ratio(returns, risk_free_rate: float = 0.0) -> float:
@@ -47,21 +65,15 @@ def calculate_sortino_ratio(returns, target_return: float = 0.0) -> float:
 
 
 def calculate_profit_factor(returns) -> float:
-    """Calculate profit factor (gross profit / gross loss)."""
-    returns = np.asarray(returns)
-    gains = returns[returns > 0].sum()
-    losses = -returns[returns < 0].sum()
-    if losses == 0:
-        return float("inf") if gains > 0 else 0.0
-    return float(gains / losses)
+    """Calculate profit factor using QuantStats."""
+    series = _to_series(returns)
+    return float(qs_stats.profit_factor(series))
 
 
 def calculate_win_rate(returns) -> float:
-    """Calculate win rate (percentage of positive returns)."""
-    returns = np.asarray(returns)
-    if len(returns) == 0:
-        return 0.0
-    return float((returns > 0).sum() / len(returns))
+    """Calculate win rate using QuantStats."""
+    series = _to_series(returns)
+    return float(qs_stats.win_rate(series))
 
 
 def calculate_calmar_ratio(returns) -> float:
@@ -116,13 +128,10 @@ def calculate_beta(returns, benchmark_returns) -> float:
 
 
 def calculate_average_win_loss_ratio(returns) -> float:
-    """Average win/loss ratio."""
-    returns = np.asarray(returns)
-    wins = returns[returns > 0]
-    losses = returns[returns < 0]
-    if len(losses) == 0:
-        return float("inf") if len(wins) > 0 else 0.0
-    return float(wins.mean() / -losses.mean())
+    """Average win/loss ratio using QuantStats."""
+    series = _to_series(returns)
+    # QuantStats exposes this metric as ``win_loss_ratio`` / ``payoff_ratio``
+    return float(qs_stats.win_loss_ratio(series))
 
 
 def calculate_comprehensive_metrics(
@@ -132,16 +141,17 @@ def calculate_comprehensive_metrics(
     confidence: float = 0.95,
 ):
     """Return a dictionary with common trading performance metrics."""
+    series = _to_series(returns)
     metrics = {
-        "sharpe_ratio": calculate_sharpe_ratio(returns, risk_free_rate),
-        "sortino_ratio": calculate_sortino_ratio(returns, risk_free_rate),
-        "calmar_ratio": calculate_calmar_ratio(returns),
-        "max_drawdown": calculate_max_drawdown(returns),
-        "var_95": calculate_var(returns, confidence),
-        "expected_shortfall": calculate_expected_shortfall(returns, confidence),
-        "profit_factor": calculate_profit_factor(returns),
-        "win_rate": calculate_win_rate(returns),
-        "average_win_loss_ratio": calculate_average_win_loss_ratio(returns),
+        "sharpe_ratio": calculate_sharpe_ratio(series, risk_free_rate),
+        "sortino_ratio": calculate_sortino_ratio(series, risk_free_rate),
+        "calmar_ratio": calculate_calmar_ratio(series),
+        "max_drawdown": calculate_max_drawdown(series),
+        "var_95": calculate_var(series, confidence),
+        "expected_shortfall": calculate_expected_shortfall(series, confidence),
+        "profit_factor": float(qs_stats.profit_factor(series)),
+        "win_rate": float(qs_stats.win_rate(series)),
+        "average_win_loss_ratio": float(qs_stats.win_loss_ratio(series)),
     }
 
     if benchmark_returns is not None:
