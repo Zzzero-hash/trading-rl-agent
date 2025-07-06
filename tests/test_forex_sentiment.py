@@ -47,7 +47,7 @@ def test_analyze_text_sentiment():
     neu = analyze_text_sentiment("EURUSD trading sideways")
     assert pos > 0
     assert neg < 0
-    assert abs(neu) < 0.1
+    assert abs(neu) < NEUTRAL_SENTIMENT_THRESHOLD
 
 
 @patch("src.data.forex_sentiment.requests.get")
