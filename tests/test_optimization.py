@@ -230,12 +230,12 @@ class TestHyperparamOptimization:
     def test_hyperparameter_search_space(self):
         """Test hyperparameter search space conversion for Ray Tune."""
         from src.optimization.cnn_lstm_optimization import (
-            _get_default_cnn_lstm_search_space,
+            get_default_search_space,
         )
         from src.optimization.rl_optimization import _get_default_sac_search_space
 
         # Test CNN-LSTM search space
-        cnn_lstm_space = _get_default_cnn_lstm_search_space()
+        cnn_lstm_space = get_default_search_space()
         assert isinstance(cnn_lstm_space, dict)
         assert "cnn_filters" in cnn_lstm_space
         assert "lstm_units" in cnn_lstm_space
@@ -289,7 +289,7 @@ class TestHyperparamOptimization:
     @pytest.mark.skip(reason="Integration test that requires Ray cluster")
     def test_optimize_rl_minimal(self):
         """Minimal test for RL optimization."""
-        from src.optimization.rl_optimization import optimize_td3_hyperparams
+        from src.optimization.rl_optimization import optimize_sac_hyperparams
 
         # Create a minimal environment config
         env_config = {
@@ -302,7 +302,7 @@ class TestHyperparamOptimization:
 
         # Run with only 1 sample and minimal iterations
         with tempfile.TemporaryDirectory() as temp_dir:
-            analysis = optimize_td3_hyperparams(
+            analysis = optimize_sac_hyperparams(
                 env_config=env_config,
                 num_samples=1,
                 max_iterations_per_trial=2,
