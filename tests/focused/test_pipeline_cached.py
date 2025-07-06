@@ -1,6 +1,8 @@
 import pandas as pd
 import pytest
 
+pytest.importorskip("talib")
+
 from src.data.pipeline import load_cached_csvs
 
 

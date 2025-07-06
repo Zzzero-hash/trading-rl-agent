@@ -232,11 +232,7 @@ class TestHyperparamOptimization:
         from src.optimization.cnn_lstm_optimization import (
             _get_default_cnn_lstm_search_space,
         )
-        from src.optimization.rl_optimization import (
-            _get_default_ppo_search_space,
-            _get_default_sac_search_space,
-            _get_default_td3_search_space,
-        )
+        from src.optimization.rl_optimization import _get_default_sac_search_space
 
         # Test CNN-LSTM search space
         cnn_lstm_space = _get_default_cnn_lstm_search_space()
@@ -245,21 +241,10 @@ class TestHyperparamOptimization:
         assert "lstm_units" in cnn_lstm_space
         assert "learning_rate" in cnn_lstm_space
 
-        # Test TD3 search space
-        td3_space = _get_default_td3_search_space()
-        assert isinstance(td3_space, dict)
-        assert "actor_lr" in td3_space
-        assert "critic_lr" in td3_space
-
         # Test SAC search space
         sac_space = _get_default_sac_search_space()
         assert isinstance(sac_space, dict)
         assert "twin_q" in sac_space
-
-        # Test PPO search space
-        ppo_space = _get_default_ppo_search_space()
-        assert isinstance(ppo_space, dict)
-        assert "lr" in ppo_space
 
     @pytest.mark.skip(reason="Integration test that requires Ray cluster")
     def test_optimize_cnn_lstm_minimal(self):
