@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+pytest.importorskip("talib")
+
 from src.data.features import compute_bollinger_bands, compute_macd
 from src.data.preprocessing import preprocess_trading_data, create_sequences
 
