@@ -318,9 +318,9 @@ The dataset is immediately ready for training the RL agent and can seamlessly in
 
 ## CNN-LSTM Hyperparameter Optimization
 
-The `src.optimization.cnn_lstm_optimization` module uses **Ray Tune** to search
-for optimal network parameters. When Ray is not available, it automatically
-falls back to a basic grid search.
+The `src.optimization.cnn_lstm_optimization` module uses **Optuna** for
+hyperparameter search. When Ray Tune is available it integrates with
+`OptunaSearch`; otherwise it runs a standalone Optuna study.
 
 Example usage:
 
