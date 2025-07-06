@@ -22,10 +22,13 @@ _Environment testing framework complete with 28 environment tests covering key s
 
 #### 🤖 Tier 2: Reinforcement Learning ✅
 
-- **RL Agents**: SAC (Ray RLlib) + Custom TD3 implementations
-- **Trading Environment**: Realistic simulation with transaction costs
+- **RL Agents**: SAC (Ray RLlib) and TD3/PPO (Stable Baselines3)
+- **Hybrid Architecture**: CNN+LSTM features as RL state space
+- **Uncertainty Quantification**: Confidence-weighted actions
+- **Training Pipeline**: Distributed training with Ray Tune
+- **Trading Environment**: Realistic simulation with transaction costs provided by FinRL
 - **Hybrid Integration**: CNN+LSTM predictions enhance RL state space
-- **Risk Management**: Confidence-weighted position sizing
+- **Risk Management**: Confidence-weighted position sizing - SAC agent utilized by Ensemble RL agent
 
 #### 🔧 Production Infrastructure ✅
 
