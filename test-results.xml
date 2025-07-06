@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="5.622" timestamp="2025-07-03T20:47:43.118033+00:00" hostname="ca3190311e25"><testcase classname="" name="tests.focused.test_dataclasses_trainer" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_dataclasses_trainer.py'.
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="4.899" timestamp="2025-07-06T20:36:04.951502+00:00" hostname="0cb157972b5d"><testcase classname="" name="tests.focused.test_dataclasses_trainer" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_dataclasses_trainer.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
 src/envs/finrl_trading_env.py:17: in &lt;module&gt;
