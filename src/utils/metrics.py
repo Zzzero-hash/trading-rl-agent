@@ -18,7 +18,7 @@ import pandas as pd
 # ``importlib`` which still triggers the package ``__init__`` but ensures the
 # dependency is available when this file is imported through the project's
 # requirements.
-qs_stats = importlib.import_module("quantstats.stats")
+# Removed global import of QuantStats. Lazy loading will be implemented in relevant functions.
 
 TRADING_DAYS_PER_YEAR = 252
 
