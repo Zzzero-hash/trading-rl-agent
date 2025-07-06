@@ -54,6 +54,10 @@ psutil>=5.9.0,<6.0
 backtrader>=1.9.78
 riskfolio-lib>=7.0.1
 
+# Performance analytics
+quantstats>=0.0.64
+ipython>=8.10.0  # avoid CVE-2023-**; latest upstream is 9.4.0
+
 # FinRL & related dependencies
 finrl>=0.3.7
 alpaca-py>=0.4.0
