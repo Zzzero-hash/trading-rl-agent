@@ -53,7 +53,7 @@ def analyze_text_sentiment(text: str) -> float:
         scores = analyzer.polarity_scores(text)
         return float(scores.get("compound", 0.0))
     except Exception as exc:  # pragma: no cover - failure path
-        print(f"VADER sentiment failed for text '{text}': {exc}")
+        logger.warning(f"VADER sentiment failed for text '{text}': {exc}")
         return 0.0
 
 
