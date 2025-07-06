@@ -66,10 +66,7 @@ class NewsSentimentProvider(SentimentProvider):
     def _analyze_text_sentiment(text: str) -> float:
         """Analyze text sentiment using the VADER compound score."""
         try:
-            from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
-            analyzer = SentimentIntensityAnalyzer()
-            scores = analyzer.polarity_scores(text)
+            scores = VADER_ANALYZER.polarity_scores(text)
             return float(scores.get("compound", 0.0))
         except Exception as exc:  # pragma: no cover - failure path
             logger.warning(f"VADER sentiment failed for text '{text}': {exc}")
