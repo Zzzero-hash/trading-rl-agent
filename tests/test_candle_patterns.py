@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+pytest.importorskip("talib")
+
 from src.data.candle_patterns import (
     compute_candle_stats,
     detect_dark_cloud_cover,
