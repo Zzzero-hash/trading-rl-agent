@@ -64,38 +64,16 @@ class NewsSentimentProvider(SentimentProvider):
 
     @staticmethod
     def _analyze_text_sentiment(text: str) -> float:
-        """Simple sentiment analysis using keyword matching."""
-        positive_words = [
-            "bullish",
-            "growth",
-            "profit",
-            "gain",
-            "up",
-            "rise",
-            "strong",
-            "beat",
-            "outperform",
-        ]
-        negative_words = [
-            "bearish",
-            "loss",
-            "decline",
-            "down",
-            "fall",
-            "weak",
-            "miss",
-            "underperform",
-            "drop",
-        ]
-        text_lower = text.lower()
-        positive_count = sum(1 for word in positive_words if word in text_lower)
-        negative_count = sum(1 for word in negative_words if word in text_lower)
-        if positive_count + negative_count == 0:
+        """Analyze text sentiment using the VADER compound score."""
+        try:
+            from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+            analyzer = SentimentIntensityAnalyzer()
+            scores = analyzer.polarity_scores(text)
+            return float(scores.get("compound", 0.0))
+        except Exception as exc:  # pragma: no cover - failure path
+            logger.warning(f"VADER sentiment failed for text '{text}': {exc}")
             return 0.0
-        sentiment_score = (positive_count - negative_count) / (
-            positive_count + negative_count
-        )
-        return max(-1.0, min(1.0, sentiment_score))
 
     @staticmethod
     def _get_mock_news_sentiment_static(

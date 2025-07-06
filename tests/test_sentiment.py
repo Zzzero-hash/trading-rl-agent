@@ -93,7 +93,7 @@ class TestSentimentProviders:
 
         assert pos_score > 0
         assert neg_score < 0
-        assert neu_score == 0.0
+        assert abs(neu_score) < 0.1
 
     def test_social_provider_mock_sentiment(self):
         """Test social provider returns mock sentiment data."""
