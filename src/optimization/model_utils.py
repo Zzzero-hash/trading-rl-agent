@@ -37,11 +37,8 @@ def profile_model_inference(
 ) -> dict[str, Any]:
     """Profile model inference performance using ``torch.utils.benchmark``."""
     model.eval()
-    device = (
-        next(model.parameters()).device
-        if any(model.parameters())
-        else torch.device("cpu")
-    )
+    first_param = next(model.parameters(), None)
+    device = first_param.device if first_param is not None else torch.device("cpu")
     x = torch.randn(batch_size, sequence_length, num_features, device=device)
     with torch.no_grad():
         for _ in range(num_warmup):
