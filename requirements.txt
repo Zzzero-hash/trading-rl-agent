@@ -3,7 +3,7 @@
 
 # Core numerical computing
 # NOTE: torch>=2.3.0 requires Python 3.11+ and CUDA 12.x. For Python 3.10 and CUDA 11.8, use torch<2.3.0.
-numpy>=1.21.0,<2.0.0  # Fix compatibility with wandb and ray
+numpy>=1.22.2  # Fix compatibility with wandb and ray
 torch>=1.12.0,<2.3.0  # PyTorch for neural networks, maintain Python 3.10 compatibility
 scipy>=1.7.0,<1.12.0  # Scientific computing
 
@@ -65,3 +65,4 @@ alpaca-trade-api>=2.3.0,<3.1.1
 ccxt>=1.66.32
 stockstats>=0.4.0
 # Using pandas_ta and ta libraries for technical analysis
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
