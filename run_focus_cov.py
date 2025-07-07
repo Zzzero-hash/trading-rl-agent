@@ -14,7 +14,7 @@ files = [
 cov = coverage.Coverage(source=["src"])
 
 cov.start()
-result = pytest.main(["tests/focused", "-v"])
+result = pytest.main(["tests/unit", "-v"])
 cov.stop()
 
 cov.save()
