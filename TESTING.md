@@ -25,7 +25,7 @@ pip install -r requirements-test-comprehensive.txt
 
 ## Running tests with pytest
 
-Tests live under the `tests/` directory and are organized with pytest markers.
+Tests live under the `tests/` directory. See [`tests/README.md`](tests/README.md) for directory layout and available markers.
 Example commands:
 
 ```bash
@@ -35,8 +35,14 @@ pytest -v
 # only unit tests
 pytest -m unit
 
-# integration tests that require Ray
+# integration tests
 pytest -m integration
+
+# performance benchmarks
+pytest -m performance
+
+# lightweight smoke tests
+pytest -m smoke
 ```
 
 ## Running tests with `run_tests.py`
@@ -59,3 +65,8 @@ setup where required. Usage:
 ```
 
 The script prints progress and manages teardown automatically.
+
+## Coverage targets
+
+The project aims for **92% or higher** total coverage with critical modules above
+**95%**. New features should include tests reaching **100%** coverage.
