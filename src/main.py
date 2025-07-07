@@ -8,7 +8,8 @@ import yaml
 from src.agents.trainer import Trainer
 
 
-def main():
+def build_parser() -> argparse.ArgumentParser:
+    """Return the CLI argument parser for the main entry point."""
 
     parser = argparse.ArgumentParser(
         description="Train or evaluate an RL trading agent"
@@ -35,7 +36,14 @@ def main():
     parser.add_argument(
         "--tune", action="store_true", help="Run Ray Tune hyperparameter search"
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    """Main CLI entry point."""
+
+    parser = build_parser()
+    args = parser.parse_args(argv)
 
     if args.tune:
         from agents.tune import run_tune
