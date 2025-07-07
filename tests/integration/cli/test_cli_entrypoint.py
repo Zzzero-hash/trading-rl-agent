@@ -24,5 +24,5 @@ def test_main_when_main(sample_config_files):
         patch("src.main.Trainer") as mock_trainer_class,
         patch("src.main.main") as mock_main,
     ):
-        exec(open("src/main.py").read())
+        runpy.run_path("src/main.py")
         assert callable(main)
