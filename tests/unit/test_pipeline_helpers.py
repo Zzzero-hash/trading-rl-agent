@@ -13,7 +13,7 @@ def test_load_cached_csvs_empty(tmp_path):
 def test_load_cached_csvs_sources(sample_csv_file, tmp_path):
     df = pd.read_csv(sample_csv_file)
     dest = tmp_path / "dataset.csv"
-    df.to_csv(dest)
+    df.to_csv(dest, index=False)
     combined = load_cached_csvs(tmp_path)
     assert "source" in combined.columns
     assert combined["source"].iloc[0] == "dataset"
