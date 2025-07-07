@@ -2,10 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-pytest.importorskip("talib")
-
 from src.data.features import compute_bollinger_bands, compute_macd
-from src.data.preprocessing import preprocess_trading_data, create_sequences
+from src.data.preprocessing import create_sequences, preprocess_trading_data
 
 
 def test_normalize_invalid_method():
@@ -41,8 +39,8 @@ def test_feature_generators_basic():
     df["log_return"] = np.log(df["close"] / df["close"].shift(1))
     assert "log_return" in df.columns
 
-    upper, mid, lower = compute_bollinger_bands(data["close"], timeperiod=3)
-    assert upper.isna().iloc[:2].all()
+    bb_df = compute_bollinger_bands(data.copy(), price_col="close", timeperiod=3)
+    assert bb_df["bb_upper_3"].isna().iloc[:2].all()
     macd_df = compute_macd(data.copy(), price_col="close")
     assert {"macd_line", "macd_signal", "macd_hist"}.issubset(macd_df.columns)
 

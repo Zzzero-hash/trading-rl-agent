@@ -1,7 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="4.899" timestamp="2025-07-06T20:36:04.951502+00:00" hostname="0cb157972b5d"><testcase classname="" name="tests.focused.test_dataclasses_trainer" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_dataclasses_trainer.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-src/envs/finrl_trading_env.py:17: in &lt;module&gt;
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="3.860" timestamp="2025-07-07T23:48:36.888730+00:00" hostname="0cb157972b5d"><testcase classname="" name="tests.integration.cli" time="0.000"><error message="collection failure">src/envs/finrl_trading_env.py:17: in &lt;module&gt;
     from finrl.env.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
 E   ModuleNotFoundError: No module named 'finrl'
 
@@ -9,53 +6,49 @@ During handling of the above exception, another exception occurred:
 /usr/lib/python3.11/importlib/__init__.py:126: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/focused/test_dataclasses_trainer.py:7: in &lt;module&gt;
-    from src.agents import trainer as trainer_module
+&lt;frozen importlib._bootstrap&gt;:1206: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1178: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1149: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:690: in _load_unlocked
+    ???
+/usr/local/lib/python3.11/dist-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/integration/cli/conftest.py:8: in &lt;module&gt;
+    import src.agents as _agents
 src/agents/__init__.py:6: in &lt;module&gt;
     from .trainer import Trainer
 src/agents/trainer.py:8: in &lt;module&gt;
     from src.envs.finrl_trading_env import register_env
 src/envs/finrl_trading_env.py:19: in &lt;module&gt;
     from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
-E   ModuleNotFoundError: No module named 'finrl'</error></testcase><testcase classname="" name="tests.focused.test_optimization_utils" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_optimization_utils.py'.
+E   ModuleNotFoundError: No module named 'finrl'</error></testcase><testcase classname="" name="tests.integration.test_backtester_wrapper" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_backtester_wrapper.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
 /usr/lib/python3.11/importlib/__init__.py:126: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/focused/test_optimization_utils.py:3: in &lt;module&gt;
-    import src.optimization.model_utils as mu
-src/optimization/__init__.py:16: in &lt;module&gt;
-    from .model_utils import (
-src/optimization/model_utils.py:18: in &lt;module&gt;
-    from torchinfo import summary
-E   ModuleNotFoundError: No module named 'torchinfo'</error></testcase><testcase classname="" name="tests.focused.test_pipeline_cached" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_pipeline_cached.py'.
+tests/integration/test_backtester_wrapper.py:4: in &lt;module&gt;
+    from src.backtesting import Backtester
+src/backtesting/__init__.py:3: in &lt;module&gt;
+    from .backtester import Backtester
+src/backtesting/backtester.py:6: in &lt;module&gt;
+    import backtrader as bt
+E   ModuleNotFoundError: No module named 'backtrader'</error></testcase><testcase classname="" name="tests.integration.test_comprehensive_data_preprocessing" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_comprehensive_data_preprocessing.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
 /usr/lib/python3.11/importlib/__init__.py:126: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/focused/test_pipeline_cached.py:4: in &lt;module&gt;
-    from src.data.pipeline import load_cached_csvs
-src/data/pipeline.py:9: in &lt;module&gt;
-    from .features import generate_features
-src/data/features.py:11: in &lt;module&gt;
-    import talib
-/usr/local/lib/python3.11/dist-packages/talib/__init__.py:109: in &lt;module&gt;
-    from ._ta_lib import (
-E   ImportError: /usr/local/lib/python3.11/dist-packages/talib/_ta_lib.cpython-311-x86_64-linux-gnu.so: undefined symbol: TA_AVGDEV_Lookback</error></testcase><testcase classname="" name="tests.focused.test_preprocessing_features" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_preprocessing_features.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-/usr/lib/python3.11/importlib/__init__.py:126: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/focused/test_preprocessing_features.py:5: in &lt;module&gt;
-    from src.data.features import compute_bollinger_bands, compute_macd
-src/data/features.py:11: in &lt;module&gt;
-    import talib
-/usr/local/lib/python3.11/dist-packages/talib/__init__.py:109: in &lt;module&gt;
-    from ._ta_lib import (
-E   ImportError: /usr/local/lib/python3.11/dist-packages/talib/_ta_lib.cpython-311-x86_64-linux-gnu.so: undefined symbol: TA_AVGDEV_Lookback</error></testcase><testcase classname="" name="tests.focused.test_trading_env_additional" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/focused/test_trading_env_additional.py'.
+tests/integration/test_comprehensive_data_preprocessing.py:16: in &lt;module&gt;
+    from src.data.features import (
+src/data/__init__.py:10: in &lt;module&gt;
+    from .sentiment import SentimentAnalyzer, SentimentData, SentimentConfig
+src/data/sentiment.py:21: in &lt;module&gt;
+    from nltk.sentiment.vader import SentimentIntensityAnalyzer
+E   ModuleNotFoundError: No module named 'nltk'</error></testcase><testcase classname="" name="tests.integration.test_comprehensive_environments" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_comprehensive_environments.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
 src/envs/finrl_trading_env.py:17: in &lt;module&gt;
@@ -66,8 +59,20 @@ During handling of the above exception, another exception occurred:
 /usr/lib/python3.11/importlib/__init__.py:126: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/focused/test_trading_env_additional.py:5: in &lt;module&gt;
+tests/integration/test_comprehensive_environments.py:15: in &lt;module&gt;
     from src.envs.finrl_trading_env import TradingEnv
 src/envs/finrl_trading_env.py:19: in &lt;module&gt;
     from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
-E   ModuleNotFoundError: No module named 'finrl'</error></testcase></testsuite></testsuites>
+E   ModuleNotFoundError: No module named 'finrl'</error></testcase><testcase classname="" name="tests.integration.test_data_pipeline" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_data_pipeline.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_data_pipeline.py:6: in &lt;module&gt;
+    from src.data.pipeline import run_pipeline
+src/data/__init__.py:10: in &lt;module&gt;
+    from .sentiment import SentimentAnalyzer, SentimentData, SentimentConfig
+src/data/sentiment.py:21: in &lt;module&gt;
+    from nltk.sentiment.vader import SentimentIntensityAnalyzer
+E   ModuleNotFoundError: No module named 'nltk'</error></testcase></testsuite></testsuites>
