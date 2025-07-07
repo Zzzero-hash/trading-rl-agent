@@ -28,7 +28,6 @@ class TradingRLCleaner:
         redundant_files = [
             # Root level test files (should be in tests/ directory)
             "test_fix.py",
-            "test_ray_compatibility.py",
             "minimal_test.py",
             "quick_integration_test.py",
             # Cleanup scripts (consolidating into this one)
