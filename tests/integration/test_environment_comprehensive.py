@@ -23,7 +23,6 @@ def test_step_returns_expected_structure(mock_trading_env):
     assert isinstance(info, dict)
 
 
-@pytest.mark.slow
 def test_multiple_steps(mock_trading_env):
     mock_trading_env.reset()
     for _ in range(100):
