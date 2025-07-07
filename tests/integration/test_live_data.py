@@ -381,51 +381,6 @@ class TestFetchLiveDataDataTypes:
             assert (result["volume"] >= 0).all()
 
 
-@pytest.mark.integration
-class TestFetchLiveDataIntegration:
-    """Integration tests that use real yfinance calls (skipped by default)."""
-
-    @pytest.mark.skip(
-        reason="Requires internet connection - enable for integration testing"
-    )
-    def test_fetch_live_data_real_call(self):
-        """Test fetch_live_data with actual yfinance call."""
-        # This test would make real API calls to Yahoo Finance
-        result = fetch_live_data("AAPL", "2023-01-01", "2023-01-05", "day")
-
-        # Basic validations for real data
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) > 0
-        assert all(
-            col in result.columns
-            for col in ["open", "high", "low", "close", "volume", "timestamp"]
-        )
-
-        # Data quality checks
-        assert (result["high"] >= result["low"]).all()
-        assert (result["high"] >= result[["open", "close"]].max(axis=1)).all()
-        assert (result["low"] <= result[["open", "close"]].min(axis=1)).all()
-
-    @pytest.mark.skip(
-        reason="Requires internet connection - enable for integration testing"
-    )
-    def test_fetch_live_data_real_minute_data(self):
-        """Test fetch_live_data with real minute-level data."""
-        # Get recent minute data (only available for recent dates)
-        end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d")
-
-        result = fetch_live_data("AAPL", start_date, end_date, "minute")
-
-        # Should have minute-level granularity
-        assert isinstance(result, pd.DataFrame)
-        if len(result) > 1:
-            # Check that timestamps are minute-level
-            time_diffs = result["timestamp"].diff().dropna()
-            # Most differences should be 1 minute (allowing for market hours)
-            minute_diffs = time_diffs.dt.total_seconds() / 60
-            assert (minute_diffs == 1.0).any()  # At least some 1-minute intervals
-
 
 class TestFetchLiveDataCompatibility:
     """Test compatibility with other data fetching functions."""
