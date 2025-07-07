@@ -48,9 +48,6 @@ def test_risk_adjusted_reward(tmp_path):
     _, r2, *_ = env.step(np.zeros(env.action_space.shape))
     assert isinstance(r2, float)
 
-import numpy as np
-
-
 def test_invalid_reward_type(tmp_path):
     df = pd.DataFrame({"open": [1], "high": [1], "low": [1], "close": [1], "volume": [1]})
     csv = tmp_path / "d.csv"
