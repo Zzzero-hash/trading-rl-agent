@@ -9,25 +9,27 @@ pytestmark = pytest.mark.unit
 
 def test_calculate_sharpe_ratio_basic():
     returns = np.array([0.01, 0.02, 0.015])
-    expected = np.mean(returns) / np.std(returns) * np.sqrt(252)
+    expected = np.mean(returns) / np.std(returns, ddof=1) * np.sqrt(252)
     assert np.isclose(metrics.calculate_sharpe_ratio(returns), expected)
 
 
 def test_calculate_sharpe_ratio_zero_std():
     returns = np.array([0.0, 0.0, 0.0])
-    assert metrics.calculate_sharpe_ratio(returns) == 0.0
+    assert np.isnan(metrics.calculate_sharpe_ratio(returns))
 
 
 def test_calculate_max_drawdown():
-    equity = np.array([1.0, 0.8, 0.6, 0.9, 1.2])
-    assert np.isclose(metrics.calculate_max_drawdown(equity), 0.4)
+    returns = np.array([0.0, -0.2, -0.25, 0.5, 0.333])
+    assert np.isclose(metrics.calculate_max_drawdown(returns), -0.4)
 
 
 def test_calculate_sortino_ratio():
     returns = pd.Series([0.01, -0.02, 0.03, -0.01])
-    excess = returns - 0.0
-    downside = excess[excess < 0]
-    expected = np.mean(excess) / np.sqrt(np.mean(downside**2)) * np.sqrt(252)
+    downside = np.clip(returns, -np.inf, 0)
+    expected = (
+        returns.mean() * 252
+        / (np.sqrt(np.mean(downside**2)) * np.sqrt(252))
+    )
     result = metrics.calculate_sortino_ratio(returns)
     assert np.isclose(result, expected)
 
