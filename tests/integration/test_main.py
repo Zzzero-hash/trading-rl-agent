@@ -594,30 +594,6 @@ class TestMainCustomSaveDir:
             assert call_args[1]["save_dir"] == str(custom_save_dir)
 
 
-@pytest.mark.integration
-class TestMainIntegration:
-    """Integration tests for main function."""
-
-    @pytest.mark.skip(reason="Requires full setup - enable for integration testing")
-    def test_main_full_integration(self, sample_config_files):
-        """Test main function with actual components (integration test)."""
-        env_path, model_path, trainer_path = sample_config_files
-
-        test_args = [
-            "main.py",
-            "--env-config",
-            env_path,
-            "--model-config",
-            model_path,
-            "--trainer-config",
-            trainer_path,
-            "--test",
-        ]
-
-        with patch.object(sys, "argv", test_args):
-            # This would test the actual main function without mocking
-            # Requires proper environment setup
-            main()
 
 
 class TestMainEntryPoint:

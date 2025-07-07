@@ -3,9 +3,12 @@ import pytest
 
 from src.data.historical import fetch_historical_data
 
+pytestmark = [pytest.mark.integration, pytest.mark.network, pytest.mark.slow]
+
 
 @pytest.mark.skipif(
-    not hasattr(fetch_historical_data, "__call__"), reason="Integration test skipped"
+    fetch_historical_data.__globals__.get("yf") is None,
+    reason="yfinance not installed",
 )
 def test_fetch_historical_live_data():
     """

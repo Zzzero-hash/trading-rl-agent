@@ -395,29 +395,3 @@ class TestTrainerIntegration:
 
 
 @pytest.mark.integration
-class TestTrainerRealRay:
-    """Integration tests that actually use Ray (skipped by default)."""
-
-    @pytest.mark.skip(reason="Requires Ray cluster - enable for integration testing")
-    def test_trainer_real_ray_initialization(self, sample_configs, temp_dir):
-        """Test Trainer with real Ray initialization."""
-        env_cfg, model_cfg, trainer_cfg = sample_configs
-
-        # This test would actually initialize Ray
-        trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
-
-        try:
-            # Verify Ray is actually initialized
-            import ray
-
-            assert ray.is_initialized()
-
-            # Test that environment is registered
-            # This would require actual environment registration test
-
-        finally:
-            # Clean up
-            import ray
-
-            if ray.is_initialized():
-                ray.shutdown()
