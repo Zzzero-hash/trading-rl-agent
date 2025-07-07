@@ -152,3 +152,14 @@ def production_dataset_path():
 
 # Backward compatibility - alias for existing tests
 trading_env = finrl_trading_env
+
+@pytest.fixture
+def basic_trading_env(sample_csv_file):
+    """Return a minimal :class:`TradingEnv` using ``sample_csv_file``."""
+    from src.envs.finrl_trading_env import TradingEnv
+
+    cfg = {"dataset_paths": sample_csv_file, "reward_type": "profit"}
+    env = TradingEnv(cfg)
+    yield env
+    if hasattr(env, "close"):
+        env.close()
