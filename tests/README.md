@@ -46,7 +46,7 @@ pytest -m smoke
 pytest --cov=src --cov-report=html
 ```
 
-Expected coverage is **>92% overall** with **>95%** on critical modules. New features should include tests reaching **100%** coverage.
+Expected coverage thresholds are defined in the centralized configuration file (`config.py`). Please refer to that file for the latest coverage expectations.
 
 Utility scripts are available at the repository root:
 
