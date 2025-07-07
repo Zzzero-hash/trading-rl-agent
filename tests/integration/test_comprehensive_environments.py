@@ -13,7 +13,7 @@ import pytest
 import torch
 
 from src.envs.finrl_trading_env import TradingEnv
-from tests.test_data_utils import get_dynamic_test_config
+from tests.unit.test_data_utils import get_dynamic_test_config
 
 
 class TestEnvironmentInteractions:

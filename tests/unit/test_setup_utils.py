@@ -7,7 +7,7 @@ import numpy as np
 from src.agents.configs import TD3Config
 from src.agents.td3_agent import TD3Agent
 from src.envs.finrl_trading_env import TradingEnv
-from tests.test_data_utils import TestDataManager, get_dynamic_test_config
+from tests.unit.test_data_utils import TestDataManager, get_dynamic_test_config
 
 
 def setup_test_env(env_cfg=None, td3_config=None):

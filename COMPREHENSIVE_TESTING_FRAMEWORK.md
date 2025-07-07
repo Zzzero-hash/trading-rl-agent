@@ -70,7 +70,7 @@ pytest --cov=src --cov-report=html
 
 ```ini
 [tool:pytest]
-testpaths = tests
+testpaths = tests/unit tests/integration tests/performance tests/smoke
 python_files = test_*.py
 python_classes = Test*
 python_functions = test_*
