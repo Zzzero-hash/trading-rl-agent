@@ -14,19 +14,19 @@ This directory contains all automated tests for the Trading RL Agent project. Te
 
 Key markers defined in `pytest.ini`:
 
-- `unit`
-- `integration`
-- `performance`
-- `smoke`
-- `slow`
-- `gpu`
-- `network`
-- `ray`
-- `ml`
 - `e2e`
-- `regression`
+- `gpu`
+- `integration`
 - `memory`
+- `ml`
+- `network`
+- `performance`
+- `ray`
+- `regression`
 - `security`
+- `slow`
+- `smoke`
+- `unit`
 
 ## Running tests
 
