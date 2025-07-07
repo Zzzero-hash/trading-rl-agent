@@ -1,10 +1,10 @@
 import sys
 from unittest.mock import patch
+import runpy
 
 import pytest
 
 from src.main import main
-
 pytestmark = pytest.mark.integration
 
 
