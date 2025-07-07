@@ -470,28 +470,3 @@ class TestTuneErrorHandling:
             mock_tune_run.assert_called_once()
 
 
-@pytest.mark.integration
-class TestTuneRealRay:
-    """Integration tests that use real Ray components (skipped by default)."""
-
-    @pytest.mark.skip(reason="Requires Ray cluster - enable for integration testing")
-    def test_tune_real_ray_integration(self, tmp_path):
-        """Test tune functionality with real Ray."""
-        config = {
-            "algorithm": "PPO",
-            "learning_rate": {"uniform": [0.001, 0.01]},
-            "env_config": {"dataset_paths": ["dummy.csv"]},
-        }
-
-        config_path = tmp_path / "real_config.yaml"
-        with open(config_path, "w") as f:
-            yaml.dump(config, f)
-
-        # This would test with real Ray initialization
-        run_tune(str(config_path))
-
-        # Verify Ray is initialized and cleanup
-        import ray
-
-        assert ray.is_initialized()
-        ray.shutdown()

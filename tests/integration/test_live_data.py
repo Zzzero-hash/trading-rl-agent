@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+pytestmark = pytest.mark.integration
+
 from src.data.live import fetch_live_data
 
 
