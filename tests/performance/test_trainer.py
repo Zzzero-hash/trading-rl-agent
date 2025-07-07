@@ -392,6 +392,3 @@ class TestTrainerIntegration:
             assert trainer.ray_config["framework"] == "torch"
             assert trainer.ray_config["num_workers"] == 2
             assert trainer.ray_config["env_config"] == env_cfg
-
-
-@pytest.mark.integration
