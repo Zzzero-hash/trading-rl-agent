@@ -9,8 +9,6 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
-
-pytest.importorskip("talib")
 from sklearn.preprocessing import StandardScaler
 import torch
 
@@ -112,10 +110,10 @@ class TestFeatureEngineering:
         np.random.seed(42)
 
         base_price = 100
-        prices = [base_price]
+        prices: list[float] = [base_price]
         for _ in range(99):
             change = np.random.normal(0, 0.02) * prices[-1]
-            prices.append(max(1, prices[-1] + change))
+            prices.append(max(1.0, prices[-1] + change))
 
         data = pd.DataFrame(
             {
@@ -167,8 +165,8 @@ class TestDataValidation:
         )
 
         # Test that feature computation handles NaNs
-        ema = compute_ema(data_with_nans["close"])
-        assert len(ema) == len(data_with_nans)
+        ema_df = compute_ema(data_with_nans.copy(), timeperiod=3)
+        assert len(ema_df) == len(data_with_nans)
 
         # Test that we can identify NaN locations
         nan_mask = data_with_nans.isna()
@@ -187,9 +185,10 @@ class TestDataValidation:
 
         # Should handle infinite values gracefully
         try:
-            ema = compute_ema(data_with_infs["close"])
+            ema_df = compute_ema(data_with_infs.copy(), timeperiod=3)
             # If it doesn't raise an error, check that result is reasonable
-            finite_ema = ema[np.isfinite(ema)]
+            ema_col = ema_df["ema_3"]
+            finite_ema = ema_col[np.isfinite(ema_col)]
             assert len(finite_ema) > 0
         except (ValueError, OverflowError):
             # It's acceptable to raise an error for infinite values
@@ -209,8 +208,8 @@ class TestDataValidation:
 
         # Convert to numeric
         numeric_data = string_data.astype(float)
-        ema = compute_ema(numeric_data["close"])
-        assert not np.isnan(ema.iloc[-1])
+        ema_df = compute_ema(numeric_data.copy(), timeperiod=3)
+        assert not np.isnan(ema_df["ema_3"].iloc[-1])
 
     def test_data_range_validation(self):
         """Test validation of data ranges."""
@@ -226,8 +225,8 @@ class TestDataValidation:
 
         # Technical indicators should handle negative prices
         # (though economically they don't make sense)
-        ema = compute_ema(negative_data["close"])
-        assert len(ema) == 3
+        ema_df = compute_ema(negative_data.copy(), timeperiod=2)
+        assert len(ema_df) == 3
 
         # Test with very large values
         large_data = pd.DataFrame(
@@ -239,8 +238,8 @@ class TestDataValidation:
             }
         )
 
-        ema_large = compute_ema(large_data["close"])
-        assert np.isfinite(ema_large.iloc[-1])
+        ema_df = compute_ema(large_data.copy(), timeperiod=2)
+        assert np.isfinite(ema_df["ema_2"].iloc[-1])
 
 
 class TestDataPreprocessing:
@@ -393,7 +392,8 @@ class TestDataPipelineIntegration:
 
         # Introduce missing values
         missing_indices = np.random.choice(100, size=10, replace=False)
-        raw_data.loc[missing_indices, "close"] = np.nan
+        for idx in missing_indices:
+            raw_data.loc[raw_data.index[idx], "close"] = np.nan
 
         # Pipeline should handle missing data
         try:
@@ -480,11 +480,11 @@ class TestDataValidationPipeline:
         cleaned_data = dirty_data.copy()
 
         # Forward fill missing values
-        cleaned_data = cleaned_data.fillna(method="ffill")
+        cleaned_data = cleaned_data.ffill()
 
         # Replace infinite values with NaN and then forward fill
         cleaned_data = cleaned_data.replace([np.inf, -np.inf], np.nan)
-        cleaned_data = cleaned_data.fillna(method="ffill")
+        cleaned_data = cleaned_data.ffill()
 
         # Replace zero volumes with mean volume
         if "volume" in cleaned_data.columns:

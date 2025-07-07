@@ -18,9 +18,13 @@ import time
 from typing import Any, Dict, List, Optional, Union
 
 from bs4 import BeautifulSoup
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import requests
 
 logger = logging.getLogger(__name__)
+
+# Initialize VADER sentiment analyzer
+VADER_ANALYZER = SentimentIntensityAnalyzer()
 
 # Global sentiment cache for backward compatibility
 sentiment = {}

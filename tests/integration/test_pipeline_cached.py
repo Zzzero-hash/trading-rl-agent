@@ -1,8 +1,6 @@
 import pandas as pd
 import pytest
 
-pytest.importorskip("talib")
-
 from src.data.pipeline import load_cached_csvs
 
 
@@ -16,9 +14,9 @@ def test_load_cached_csvs_combines_files(tmp_path):
 
     assert len(combined) == len(df1) + len(df2)
     assert set(combined["source"]) == {"a", "b"}
-    pd.testing.assert_series_equal(
-        combined.loc[0, ["open", "close"]].astype(float), df1.loc[0].astype(float)
-    )
+    # Check that first row values match original data
+    assert combined.iloc[0]["open"] == df1.iloc[0]["open"]
+    assert combined.iloc[0]["close"] == df1.iloc[0]["close"]
 
 
 def test_load_cached_csvs_missing_dir(tmp_path):

@@ -82,6 +82,3 @@ docker-compose*.yml
 
 # Kubernetes manifests
 yaml
-
-ta-lib/
-ta-lib-*.tar.gz
