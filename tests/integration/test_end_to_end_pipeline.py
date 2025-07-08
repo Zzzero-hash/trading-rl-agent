@@ -48,7 +48,7 @@ if "nltk.sentiment.vader" not in sys.modules:
     dummy.SentimentIntensityAnalyzer = DummySIA
     sys.modules["nltk.sentiment.vader"] = dummy
 
-import pandas as pd
+import pytest
 import pytest
 
 base_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
