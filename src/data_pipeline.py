@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-from ta.momentum import RSIIndicator
+import pandas_ta as ta
 
 try:
     import ray.data as rdata
@@ -114,8 +114,9 @@ def generate_features(df: pd.DataFrame, cfg: PipelineConfig) -> pd.DataFrame:
                 batch[f"sma_{w}"] = batch["close"].rolling(w).mean()
             for w in cfg.momentum_windows:
                 batch[f"mom_{w}"] = batch["close"].diff(w)
-            rsi_ind = RSIIndicator(batch["close"].astype(float), window=cfg.rsi_window)
-            batch[f"rsi_{cfg.rsi_window}"] = rsi_ind.rsi()
+            batch[f"rsi_{cfg.rsi_window}"] = ta.rsi(
+                batch["close"].astype(float), length=cfg.rsi_window
+            )
             batch[f"vol_{cfg.vol_window}"] = batch["log_return"].rolling(
                 cfg.vol_window
             ).std(ddof=0) * np.sqrt(cfg.vol_window)
@@ -130,8 +131,9 @@ def generate_features(df: pd.DataFrame, cfg: PipelineConfig) -> pd.DataFrame:
             df[f"sma_{w}"] = df["close"].rolling(w).mean()
         for w in cfg.momentum_windows:
             df[f"mom_{w}"] = df["close"].diff(w)
-        rsi_ind = RSIIndicator(df["close"].astype(float), window=cfg.rsi_window)
-        df[f"rsi_{cfg.rsi_window}"] = rsi_ind.rsi()
+        df[f"rsi_{cfg.rsi_window}"] = ta.rsi(
+            df["close"].astype(float), length=cfg.rsi_window
+        )
         df[f"vol_{cfg.vol_window}"] = df["log_return"].rolling(cfg.vol_window).std(
             ddof=0
         ) * np.sqrt(cfg.vol_window)
