@@ -65,6 +65,15 @@ from trading_rl_agent.envs import TradingEnv
 from trading_rl_agent.models import CNNLSTMModel
 ```
 
+**Automated Update:**
+
+Run the following command to rewrite old import paths in bulk:
+
+```bash
+grep -rl "from src" your_project | \
+  xargs sed -i 's/from src\./from trading_rl_agent./g'
+```
+
 ### **Step 2: Adopt New Configuration System**
 
 **Old Configuration:**
@@ -85,6 +94,21 @@ from trading_rl_agent import ConfigManager
 
 # Hierarchical configuration with validation
 config = ConfigManager("configs/production.yaml")
+```
+
+### **Step 2a: Migrate Existing Config Files**
+
+Convert legacy JSON configs to the new YAML format using the helper script:
+
+```bash
+python scripts/migrate_config.py config.json configs/production.yaml
+```
+
+After conversion, load the YAML via `ConfigManager` and verify fields:
+
+```python
+cfg = ConfigManager("configs/production.yaml").load_config()
+print(cfg.data.data_path)
 ```
 
 ### **Step 3: Integrate Risk Management**

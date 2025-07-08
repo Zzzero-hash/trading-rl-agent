@@ -37,82 +37,35 @@ pytest
 ### 1. Generate Data
 
 ```bash
-# Load market data using FinRL
-python ../finrl_data_loader.py --config ../configs/finrl_real_data.yaml
-
-# This creates:
-# - Advanced feature engineering (78 technical indicators)
-# - 19 real market instruments (stocks, forex, crypto)
-# - Synthetic data augmentation
-# - Real-time integration compatibility
+# Run the built-in Ray data pipeline
+python -m trading_rl_agent.data.pipeline \
+    --config src/configs/data/pipeline.yaml
 ```
 
 ### 2. Initialize the Hybrid System
 
 ```python
-from trading_rl_agent.envs.trading_env import TradingEnv
-from trading_rl_agent.agents.sac_agent import SACAgent
-from trading_rl_agent.models.cnn_lstm_model import CNNLSTMModel
+from trading_rl_agent import ConfigManager, PortfolioManager
+from trading_rl_agent.agents import SACAgent
+from trading_rl_agent.data.pipeline import load_cached_csvs
 
-# Load data generated via FinRL
-env = TradingEnv(
-    data_paths=["data/finrl_real_sample.csv"],
-    initial_balance=10000,
-    window_size=50,
-    transaction_cost=0.001,
-    use_cnn_lstm_features=True  # Enable hybrid mode
-)
+# Load configuration
+cfg = ConfigManager("configs/production.yaml").load_config()
 
-# Initialize hybrid CNN+LSTM feature extractor
-cnn_lstm = CNNLSTMModel(
-    input_features=78,
-    cnn_filters=[32, 64, 128],
-    lstm_units=256,
-    dropout_rate=0.2
-)
+# Load cached training data created by the pipeline
+train_df = load_cached_csvs("data/raw")
 
-# Initialize RL agent with hybrid features
-agent = SACAgent(
-    state_dim=env.observation_space.shape[0],
-    action_dim=env.action_space.shape[0],
-    hidden_dim=512,  # Larger network for hybrid features
-    learning_rate=3e-4
-)
+# Create agent from config
+agent = SACAgent(cfg.agent)
+
+# Train on historical data
+agent.train(train_df)
+
+# Start live trading (paper trading by default)
+portfolio = PortfolioManager(initial_capital=100000)
+portfolio.start_live_trading(agent)
 ```
 
-### 3. Train the Hybrid System
-
-```python
-# Train with hybrid architecture
-training_results = agent.train(
-    env=env,
-    episodes=2000,
-    max_steps=1000,
-    save_frequency=100,
-    use_ray_tune=True,  # Hyperparameter optimization
-    hybrid_mode=True    # Enable CNN+LSTM integration
-)
-```
-
-### 4. Evaluate Hybrid Performance
-
-```python
-from evaluate_agent import evaluate_agent
-
-# Evaluate the hybrid system
-results = evaluate_agent(
-    agent=agent,
-    env=env,
-    episodes=10,
-    use_hybrid_features=True
-)
-
-print(f"Hybrid System Performance:")
-print(f"Average Return: {results['avg_return']:.2f}")
-print(f"Sharpe Ratio: {results['sharpe_ratio']:.2f}")
-print(f"Max Drawdown: {results['max_drawdown']:.2f}")
-print(f"Win Rate: {results['win_rate']:.2f}")
-```
 
 ## ⚙️ Configuration
 
