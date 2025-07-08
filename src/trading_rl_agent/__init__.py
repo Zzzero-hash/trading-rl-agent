@@ -51,6 +51,19 @@ __all__ = [
 ]
 
 
+def __dir__():
+    """Return a list of attributes for tab completion."""
+    lazy_keys = [
+        "Agent",
+        "EnsembleAgent",
+        "Trainer",
+        "DataPipeline",
+        "MarketDataLoader",
+        "PortfolioManager",
+        "RiskManager",
+        "ExecutionEngine",
+    ]
+    return sorted(__all__ + lazy_keys)
 def __getattr__(name: str):
     """Lazily import heavy optional components when accessed."""
     import importlib
