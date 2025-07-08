@@ -106,5 +106,21 @@ def test_correlation_and_concentration():
 
 def test_kelly_position_size():
     rm = RiskManager()
+    # Test with profitable scenario (positive expected return)
     size = rm.calculate_kelly_position_size(0.1, 0.6, 0.05, 0.02)
     assert 0 <= size <= 0.25
+
+    # Test with unprofitable scenario (negative expected return)
+    size_negative = rm.calculate_kelly_position_size(-0.05, 0.4, 0.02, 0.03)
+    assert size_negative == 0  # Should return 0 for negative expected return
+
+    # Test with very high win rate
+    size_high_wr = rm.calculate_kelly_position_size(0.15, 0.9, 0.10, 0.05)
+    assert 0 < size_high_wr <= 0.25  # Should be positive but capped
+
+    # Verify Kelly formula properties
+    expected_return, win_rate, avg_win, avg_loss = 0.08, 0.55, 0.04, 0.03
+    kelly_raw = (expected_return * win_rate - (1 - win_rate) * avg_loss) / avg_win
+    size_calculated = rm.calculate_kelly_position_size(expected_return, win_rate, avg_win, avg_loss)
+    if kelly_raw > 0:
+        assert size_calculated > 0  # Should be positive when Kelly formula is positive
