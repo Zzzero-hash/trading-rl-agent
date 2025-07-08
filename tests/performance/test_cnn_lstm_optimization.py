@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 import torch
 
-from src.optimization import cnn_lstm_optimization as mod
-from src.optimization.cnn_lstm_optimization import (
+from trading_rl_agent.optimization import cnn_lstm_optimization as mod
+from trading_rl_agent.optimization.cnn_lstm_optimization import (
     create_simple_dataset,
     get_default_search_space,
     optimize_cnn_lstm_streamlined,

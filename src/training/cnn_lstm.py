@@ -5,7 +5,7 @@ sentiment analysis and technical indicators. It supports both classification
 and regression tasks for market prediction.
 
 Example usage:
->>> from src.training.cnn_lstm import CNNLSTMTrainer, TrainingConfig
+>>> from trading_rl_agent.training.cnn_lstm import CNNLSTMTrainer, TrainingConfig
 >>> trainer = CNNLSTMTrainer()
 >>> model = trainer.train_from_config('src/configs/training/cnn_lstm_train.yaml')
 """
@@ -27,9 +27,9 @@ import pytorch_lightning as pl
 from pytorch_forecasting import TimeSeriesDataSet
 import yaml
 
-from src.data.features import generate_features
-from src.data.sentiment import SentimentAnalyzer, SentimentConfig
-from src.models.cnn_lstm import CNNLSTMModel
+from trading_rl_agent.data.features import generate_features
+from trading_rl_agent.data.sentiment import SentimentAnalyzer, SentimentConfig
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 
 
 # Define a simple load_data function if not available

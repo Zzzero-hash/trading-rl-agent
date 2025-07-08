@@ -168,15 +168,15 @@ class TradingRLCleaner:
 ## Usage
 ```python
 # CNN-LSTM optimization
-from src.optimization.cnn_lstm_optimization import optimize_cnn_lstm
+from trading_rl_agent.optimization.cnn_lstm_optimization import optimize_cnn_lstm
 results = optimize_cnn_lstm(features, targets, num_samples=20)
 
 # RL optimization
-from src.optimization.rl_optimization import optimize_sac_hyperparams
+from trading_rl_agent.optimization.rl_optimization import optimize_sac_hyperparams
 results = optimize_sac_hyperparams(env_config, num_samples=10)
 
 # Model analysis
-from src.optimization.model_utils import get_model_summary
+from trading_rl_agent.optimization.model_utils import get_model_summary
 print(get_model_summary(model, input_size=(1, 10)))
 ```
 

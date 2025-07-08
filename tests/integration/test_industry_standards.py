@@ -14,7 +14,7 @@ import pandas as pd
 import pytest
 
 # Test professional data feeds
-from src.data.professional_feeds import ProfessionalDataProvider
+from trading_rl_agent.data.professional_feeds import ProfessionalDataProvider
 
 
 class TestProfessionalDataProvider:
@@ -211,7 +211,7 @@ class TestFinRLIntegration:
 
     def test_finrl_environment_creation(self, sample_finrl_data):
         """Test FinRL environment creation."""
-        from src.envs.finrl_trading_env import HybridFinRLEnv
+        from trading_rl_agent.envs.finrl_trading_env import HybridFinRLEnv
 
         env = HybridFinRLEnv(df=sample_finrl_data)
 
@@ -222,7 +222,7 @@ class TestFinRLIntegration:
 
     def test_cnn_lstm_integration(self, sample_finrl_data):
         """Test CNN+LSTM model integration with FinRL environment."""
-        from src.envs.finrl_trading_env import HybridFinRLEnv
+        from trading_rl_agent.envs.finrl_trading_env import HybridFinRLEnv
 
         # Mock CNN+LSTM model
         mock_model = Mock()
@@ -263,7 +263,7 @@ class TestIndustryStandardMetrics:
 
     def test_sharpe_ratio_calculation(self, sample_returns):
         """Test Sharpe ratio calculation."""
-        from src.utils import metrics
+        from trading_rl_agent.utils import metrics
 
         sharpe = metrics.calculate_sharpe_ratio(sample_returns, risk_free_rate=0.02)
 
@@ -272,7 +272,7 @@ class TestIndustryStandardMetrics:
 
     def test_maximum_drawdown_calculation(self, sample_returns):
         """Test maximum drawdown calculation."""
-        from src.utils import metrics
+        from trading_rl_agent.utils import metrics
 
         max_dd = metrics.calculate_max_drawdown(sample_returns)
 
@@ -281,7 +281,7 @@ class TestIndustryStandardMetrics:
 
     def test_sortino_ratio_calculation(self, sample_returns):
         """Test Sortino ratio calculation."""
-        from src.utils import metrics
+        from trading_rl_agent.utils import metrics
 
         sortino = metrics.calculate_sortino_ratio(sample_returns, target_return=0.02)
 
@@ -290,7 +290,7 @@ class TestIndustryStandardMetrics:
 
     def test_var_calculation(self, sample_returns):
         """Test Value at Risk calculation."""
-        from src.utils import metrics
+        from trading_rl_agent.utils import metrics
 
         var_95 = metrics.calculate_var(sample_returns, confidence=0.95)
 
@@ -301,7 +301,7 @@ class TestIndustryStandardMetrics:
         self, sample_returns, sample_benchmark_returns
     ):
         """Test Information ratio calculation."""
-        from src.utils import metrics
+        from trading_rl_agent.utils import metrics
 
         info_ratio = metrics.calculate_information_ratio(
             sample_returns, sample_benchmark_returns
@@ -314,7 +314,7 @@ class TestIndustryStandardMetrics:
         self, sample_returns, sample_benchmark_returns
     ):
         """Test comprehensive metrics calculation."""
-        from src.utils import metrics
+        from trading_rl_agent.utils import metrics
 
         metrics_dict = metrics.calculate_comprehensive_metrics(
             sample_returns, sample_benchmark_returns
@@ -346,7 +346,7 @@ class TestRiskManagement:
 
     def test_position_size_calculation(self):
         """Test position sizing algorithms."""
-        from src.risk.position_sizing import IndustryGradeRiskManager
+        from trading_rl_agent.risk.position_sizing import IndustryGradeRiskManager
 
         risk_manager = IndustryGradeRiskManager(max_position_size=0.1)
 
@@ -363,7 +363,7 @@ class TestRiskManagement:
 
     def test_position_limits_enforcement(self):
         """Test position limit enforcement."""
-        from src.risk.position_sizing import IndustryGradeRiskManager
+        from trading_rl_agent.risk.position_sizing import IndustryGradeRiskManager
 
         risk_manager = IndustryGradeRiskManager(max_position_size=0.1)
 
@@ -379,7 +379,7 @@ class TestRiskManagement:
 
     def test_drawdown_monitoring(self):
         """Test maximum drawdown monitoring."""
-        from src.risk.position_sizing import IndustryGradeRiskManager
+        from trading_rl_agent.risk.position_sizing import IndustryGradeRiskManager
 
         risk_manager = IndustryGradeRiskManager(max_drawdown=0.02)
 
@@ -399,7 +399,7 @@ class TestModelServing:
     @pytest.mark.asyncio
     async def test_trading_model_service_prediction(self):
         """Test model serving prediction endpoint."""
-        from src.deployment.model_serving import TradingModelService
+        from trading_rl_agent.deployment.model_serving import TradingModelService
 
         # Mock models
         mock_cnn_lstm = Mock()
@@ -438,7 +438,7 @@ class TestModelServing:
 
     def test_model_monitoring_metrics(self):
         """Test model monitoring and metrics collection."""
-        from src.monitoring.model_monitoring import ModelMonitor
+        from trading_rl_agent.monitoring.model_monitoring import ModelMonitor
 
         monitor = ModelMonitor()
 

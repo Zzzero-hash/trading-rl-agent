@@ -5,7 +5,7 @@ sources, compute common technical indicators, and split the resulting dataset
 into train/validation/test segments.  It is designed to be configuration driven
 and easily extended.  Example usage:
 
->>> from src.data_pipeline import PipelineConfig, load_data, generate_features, split_by_date
+>>> from trading_rl_agent.data_pipeline import PipelineConfig, load_data, generate_features, split_by_date
 >>> cfg = PipelineConfig(sma_windows=[3], momentum_windows=[3], rsi_window=14, vol_window=5)
 >>> df = load_data({"type": "csv", "path": "prices.csv"})
 >>> features = generate_features(df, cfg)

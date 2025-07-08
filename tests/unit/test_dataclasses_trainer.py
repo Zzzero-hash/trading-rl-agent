@@ -4,8 +4,8 @@ from unittest import mock
 
 import pytest
 
-from src.agents import trainer as trainer_module
-from src.agents.configs import EnsembleConfig
+from trading_rl_agent.agents import trainer as trainer_module
+from trading_rl_agent.agents.configs import EnsembleConfig
 
 
 def test_ensemble_config_alias_and_validation():

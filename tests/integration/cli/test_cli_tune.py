@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.main import main
+from trading_rl_agent.main import main
 
 pytestmark = pytest.mark.integration
 

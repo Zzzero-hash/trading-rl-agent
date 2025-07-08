@@ -16,7 +16,7 @@ def test_optimization():
     print("🧪 Testing streamlined optimization...")
 
     try:
-        from src.optimization import optimize_cnn_lstm
+        from trading_rl_agent.optimization import optimize_cnn_lstm
 
         # Test with small data
         np.random.seed(42)

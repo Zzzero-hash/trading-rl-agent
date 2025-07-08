@@ -302,8 +302,8 @@ import pandas as pd
 from unittest.mock import Mock, patch
 from pathlib import Path
 
-from src.agents.td3_agent import TD3Agent
-from src.agents.configs import TD3Config
+from trading_rl_agent.agents.td3_agent import TD3Agent
+from trading_rl_agent.agents.configs import TD3Config
 
 
 class TestTD3Agent:

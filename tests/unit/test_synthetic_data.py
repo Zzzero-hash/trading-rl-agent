@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.data.synthetic import fetch_synthetic_data
+from trading_rl_agent.data.synthetic import fetch_synthetic_data
 
 
 def test_synthetic_columns_and_length():

@@ -5,7 +5,7 @@ import os
 import ray
 from ray import tune
 
-from src.envs.finrl_trading_env import register_env
+from trading_rl_agent.envs.finrl_trading_env import register_env
 
 try:
     from ray.rllib.algorithms.ppo import PPOTrainer

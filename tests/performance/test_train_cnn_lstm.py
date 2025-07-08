@@ -14,8 +14,8 @@ import torch
 
 import yaml
 
-from src.models.cnn_lstm import CNNLSTMModel
-from src.training.cnn_lstm import (
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
+from trading_rl_agent.training.cnn_lstm import (
     CNNLSTMTrainer,
     TrainingConfig,
     create_example_config,
