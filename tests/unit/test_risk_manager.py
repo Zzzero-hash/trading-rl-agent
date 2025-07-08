@@ -1,7 +1,7 @@
-import sys
-from pathlib import Path
-import types
 import logging
+from pathlib import Path
+import sys
+import types
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -31,18 +31,24 @@ if "structlog" not in sys.modules:
     sys.modules["structlog"] = stub
 
 if "src.envs.finrl_trading_env" not in sys.modules:
-    sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(register_env=lambda: None)
+    sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(
+        register_env=lambda: None
+    )
 
 if "trading_rl_agent" not in sys.modules:
     pkg = types.ModuleType("trading_rl_agent")
-    pkg.__path__ = [str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")]
+    pkg.__path__ = [
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+    ]
     sys.modules["trading_rl_agent"] = pkg
 
 if "nltk.sentiment.vader" not in sys.modules:
     dummy = types.ModuleType("nltk.sentiment.vader")
+
     class DummySIA:
         def polarity_scores(self, text):
             return {"compound": 0.0}
+
     dummy.SentimentIntensityAnalyzer = DummySIA
     sys.modules["nltk.sentiment.vader"] = dummy
 base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
@@ -57,6 +63,7 @@ import pandas as pd
 import pytest
 
 from trading_rl_agent.risk.manager import RiskManager
+from trading_rl_agent.risk.position_sizer import kelly_position_size
 
 pytestmark = pytest.mark.unit
 
@@ -121,6 +128,20 @@ def test_kelly_position_size():
     # Verify Kelly formula properties
     expected_return, win_rate, avg_win, avg_loss = 0.08, 0.55, 0.04, 0.03
     kelly_raw = (expected_return * win_rate - (1 - win_rate) * avg_loss) / avg_win
-    size_calculated = rm.calculate_kelly_position_size(expected_return, win_rate, avg_win, avg_loss)
+    size_calculated = rm.calculate_kelly_position_size(
+        expected_return, win_rate, avg_win, avg_loss
+    )
     if kelly_raw > 0:
         assert size_calculated > 0  # Should be positive when Kelly formula is positive
+
+
+def test_portfolio_drawdown_and_function():
+    rm = RiskManager()
+    rm.update_returns_data(_sample_returns())
+    weights = {"A": 0.5, "B": 0.5}
+    dd = rm.calculate_portfolio_drawdown(weights)
+    assert 0 <= dd <= 1
+
+    # Module-level Kelly function
+    size = kelly_position_size(0.1, 0.6, 0.05, 0.02)
+    assert 0 < size <= 0.25
