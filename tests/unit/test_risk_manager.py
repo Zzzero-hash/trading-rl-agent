@@ -77,6 +77,10 @@ def test_var_and_cvar():
     cvar = rm.calculate_portfolio_cvar(weights)
     assert var >= 0
     assert cvar >= var
+    # Verify CVaR is meaningfully larger than VaR for typical distributions
+    assert cvar > var * 1.1  # CVaR should be at least 10% higher than VaR
+    # Verify reasonable magnitude for the given volatility
+    assert 0.001 <= var <= 0.1  # Reasonable range for daily VaR
 
 
 def test_correlation_and_concentration():
