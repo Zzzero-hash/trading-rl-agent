@@ -19,9 +19,12 @@ _Current status: core functionality validated, environment testing framework com
 2. **Install dependencies**
 
    ```bash
+   pip install -r requirements.txt
    pip install -r requirements-finrl.txt
    pip install finrl[full] "ray[rllib]"
    ```
+
+   The base requirements file now includes `nltk>=3.8` for sentiment analysis.
 
 3. **Run tests**
    ```bash
