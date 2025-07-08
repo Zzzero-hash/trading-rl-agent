@@ -88,10 +88,12 @@ def test_compute_stochastic_constant():
     )
     assert "stoch_k" in df_stoch.columns and "stoch_d" in df_stoch.columns
     # NaNs during warmup then zeros
-    assert df_stoch["stoch_k"][:4].isnull().all()
-    assert (df_stoch["stoch_k"][4:] == 0.0).all()
-    assert df_stoch["stoch_d"][:6].isnull().all()
-    assert (df_stoch["stoch_d"][6:] == 0.0).all()
+    warmup_k = max(3, 3)  # Derived from fastk_period and slowk_period
+    warmup_d = max(warmup_k, 3)  # Derived from warmup_k and slowd_period
+    assert df_stoch["stoch_k"][:warmup_k].isnull().all()
+    assert (df_stoch["stoch_k"][warmup_k:] == 0.0).all()
+    assert df_stoch["stoch_d"][:warmup_d].isnull().all()
+    assert (df_stoch["stoch_d"][warmup_d:] == 0.0).all()
 
 
 def test_compute_stochastic_full():
