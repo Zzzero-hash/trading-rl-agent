@@ -242,6 +242,43 @@ class RiskManager:
             self.logger.error(f"CVaR calculation failed: {e}")
             return self.calculate_portfolio_var(weights, confidence_level) * 1.3
 
+    def calculate_portfolio_drawdown(self, weights: dict[str, float]) -> float:
+        """Calculate maximum drawdown for a weighted portfolio."""
+        try:
+            available_assets = set(weights.keys()) & set(self._returns_data.keys())
+            if not available_assets:
+                return 0.0
+
+            returns_df = pd.DataFrame()
+            filtered_weights = {}
+            for asset in available_assets:
+                if weights[asset] != 0:
+                    returns_df[asset] = self._returns_data[asset]
+                    filtered_weights[asset] = weights[asset]
+
+            if returns_df.empty:
+                return 0.0
+
+            total_weight = sum(filtered_weights.values())
+            if total_weight == 0:
+                return 0.0
+
+            weight_series = pd.Series(
+                {k: v / total_weight for k, v in filtered_weights.items()}
+            )
+            portfolio_returns = (returns_df * weight_series).sum(axis=1).dropna()
+
+            if portfolio_returns.empty:
+                return 0.0
+
+            cumulative_returns = (1 + portfolio_returns).cumprod()
+            rolling_max = cumulative_returns.expanding().max()
+            drawdowns = (cumulative_returns - rolling_max) / rolling_max
+            return abs(drawdowns.min())
+        except Exception as e:
+            self.logger.error(f"Drawdown calculation failed: {e}")
+            return 0.0
+
     def calculate_sharpe_ratio(
         self, portfolio_returns: pd.Series, risk_free_rate: float = 0.02
     ) -> float:
@@ -381,15 +418,11 @@ class RiskManager:
 
             # Convert to concentration risk (0 = fully diversified, 1 = fully concentrated)
             n_assets = len(normalized_weights)
-            min_herfindahl = 1.0 / n_assets  # Equally weighted portfolio
-            max_herfindahl = 1.0  # Single asset portfolio
 
-            if max_herfindahl == min_herfindahl:
-                return 0.0
+            if n_assets == 1:
+                return 1.0
 
-            concentration_risk = (herfindahl - min_herfindahl) / (
-                max_herfindahl - min_herfindahl
-            )
+            concentration_risk = herfindahl
             return concentration_risk
 
         except Exception as e:
@@ -417,6 +450,7 @@ class RiskManager:
             current_cvar = self.calculate_portfolio_cvar(portfolio_weights)
             correlation_risk = self.calculate_correlation_risk(portfolio_weights)
             concentration_risk = self.calculate_concentration_risk(portfolio_weights)
+            drawdown = self.calculate_portfolio_drawdown(portfolio_weights)
 
             # Check VaR limit
             if current_var > self.risk_limits.max_portfolio_var:
@@ -450,6 +484,17 @@ class RiskManager:
                         "current_value": correlation_risk,
                         "limit": self.risk_limits.max_correlation,
                         "severity": "medium",
+                    }
+                )
+
+            # Check drawdown limit
+            if drawdown > self.risk_limits.max_drawdown:
+                violations.append(
+                    {
+                        "type": "drawdown_limit",
+                        "current_value": drawdown,
+                        "limit": self.risk_limits.max_drawdown,
+                        "severity": "high",
                     }
                 )
 
@@ -533,6 +578,7 @@ class RiskManager:
             cvar = self.calculate_portfolio_cvar(portfolio_weights)
             correlation_risk = self.calculate_correlation_risk(portfolio_weights)
             concentration_risk = self.calculate_concentration_risk(portfolio_weights)
+            drawdown = self.calculate_portfolio_drawdown(portfolio_weights)
 
             report = {
                 "timestamp": datetime.now(),
@@ -542,6 +588,7 @@ class RiskManager:
                     "cvar_5pct": cvar,
                     "correlation_risk": correlation_risk,
                     "concentration_risk": concentration_risk,
+                    "max_drawdown": drawdown,
                 },
                 "risk_limits": {
                     "var_limit": self.risk_limits.max_portfolio_var,
