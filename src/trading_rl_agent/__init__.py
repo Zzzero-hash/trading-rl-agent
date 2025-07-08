@@ -70,11 +70,16 @@ def __getattr__(name: str):
         module_name, attr = lazy_map[name]
         try:
             module = importlib.import_module(f"{__name__}{module_name}")
+            obj = getattr(module, attr)
         except ModuleNotFoundError as exc:  # pragma: no cover - optional dep
             raise ImportError(
                 f"{name} requires optional ML dependencies. Install them to use this feature."
             ) from exc
-        obj = getattr(module, attr)
+        except AttributeError as exc:
+            raise ImportError(
+                f"The module '{module_name}' was found, but it does not contain the attribute '{attr}'. "
+                f"Ensure that all dependencies are installed and the module is correctly implemented."
+            ) from exc
 
         globals()[name] = obj
         return obj
