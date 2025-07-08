@@ -63,6 +63,7 @@ ipython>=8.10.0  # avoid CVE-2023-**; latest upstream is 9.4.0
 finrl>=0.3.7
 alpaca-py>=0.4.0
 alpaca-trade-api>=2.3.0,<3.1.1
+alpha_vantage>=2.3.1
 ccxt>=1.66.32
 stockstats>=0.4.0
 # Using pandas_ta and ta libraries for technical analysis
