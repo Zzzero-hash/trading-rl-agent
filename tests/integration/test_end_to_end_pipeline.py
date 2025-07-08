@@ -35,7 +35,6 @@ if "structlog" not in sys.modules:
     sys.modules["structlog"] = stub
 
 if "trading_rl_agent" not in sys.modules:
-    import types
 
     pkg = types.ModuleType("trading_rl_agent")
     pkg.__path__ = [str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")]
