@@ -66,6 +66,10 @@ def main():
             args.num_workers = max(1, int(resources["CPU"] - 1))
         if args.num_gpus == 0 and resources.get("GPU", 0) > 0:
             args.num_gpus = int(resources["GPU"])
+        if not args.data:
+            raise ValueError("Argument '--data' is required when '--config' is not provided.")
+        if not args.model_path:
+            raise ValueError("Argument '--model-path' is required when '--config' is not provided.")
         data_path = args.data
         model_path = args.model_path
         window_size = 50
