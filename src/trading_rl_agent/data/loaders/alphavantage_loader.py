@@ -61,7 +61,6 @@ def load_alphavantage(
     mask = (data["timestamp"] >= pd.to_datetime(start)) & (data["timestamp"] <= pd.to_datetime(end))
     data = data.loc[mask]
 
-    data = data.rename(columns={"open": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"})
     data = data[["timestamp", "open", "high", "low", "close", "volume"]]
     data.sort_values("timestamp", inplace=True)
     return data.reset_index(drop=True)
