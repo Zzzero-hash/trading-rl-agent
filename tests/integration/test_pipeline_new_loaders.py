@@ -90,7 +90,7 @@ def test_pipeline_uses_new_loaders(tmp_path, dummy_loaders):
     cfg_path.write_text(yaml.safe_dump(cfg))
 
     ray.init(local_mode=True, log_to_driver=False)
-    results = run_pipeline(str(cfg_path))
+    results = ray.get(run_pipeline.remote(str(cfg_path)))
     ray.shutdown()
 
     assert "yfinance_AAPL" in results
