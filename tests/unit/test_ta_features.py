@@ -88,7 +88,7 @@ def test_compute_stochastic_constant():
     )
     assert "stoch_k" in df_stoch.columns and "stoch_d" in df_stoch.columns
     # Compare with pandas-ta output for expected behavior
-    expected = ta.stoch(
+    expected = pta.stoch(
         high=df["high"],
         low=df["low"],
         close=df["close"],
