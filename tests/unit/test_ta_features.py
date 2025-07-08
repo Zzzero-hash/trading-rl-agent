@@ -87,13 +87,25 @@ def test_compute_stochastic_constant():
         df.copy(), fastk_period=3, slowk_period=3, slowd_period=3
     )
     assert "stoch_k" in df_stoch.columns and "stoch_d" in df_stoch.columns
-    # NaNs during warmup then zeros
-    warmup_k = max(3, 3)  # Derived from fastk_period and slowk_period
-    warmup_d = max(warmup_k, 3)  # Derived from warmup_k and slowd_period
-    assert df_stoch["stoch_k"][:warmup_k].isnull().all()
-    assert (df_stoch["stoch_k"][warmup_k:] == 0.0).all()
-    assert df_stoch["stoch_d"][:warmup_d].isnull().all()
-    assert (df_stoch["stoch_d"][warmup_d:] == 0.0).all()
+    # Compare with pandas-ta output for expected behavior
+    expected = ta.stoch(
+        high=df["high"],
+        low=df["low"],
+        close=df["close"],
+        k=3,
+        d=3,
+        smooth_k=3,
+    ).reindex(df.index)
+    pd.testing.assert_series_equal(
+        df_stoch["stoch_k"],
+        expected.iloc[:, 0],
+        check_names=False,
+    )
+    pd.testing.assert_series_equal(
+        df_stoch["stoch_d"],
+        expected.iloc[:, 1],
+        check_names=False,
+    )
 
 
 def test_compute_stochastic_full():
