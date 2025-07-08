@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 import torch
 
-from src.data.features import generate_features
-from src.data.synthetic import generate_gbm_prices
+from trading_rl_agent.data.features import generate_features
+from trading_rl_agent.data.synthetic import generate_gbm_prices
 
 pytestmark = pytest.mark.integration
 

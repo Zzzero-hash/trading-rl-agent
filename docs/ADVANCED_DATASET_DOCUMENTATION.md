@@ -192,7 +192,7 @@ data/
 ### Training the Model
 
 ```python
-from src.envs.trader_env import TraderEnv
+from trading_rl_agent.envs.trader_env import TraderEnv
 
 # Create training environment
 env = TraderEnv(['data/sample_data.csv'], window_size=10, initial_balance=10000)
@@ -205,8 +205,8 @@ env = TraderEnv(['data/sample_data.csv'], window_size=10, initial_balance=10000)
 ### Live Data Integration
 
 ```python
-from src.data.features import generate_features
-from src.data.live import fetch_live_data
+from trading_rl_agent.data.features import generate_features
+from trading_rl_agent.data.live import fetch_live_data
 
 # Fetch live data
 live_data = fetch_live_data("AAPL", start="2025-06-15", end="2025-06-16")
@@ -325,7 +325,7 @@ hyperparameter search. When Ray Tune is available it integrates with
 Example usage:
 
 ```python
-from src.optimization.cnn_lstm_optimization import optimize_cnn_lstm
+from trading_rl_agent.optimization.cnn_lstm_optimization import optimize_cnn_lstm
 from ray import tune
 
 results = optimize_cnn_lstm(

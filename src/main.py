@@ -5,7 +5,7 @@ import platform
 import psutil
 import yaml
 
-from src.agents.trainer import Trainer
+from trading_rl_agent.agents.trainer import Trainer
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.data.forex_sentiment import (
+from trading_rl_agent.data.forex_sentiment import (
     ForexSentimentData,
     analyze_text_sentiment,
     get_all_forex_sentiment,

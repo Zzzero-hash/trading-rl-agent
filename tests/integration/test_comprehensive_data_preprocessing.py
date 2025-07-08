@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 import torch
 
 # Import data utilities
-from src.data.features import (
+from trading_rl_agent.data.features import (
     compute_adx,
     compute_atr,
     compute_bollinger_bands,
@@ -28,8 +28,8 @@ from src.data.features import (
     detect_shooting_star,
     generate_features,
 )
-from src.data.preprocessing import create_sequences
-from src.data.synthetic import fetch_synthetic_data
+from trading_rl_agent.data.preprocessing import create_sequences
+from trading_rl_agent.data.synthetic import fetch_synthetic_data
 
 
 class TestFeatureEngineering:

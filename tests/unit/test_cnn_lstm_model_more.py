@@ -2,7 +2,7 @@ import torch
 import yaml
 import pytest
 
-from src.models import CNNLSTMModel
+from trading_rl_agent.models import CNNLSTMModel
 
 pytestmark = pytest.mark.unit
 

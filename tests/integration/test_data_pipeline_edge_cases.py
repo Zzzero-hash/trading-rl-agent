@@ -6,7 +6,7 @@ import pytest
 import ray
 import yaml
 
-from src.data.pipeline import run_pipeline
+from trading_rl_agent.data.pipeline import run_pipeline
 
 
 @pytest.fixture(autouse=True)

@@ -21,11 +21,11 @@ from pathlib import Path
 
 import numpy as np
 
-from src.agents.policy_utils import CallablePolicy, WeightedEnsembleAgent
-from src.agents.sac_agent import SACAgent
-from src.agents.td3_agent import TD3Agent
-from src.envs.trading_env import TradingEnv
-from src.utils import metrics
+from trading_rl_agent.agents.policy_utils import CallablePolicy, WeightedEnsembleAgent
+from trading_rl_agent.agents.sac_agent import SACAgent
+from trading_rl_agent.agents.td3_agent import TD3Agent
+from trading_rl_agent.envs.trading_env import TradingEnv
+from trading_rl_agent.utils import metrics
 
 
 def parse_args() -> argparse.Namespace:

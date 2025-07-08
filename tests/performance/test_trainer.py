@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 import yaml
 
-from src.agents.trainer import Trainer
+from trading_rl_agent.agents.trainer import Trainer
 
 
 @pytest.fixture

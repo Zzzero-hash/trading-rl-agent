@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.data.candle_patterns import (
+from trading_rl_agent.data.candle_patterns import (
     compute_candle_stats,
     detect_dark_cloud_cover,
     detect_harami,
@@ -20,14 +20,14 @@ from src.data.candle_patterns import (
 )
 
 # Import the original functions to compare with advanced patterns
-from src.data.features import detect_doji
-from src.data.features import detect_doji as features_detect_doji
-from src.data.features import detect_engulfing
-from src.data.features import detect_engulfing as features_detect_engulfing
-from src.data.features import detect_evening_star
-from src.data.features import detect_hammer
-from src.data.features import detect_hammer as features_detect_hammer
-from src.data.features import detect_morning_star, detect_shooting_star
+from trading_rl_agent.data.features import detect_doji
+from trading_rl_agent.data.features import detect_doji as features_detect_doji
+from trading_rl_agent.data.features import detect_engulfing
+from trading_rl_agent.data.features import detect_engulfing as features_detect_engulfing
+from trading_rl_agent.data.features import detect_evening_star
+from trading_rl_agent.data.features import detect_hammer
+from trading_rl_agent.data.features import detect_hammer as features_detect_hammer
+from trading_rl_agent.data.features import detect_morning_star, detect_shooting_star
 
 
 def create_test_df():
@@ -319,7 +319,7 @@ def test_complex_pattern_combination():
     )
 
     # Apply all pattern detection functions
-    from src.data.candle_patterns import compute_all_candle_patterns
+    from trading_rl_agent.data.candle_patterns import compute_all_candle_patterns
 
     result = compute_all_candle_patterns(df)
 

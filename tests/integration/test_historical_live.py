@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from src.data.historical import fetch_historical_data
+from trading_rl_agent.data.historical import fetch_historical_data
 
 pytestmark = [pytest.mark.integration, pytest.mark.network, pytest.mark.slow]
 

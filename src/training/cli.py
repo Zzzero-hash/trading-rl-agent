@@ -1,6 +1,6 @@
 import argparse
 
-from src.agents.tune import run_tune
+from trading_rl_agent.agents.tune import run_tune
 
 from . import cnn_lstm, rl
 

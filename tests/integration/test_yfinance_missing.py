@@ -1,7 +1,7 @@
 import pytest
 
-from src.data.historical import fetch_historical_data
-from src.data.live import fetch_live_data
+from trading_rl_agent.data.historical import fetch_historical_data
+from trading_rl_agent.data.live import fetch_live_data
 
 
 def test_fetch_historical_data_missing_yfinance(monkeypatch):

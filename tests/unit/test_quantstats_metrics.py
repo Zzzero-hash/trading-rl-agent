@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import quantstats.stats as qs
 
-from src.utils import metrics
+from trading_rl_agent.utils import metrics
 
 
 def _sample_series():

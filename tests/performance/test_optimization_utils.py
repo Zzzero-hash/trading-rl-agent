@@ -1,6 +1,6 @@
 import types
 
-import src.optimization.model_utils as mu
+import trading_rl_agent.optimization.model_utils as mu
 
 
 def test_optimal_gpu_config_no_gpu(monkeypatch):

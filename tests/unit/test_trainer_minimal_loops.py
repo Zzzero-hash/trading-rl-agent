@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 import types
 import pytest
 
-from src.agents import trainer as trainer_module
+from trading_rl_agent.agents import trainer as trainer_module
 
 pytestmark = pytest.mark.unit
 
