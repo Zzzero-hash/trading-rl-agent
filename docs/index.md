@@ -38,22 +38,18 @@ api_reference
 ## Quick Start
 
 ```python
-from trading_rl_agent.envs.trading_env import TradingEnv
-from trading_rl_agent.agents.sac_agent import SACAgent
+from trading_rl_agent import ConfigManager, PortfolioManager
+from trading_rl_agent.agents import SACAgent
+from trading_rl_agent.data.pipeline import load_cached_csvs
 
-# Initialize hybrid environment with production dataset
-env = TradingEnv(
-    data_paths=['data/finrl_real_sample.csv'],
-    use_cnn_lstm_features=True,
-    window_size=50
-)
+cfg = ConfigManager("configs/production.yaml").load_config()
+data = load_cached_csvs("data/raw")
 
-# Create and train SAC agent
-agent = SACAgent(
-    state_dim=env.observation_space.shape[0],
-    action_dim=env.action_space.shape[0]
-)
-agent.train(env, episodes=1000)
+agent = SACAgent(cfg.agent)
+agent.train(data)
+
+portfolio = PortfolioManager(initial_capital=100000)
+portfolio.start_live_trading(agent)
 ```
 
 ## System Status
