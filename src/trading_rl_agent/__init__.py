@@ -64,24 +64,24 @@ def __dir__():
         "ExecutionEngine",
     ]
     return sorted(__all__ + lazy_keys)
+# Mapping of lazily imported components to their modules and attributes
+lazy_map = {
+    # Agents and trainer related components
+    "Agent": (".agents", "Agent"),
+    "EnsembleAgent": (".agents", "EnsembleAgent"),
+    "Trainer": (".agents.trainer", "Trainer"),
+    # Data handling
+    "DataPipeline": (".data", "DataPipeline"),
+    "MarketDataLoader": (".data", "MarketDataLoader"),
+    # Portfolio, risk and execution modules
+    "PortfolioManager": (".portfolio", "PortfolioManager"),
+    "RiskManager": (".risk", "RiskManager"),
+    "ExecutionEngine": (".execution", "ExecutionEngine"),
+}
+
 def __getattr__(name: str):
     """Lazily import heavy optional components when accessed."""
     import importlib
-
-    lazy_map = {
-        # Agents and trainer related components
-        "Agent": (".agents", "Agent"),
-        "EnsembleAgent": (".agents", "EnsembleAgent"),
-        "Trainer": (".agents.trainer", "Trainer"),
-        # Data handling
-        "DataPipeline": (".data", "DataPipeline"),
-        "MarketDataLoader": (".data", "MarketDataLoader"),
-        # Portfolio, risk and execution modules
-        "PortfolioManager": (".portfolio", "PortfolioManager"),
-        "RiskManager": (".risk", "RiskManager"),
-        "ExecutionEngine": (".execution", "ExecutionEngine"),
-    }
-
     if name in lazy_map:
         module_name, attr = lazy_map[name]
         try:
