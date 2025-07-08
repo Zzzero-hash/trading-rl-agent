@@ -31,18 +31,24 @@ if "structlog" not in sys.modules:
     sys.modules["structlog"] = stub
 
 if "src.envs.finrl_trading_env" not in sys.modules:
-    sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(register_env=lambda: None)
+    sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(
+        register_env=lambda: None
+    )
 
 if "trading_rl_agent" not in sys.modules:
     pkg = types.ModuleType("trading_rl_agent")
-    pkg.__path__ = [str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")]
+    pkg.__path__ = [
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+    ]
     sys.modules["trading_rl_agent"] = pkg
 
 if "nltk.sentiment.vader" not in sys.modules:
     dummy = types.ModuleType("nltk.sentiment.vader")
+
     class DummySIA:
         def polarity_scores(self, text):
             return {"compound": 0.0}
+
     dummy.SentimentIntensityAnalyzer = DummySIA
     sys.modules["nltk.sentiment.vader"] = dummy
 base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
@@ -52,19 +58,19 @@ for pkg in ["features", "portfolio", "risk"]:
         mod = types.ModuleType(key)
         mod.__path__ = [str(base / pkg)]
         sys.modules[key] = mod
-import numpy as np
-import pandas as pd
-import pytest
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+import pytest  # noqa: E402
 
-import trading_rl_agent.features.technical_indicators as ti
+import trading_rl_agent.features.technical_indicators as ti  # noqa: E402
 
 pytestmark = pytest.mark.unit
 
 
-def test_get_feature_names(monkeypatch):
-    monkeypatch.setattr(ti, "TALIB_AVAILABLE", False)
-    monkeypatch.setattr(ti, "PANDAS_TA_AVAILABLE", True)
-    cfg = ti.IndicatorConfig(sma_periods=[3], ema_periods=[5], obv_enabled=False, vwap_enabled=False)
+def test_get_feature_names():
+    cfg = ti.IndicatorConfig(
+        sma_periods=[3], ema_periods=[5], obv_enabled=False, vwap_enabled=False
+    )
     indicator = ti.TechnicalIndicators(cfg)
     names = indicator.get_feature_names()
     assert names == [
@@ -78,4 +84,10 @@ def test_get_feature_names(monkeypatch):
         "bb_middle",
         "bb_lower",
         "atr",
+        "pattern_doji",
+        "pattern_hammer",
+        "pattern_engulfing",
+        "pattern_harami",
+        "pattern_morning_star",
+        "pattern_evening_star",
     ]
