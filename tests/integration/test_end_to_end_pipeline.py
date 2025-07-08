@@ -90,7 +90,6 @@ def test_data_ingestion_training_portfolio(tmp_path, benchmark):
     def create_data():
         return fetch_synthetic_data(n_samples=50)
 
-    import time
     start = time.perf_counter()
     df = create_data()
     df = generate_features(df)
