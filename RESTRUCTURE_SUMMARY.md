@@ -45,7 +45,7 @@ src/trading_rl_agent/           # New main package
 
 ### **Feature Engineering Module** (`features/`)
 
-- **Technical Indicators**: TA-Lib integration with 150+ indicators
+- **Technical Indicators**: Comprehensive library of 150+ indicators
 - **Market Microstructure**: Order book and trade-level features
 - **Cross-Asset Analysis**: Correlation and regime detection
 - **Alternative Data**: News, sentiment, economic indicators

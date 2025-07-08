@@ -1,8 +1,8 @@
 """
 Technical indicators module using industry-standard libraries.
 
-Provides comprehensive technical analysis indicators using TA-Lib and pandas-ta
-for robust feature engineering in trading strategies.
+Provides comprehensive technical analysis indicators using pandas-ta for robust
+feature engineering in trading strategies.
 """
 
 from dataclasses import dataclass
@@ -65,7 +65,7 @@ class TechnicalIndicators:
     """
     Comprehensive technical indicators calculator using multiple libraries.
 
-    Supports both TA-Lib (C-based, fast) and pandas-ta (Python-based, flexible)
+    Supports both talib (C-based, fast) and pandas-ta (Python-based, flexible)
     for maximum compatibility and performance.
     """
 
@@ -75,13 +75,13 @@ class TechnicalIndicators:
 
         if not TALIB_AVAILABLE and not PANDAS_TA_AVAILABLE:
             raise ImportError(
-                "Neither TA-Lib nor pandas-ta is available. "
-                "Please install at least one: pip install TA-Lib pandas-ta"
+                "Neither talib nor pandas-ta is available. "
+                "Please install at least one: pip install talib pandas-ta"
             )
 
         self.use_talib = TALIB_AVAILABLE
         self.logger.info(
-            f"Using TA-Lib: {TALIB_AVAILABLE}, pandas-ta: {PANDAS_TA_AVAILABLE}"
+            f"Using talib: {TALIB_AVAILABLE}, pandas-ta: {PANDAS_TA_AVAILABLE}"
         )
 
     def calculate_all_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -109,7 +109,7 @@ class TechnicalIndicators:
             # Volume indicators
             result_df = self._add_volume_indicators(result_df)
 
-            # Pattern recognition (if TA-Lib available)
+            # Pattern recognition (if talib available)
             if self.use_talib:
                 result_df = self._add_pattern_recognition(result_df)
 
@@ -241,7 +241,7 @@ class TechnicalIndicators:
         return df
 
     def _add_pattern_recognition(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add candlestick pattern recognition (TA-Lib only)."""
+        """Add candlestick pattern recognition (talib only)."""
         if not self.use_talib:
             return df
 
@@ -287,7 +287,7 @@ class TechnicalIndicators:
         if self.config.vwap_enabled:
             features.append("vwap")
 
-        # Patterns (if TA-Lib available)
+        # Patterns (if talib available)
         if self.use_talib:
             pattern_names = [
                 "doji",
