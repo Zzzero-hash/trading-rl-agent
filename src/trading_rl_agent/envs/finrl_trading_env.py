@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Dict, Iterable
+from typing import Any, Dict
 
 import numpy as np
+
 try:
     import empyrical
 except ImportError as e:
@@ -16,13 +18,15 @@ import pandas as pd
 try:  # FinRL 0.4+
     from finrl.env.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
 except Exception:  # FinRL 0.3.x
-    from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
+    from finrl.meta.env_stock_trading.env_stocktrading import (
+        StockTradingEnv as _FinRLTradingEnv,
+    )
 
 
 class TradingEnv(_FinRLTradingEnv):
     """Thin wrapper around FinRL's :class:`StockTradingEnv`."""
 
-    def __init__(self, env_cfg: Dict[str, Any] | None = None, **kwargs: Any) -> None:
+    def __init__(self, env_cfg: dict[str, Any] | None = None, **kwargs: Any) -> None:
         cfg = {**(env_cfg or {}), **kwargs}
 
         data_paths: Iterable[str | Path] = cfg.get("dataset_paths", [])
@@ -52,7 +56,9 @@ class TradingEnv(_FinRLTradingEnv):
         valid_reward_types = ["profit", "sharpe", "risk_adjusted"]
         self.reward_type = cfg.get("reward_type", "profit")
         if self.reward_type not in valid_reward_types:
-            raise ValueError(f"Invalid reward_type: {self.reward_type}. Must be one of {valid_reward_types}")
+            raise ValueError(
+                f"Invalid reward_type: {self.reward_type}. Must be one of {valid_reward_types}"
+            )
         self.risk_penalty = float(cfg.get("risk_penalty", 0.1))
         num_stock_shares = cfg.get("num_stock_shares", [0] * stock_dim)
         buy_cost_pct = cfg.get("buy_cost_pct", [0.001] * stock_dim)
@@ -107,7 +113,11 @@ class TradingEnv(_FinRLTradingEnv):
             reward *= self.reward_scaling
 
         return obs, float(reward), done, truncated, info
-def env_creator(env_cfg: Dict[str, Any] | None = None) -> TradingEnv:  # pragma: no cover
+
+
+def env_creator(
+    env_cfg: dict[str, Any] | None = None,
+) -> TradingEnv:  # pragma: no cover
     return TradingEnv(env_cfg)
 
 

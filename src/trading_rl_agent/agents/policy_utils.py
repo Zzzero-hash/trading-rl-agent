@@ -12,7 +12,9 @@ from ray.rllib.policy.policy_map import PolicyMap
 class CallablePolicy(Policy):
     """Wrap a callable into an RLlib Policy."""
 
-    def __init__(self, obs_space: spaces.Space, action_space: spaces.Space, func: Callable):
+    def __init__(
+        self, obs_space: spaces.Space, action_space: spaces.Space, func: Callable
+    ):
         super().__init__(obs_space, action_space, {})
         if not callable(func):
             raise ValueError("func must be a callable")
@@ -30,7 +32,7 @@ class CallablePolicy(Policy):
         return actions_array, [], {}
 
 
-def weighted_policy_mapping(weights: Dict[str, float]):
+def weighted_policy_mapping(weights: dict[str, float]):
     """Create a policy mapping function using normalized weights."""
     total = sum(weights.values()) or 1.0
     norm_weights = {k: v / total for k, v in weights.items()}
@@ -50,15 +52,15 @@ def weighted_policy_mapping(weights: Dict[str, float]):
 class WeightedEnsembleAgent:
     """Simple ensemble agent using RLlib's policy mapping utilities."""
 
-    def __init__(self, policies: Dict[str, Policy], weights: Dict[str, float]):
+    def __init__(self, policies: dict[str, Policy], weights: dict[str, float]):
         # Validate that weights.keys() matches policies.keys()
         if set(weights.keys()) != set(policies.keys()):
             raise ValueError("Mismatch between policies and weights keys.")
-        
+
         # Normalize weights to ensure they sum to 1
         total = sum(weights.values()) or 1.0
         normalized_weights = {k: v / total for k, v in weights.items()}
-        
+
         self.policy_map: PolicyMap = PolicyMap()
         for name, policy in policies.items():
             self.policy_map[name] = policy

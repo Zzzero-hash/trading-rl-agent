@@ -7,8 +7,9 @@ Includes risk-adjusted returns, drawdown analysis, and portfolio metrics.
 
 """Convenience wrappers around the ``empyrical`` statistics library."""
 
-import empyrical as _empyrical
 import importlib
+
+import empyrical as _empyrical
 import numpy as np
 import pandas as pd
 
