@@ -42,6 +42,15 @@ if "nltk.sentiment.vader" not in sys.modules:
     dummy = types.ModuleType("nltk.sentiment.vader")
     class DummySIA:
         def polarity_scores(self, text):
+            """
+            Return a neutral sentiment score for the given text.
+            
+            Parameters:
+                text (str): The input text to analyze.
+            
+            Returns:
+                dict: A dictionary with a single key "compound" set to 0.0, indicating neutral sentiment.
+            """
             return {"compound": 0.0}
     dummy.SentimentIntensityAnalyzer = DummySIA
     sys.modules["nltk.sentiment.vader"] = dummy
@@ -61,6 +70,9 @@ pytestmark = pytest.mark.unit
 
 
 def test_default_config(tmp_path):
+    """
+    Test that the default configuration is loaded correctly and contains expected default values.
+    """
     manager = ConfigManager()
     cfg = manager.load_config()
     assert isinstance(cfg, SystemConfig)
@@ -69,6 +81,11 @@ def test_default_config(tmp_path):
 
 
 def test_load_update_save_config(tmp_path):
+    """
+    Test loading, updating, and saving a configuration using ConfigManager.
+    
+    Creates a YAML configuration file, loads it, verifies its contents, updates a value, saves the updated configuration, and checks that the saved file reflects the changes.
+    """
     config_file = tmp_path / "config.yaml"
     data = {"environment": "production", "debug": True, "risk": {"max_drawdown": 0.2}}
     with open(config_file, "w") as f:

@@ -42,6 +42,15 @@ if "nltk.sentiment.vader" not in sys.modules:
     dummy = types.ModuleType("nltk.sentiment.vader")
     class DummySIA:
         def polarity_scores(self, text):
+            """
+            Return a neutral sentiment score for the given text.
+            
+            Parameters:
+                text (str): The input text to analyze.
+            
+            Returns:
+                dict: A dictionary with a single key 'compound' set to 0.0, indicating neutral sentiment.
+            """
             return {"compound": 0.0}
     dummy.SentimentIntensityAnalyzer = DummySIA
     sys.modules["nltk.sentiment.vader"] = dummy
@@ -60,6 +69,9 @@ pytestmark = pytest.mark.unit
 
 
 def test_execute_trade_and_update_prices():
+    """
+    Test that executing a trade and updating prices correctly updates positions, unrealized PnL, and performance history in the PortfolioManager.
+    """
     cfg = PortfolioConfig(max_position_size=0.5, max_leverage=2.0)
     pm = PortfolioManager(1000.0, cfg)
 
@@ -73,6 +85,11 @@ def test_execute_trade_and_update_prices():
 
 
 def test_trade_rejected_by_risk():
+    """
+    Test that a trade exceeding the maximum position size is rejected by the PortfolioManager.
+    
+    Verifies that when attempting to execute a trade that violates risk constraints, the trade is not executed, no positions are created, and cash remains unchanged.
+    """
     cfg = PortfolioConfig(max_position_size=0.05)
     pm = PortfolioManager(1000.0, cfg)
 
