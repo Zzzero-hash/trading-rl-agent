@@ -62,6 +62,7 @@ pytestmark = pytest.mark.unit
 
 
 def _sample_returns():
+    np.random.seed(42)  # Seed the random number generator for reproducibility
     dates = pd.date_range("2023-01-01", periods=60)
     a = pd.Series(np.random.normal(0, 0.01, len(dates)), index=dates)
     b = pd.Series(np.random.normal(0, 0.02, len(dates)), index=dates)
