@@ -1,0 +1,29 @@
+environment: production
+debug: false
+
+data:
+  data_sources:
+    primary: alpaca
+    backup: yfinance
+  real_time_enabled: true
+  feature_window: 50
+
+agent:
+  agent_type: sac
+  ensemble_size: 3
+  total_timesteps: 1000000
+
+risk:
+  max_position_size: 0.1
+  max_leverage: 1.0
+  var_confidence_level: 0.05
+
+execution:
+  broker: alpaca
+  paper_trading: false
+  order_timeout: 60
+
+monitoring:
+  mlflow_enabled: true
+  alerts_enabled: true
+  metrics_frequency: 300
