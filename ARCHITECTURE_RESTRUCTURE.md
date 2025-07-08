@@ -26,7 +26,7 @@ trading-rl-agent/
 │       │   ├── validators/       # Data quality checks
 │       │   └── __init__.py
 │       ├── features/              # Feature engineering (NEW)
-│       │   ├── technical_indicators.py  # TA-Lib indicators
+│       │   ├── technical_indicators.py  # technical indicators
 │       │   ├── market_microstructure.py # Microstructure features
 │       │   ├── cross_asset.py     # Cross-asset correlations
 │       │   ├── alternative_data.py # Alt data integration
@@ -111,7 +111,7 @@ trading-rl-agent/
 
 ### **3. Comprehensive Feature Engineering**
 
-- **Technical Indicators**: TA-Lib integration with 150+ indicators
+- **Technical Indicators**: Comprehensive library of 150+ indicators
 - **Market Microstructure**: Order book and trade-level features
 - **Cross-Asset Features**: Correlation and regime detection
 - **Alternative Data**: News, sentiment, and economic indicators

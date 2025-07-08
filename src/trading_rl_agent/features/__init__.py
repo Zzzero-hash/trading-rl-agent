@@ -2,7 +2,7 @@
 Feature engineering pipeline for trading system.
 
 This module provides comprehensive feature engineering capabilities including:
-- Technical indicators (using TA-Lib)
+- Technical indicators
 - Market microstructure features
 - Cross-asset correlation features
 - Alternative data integration

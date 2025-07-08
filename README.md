@@ -150,7 +150,7 @@ risk_manager = RiskManager(
 
 ### **Advanced Feature Engineering**
 
-- **📊 Technical Indicators**: 150+ TA-Lib indicators
+ - **📊 Technical Indicators**: 150+ technical indicators
 - **🔗 Cross-Asset Features**: Correlation and regime detection
 - **📰 Alternative Data**: News sentiment, economic indicators
 - **🕒 Real-Time Processing**: Sub-second feature calculation
