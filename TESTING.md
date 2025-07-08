@@ -11,6 +11,9 @@ pip install -r requirements.txt
 pip install -r requirements-test.txt
 ```
 
+`nltk>=3.8` is included in the base requirements and is required for the
+sentiment analysis tests.
+
 For machine-learning features (PyTorch and RLlib) install additional packages:
 
 ```bash
