@@ -8,6 +8,7 @@ Production-ready hybrid CNN+LSTM + Reinforcement Learning system for algorithmic
 
 - [`getting_started.md`](getting_started.md) - Installation and basic usage
 - [`EVALUATION_GUIDE.md`](EVALUATION_GUIDE.md) - Agent evaluation and performance analysis
+- [`performance.md`](performance.md) - Benchmark results for data pipelines and training
 
 ### Architecture & Development
 
