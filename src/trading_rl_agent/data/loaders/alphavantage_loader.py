@@ -46,11 +46,15 @@ def load_alphavantage(
     ts = TimeSeries(key=api_key, output_format="pandas")
 
     if interval == "day":
-        data, _ = ts.get_daily(symbol, outputsize="full")
-    else:
-        intr_map = {"hour": "60min", "minute": "1min"}
-        iv = intr_map.get(interval, interval)
-        data, _ = ts.get_intraday(symbol, interval=iv, outputsize="full")
+    try:
+        if interval == "day":
+            data, _ = ts.get_daily(symbol, outputsize="full")
+        else:
+            intr_map = {"hour": "60min", "minute": "1min"}
+            iv = intr_map.get(interval, interval)
+            data, _ = ts.get_intraday(symbol, interval=iv, outputsize="full")
+    except Exception as e:
+        raise RuntimeError(f"Failed to fetch data from Alpha Vantage for symbol {symbol}: {e}")
 
     # Columns like '1. open', etc -> take last part after space
     data.rename(columns=lambda c: c.split(" ")[-1], inplace=True)
