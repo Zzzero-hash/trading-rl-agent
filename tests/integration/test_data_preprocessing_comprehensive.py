@@ -9,11 +9,51 @@ import tempfile
 from unittest.mock import Mock, patch
 import warnings
 
+import sys
+import types
+import logging
 import numpy as np
 import pandas as pd
 import pytest
 
 from tests.conftest_extra import large_dataset, memory_monitor
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+
+if "structlog" not in sys.modules:
+    stub = types.SimpleNamespace(
+        BoundLogger=object,
+        stdlib=types.SimpleNamespace(
+            ProcessorFormatter=object,
+            BoundLogger=object,
+            LoggerFactory=lambda: None,
+            filter_by_level=lambda *a, **k: None,
+            add_logger_name=lambda *a, **k: None,
+            add_log_level=lambda *a, **k: None,
+            PositionalArgumentsFormatter=lambda: None,
+            wrap_for_formatter=lambda f: f,
+        ),
+        processors=types.SimpleNamespace(
+            TimeStamper=lambda **_: None,
+            StackInfoRenderer=lambda **_: None,
+            format_exc_info=lambda **_: None,
+            UnicodeDecoder=lambda **_: None,
+        ),
+        dev=types.SimpleNamespace(ConsoleRenderer=lambda **_: None),
+        configure=lambda **_: None,
+        get_logger=lambda name=None: logging.getLogger(name),
+    )
+    sys.modules["structlog"] = stub
+
+base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
+if "trading_rl_agent" not in sys.modules:
+    pkg = types.ModuleType("trading_rl_agent")
+    pkg.__path__ = [str(base)]
+    sys.modules["trading_rl_agent"] = pkg
+if "trading_rl_agent.data" not in sys.modules:
+    mod = types.ModuleType("trading_rl_agent.data")
+    mod.__path__ = [str(base / "data")]
+    sys.modules["trading_rl_agent.data"] = mod
 
 
 @pytest.fixture
@@ -132,7 +172,7 @@ class TestDataPreprocessingComprehensive:
     def test_technical_indicators_comprehensive(self, sample_market_data):
         """Test comprehensive technical indicator calculations."""
         try:
-            from ta.momentum import RSIIndicator
+            import pandas_ta as ta
 
             # Test log returns
             returns = np.log(
@@ -148,7 +188,7 @@ class TestDataPreprocessingComprehensive:
             assert len(sma) == len(sample_market_data)
 
             # Test RSI
-            rsi = RSIIndicator(sample_market_data["close"].astype(float)).rsi()
+            rsi = ta.rsi(sample_market_data["close"].astype(float), length=14)
             assert isinstance(rsi, pd.Series)
             rsi_valid = rsi.dropna()
             if len(rsi_valid) > 0:
