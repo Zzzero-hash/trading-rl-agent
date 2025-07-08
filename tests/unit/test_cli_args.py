@@ -1,6 +1,6 @@
 import pytest
 
-from src.main import build_parser
+from trading_rl_agent.main import build_parser
 
 pytestmark = pytest.mark.unit
 

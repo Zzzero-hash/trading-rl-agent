@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from src.data.pipeline import load_cached_csvs
+from trading_rl_agent.data.pipeline import load_cached_csvs
 
 pytestmark = pytest.mark.unit
 

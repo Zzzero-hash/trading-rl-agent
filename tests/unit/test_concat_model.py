@@ -2,7 +2,7 @@ from gymnasium import spaces
 import numpy as np
 import torch
 
-from src.models.concat_model import ConcatModel
+from trading_rl_agent.models.concat_model import ConcatModel
 
 
 def test_concat_model_output_shape():

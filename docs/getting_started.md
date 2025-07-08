@@ -50,9 +50,9 @@ python ../finrl_data_loader.py --config ../configs/finrl_real_data.yaml
 ### 2. Initialize the Hybrid System
 
 ```python
-from src.envs.trading_env import TradingEnv
-from src.agents.sac_agent import SACAgent
-from src.models.cnn_lstm_model import CNNLSTMModel
+from trading_rl_agent.envs.trading_env import TradingEnv
+from trading_rl_agent.agents.sac_agent import SACAgent
+from trading_rl_agent.models.cnn_lstm_model import CNNLSTMModel
 
 # Load data generated via FinRL
 env = TradingEnv(

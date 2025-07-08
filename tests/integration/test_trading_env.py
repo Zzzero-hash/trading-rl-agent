@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.envs.finrl_trading_env import TradingEnv, env_creator, register_env
+from trading_rl_agent.envs.finrl_trading_env import TradingEnv, env_creator, register_env
 
 
 @pytest.fixture

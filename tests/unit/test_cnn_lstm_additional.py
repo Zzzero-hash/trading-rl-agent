@@ -2,7 +2,7 @@ import yaml
 import torch
 import pytest
 
-from src.models.cnn_lstm import CNNLSTMModel, _load_config
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel, _load_config
 
 
 def test_load_config_from_path(tmp_path):

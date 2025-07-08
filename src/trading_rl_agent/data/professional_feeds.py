@@ -33,7 +33,7 @@ except ImportError:
 
 import yfinance as yf
 
-from src.data.features import generate_features
+from trading_rl_agent.data.features import generate_features
 
 logger = logging.getLogger(__name__)
 

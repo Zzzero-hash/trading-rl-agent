@@ -3,7 +3,7 @@ import pandas as pd
 import quantstats.stats as qs
 import pytest
 
-from src.utils import metrics
+from trading_rl_agent.utils import metrics
 
 pytestmark = pytest.mark.unit
 

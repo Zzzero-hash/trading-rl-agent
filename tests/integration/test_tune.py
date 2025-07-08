@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 import yaml
 
-from src.agents.tune import _convert_value, _load_search_space, run_tune
+from trading_rl_agent.agents.tune import _convert_value, _load_search_space, run_tune
 
 
 class TestConvertValue:

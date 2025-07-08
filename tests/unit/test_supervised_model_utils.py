@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 import torch
 
-from src.supervised_model import (
+from trading_rl_agent.supervised_model import (
     ModelConfig,
     TrendPredictor,
     _to_tensor,

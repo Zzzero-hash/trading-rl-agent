@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from ta.momentum import RSIIndicator
 
-from src.data.features import add_sentiment, generate_features
+from trading_rl_agent.data.features import add_sentiment, generate_features
 
 
 def test_compute_log_returns():
