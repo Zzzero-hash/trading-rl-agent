@@ -57,7 +57,14 @@ run_pipeline = pipeline.run_pipeline
 
 @pytest.fixture(autouse=True)
 def dummy_loaders(monkeypatch):
-    df = pd.DataFrame({"open": [1], "high": [2], "low": [3], "close": [4], "volume": [5]})
+    df = pd.DataFrame({
+        "timestamp": [pd.Timestamp("2024-01-01")],
+        "open":      [1],
+        "high":      [2],
+        "low":       [3],
+        "close":     [4],
+        "volume":    [5],
+    })
     monkeypatch.setattr(
         pipeline,
         "load_yfinance",
