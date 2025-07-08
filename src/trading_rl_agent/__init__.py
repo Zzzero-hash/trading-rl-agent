@@ -23,16 +23,15 @@ __author__ = "Trading RL Team"
 
 # Core imports for easy access
 from .core.config import ConfigManager, SystemConfig
-from .core.logging import setup_logging, get_logger
-from .core.exceptions import TradingSystemError, DataValidationError, ModelError
+from .core.exceptions import DataValidationError, ModelError, TradingSystemError
+from .core.logging import get_logger, setup_logging
 
 # Main components are imported lazily to avoid heavy dependencies at import time.
-# These modules rely on ML frameworks such as ``torch`` and ``ray``.  Importing
+# These modules rely on ML frameworks such as ``torch`` and ``ray``. Importing
 # them here would make ``import trading_rl_agent`` fail in lightweight
-# environments.  The classes are therefore loaded on demand via ``__getattr__``.
+# environments. The classes are therefore loaded on demand via ``__getattr__``.
 
 __all__ = [
-    # Core
     "ConfigManager",
     "SystemConfig",
     "setup_logging",
@@ -40,56 +39,46 @@ __all__ = [
     "TradingSystemError",
     "DataValidationError",
     "ModelError",
-    # Main components
-    "Agent",
-    "EnsembleAgent",
-    "DataPipeline",
-    "MarketDataLoader",
-    "PortfolioManager",
-    "RiskManager",
-    "ExecutionEngine",
 ]
+
+# Optional heavy components mapped to their import paths.  These are imported
+# lazily to keep ``import trading_rl_agent`` lightweight.
+_OPTIONAL_IMPORTS = {
+    "Trainer": (".agents.trainer", "Trainer"),
+    "WeightedEnsembleAgent": (".agents.policy_utils", "WeightedEnsembleAgent"),
+    "CallablePolicy": (".agents.policy_utils", "CallablePolicy"),
+    "weighted_policy_mapping": (".agents.policy_utils", "weighted_policy_mapping"),
+    "PortfolioManager": (".portfolio.manager", "PortfolioManager"),
+    "ExecutionEngine": (".execution", "ExecutionEngine"),
+}
 
 
 def __dir__():
     """Return a list of attributes for tab completion."""
-    lazy_keys = [
-        "Agent",
-        "EnsembleAgent",
-        "Trainer",
-        "DataPipeline",
-        "MarketDataLoader",
-        "PortfolioManager",
-        "RiskManager",
-        "ExecutionEngine",
-    ]
-    return sorted(__all__ + lazy_keys)
+    return sorted(__all__ + list(_OPTIONAL_IMPORTS))
+
+
 # Mapping of lazily imported components to their modules and attributes
-lazy_map = {
-    # Agents and trainer related components
-    "Agent": (".agents", "Agent"),
-    "EnsembleAgent": (".agents", "EnsembleAgent"),
-    "Trainer": (".agents.trainer", "Trainer"),
-    # Data handling
-    "DataPipeline": (".data", "DataPipeline"),
-    "MarketDataLoader": (".data", "MarketDataLoader"),
-    # Portfolio, risk and execution modules
-    "PortfolioManager": (".portfolio", "PortfolioManager"),
-    "RiskManager": (".risk", "RiskManager"),
-    "ExecutionEngine": (".execution", "ExecutionEngine"),
-}
+lazy_map = _OPTIONAL_IMPORTS
+
 
 def __getattr__(name: str):
     """Lazily import heavy optional components when accessed."""
     import importlib
+
     if name in lazy_map:
         module_name, attr = lazy_map[name]
         try:
             module = importlib.import_module(f"{__name__}{module_name}")
             obj = getattr(module, attr)
-        except Exception as exc:  # pragma: no cover - just in case
+        except ModuleNotFoundError as exc:  # pragma: no cover - optional dep
             raise ImportError(
                 f"{name} requires optional ML dependencies. Install them to use this feature."
+            ) from exc
+        except AttributeError as exc:
+            raise ImportError(
+                f"The module '{module_name}' was found, but it does not contain the attribute '{attr}'. "
+                f"Ensure that all dependencies are installed and the module is correctly implemented."
             ) from exc
 
         globals()[name] = obj
