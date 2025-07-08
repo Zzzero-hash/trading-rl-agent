@@ -3,7 +3,7 @@
 [![Coverage Status](https://codecov.io/gh/Zzzero-hash/trading-rl-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/Zzzero-hash/trading-rl-agent)
 
 A research-focused system combining CNN+LSTM market intelligence with reinforcement learning (RL) optimization.
-_Current status: core functionality validated, environment testing framework complete, and all tests passing._
+_Current status: core functionality validated, environment testing framework complete, and some tests currently failing due to missing dependencies (see test-report.md)._
 
 ---
 
@@ -27,8 +27,7 @@ _Current status: core functionality validated, environment testing framework com
    ```bash
    pytest
    ```
-   All ~733 tests should pass, validating the core environment and integration.
-
+   The suite currently includes around 29 tests. Some may fail if optional dependencies such as `finrl` or `nltk` are missing.
 ---
 
 ## 📦 Project Structure
@@ -110,7 +109,7 @@ if __name__ == "__main__":
 - ✅ Environment testing framework complete
 - ✅ Core CNN+LSTM & RL integration validated
 - ✅ Sample datasets included
-- ✅ ~733 tests passing
+- ❌ Some tests failing due to missing dependencies (see [test-report.md](test-report.md))
 
 > **Note:** This project is research-oriented. Sample data and workflows are provided for experimentation. Production deployment, professional data feeds, advanced risk modules, and multi-asset portfolio features remain under active development.
 
