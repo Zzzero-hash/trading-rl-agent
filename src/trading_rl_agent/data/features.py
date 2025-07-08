@@ -26,9 +26,9 @@ def compute_ema(
 def compute_macd(df: pd.DataFrame, price_col: str = "close") -> pd.DataFrame:
     """Compute MACD line, signal, and histogram using pandas-ta."""
     macd = ta.macd(df[price_col])
-    df["macd_line"] = macd.iloc[:, 0]
-    df["macd_hist"] = macd.iloc[:, 1]
-    df["macd_signal"] = macd.iloc[:, 2]
+    df["macd_line"] = macd["MACD_12_26_9"]
+    df["macd_hist"] = macd["MACDh_12_26_9"]
+    df["macd_signal"] = macd["MACDs_12_26_9"]
     return df
 
 
