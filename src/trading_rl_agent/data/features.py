@@ -4,10 +4,7 @@ Feature engineering utilities for trading data pipelines.
 
 import numpy as np
 import pandas as pd
-from ta.momentum import RSIIndicator, StochasticOscillator, WilliamsRIndicator
-from ta.trend import MACD, ADXIndicator, EMAIndicator
-from ta.volatility import AverageTrueRange, BollingerBands
-from ta.volume import OnBalanceVolumeIndicator
+import pandas_ta as ta
 
 
 def add_sentiment(df: pd.DataFrame, sentiment_col: str = "sentiment") -> pd.DataFrame:
@@ -21,38 +18,36 @@ def add_sentiment(df: pd.DataFrame, sentiment_col: str = "sentiment") -> pd.Data
 def compute_ema(
     df: pd.DataFrame, price_col: str = "close", timeperiod: int = 20
 ) -> pd.DataFrame:
-    """Compute Exponential Moving Average (EMA) using `ta` library."""
-    df[f"ema_{timeperiod}"] = EMAIndicator(
-        close=df[price_col], window=timeperiod
-    ).ema_indicator()
+    """Compute Exponential Moving Average (EMA) using pandas-ta."""
+    df[f"ema_{timeperiod}"] = ta.ema(df[price_col], length=timeperiod)
     return df
 
 
 def compute_macd(df: pd.DataFrame, price_col: str = "close") -> pd.DataFrame:
-    """Compute MACD, signal, and histogram using `ta` library."""
-    macd_ind = MACD(close=df[price_col])
-    df["macd_line"] = macd_ind.macd()
-    df["macd_signal"] = macd_ind.macd_signal()
-    df["macd_hist"] = macd_ind.macd_diff()
+    """Compute MACD line, signal, and histogram using pandas-ta."""
+    macd = ta.macd(df[price_col])
+    df["macd_line"] = macd["MACD_12_26_9"]
+    df["macd_hist"] = macd["MACDh_12_26_9"]
+    df["macd_signal"] = macd["MACDs_12_26_9"]
     return df
 
 
 def compute_atr(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """Compute Average True Range (ATR) using `ta` library."""
-    df[f"atr_{timeperiod}"] = AverageTrueRange(
-        high=df["high"], low=df["low"], close=df["close"], window=timeperiod
-    ).average_true_range()
+    """Compute Average True Range (ATR) using pandas-ta."""
+    df[f"atr_{timeperiod}"] = ta.atr(
+        high=df["high"], low=df["low"], close=df["close"], length=timeperiod
+    ).fillna(0.0)
     return df
 
 
 def compute_bollinger_bands(
     df: pd.DataFrame, price_col: str = "close", timeperiod: int = 20
 ) -> pd.DataFrame:
-    """Compute Bollinger Bands using `ta` library."""
-    bb = BollingerBands(close=df[price_col], window=timeperiod)
-    df[f"bb_upper_{timeperiod}"] = bb.bollinger_hband()
-    df[f"bb_mavg_{timeperiod}"] = bb.bollinger_mavg()
-    df[f"bb_lower_{timeperiod}"] = bb.bollinger_lband()
+    """Compute Bollinger Bands using pandas-ta."""
+    bb = ta.bbands(df[price_col], length=timeperiod)
+    df[f"bb_lower_{timeperiod}"] = bb.iloc[:, 0]
+    df[f"bb_mavg_{timeperiod}"] = bb.iloc[:, 1]
+    df[f"bb_upper_{timeperiod}"] = bb.iloc[:, 2]
     return df
 
 
@@ -62,40 +57,40 @@ def compute_stochastic(
     slowk_period: int = 3,
     slowd_period: int = 3,
 ) -> pd.DataFrame:
-    """Compute Stochastic Oscillator using `ta` library."""
-    so = StochasticOscillator(
+    """Compute Stochastic Oscillator using pandas-ta."""
+    stoch = ta.stoch(
         high=df["high"],
         low=df["low"],
         close=df["close"],
-        window=fastk_period,
-        smooth_window=slowk_period,
+        k=fastk_period,
+        d=slowd_period,
+        smooth_k=slowk_period,
     )
-    df["stoch_k"] = so.stoch()
-    df["stoch_d"] = so.stoch_signal()
+    df["stoch_k"] = stoch.iloc[:, 0]
+    df["stoch_d"] = stoch.iloc[:, 1]
     return df
 
 
 def compute_adx(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """Compute Average Directional Index (ADX) using `ta` library."""
-    df[f"adx_{timeperiod}"] = ADXIndicator(
-        high=df["high"], low=df["low"], close=df["close"], window=timeperiod
-    ).adx()
+    """Compute Average Directional Index (ADX) using pandas-ta."""
+    adx = ta.adx(
+        high=df["high"], low=df["low"], close=df["close"], length=timeperiod
+    )
+    df[f"adx_{timeperiod}"] = adx.iloc[:, 0].fillna(0.0)
     return df
 
 
 def compute_williams_r(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """Compute Williams %R using `ta` library."""
-    df[f"wr_{timeperiod}"] = WilliamsRIndicator(
-        high=df["high"], low=df["low"], close=df["close"], lbp=timeperiod
-    ).williams_r()
+    """Compute Williams %R using pandas-ta."""
+    df[f"wr_{timeperiod}"] = ta.willr(
+        high=df["high"], low=df["low"], close=df["close"], length=timeperiod
+    )
     return df
 
 
 def compute_obv(df: pd.DataFrame) -> pd.DataFrame:
-    """Compute On-Balance Volume (OBV) using `ta` library."""
-    df["obv"] = OnBalanceVolumeIndicator(
-        close=df["close"], volume=df["volume"]
-    ).on_balance_volume()
+    """Compute On-Balance Volume (OBV) using pandas-ta."""
+    df["obv"] = ta.obv(close=df["close"], volume=df["volume"])
     return df
 
 
@@ -327,7 +322,7 @@ def generate_features(
     for w in ma_windows:
         df[f"sma_{w}"] = df["close"].rolling(w).mean()
 
-    df[f"rsi_{rsi_window}"] = RSIIndicator(close=df["close"], window=rsi_window).rsi()
+    df[f"rsi_{rsi_window}"] = ta.rsi(df["close"], length=rsi_window)
 
     df[f"vol_{vol_window}"] = df["log_return"].rolling(vol_window).std(
         ddof=0
