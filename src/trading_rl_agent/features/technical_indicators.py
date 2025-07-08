@@ -11,20 +11,7 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-
-try:
-    import talib
-
-    TALIB_AVAILABLE = True
-except ImportError:
-    TALIB_AVAILABLE = False
-
-try:
-    import pandas_ta as ta
-
-    PANDAS_TA_AVAILABLE = True
-except ImportError:
-    PANDAS_TA_AVAILABLE = False
+import pandas_ta as ta
 
 from ..core.logging import get_logger
 
@@ -73,16 +60,15 @@ class TechnicalIndicators:
         self.config = config or IndicatorConfig()
         self.logger = get_logger(self.__class__.__name__)
 
-        if not TALIB_AVAILABLE and not PANDAS_TA_AVAILABLE:
+        try:
+            import pandas_ta  # noqa: F401
+        except Exception as exc:  # pragma: no cover - import guard
             raise ImportError(
-                "Neither talib nor pandas-ta is available. "
-                "Please install at least one: pip install talib pandas-ta"
-            )
+                "pandas-ta is required for TechnicalIndicators. "
+                "Please install it with `pip install pandas-ta`."
+            ) from exc
 
-        self.use_talib = TALIB_AVAILABLE
-        self.logger.info(
-            f"Using talib: {TALIB_AVAILABLE}, pandas-ta: {PANDAS_TA_AVAILABLE}"
-        )
+        self.logger.info("Using pandas-ta for technical indicators")
 
     def calculate_all_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -109,9 +95,8 @@ class TechnicalIndicators:
             # Volume indicators
             result_df = self._add_volume_indicators(result_df)
 
-            # Pattern recognition (if talib available)
-            if self.use_talib:
-                result_df = self._add_pattern_recognition(result_df)
+            # Pattern recognition
+            result_df = self._add_pattern_recognition(result_df)
 
             self.logger.info(
                 f"Calculated {len(result_df.columns) - len(df.columns)} indicators"
@@ -125,90 +110,51 @@ class TechnicalIndicators:
     def _add_moving_averages(self, df: pd.DataFrame) -> pd.DataFrame:
         """Add Simple and Exponential Moving Averages."""
         for period in self.config.sma_periods:
-            if self.use_talib:
-                df[f"sma_{period}"] = talib.SMA(df["close"], timeperiod=period)
-            else:
-                df[f"sma_{period}"] = df["close"].rolling(window=period).mean()
+            df[f"sma_{period}"] = ta.sma(df["close"], length=period)
 
         for period in self.config.ema_periods:
-            if self.use_talib:
-                df[f"ema_{period}"] = talib.EMA(df["close"], timeperiod=period)
-            else:
-                df[f"ema_{period}"] = df["close"].ewm(span=period).mean()
+            df[f"ema_{period}"] = ta.ema(df["close"], length=period)
 
         return df
 
     def _add_momentum_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """Add momentum-based indicators."""
         # RSI
-        if self.use_talib:
-            df["rsi"] = talib.RSI(df["close"], timeperiod=self.config.rsi_period)
-        else:
-            delta = df["close"].diff()
-            gain = (
-                (delta.where(delta > 0, 0))
-                .rolling(window=self.config.rsi_period)
-                .mean()
-            )
-            loss = (
-                (-delta.where(delta < 0, 0))
-                .rolling(window=self.config.rsi_period)
-                .mean()
-            )
-            rs = gain / loss
-            df["rsi"] = 100 - (100 / (1 + rs))
+        df["rsi"] = ta.rsi(df["close"], length=self.config.rsi_period)
 
         # MACD
-        if self.use_talib:
-            macd, macd_signal, macd_hist = talib.MACD(
-                df["close"],
-                fastperiod=self.config.macd_fast,
-                slowperiod=self.config.macd_slow,
-                signalperiod=self.config.macd_signal,
-            )
-            df["macd"] = macd
-            df["macd_signal"] = macd_signal
-            df["macd_histogram"] = macd_hist
-        else:
-            ema_fast = df["close"].ewm(span=self.config.macd_fast).mean()
-            ema_slow = df["close"].ewm(span=self.config.macd_slow).mean()
-            df["macd"] = ema_fast - ema_slow
-            df["macd_signal"] = df["macd"].ewm(span=self.config.macd_signal).mean()
-            df["macd_histogram"] = df["macd"] - df["macd_signal"]
+        macd_df = ta.macd(
+            df["close"],
+            fast=self.config.macd_fast,
+            slow=self.config.macd_slow,
+            signal=self.config.macd_signal,
+        )
+        df["macd"] = macd_df[
+            f"MACD_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
+        ]
+        df["macd_signal"] = macd_df[
+            f"MACDs_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
+        ]
+        df["macd_histogram"] = macd_df[
+            f"MACDh_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
+        ]
 
         return df
 
     def _add_volatility_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """Add volatility-based indicators."""
         # Bollinger Bands
-        if self.use_talib:
-            bb_upper, bb_middle, bb_lower = talib.BBANDS(
-                df["close"],
-                timeperiod=self.config.bb_period,
-                nbdevup=self.config.bb_std,
-                nbdevdn=self.config.bb_std,
-            )
-            df["bb_upper"] = bb_upper
-            df["bb_middle"] = bb_middle
-            df["bb_lower"] = bb_lower
-        else:
-            sma = df["close"].rolling(window=self.config.bb_period).mean()
-            std = df["close"].rolling(window=self.config.bb_period).std()
-            df["bb_upper"] = sma + (std * self.config.bb_std)
-            df["bb_middle"] = sma
-            df["bb_lower"] = sma - (std * self.config.bb_std)
+        bb = ta.bbands(
+            df["close"], length=self.config.bb_period, std=self.config.bb_std
+        )
+        df["bb_upper"] = bb[f"BBU_{self.config.bb_period}_{self.config.bb_std}"]
+        df["bb_middle"] = bb[f"BBM_{self.config.bb_period}_{self.config.bb_std}"]
+        df["bb_lower"] = bb[f"BBL_{self.config.bb_period}_{self.config.bb_std}"]
 
         # ATR (Average True Range)
-        if self.use_talib:
-            df["atr"] = talib.ATR(
-                df["high"], df["low"], df["close"], timeperiod=self.config.atr_period
-            )
-        else:
-            high_low = df["high"] - df["low"]
-            high_close = np.abs(df["high"] - df["close"].shift())
-            low_close = np.abs(df["low"] - df["close"].shift())
-            tr = np.maximum(high_low, np.maximum(high_close, low_close))
-            df["atr"] = tr.rolling(window=self.config.atr_period).mean()
+        df["atr"] = ta.atr(
+            df["high"], df["low"], df["close"], length=self.config.atr_period
+        )
 
         return df
 
@@ -220,18 +166,7 @@ class TechnicalIndicators:
 
         # On-Balance Volume (OBV)
         if self.config.obv_enabled:
-            if self.use_talib:
-                df["obv"] = talib.OBV(df["close"], df["volume"])
-            else:
-                obv = [0]
-                for i in range(1, len(df)):
-                    if df["close"].iloc[i] > df["close"].iloc[i - 1]:
-                        obv.append(obv[-1] + df["volume"].iloc[i])
-                    elif df["close"].iloc[i] < df["close"].iloc[i - 1]:
-                        obv.append(obv[-1] - df["volume"].iloc[i])
-                    else:
-                        obv.append(obv[-1])
-                df["obv"] = obv
+            df["obv"] = ta.obv(df["close"], df["volume"])
 
         # VWAP (Volume Weighted Average Price)
         if self.config.vwap_enabled:
@@ -241,27 +176,26 @@ class TechnicalIndicators:
         return df
 
     def _add_pattern_recognition(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add candlestick pattern recognition (talib only)."""
-        if not self.use_talib:
-            return df
+        """Add candlestick pattern recognition using pandas-ta."""
 
-        # Key candlestick patterns
-        patterns = {
-            "doji": talib.CDLDOJI,
-            "hammer": talib.CDLHAMMER,
-            "engulfing": talib.CDLENGULFING,
-            "harami": talib.CDLHARAMI,
-            "morning_star": talib.CDLMORNINGSTAR,
-            "evening_star": talib.CDLEVENINGSTAR,
-        }
+        pattern_names = [
+            "doji",
+            "hammer",
+            "engulfing",
+            "harami",
+            "morning_star",
+            "evening_star",
+        ]
 
-        for pattern_name, pattern_func in patterns.items():
+        for name in pattern_names:
             try:
-                df[f"pattern_{pattern_name}"] = pattern_func(
-                    df["open"], df["high"], df["low"], df["close"]
+                res = ta.cdl_pattern(
+                    df["open"], df["high"], df["low"], df["close"], name=name
                 )
-            except Exception as e:
-                self.logger.warning(f"Failed to calculate pattern {pattern_name}: {e}")
+                if res is not None:
+                    df[f"pattern_{name}"] = res.iloc[:, 0]
+            except Exception as e:  # pragma: no cover - non-critical
+                self.logger.warning(f"Failed to calculate pattern {name}: {e}")
 
         return df
 
@@ -287,16 +221,15 @@ class TechnicalIndicators:
         if self.config.vwap_enabled:
             features.append("vwap")
 
-        # Patterns (if talib available)
-        if self.use_talib:
-            pattern_names = [
-                "doji",
-                "hammer",
-                "engulfing",
-                "harami",
-                "morning_star",
-                "evening_star",
-            ]
-            features.extend([f"pattern_{name}" for name in pattern_names])
+        # Pattern recognition features
+        pattern_names = [
+            "doji",
+            "hammer",
+            "engulfing",
+            "harami",
+            "morning_star",
+            "evening_star",
+        ]
+        features.extend([f"pattern_{name}" for name in pattern_names])
 
         return features
