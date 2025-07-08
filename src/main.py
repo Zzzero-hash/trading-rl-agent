@@ -64,7 +64,7 @@ def main(argv: list[str] | None = None) -> None:
         from agents.tune import run_tune
 
         if args.config:
-            run_tune(args.config)
+            run_tune([args.config])
         else:
             run_tune([args.env_config, args.model_config, args.trainer_config])
         return
