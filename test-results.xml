@@ -1,9 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="3.860" timestamp="2025-07-07T23:48:36.888730+00:00" hostname="0cb157972b5d"><testcase classname="" name="tests.integration.cli" time="0.000"><error message="collection failure">src/envs/finrl_trading_env.py:17: in &lt;module&gt;
-    from finrl.env.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
-E   ModuleNotFoundError: No module named 'finrl'
-
-During handling of the above exception, another exception occurred:
-/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="3.258" timestamp="2025-07-08T03:29:46.803170+00:00" hostname="0cb157972b5d"><testcase classname="" name="tests.integration.cli" time="0.000"><error message="collection failure">/usr/lib/python3.11/importlib/__init__.py:126: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 &lt;frozen importlib._bootstrap&gt;:1206: in _gcd_import
@@ -18,13 +13,7 @@ During handling of the above exception, another exception occurred:
     exec(co, module.__dict__)
 tests/integration/cli/conftest.py:8: in &lt;module&gt;
     import src.agents as _agents
-src/agents/__init__.py:6: in &lt;module&gt;
-    from .trainer import Trainer
-src/agents/trainer.py:8: in &lt;module&gt;
-    from src.envs.finrl_trading_env import register_env
-src/envs/finrl_trading_env.py:19: in &lt;module&gt;
-    from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
-E   ModuleNotFoundError: No module named 'finrl'</error></testcase><testcase classname="" name="tests.integration.test_backtester_wrapper" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_backtester_wrapper.py'.
+E   ModuleNotFoundError: No module named 'src.agents'</error></testcase><testcase classname="" name="tests.integration.test_backtester_wrapper" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_backtester_wrapper.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
 /usr/lib/python3.11/importlib/__init__.py:126: in import_module
@@ -44,26 +33,15 @@ Traceback:
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 tests/integration/test_comprehensive_data_preprocessing.py:16: in &lt;module&gt;
     from src.data.features import (
-src/data/__init__.py:10: in &lt;module&gt;
-    from .sentiment import SentimentAnalyzer, SentimentData, SentimentConfig
-src/data/sentiment.py:21: in &lt;module&gt;
-    from nltk.sentiment.vader import SentimentIntensityAnalyzer
-E   ModuleNotFoundError: No module named 'nltk'</error></testcase><testcase classname="" name="tests.integration.test_comprehensive_environments" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_comprehensive_environments.py'.
+E   ModuleNotFoundError: No module named 'src.data'</error></testcase><testcase classname="" name="tests.integration.test_comprehensive_environments" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_comprehensive_environments.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
-src/envs/finrl_trading_env.py:17: in &lt;module&gt;
-    from finrl.env.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
-E   ModuleNotFoundError: No module named 'finrl'
-
-During handling of the above exception, another exception occurred:
 /usr/lib/python3.11/importlib/__init__.py:126: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 tests/integration/test_comprehensive_environments.py:15: in &lt;module&gt;
     from src.envs.finrl_trading_env import TradingEnv
-src/envs/finrl_trading_env.py:19: in &lt;module&gt;
-    from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
-E   ModuleNotFoundError: No module named 'finrl'</error></testcase><testcase classname="" name="tests.integration.test_data_pipeline" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_data_pipeline.py'.
+E   ModuleNotFoundError: No module named 'src.envs'</error></testcase><testcase classname="" name="tests.integration.test_data_pipeline" time="0.000"><error message="collection failure">ImportError while importing test module '/workspaces/trading-rl-agent/tests/integration/test_data_pipeline.py'.
 Hint: make sure your test modules/packages have valid Python names.
 Traceback:
 /usr/lib/python3.11/importlib/__init__.py:126: in import_module
@@ -71,8 +49,4 @@ Traceback:
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 tests/integration/test_data_pipeline.py:6: in &lt;module&gt;
     from src.data.pipeline import run_pipeline
-src/data/__init__.py:10: in &lt;module&gt;
-    from .sentiment import SentimentAnalyzer, SentimentData, SentimentConfig
-src/data/sentiment.py:21: in &lt;module&gt;
-    from nltk.sentiment.vader import SentimentIntensityAnalyzer
-E   ModuleNotFoundError: No module named 'nltk'</error></testcase></testsuite></testsuites>
+E   ModuleNotFoundError: No module named 'src.data'</error></testcase></testsuite></testsuites>

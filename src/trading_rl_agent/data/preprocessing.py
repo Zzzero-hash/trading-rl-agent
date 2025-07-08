@@ -6,9 +6,9 @@ Provides functions for data standardization, sequence creation, and normalizatio
 from typing import Optional, Tuple, Union
 
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from numpy.lib.stride_tricks import sliding_window_view
 
 
 def create_sequences(
@@ -44,7 +44,11 @@ def create_sequences(
     targets = np.asarray(targets)
 
     if len(features) <= sequence_length:
-        seq_shape = (0, sequence_length, features.shape[1]) if features.ndim > 1 else (0, sequence_length)
+        seq_shape = (
+            (0, sequence_length, features.shape[1])
+            if features.ndim > 1
+            else (0, sequence_length)
+        )
         return np.empty(seq_shape), np.empty((0, 1))
 
     windows = sliding_window_view(features, sequence_length, axis=0)[:-1]
