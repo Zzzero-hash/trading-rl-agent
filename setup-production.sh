@@ -137,12 +137,6 @@ install_system_dependencies() {
             unzip \
             pkg-config
 
-        # Install TA-Lib dependencies
-        sudo apt-get install -y \
-            libatlas-base-dev \
-            libopenblas-dev \
-            liblapack-dev \
-            gfortran
 
         # Install Redis (for caching)
         sudo apt-get install -y redis-server
@@ -156,31 +150,6 @@ install_system_dependencies() {
     fi
 }
 
-# Function to install TA-Lib
-install_talib() {
-    print_status "Installing TA-Lib..."
-
-    # Check if TA-Lib is already installed
-    if pip show TA-Lib >/dev/null 2>&1; then
-        print_success "TA-Lib already installed"
-        return 0
-    fi
-
-    # Download and install TA-Lib
-    cd /tmp
-    wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
-    tar -xzf ta-lib-0.4.0-src.tar.gz
-    cd ta-lib/
-    ./configure --prefix=/usr
-    make
-    sudo make install
-    cd -
-
-    # Install Python wrapper
-    pip install TA-Lib
-
-    print_success "TA-Lib installed successfully"
-}
 
 # Function to setup configuration files
 setup_configurations() {
@@ -449,7 +418,6 @@ main() {
     # Install system dependencies (skip in minimal mode)
     if [ "$setup_type" != "minimal" ]; then
         install_system_dependencies
-        install_talib
     fi
 
     setup_virtual_env

@@ -17,7 +17,6 @@ gymnasium>=0.28.0
 # Financial Data & Technical Analysis
 yfinance>=0.2.20
 pandas-ta>=0.3.14b
-TA-Lib>=0.4.25
 ccxt>=4.0.0
 alpaca-trade-api>=3.0.0
 
