@@ -35,7 +35,7 @@ from ray.tune.schedulers import ASHAScheduler
 # Always assume Ray is available
 RAY_AVAILABLE = True
 
-from src.models.cnn_lstm import CNNLSTMModel
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 
 
 def get_default_search_space() -> dict[str, Any]:

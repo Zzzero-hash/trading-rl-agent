@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import torch
 
-from src.optimization import cnn_lstm_optimization as mod
+from trading_rl_agent.optimization import cnn_lstm_optimization as mod
 
 
 def test_ray_tune_optimization_unavailable(monkeypatch):

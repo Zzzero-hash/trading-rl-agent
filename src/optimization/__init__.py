@@ -6,7 +6,7 @@ This module provides clean, working implementations of:
 3. Model inspection and profiling utilities
 
 Example usage:
->>> from src.optimization import optimize_cnn_lstm, get_model_summary
+>>> from trading_rl_agent.optimization import optimize_cnn_lstm, get_model_summary
 >>> results = optimize_cnn_lstm(features, targets, num_samples=20)
 >>> summary = get_model_summary(model, input_size=(1, 10))
 >>> print(summary)

@@ -148,7 +148,7 @@ python scripts/compare_agents.py \
 ### Rolling Performance Analysis
 
 ```python
-from src.evaluation.rolling_metrics import RollingMetricsCalculator
+from trading_rl_agent.evaluation.rolling_metrics import RollingMetricsCalculator
 
 # Analyze performance over time
 calculator = RollingMetricsCalculator(window=252)  # 1 year rolling
@@ -161,7 +161,7 @@ rolling_metrics = calculator.calculate(
 ### Risk Attribution Analysis
 
 ```python
-from src.evaluation.risk_attribution import RiskAttributor
+from trading_rl_agent.evaluation.risk_attribution import RiskAttributor
 
 # Decompose risk sources
 attributor = RiskAttributor()
@@ -176,7 +176,7 @@ risk_breakdown = attributor.analyze(
 ### Performance Plots
 
 ```python
-from src.utils.plotting import create_performance_dashboard
+from trading_rl_agent.utils.plotting import create_performance_dashboard
 
 # Generate comprehensive performance dashboard
 dashboard = create_performance_dashboard(
@@ -256,7 +256,7 @@ Before deploying to live trading:
 
 ```python
 # Debug evaluation step-by-step
-from src.evaluation.debug_evaluator import DebugEvaluator
+from trading_rl_agent.evaluation.debug_evaluator import DebugEvaluator
 
 debugger = DebugEvaluator()
 debug_results = debugger.evaluate_with_diagnostics(

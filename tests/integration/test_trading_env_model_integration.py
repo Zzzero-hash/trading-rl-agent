@@ -3,8 +3,8 @@ import pandas as pd
 import pytest
 import torch
 
-from src.envs.finrl_trading_env import TradingEnv
-from src.supervised_model import ModelConfig, TrendPredictor, save_model
+from trading_rl_agent.envs.finrl_trading_env import TradingEnv
+from trading_rl_agent.supervised_model import ModelConfig, TrendPredictor, save_model
 
 pytestmark = pytest.mark.integration
 

@@ -38,8 +38,8 @@ api_reference
 ## Quick Start
 
 ```python
-from src.envs.trading_env import TradingEnv
-from src.agents.sac_agent import SACAgent
+from trading_rl_agent.envs.trading_env import TradingEnv
+from trading_rl_agent.agents.sac_agent import SACAgent
 
 # Initialize hybrid environment with production dataset
 env = TradingEnv(

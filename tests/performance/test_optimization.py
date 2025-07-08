@@ -19,8 +19,8 @@ from ray import tune
 import torch
 import torch.nn as nn
 
-from src.models.cnn_lstm import CNNLSTMModel
-from src.optimization.model_utils import (
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
+from trading_rl_agent.optimization.model_utils import (
     detect_gpus,
     get_model_summary,
     optimal_gpu_config,
@@ -229,10 +229,10 @@ class TestHyperparamOptimization:
 
     def test_hyperparameter_search_space(self):
         """Test hyperparameter search space conversion for Ray Tune."""
-        from src.optimization.cnn_lstm_optimization import (
+        from trading_rl_agent.optimization.cnn_lstm_optimization import (
             get_default_search_space,
         )
-        from src.optimization.rl_optimization import _get_default_sac_search_space
+        from trading_rl_agent.optimization.rl_optimization import _get_default_sac_search_space
 
         # Test CNN-LSTM search space
         cnn_lstm_space = get_default_search_space()

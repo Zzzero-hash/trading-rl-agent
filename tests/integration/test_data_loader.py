@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from src.data_pipeline import load_data
+from trading_rl_agent.data_pipeline import load_data
 
 
 def test_load_csv_parses_columns_and_dtypes(tmp_path):

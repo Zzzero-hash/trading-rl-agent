@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from src.data.pipeline import load_cached_csvs
+from trading_rl_agent.data.pipeline import load_cached_csvs
 
 
 def test_load_cached_csvs(tmp_path):

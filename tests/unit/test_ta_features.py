@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from ta.volume import OnBalanceVolumeIndicator
 
-from src.data.features import (
+from trading_rl_agent.data.features import (
     compute_adx,
     compute_atr,
     compute_bollinger_bands,

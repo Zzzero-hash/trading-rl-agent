@@ -9,9 +9,9 @@ import typer
 
 from evaluate_agent import main as eval_main
 from finrl_data_loader import load_real_data, load_synthetic_data
-from src.backtesting import Backtester
-from src.training.cnn_lstm import CNNLSTMTrainer
-from src.training.rl import main as rl_main
+from trading_rl_agent.backtesting import Backtester
+from trading_rl_agent.training.cnn_lstm import CNNLSTMTrainer
+from trading_rl_agent.training.rl import main as rl_main
 
 # Module-level default options to avoid function calls in defaults
 GEN_DATA_CONFIG = typer.Option(..., help="Path to data config YAML")
@@ -124,7 +124,7 @@ def serve(
     try:
         from ray import serve as ray_serve
 
-        from src.serve_deployment import deployment_graph
+        from trading_rl_agent.serve_deployment import deployment_graph
     except ImportError:
         typer.secho(
             "Ray Serve is not installed or src.serve_deployment missing.",

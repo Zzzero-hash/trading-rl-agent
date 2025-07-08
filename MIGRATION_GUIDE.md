@@ -33,8 +33,8 @@ src/trading_rl_agent/monitoring/    # Performance monitoring
 
 ```python
 # OLD IMPORTS (still work via compatibility layer)
-from src.agents import SACAgent
-from src.envs import TradingEnv
+from trading_rl_agent.agents import SACAgent
+from trading_rl_agent.envs import TradingEnv
 
 # NEW IMPORTS (recommended)
 from trading_rl_agent.agents import SACAgent
@@ -52,9 +52,9 @@ from trading_rl_agent.risk import RiskManager            # NEW
 **Old Code:**
 
 ```python
-from src.agents.sac_agent import SACAgent
-from src.envs.trading_env import TradingEnv
-from src.models.cnn_lstm import CNNLSTMModel
+from trading_rl_agent.agents.sac_agent import SACAgent
+from trading_rl_agent.envs.trading_env import TradingEnv
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 ```
 
 **New Code:**
@@ -201,8 +201,8 @@ print(f"Max Drawdown: {current_metrics['max_drawdown']}")
 **Old Test Code:**
 
 ```python
-from src.agents.sac_agent import SACAgent
-from src.envs.trading_env import TradingEnv
+from trading_rl_agent.agents.sac_agent import SACAgent
+from trading_rl_agent.envs.trading_env import TradingEnv
 
 def test_agent_training():
     agent = SACAgent(state_dim=10, action_dim=3)
@@ -346,7 +346,7 @@ ImportError: No module named 'src.agents'
 try:
     from trading_rl_agent.agents import SACAgent
 except ImportError:
-    from src.agents.sac_agent import SACAgent  # Fallback
+    from trading_rl_agent.agents.sac_agent import SACAgent  # Fallback
 ```
 
 ### **Issue 2: Configuration Loading**
