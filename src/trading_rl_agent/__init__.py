@@ -26,12 +26,10 @@ from .core.config import ConfigManager, SystemConfig
 from .core.logging import setup_logging, get_logger
 from .core.exceptions import TradingSystemError, DataValidationError, ModelError
 
-# Main components
-from .agents import Agent, EnsembleAgent
-from .data import DataPipeline, MarketDataLoader
-from .portfolio import PortfolioManager
-from .risk import RiskManager
-from .execution import ExecutionEngine
+# Main components are imported lazily to avoid heavy dependencies at import time.
+# These modules rely on ML frameworks such as ``torch`` and ``ray``.  Importing
+# them here would make ``import trading_rl_agent`` fail in lightweight
+# environments.  The classes are therefore loaded on demand via ``__getattr__``.
 
 __all__ = [
     # Core
@@ -51,3 +49,37 @@ __all__ = [
     "RiskManager",
     "ExecutionEngine",
 ]
+
+
+def __getattr__(name: str):
+    """Lazily import heavy optional components when accessed."""
+    import importlib
+
+    lazy_map = {
+        # Agents and trainer related components
+        "Agent": (".agents", "Agent"),
+        "EnsembleAgent": (".agents", "EnsembleAgent"),
+        "Trainer": (".agents.trainer", "Trainer"),
+        # Data handling
+        "DataPipeline": (".data", "DataPipeline"),
+        "MarketDataLoader": (".data", "MarketDataLoader"),
+        # Portfolio, risk and execution modules
+        "PortfolioManager": (".portfolio", "PortfolioManager"),
+        "RiskManager": (".risk", "RiskManager"),
+        "ExecutionEngine": (".execution", "ExecutionEngine"),
+    }
+
+    if name in lazy_map:
+        module_name, attr = lazy_map[name]
+        try:
+            module = importlib.import_module(f"{__name__}{module_name}")
+            obj = getattr(module, attr)
+        except Exception as exc:  # pragma: no cover - just in case
+            raise ImportError(
+                f"{name} requires optional ML dependencies. Install them to use this feature."
+            ) from exc
+
+        globals()[name] = obj
+        return obj
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
