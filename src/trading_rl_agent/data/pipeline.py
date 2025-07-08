@@ -10,6 +10,7 @@ from .features import generate_features
 from .historical import fetch_historical_data
 from .live import fetch_live_data
 from .synthetic import fetch_synthetic_data
+from .loaders import load_yfinance, load_alphavantage, load_ccxt
 
 
 @ray.remote
@@ -59,6 +60,9 @@ def run_pipeline(config_path: str):  # pragma: no cover
     ----------
     config_path : str
         Path to a YAML configuration file defining symbols and output options.
+        Supported YAML keys include:
+        ``coinbase_perp_symbols``, ``oanda_fx_symbols``, ``yfinance_symbols``,
+        ``alphavantage_symbols`` and ``ccxt`` (mapping of exchange to symbols).
 
     Returns
     -------
@@ -73,6 +77,9 @@ def run_pipeline(config_path: str):  # pragma: no cover
     timestep = cfg.get("timestep", "day")
     coinbase_symbols = cfg.get("coinbase_perp_symbols", [])
     oanda_symbols = cfg.get("oanda_fx_symbols", [])
+    yfinance_symbols = cfg.get("yfinance_symbols", [])
+    alphavantage_symbols = cfg.get("alphavantage_symbols", [])
+    ccxt_sources = cfg.get("ccxt", {})
     output_dir = cfg.get("output_dir", "data/raw")
     to_csv = cfg.get("to_csv", True)
 
@@ -107,6 +114,38 @@ def run_pipeline(config_path: str):  # pragma: no cover
             end=end,
             timestep=timestep,
         )
+
+    for symbol in yfinance_symbols:
+        key = f"yfinance_{symbol}"
+        tasks[key] = _fetch_data_remote.remote(
+            load_yfinance,
+            symbol=symbol,
+            start=start,
+            end=end,
+            interval=timestep,
+        )
+
+    for symbol in alphavantage_symbols:
+        key = f"alphavantage_{symbol}"
+        tasks[key] = _fetch_data_remote.remote(
+            load_alphavantage,
+            symbol=symbol,
+            start=start,
+            end=end,
+            interval=timestep,
+        )
+
+    for exch, symbols in ccxt_sources.items():
+        for symbol in symbols:
+            key = f"{exch}_{symbol.replace('/', '')}"
+            tasks[key] = _fetch_data_remote.remote(
+                load_ccxt,
+                symbol=symbol,
+                start=start,
+                end=end,
+                interval=timestep,
+                exchange=exch,
+            )
 
     freq_map = {"day": "D", "hour": "H", "minute": "T"}
     n_samples = 1
