@@ -45,7 +45,7 @@ src/trading_rl_agent/           # New main package
 
 ### **Feature Engineering Module** (`features/`)
 
-- **Technical Indicators**: Comprehensive library of 150+ indicators
+- **Technical Indicators**: Comprehensive library of 150+ indicators powered by pandas-ta
 - **Market Microstructure**: Order book and trade-level features
 - **Cross-Asset Analysis**: Correlation and regime detection
 - **Alternative Data**: News, sentiment, economic indicators
