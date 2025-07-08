@@ -89,6 +89,16 @@ def test_correlation_and_concentration():
     assert 0 <= corr <= 1
     assert 0 <= conc <= 1
 
+    # Test extreme concentration (single asset)
+    extreme_weights = {"A": 1.0, "B": 0.0}
+    extreme_conc = rm.calculate_concentration_risk(extreme_weights)
+    assert extreme_conc == 1.0  # Maximum concentration
+
+    # Test equal weights (minimum concentration for 2 assets)
+    equal_weights = {"A": 0.5, "B": 0.5}
+    equal_conc = rm.calculate_concentration_risk(equal_weights)
+    assert equal_conc == 0.5  # Expected value for equal 2-asset portfolio
+
 
 def test_kelly_position_size():
     rm = RiskManager()
