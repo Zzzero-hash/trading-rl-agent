@@ -24,7 +24,7 @@ import numpy as np
 from trading_rl_agent.agents.policy_utils import CallablePolicy, WeightedEnsembleAgent
 from trading_rl_agent.agents.sac_agent import SACAgent
 from trading_rl_agent.agents.td3_agent import TD3Agent
-from trading_rl_agent.envs.trading_env import TradingEnv
+from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 from trading_rl_agent.utils import metrics
 
 
@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
         "--agent",
         type=str,
         default="sac",
-        choices=["sac", "td3", "ensemble"],
+        choices=["sac", "td3", "ppo", "ensemble"],
         help="Type of agent to load",
     )
     parser.add_argument(
@@ -62,6 +62,11 @@ def load_agent(agent_type: str, state_dim: int, action_dim: int, checkpoint: str
         return agent
     if agent_type == "td3":
         agent = TD3Agent(state_dim=state_dim, action_dim=action_dim)
+        agent.load(checkpoint)
+        return agent
+    if agent_type == "ppo":
+        from trading_rl_agent.agents.ppo_agent import PPOAgent
+        agent = PPOAgent(state_dim=state_dim, action_dim=action_dim)
         agent.load(checkpoint)
         return agent
 
