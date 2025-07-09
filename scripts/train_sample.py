@@ -53,7 +53,7 @@ from trading_rl_agent import PPOAgent
 
 
 OUTPUT_DIR = Path("./outputs")
-OUTPUT_DIR.mkdir(exist_ok=True)
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 DATA_PATH = OUTPUT_DIR / "sample_data.csv"
 CHECKPOINT_PATH = OUTPUT_DIR / "ppo_agent_checkpoint.zip"
 
