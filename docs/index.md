@@ -44,6 +44,14 @@ ROADMAP
 CLEANUP_PLAN
 COMPREHENSIVE_TESTING_FRAMEWORK
 ```
+```{toctree}
+:maxdepth: 2
+:caption: Project Resources:
+
+../tests/README
+../scripts/README
+```
+
 
 ## Quick Start
 
