@@ -71,4 +71,19 @@ class PPOAgent:
         self.model.save(filepath)
 
     def load(self, filepath: str) -> None:
-        self.model = PPO.load(filepath)
+        # Load the model onto the agent’s configured device
+        self.model = PPO.load(filepath, device=self.device)
+
+        # Validate loaded model matches agent configuration
+        expected_obs_shape = (self.state_dim,)
+        expected_action_shape = (self.action_dim,)
+        if self.model.observation_space.shape != expected_obs_shape:
+            raise ValueError(
+                f"Loaded model observation space {self.model.observation_space.shape} "
+                f"doesn't match agent state_dim {expected_obs_shape}"
+            )
+        if self.model.action_space.shape != expected_action_shape:
+            raise ValueError(
+                f"Loaded model action space {self.model.action_space.shape} "
+                f"doesn't match agent action_dim {expected_action_shape}"
+            )
