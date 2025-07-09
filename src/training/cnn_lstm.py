@@ -15,8 +15,7 @@ import logging
 import os
 from pathlib import Path
 import pickle
-import sys
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional
 
 from dotenv import load_dotenv
 import numpy as np
@@ -40,7 +39,6 @@ def load_data(config: dict[str, Any]) -> pd.DataFrame:
         return pd.read_csv(config["path"])
     else:
         # Return dummy data for testing
-        import datetime
 
         dates = pd.date_range(start="2023-01-01", end="2024-01-01", freq="D")
         np.random.seed(42)

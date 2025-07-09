@@ -7,35 +7,33 @@ that handles both Ray Tune and fallback scenarios correctly.
 from datetime import datetime
 import json
 import logging
-import os
 from pathlib import Path
 import sys
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
-from sklearn.metrics import mean_squared_error
+import ray
+from ray import tune
+from ray.tune.schedulers import ASHAScheduler
 from sklearn.preprocessing import StandardScaler
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset, random_split
-
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import ray
-from ray import tune
-from ray.tune.schedulers import ASHAScheduler
+# Import after path setup
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel  # noqa: E402
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Always assume Ray is available
 RAY_AVAILABLE = True
-
-from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 
 
 def get_default_search_space() -> dict[str, Any]:
