@@ -22,7 +22,7 @@ class RiskAwareEnv(gym.Wrapper):
 
     def reset(self, **kwargs):
         self._returns = []
-        return self.env.reset(**kwargs)
+        return super().reset(**kwargs)
 
     def step(self, action):
         # Handle array-like actions
