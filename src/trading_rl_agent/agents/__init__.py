@@ -6,6 +6,7 @@
 from .trainer import Trainer
 from .td3_agent import TD3Agent
 from .sac_agent import SACAgent
+from .ppo_agent import PPOAgent
 from .rainbow_dqn_agent import RainbowDQNAgent
 from .policy_utils import (
     CallablePolicy,
@@ -18,6 +19,7 @@ __all__ = [
     "Trainer",
     "SACAgent",
     "TD3Agent",
+    "PPOAgent",
     "RainbowDQNAgent",
     "CallablePolicy",
     "WeightedEnsembleAgent",
