@@ -142,6 +142,33 @@ python evaluate_agent.py --config config/production_config.yaml
 python scripts/generate_performance_report.py
 ```
 
+## 🎬 End-to-End Example
+
+Try the quick demo script to see the pieces working together:
+
+```bash
+python scripts/train_sample.py
+```
+
+This command loads a sample dataset (or generates synthetic data), builds a
+`FeaturePipeline`, trains a lightweight `PPOAgent` for a few steps and writes
+two files under `./outputs/`:
+
+- `sample_data.csv` – the processed dataset used for training
+- `ppo_agent_checkpoint.zip` – the saved agent checkpoint
+
+You can evaluate the trained agent using:
+
+```bash
+python evaluate_agent.py \
+    --data outputs/sample_data.csv \
+    --checkpoint outputs/ppo_agent_checkpoint.zip \
+    --agent ppo \
+    --output outputs/eval.json
+```
+
+The evaluation metrics will be saved in `outputs/eval.json`.
+
 ## 🔄 Next Steps
 
 ### Production Deployment
