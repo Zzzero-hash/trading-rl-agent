@@ -567,6 +567,15 @@ python -m http.server 8000 --directory _build/html
 make clean
 ```
 
+Continuous integration builds and link checks the documentation using:
+
+```bash
+make -C docs html
+make -C docs linkcheck
+```
+
+Ensure these commands succeed locally before opening a pull request.
+
 ### Documentation Guidelines
 
 - Use clear, concise language
