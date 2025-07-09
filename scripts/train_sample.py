@@ -64,7 +64,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 def load_data() -> pd.DataFrame:
     """Load bundled sample dataset or generate synthetic data."""
-    packaged = Path(__file__).resolve().parents[1] / "data" / "sample_data.csv"
+    packaged = Path(__file__).resolve().parents[1] / "samples" / "sample_data.csv"
     if packaged.exists():
         logging.info(f"Loading bundled dataset from {packaged}")
         return pd.read_csv(packaged)
