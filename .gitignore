@@ -31,6 +31,11 @@ Thumbs.db
 
 # Testing
 .pytest_cache/
+coverage.json
+coverage.xml
+test-report.json
+test-report.md
+test-results.xml
 
 # Node modules and cache files
 node_modules/
