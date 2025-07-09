@@ -249,6 +249,15 @@ print(f"Win Rate: {results.win_rate:.2%}")
 
 ## 🧪 **Testing & Validation**
 
+Before running the test suite, install the dependencies listed in
+`requirements-test.txt`. These include **numpy**, **pandas**, **scipy**,
+**torch**, **ray[rllib]**, **gymnasium**, **stable-baselines3**, **sb3-contrib**
+and the full **pytest** toolchain.
+
+```bash
+pip install -r requirements-test.txt
+```
+
 ### **Comprehensive Test Suite**
 
 ```bash
@@ -256,12 +265,29 @@ print(f"Win Rate: {results.win_rate:.2%}")
 pytest tests/ -v
 
 # Run specific test categories
-pytest tests/unit/ -v          # Unit tests
-pytest tests/integration/ -v   # Integration tests
-pytest tests/performance/ -v   # Performance tests
+pytest -m unit          # Unit tests
+pytest -m integration   # Integration tests
+pytest -m performance   # Performance tests
 
 # Generate coverage report
 pytest --cov=src tests/ --cov-report=html
+```
+
+### **Verify Full Workflow**
+
+Run the minimal training example and evaluate the resulting checkpoint to
+confirm that data ingestion, model training and evaluation work end-to-end.
+
+```bash
+# Train on the bundled sample dataset (or generated synthetic data)
+python scripts/train_sample.py
+
+# Evaluate the trained agent
+python evaluate_agent.py \
+    --data outputs/sample_data.csv \
+    --checkpoint outputs/ppo_agent_checkpoint.zip \
+    --agent ppo \
+    --output outputs/evaluation.json
 ```
 
 ### **Performance Benchmarking**
