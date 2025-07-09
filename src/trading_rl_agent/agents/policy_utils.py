@@ -70,3 +70,11 @@ class WeightedEnsembleAgent:
         policy_id = self.mapping_fn("agent0")
         action, _, _ = self.policy_map[policy_id].compute_single_action(obs)
         return action
+
+
+class EnsembleAgent(WeightedEnsembleAgent):
+    """Backward-compatible alias for :class:`WeightedEnsembleAgent`."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
