@@ -5,7 +5,7 @@ predict market trends from sequences of engineered features.  A simple training
 routine ``train_supervised`` is provided which can train the model on numpy or
 pandas inputs and optionally runs on GPU.  Example usage:
 
->>> from src.supervised_model import ModelConfig, TrainingConfig, train_supervised
+>>> from trading_rl_agent.supervised_model import ModelConfig, TrainingConfig, train_supervised
 >>> features, targets = load_some_data()
 >>> model_cfg = ModelConfig(task='classification')
 >>> train_cfg = TrainingConfig(epochs=5)

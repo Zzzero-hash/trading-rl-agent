@@ -5,22 +5,38 @@ import platform
 import psutil
 import yaml
 
-from src.agents.trainer import Trainer
+from trading_rl_agent.agents.trainer import Trainer
+from trading_rl_agent.core.config import ConfigManager
 
 
-def main():
+def build_parser() -> argparse.ArgumentParser:
+    """Return the CLI argument parser for the main entry point."""
 
     parser = argparse.ArgumentParser(
         description="Train or evaluate an RL trading agent"
     )
     parser.add_argument(
-        "--env-config", type=str, required=True, help="Path to environment config YAML"
+        "--config",
+        type=str,
+        help="Path to unified system config YAML",
     )
     parser.add_argument(
-        "--model-config", type=str, required=True, help="Path to model config YAML"
+        "--env-config",
+        type=str,
+        required=False,
+        help="Path to environment config YAML",
     )
     parser.add_argument(
-        "--trainer-config", type=str, required=True, help="Path to trainer config YAML"
+        "--model-config",
+        type=str,
+        required=False,
+        help="Path to model config YAML",
+    )
+    parser.add_argument(
+        "--trainer-config",
+        type=str,
+        required=False,
+        help="Path to trainer config YAML",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument(
@@ -35,21 +51,38 @@ def main():
     parser.add_argument(
         "--tune", action="store_true", help="Run Ray Tune hyperparameter search"
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    """Main CLI entry point."""
+
+    parser = build_parser()
+    args = parser.parse_args(argv)
 
     if args.tune:
         from agents.tune import run_tune
 
-        run_tune([args.env_config, args.model_config, args.trainer_config])
+        if args.config:
+            run_tune([args.config])
+        else:
+            run_tune([args.env_config, args.model_config, args.trainer_config])
         return
 
-    # Load configurations
-    with open(args.env_config) as f:
-        env_cfg = yaml.safe_load(f)
-    with open(args.model_config) as f:
-        model_cfg = yaml.safe_load(f)
-    with open(args.trainer_config) as f:
-        trainer_cfg = yaml.safe_load(f)
+    if args.config:
+        cfg_mgr = ConfigManager(args.config)
+        system_cfg = cfg_mgr.load_config()
+        env_cfg = system_cfg.data.__dict__
+        model_cfg = system_cfg.model.__dict__
+        trainer_cfg = system_cfg.rl.__dict__
+    else:
+        # Legacy separate configs
+        with open(args.env_config) as f:
+            env_cfg = yaml.safe_load(f)
+        with open(args.model_config) as f:
+            model_cfg = yaml.safe_load(f)
+        with open(args.trainer_config) as f:
+            trainer_cfg = yaml.safe_load(f)
 
     trainer = Trainer(
         env_cfg, model_cfg, trainer_cfg, seed=args.seed, save_dir=args.save_dir

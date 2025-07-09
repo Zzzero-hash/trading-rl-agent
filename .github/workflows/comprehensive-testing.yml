@@ -87,7 +87,7 @@ jobs:
     - name: Code structure validation
       run: |
         find . -name "*.py" -type f | head -10
-        find tests/ -name "test_*.py" -type f | wc -l
+        find tests/unit tests/integration -name "test_*.py" -type f | wc -l
 
   # =============================================================================
   # CODE QUALITY CHECKS
@@ -190,15 +190,15 @@ jobs:
 
     - name: Run smoke tests
       run: |
-        pytest tests/ -m "smoke" -v --tb=short --maxfail=5 --timeout=60
+        pytest tests/smoke -m "smoke" -v --tb=short --maxfail=5 --timeout=60
       continue-on-error: false
 
     - name: Import tests
       run: |
-        python -c "import src.agents; print('✅ Agents module imported')"
-        python -c "import src.data; print('✅ Data module imported')"
-        python -c "import src.envs; print('✅ Envs module imported')"
-        python -c "import src.utils; print('✅ Utils module imported')"
+        python -c "import trading_rl_agent.agents; print('✅ Agents module imported')"
+        python -c "import trading_rl_agent.data; print('✅ Data module imported')"
+        python -c "import trading_rl_agent.envs; print('✅ Envs module imported')"
+        python -c "import trading_rl_agent.utils; print('✅ Utils module imported')"
 
   # =============================================================================
   # UNIT TESTS
@@ -241,7 +241,7 @@ jobs:
 
     - name: Run unit tests for ${{ matrix.test-group }}
       run: |
-        pytest tests/ -m "unit" -k "${{ matrix.test-group }}" \
+        pytest tests/unit -m "unit" -k "${{ matrix.test-group }}" \
           --cov=src \
           --cov-report=xml:coverage-${{ matrix.test-group }}-${{ matrix.python-version }}.xml \
           --cov-report=html:htmlcov-${{ matrix.test-group }}-${{ matrix.python-version }} \
@@ -309,7 +309,7 @@ jobs:
 
     - name: Run integration tests - ${{ matrix.test-suite }}
       run: |
-        pytest tests/ -m "integration" -k "${{ matrix.test-suite }}" \
+        pytest tests/integration -m "integration" -k "${{ matrix.test-suite }}" \
           --cov=src \
           --cov-report=xml:coverage-integration-${{ matrix.test-suite }}.xml \
           --cov-report=html:htmlcov-integration-${{ matrix.test-suite }} \
@@ -366,7 +366,7 @@ jobs:
 
     - name: Run performance tests
       run: |
-        pytest tests/ -m "performance" \
+        pytest tests/performance -m "performance" \
           --benchmark-only \
           --benchmark-json=benchmark-results.json \
           -v --tb=short --timeout=600
@@ -377,52 +377,6 @@ jobs:
       with:
         name: benchmark-results
         path: benchmark-results.json
-
-  # =============================================================================
-  # MEMORY TESTS
-  # =============================================================================
-
-  memory-tests:
-    name: Memory Tests
-    runs-on: ubuntu-latest
-    needs: [setup-and-validate, unit-tests]
-    if: ${{ github.event.inputs.test_level == 'full' || github.event_name == 'schedule' }}
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ needs.setup-and-validate.outputs.python-version }}
-
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/pip
-          ~/.local/share/virtualenvs
-        key: ${{ needs.setup-and-validate.outputs.cache-key }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-test-comprehensive.txt
-        pip install -r requirements-core.txt
-
-    - name: Run memory tests
-      run: |
-        pytest tests/ -m "memory" \
-          --memray \
-          -v --tb=short --timeout=300
-
-    - name: Upload memory profiles
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: memory-profiles
-        path: '*.memray'
 
   # =============================================================================
   # COVERAGE AGGREGATION

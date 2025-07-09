@@ -72,7 +72,7 @@ def finrl_sample_data():
 def finrl_trading_env(finrl_sample_data):
     """Provide a FinRL-based trading environment for testing."""
     try:
-        from src.envs.finrl_trading_env import HybridFinRLEnv
+        from trading_rl_agent.envs.finrl_trading_env import HybridFinRLEnv
 
         # Create environment with minimal configuration for fast testing
         env = HybridFinRLEnv(
@@ -89,8 +89,8 @@ def finrl_trading_env(finrl_sample_data):
 
     except ImportError:
         # Fallback to simple TradingEnv using synthetic data
-        from src.envs.finrl_trading_env import TradingEnv
-        from tests.test_data_utils import get_dynamic_test_config
+        from trading_rl_agent.envs.finrl_trading_env import TradingEnv
+        from tests.unit.test_data_utils import get_dynamic_test_config
 
         cfg = get_dynamic_test_config(
             {
@@ -115,7 +115,7 @@ def sample_csv_file(tmp_path):
     """Provide a sample CSV file using ``TestDataManager`` utilities."""
     import pandas as pd
 
-    from tests.test_data_utils import TestDataManager
+    from tests.unit.test_data_utils import TestDataManager
 
     manager = TestDataManager(str(tmp_path))
     df = manager.generate_synthetic_dataset()
@@ -152,3 +152,14 @@ def production_dataset_path():
 
 # Backward compatibility - alias for existing tests
 trading_env = finrl_trading_env
+
+@pytest.fixture
+def basic_trading_env(sample_csv_file):
+    """Return a minimal :class:`TradingEnv` using ``sample_csv_file``."""
+    from trading_rl_agent.envs.finrl_trading_env import TradingEnv
+
+    cfg = {"dataset_paths": sample_csv_file, "reward_type": "profit"}
+    env = TradingEnv(cfg)
+    yield env
+    if hasattr(env, "close"):
+        env.close()

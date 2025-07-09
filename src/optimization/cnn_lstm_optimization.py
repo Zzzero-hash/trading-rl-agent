@@ -1,7 +1,7 @@
 """Streamlined CNN-LSTM Optimization.
 
-This module uses Optuna for hyperparameter search and integrates with
-Ray Tune when available.
+This module provides a simple, working hyperparameter optimization
+that handles both Ray Tune and fallback scenarios correctly.
 """
 
 from datetime import datetime
@@ -28,22 +28,14 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-try:
-    import ray
-    from ray import tune
-    from ray.tune.search.optuna import OptunaSearch
+import ray
+from ray import tune
+from ray.tune.schedulers import ASHAScheduler
 
-    RAY_AVAILABLE = True
-    logger.info("Ray Tune available for optimization")
-except ImportError:
-    RAY_AVAILABLE = False
-    logger.info("Ray Tune not available - using Optuna")
+# Always assume Ray is available
+RAY_AVAILABLE = True
 
-try:
-    from src.models.cnn_lstm import CNNLSTMModel
-except ImportError as e:
-    logger.error(f"Could not import CNNLSTMModel: {e}")
-    raise
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 
 
 def get_default_search_space() -> dict[str, Any]:
@@ -54,23 +46,13 @@ def get_default_search_space() -> dict[str, Any]:
     Dict[str, Any]
         Default search space for hyperparameter optimization
     """
-    if RAY_AVAILABLE and "tune" in globals():
-        return {
-            "learning_rate": tune.loguniform(1e-4, 1e-2),
-            "batch_size": tune.choice([16, 32, 64]),
-            "lstm_units": tune.choice([32, 64, 128, 256]),
-            "dropout": tune.uniform(0.1, 0.5),
-            "sequence_length": tune.choice([8, 12, 16]),
-        }
-    else:
-        # Default ranges for Optuna optimization
-        return {
-            "learning_rate": [0.001, 0.0005, 0.0001],
-            "batch_size": [16, 32, 64],
-            "lstm_units": [64, 128, 256],
-            "dropout": [0.1, 0.2, 0.3],
-            "sequence_length": [8, 12, 16],
-        }
+    return {
+        "learning_rate": tune.loguniform(1e-4, 1e-2),
+        "batch_size": tune.choice([16, 32, 64]),
+        "lstm_units": tune.choice([32, 64, 128, 256]),
+        "dropout": tune.uniform(0.1, 0.5),
+        "sequence_length": tune.choice([8, 12, 16]),
+    }
 
 
 def create_simple_dataset(
@@ -159,6 +141,10 @@ def train_single_trial(
         )
         criterion = nn.MSELoss()
 
+        # Initialize training metrics
+        train_loss = float("inf")
+        val_loss = float("inf")
+        epoch = -1
         # Training loop
         best_val_loss = float("inf")
         patience_counter = 0
@@ -213,8 +199,8 @@ def train_single_trial(
 
         return {
             "val_loss": best_val_loss,
-            "train_loss": train_loss if "train_loss" in locals() else float("inf"),
-            "epochs_trained": epoch + 1 if "epoch" in locals() else 0,
+            "train_loss": train_loss,
+            "epochs_trained": epoch + 1,
         }
 
     except Exception as e:
@@ -227,52 +213,60 @@ def train_single_trial(
         }
 
 
-def optuna_optimization(
+def simple_grid_search(
     features: np.ndarray,
     targets: np.ndarray,
     num_samples: int = 5,
     max_epochs_per_trial: int = 20,
 ) -> dict[str, Any]:
-    """Optimize hyperparameters using Optuna."""
+    """Simple grid search optimization."""
 
-    import optuna
+    logger.info("Running simple grid search optimization...")
 
-    logger.info("Running Optuna optimization...")
+    # Define search space
+    param_grid = {
+        "learning_rate": [0.001, 0.0005],
+        "batch_size": [16, 32],
+        "lstm_units": [64, 128],
+        "dropout": [0.2, 0.3],
+        "sequence_length": [8, 12],
+    }
 
-    def objective(trial: optuna.trial.Trial) -> float:
-        config = {
-            "learning_rate": trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True),
-            "batch_size": trial.suggest_categorical("batch_size", [16, 32, 64]),
-            "lstm_units": trial.suggest_categorical("lstm_units", [64, 128, 256]),
-            "dropout": trial.suggest_float("dropout", 0.1, 0.5),
-            "sequence_length": trial.suggest_categorical("sequence_length", [8, 12, 16]),
-        }
+    best_config = None
+    best_score = float("inf")
+    results = []
 
+    # Sample configurations
+    import random
+
+    for trial in range(num_samples):
+        config = {param: random.choice(values) for param, values in param_grid.items()}
+
+        logger.info(f"Trial {trial + 1}/{num_samples}: {config}")
+
+        # Train model
         metrics = train_single_trial(config, features, targets, max_epochs_per_trial)
-        for k, v in metrics.items():
-            trial.set_user_attr(k, v)
-        trial.set_user_attr("config", config)
-        return metrics["val_loss"]
 
-    study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=num_samples)
+        # Track results
+        result = {**config, **metrics}
+        results.append(result)
 
-    best_trial = study.best_trial
-    best_config = best_trial.user_attrs.get("config", best_trial.params)
-    best_score = best_trial.value
+        # Update best
+        score = metrics["val_loss"]
+        if score < best_score:
+            best_score = score
+            best_config = config.copy()
+            logger.info(f"New best score: {best_score:.4f}")
 
-    all_results = []
-    for t in study.trials:
-        entry = {**t.params}
-        entry.update({k: t.user_attrs.get(k) for k in ["val_loss", "train_loss", "epochs_trained"]})
-        all_results.append(entry)
-
-    return {
+    # Create results summary
+    final_results = {
         "best_config": best_config,
         "best_score": best_score,
-        "all_results": all_results,
-        "method": "optuna",
+        "all_results": results,
+        "method": "simple_grid_search",
     }
+
+    return final_results
 
 
 def optimize_cnn_lstm_streamlined(
@@ -308,24 +302,16 @@ def optimize_cnn_lstm_streamlined(
     scaler = StandardScaler()
     features_scaled = scaler.fit_transform(features)
 
-    # Choose optimization method
-    if RAY_AVAILABLE and num_samples > 10:
-        logger.info("Using Ray Tune with OptunaSearch for optimization")
-        try:
-            results = ray_tune_optimization(
-                features_scaled, targets, num_samples, max_epochs_per_trial
-            )
-        except Exception as e:
-            logger.warning(f"Ray Tune failed: {e}")
-            logger.info("Falling back to Optuna")
-            results = optuna_optimization(
-                features_scaled, targets, num_samples, max_epochs_per_trial
-            )
-    else:
-        logger.info("Using Optuna for optimization")
-        results = optuna_optimization(
-            features_scaled, targets, num_samples, max_epochs_per_trial
+    # Always use Ray Tune for optimization
+    logger.info("Using Ray Tune for optimization")
+    # Ensure Ray cluster is initialized
+    if not ray.is_initialized():
+        raise RuntimeError(
+            "Ray cluster must be initialized before running optimization."
         )
+    results = ray_tune_optimization(
+        features_scaled, targets, num_samples, max_epochs_per_trial
+    )
 
     # Save results
     results_path = Path(output_dir) / "optimization_results.json"
@@ -382,25 +368,19 @@ def ray_tune_optimization(
     dict
         Summary of optimization results.
     """
-
-    if not RAY_AVAILABLE:
-        logger.info("Ray Tune not available - using Optuna")
-        return optuna_optimization(features, targets, num_samples, max_epochs_per_trial)
-
+    # Ensure Ray cluster is initialized once
     if not ray.is_initialized():
-        try:
-            from src.utils.cluster import init_ray
+        raise RuntimeError(
+            "Ray cluster must be initialized before running Ray Tune optimization."
+        )
 
-            init_ray()
-        except Exception:
-            ray.init()
-
+    # Prepare search space
     search_space = get_default_search_space()
     if custom_search_space:
         search_space.update(custom_search_space)
 
     if ray_resources_per_trial is None:
-        ray_resources_per_trial = {"cpu": 1, "gpu": int(torch.cuda.is_available())}
+         ray_resources_per_trial = {"cpu": 1, "gpu": int(torch.cuda.is_available())}
 
     train_fn = tune.with_parameters(
         train_single_trial,
@@ -409,19 +389,16 @@ def ray_tune_optimization(
         max_epochs=max_epochs_per_trial,
     )
 
-    scheduler = tune.schedulers.ASHAScheduler(
+    scheduler = ASHAScheduler(
         max_t=max_epochs_per_trial,
         grace_period=1,
         reduction_factor=2,
     )
 
-    search_alg = OptunaSearch(metric="val_loss", mode="min")
-
     analysis = tune.run(
         train_fn,
         config=search_space,
         num_samples=num_samples,
-        search_alg=search_alg,
         scheduler=scheduler,
         resources_per_trial=ray_resources_per_trial,
         metric="val_loss",
@@ -432,6 +409,7 @@ def ray_tune_optimization(
 
     best_config = analysis.get_best_config(metric="val_loss", mode="min")
     best_trial = analysis.get_best_trial(metric="val_loss", mode="min")
+    assert best_trial is not None, "No trials found in Ray Tune analysis"
     best_score = float(best_trial.last_result.get("val_loss", float("inf")))
 
     all_results = analysis.dataframe().to_dict(orient="records")

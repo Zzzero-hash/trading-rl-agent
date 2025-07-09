@@ -25,7 +25,7 @@ import torch
 import yaml
 
 # Import test utilities
-from tests.test_data_utils import TestDataManager, get_dynamic_test_config
+from tests.unit.test_data_utils import TestDataManager, get_dynamic_test_config
 
 # Configure test logging
 logging.basicConfig(level=logging.INFO)
@@ -160,7 +160,7 @@ def sample_csv_path(tmp_path):
     """Create a temporary CSV file with ``TestDataManager``."""
     import pandas as pd
 
-    from tests.test_data_utils import TestDataManager
+    from tests.unit.test_data_utils import TestDataManager
 
     manager = TestDataManager(str(tmp_path))
     df = manager.generate_synthetic_dataset()
@@ -178,7 +178,7 @@ def sample_csv_path_session(tmp_path_factory):
     """Session-scoped CSV path generated with ``TestDataManager``."""
     import pandas as pd
 
-    from tests.test_data_utils import TestDataManager
+    from tests.unit.test_data_utils import TestDataManager
 
     data_dir = tmp_path_factory.mktemp("data")
     manager = TestDataManager(str(data_dir))
@@ -539,7 +539,7 @@ def integration_environment(sample_csv_path, trading_env_config):
     mocks = {}
 
     try:
-        from src.envs.finrl_trading_env import TradingEnv
+        from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 
         trading_env_config["dataset_paths"] = [sample_csv_path]
         env = TradingEnv(**trading_env_config)
