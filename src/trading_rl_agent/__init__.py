@@ -51,6 +51,7 @@ _OPTIONAL_IMPORTS = {
     "weighted_policy_mapping": (".agents.policy_utils", "weighted_policy_mapping"),
     "PortfolioManager": (".portfolio.manager", "PortfolioManager"),
     "ExecutionEngine": (".execution", "ExecutionEngine"),
+    "PPOAgent": (".agents.ppo_agent", "PPOAgent"),
 }
 
 
