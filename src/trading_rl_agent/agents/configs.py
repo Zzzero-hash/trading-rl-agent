@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class EnsembleConfig:
-    """Configuration options for :class:`EnsembleAgent`."""
+    """Configuration options for :class:`WeightedEnsembleAgent`."""
 
     agents: dict[str, dict[str, Any]] = field(
         default_factory=lambda: {
