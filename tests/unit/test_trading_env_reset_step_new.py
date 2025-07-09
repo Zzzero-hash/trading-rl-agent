@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.envs.finrl_trading_env import TradingEnv
+from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 
 pytestmark = pytest.mark.unit
 

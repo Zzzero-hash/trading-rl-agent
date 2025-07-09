@@ -1,7 +1,7 @@
 import types
 from unittest import mock
 
-from src.agents import trainer as trainer_module
+from trading_rl_agent.agents import trainer as trainer_module
 
 
 def test_dqn_algorithm_selected(monkeypatch, tmp_path):

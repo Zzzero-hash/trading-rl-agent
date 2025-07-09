@@ -1,18 +1,23 @@
 import numpy as np
 import pandas as pd
 import pytest
-from ta.volume import OnBalanceVolumeIndicator
+import pandas_ta as ta
+import importlib.util
+from pathlib import Path
 
-from src.data.features import (
-    compute_adx,
-    compute_atr,
-    compute_bollinger_bands,
-    compute_ema,
-    compute_macd,
-    compute_obv,
-    compute_stochastic,
-    compute_williams_r,
-)
+feature_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "features.py"
+spec = importlib.util.spec_from_file_location("features", feature_path)
+features = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(features)
+
+compute_adx = features.compute_adx
+compute_atr = features.compute_atr
+compute_bollinger_bands = features.compute_bollinger_bands
+compute_ema = features.compute_ema
+compute_macd = features.compute_macd
+compute_obv = features.compute_obv
+compute_stochastic = features.compute_stochastic
+compute_williams_r = features.compute_williams_r
 
 
 def test_compute_ema_constant():
@@ -82,9 +87,25 @@ def test_compute_stochastic_constant():
         df.copy(), fastk_period=3, slowk_period=3, slowd_period=3
     )
     assert "stoch_k" in df_stoch.columns and "stoch_d" in df_stoch.columns
-    # All values NaN due to zero range
-    assert df_stoch["stoch_k"].isnull().all()
-    assert df_stoch["stoch_d"].isnull().all()
+    # Compare with pandas-ta output for expected behavior
+    expected = pta.stoch(
+        high=df["high"],
+        low=df["low"],
+        close=df["close"],
+        k=3,
+        d=3,
+        smooth_k=3,
+    ).reindex(df.index)
+    pd.testing.assert_series_equal(
+        df_stoch["stoch_k"],
+        expected.iloc[:, 0],
+        check_names=False,
+    )
+    pd.testing.assert_series_equal(
+        df_stoch["stoch_d"],
+        expected.iloc[:, 1],
+        check_names=False,
+    )
 
 
 def test_compute_stochastic_full():
@@ -133,9 +154,5 @@ def test_compute_obv_constant_and_trend():
     # Increasing close => OBV increases cumulatively by volume
     df2 = pd.DataFrame({"close": np.arange(n), "volume": volumes})
     df_obv2 = compute_obv(df2.copy())
-    expected = (
-        OnBalanceVolumeIndicator(df2["close"], df2["volume"])
-        .on_balance_volume()
-        .values[1:]
-    )
+    expected = ta.obv(df2["close"], df2["volume"]).values[1:]
     assert np.array_equal(df_obv2["obv"].iloc[1:].values, expected)

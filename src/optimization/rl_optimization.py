@@ -8,7 +8,7 @@ Note: TD3 has been removed from Ray RLlib 2.38.0+. Use SAC for continuous contro
 
 Example usage:
 
->>> from src.optimization.rl_optimization import optimize_sac_hyperparams
+>>> from trading_rl_agent.optimization.rl_optimization import optimize_sac_hyperparams
 >>> results = optimize_sac_hyperparams(
 ...     env_config=env_config,
 ...     num_samples=20,
@@ -34,9 +34,9 @@ from ray.tune.registry import register_env
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
 
-from src.envs.finrl_trading_env import TradingEnv
-from src.models.concat_model import ConcatModel
-from src.utils.cluster import get_available_devices, init_ray
+from trading_rl_agent.envs.finrl_trading_env import TradingEnv
+from trading_rl_agent.models.concat_model import ConcatModel
+from trading_rl_agent.utils.cluster import get_available_devices, init_ray
 
 torch, _ = try_import_torch()
 logger = logging.getLogger(__name__)

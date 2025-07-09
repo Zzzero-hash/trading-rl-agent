@@ -5,7 +5,7 @@ import pytest
 import yaml
 import sys
 
-import src.agents as _agents
+import trading_rl_agent.agents as _agents
 
 # Ensure the package can be imported as ``agents`` when calling the CLI.
 sys.modules.setdefault("agents", _agents)

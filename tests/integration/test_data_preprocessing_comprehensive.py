@@ -9,11 +9,51 @@ import tempfile
 from unittest.mock import Mock, patch
 import warnings
 
+import sys
+import types
+import logging
 import numpy as np
 import pandas as pd
 import pytest
 
 from tests.conftest_extra import large_dataset, memory_monitor
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+
+if "structlog" not in sys.modules:
+    stub = types.SimpleNamespace(
+        BoundLogger=object,
+        stdlib=types.SimpleNamespace(
+            ProcessorFormatter=object,
+            BoundLogger=object,
+            LoggerFactory=lambda: None,
+            filter_by_level=lambda *a, **k: None,
+            add_logger_name=lambda *a, **k: None,
+            add_log_level=lambda *a, **k: None,
+            PositionalArgumentsFormatter=lambda: None,
+            wrap_for_formatter=lambda f: f,
+        ),
+        processors=types.SimpleNamespace(
+            TimeStamper=lambda **_: None,
+            StackInfoRenderer=lambda **_: None,
+            format_exc_info=lambda **_: None,
+            UnicodeDecoder=lambda **_: None,
+        ),
+        dev=types.SimpleNamespace(ConsoleRenderer=lambda **_: None),
+        configure=lambda **_: None,
+        get_logger=lambda name=None: logging.getLogger(name),
+    )
+    sys.modules["structlog"] = stub
+
+base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
+if "trading_rl_agent" not in sys.modules:
+    pkg = types.ModuleType("trading_rl_agent")
+    pkg.__path__ = [str(base)]
+    sys.modules["trading_rl_agent"] = pkg
+if "trading_rl_agent.data" not in sys.modules:
+    mod = types.ModuleType("trading_rl_agent.data")
+    mod.__path__ = [str(base / "data")]
+    sys.modules["trading_rl_agent.data"] = mod
 
 
 @pytest.fixture
@@ -85,7 +125,7 @@ class TestDataPreprocessingComprehensive:
     def test_feature_generation_comprehensive(self, sample_market_data):
         """Test comprehensive feature generation from market data."""
         try:
-            from src.data.features import generate_features
+            from trading_rl_agent.data.features import generate_features
 
             # Test basic feature generation
             features_df = generate_features(sample_market_data.copy())
@@ -132,7 +172,7 @@ class TestDataPreprocessingComprehensive:
     def test_technical_indicators_comprehensive(self, sample_market_data):
         """Test comprehensive technical indicator calculations."""
         try:
-            from ta.momentum import RSIIndicator
+            import pandas_ta as ta
 
             # Test log returns
             returns = np.log(
@@ -148,7 +188,7 @@ class TestDataPreprocessingComprehensive:
             assert len(sma) == len(sample_market_data)
 
             # Test RSI
-            rsi = RSIIndicator(sample_market_data["close"].astype(float)).rsi()
+            rsi = ta.rsi(sample_market_data["close"].astype(float), length=14)
             assert isinstance(rsi, pd.Series)
             rsi_valid = rsi.dropna()
             if len(rsi_valid) > 0:
@@ -171,7 +211,7 @@ class TestDataPreprocessingComprehensive:
     def test_advanced_technical_indicators(self, sample_market_data):
         """Test advanced technical indicators."""
         try:
-            from src.data.features import (
+            from trading_rl_agent.data.features import (
                 compute_atr,
                 compute_bollinger_bands,
                 compute_ema,
@@ -239,7 +279,7 @@ class TestDataPreprocessingComprehensive:
     def test_candlestick_patterns(self, sample_market_data):
         """Test candlestick pattern detection."""
         try:
-            from src.data.features import (
+            from trading_rl_agent.data.features import (
                 detect_doji,
                 detect_engulfing,
                 detect_hammer,
@@ -293,7 +333,7 @@ class TestDataPreprocessingComprehensive:
     def test_data_normalization(self, sample_market_data):
         """Test data normalization and scaling."""
         try:
-            from src.data.features import generate_features
+            from trading_rl_agent.data.features import generate_features
 
             # Generate features first
             features_df = generate_features(sample_market_data.copy())
@@ -348,7 +388,7 @@ class TestDataPreprocessingComprehensive:
     def test_missing_data_handling(self, noisy_market_data):
         """Test handling of missing data and outliers."""
         try:
-            from src.data.features import generate_features
+            from trading_rl_agent.data.features import generate_features
 
             # Test with noisy data containing NaN values
             features_df = generate_features(noisy_market_data.copy())
@@ -392,7 +432,7 @@ class TestDataPreprocessingComprehensive:
     def test_feature_engineering_pipeline(self, sample_market_data):
         """Test complete feature engineering pipeline."""
         try:
-            from src.data.features import generate_features
+            from trading_rl_agent.data.features import generate_features
 
             # Test pipeline with different configurations
             configs = [
@@ -429,7 +469,7 @@ class TestDataPreprocessingComprehensive:
     def test_time_series_features(self, sample_market_data):
         """Test time series specific features."""
         try:
-            from src.data.features import generate_features
+            from trading_rl_agent.data.features import generate_features
 
             # Ensure timestamp column is datetime
             if "timestamp" in sample_market_data.columns:
@@ -489,7 +529,7 @@ class TestDataPreprocessingComprehensive:
         try:
             import time
 
-            from src.data.features import generate_features
+            from trading_rl_agent.data.features import generate_features
 
             initial_memory = memory_monitor["initial"]
 
@@ -531,8 +571,8 @@ class TestDataPipelineIntegration:
     def test_preprocessing_environment_integration(self, sample_market_data, tmp_path):
         """Test preprocessing integration with trading environment."""
         try:
-            from src.data.features import generate_features
-            from src.envs.finrl_trading_env import TradingEnv
+            from trading_rl_agent.data.features import generate_features
+            from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 
             # Preprocess data
             features_df = generate_features(sample_market_data.copy())
@@ -570,7 +610,7 @@ class TestDataPipelineIntegration:
     def test_preprocessing_model_integration(self, sample_market_data):
         """Test preprocessing integration with predictive models."""
         try:
-            from src.data.features import generate_features
+            from trading_rl_agent.data.features import generate_features
 
             # Preprocess data
             features_df = generate_features(sample_market_data.copy())
