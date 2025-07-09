@@ -74,7 +74,4 @@ class WeightedEnsembleAgent:
 
 class EnsembleAgent(WeightedEnsembleAgent):
     """Backward-compatible alias for :class:`WeightedEnsembleAgent`."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    pass
