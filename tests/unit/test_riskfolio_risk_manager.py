@@ -21,6 +21,7 @@ def test_var_limit_violation(risk_manager):
     # Override calculate_risk to return high Var
     def high_var(returns):
         return {"var": 0.01}
+
     risk_manager.calculate_risk = high_var
     assert not risk_manager.validate_action(0.0, np.array([0.0]))
 

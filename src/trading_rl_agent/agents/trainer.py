@@ -2,19 +2,21 @@
 import glob
 import os
 
+import gymnasium as gym
+import numpy as np
 import ray
 from ray import tune
 
 from trading_rl_agent.envs.finrl_trading_env import TradingEnv, register_env
-from risk import RiskfolioConfig, RiskfolioRiskManager
-import gymnasium as gym
-import numpy as np
+from trading_rl_agent.risk import RiskfolioConfig, RiskfolioRiskManager
 
 
 class RiskAwareEnv(gym.Wrapper):
     """Environment wrapper applying risk management."""
 
-    def __init__(self, env: gym.Env, risk_manager: RiskfolioRiskManager, terminate: bool = True) -> None:
+    def __init__(
+        self, env: gym.Env, risk_manager: RiskfolioRiskManager, terminate: bool = True
+    ) -> None:
         super().__init__(env)
         self.risk_manager = risk_manager
         self.terminate = terminate
@@ -30,7 +32,9 @@ class RiskAwareEnv(gym.Wrapper):
         scalar_action = float(act_arr.mean())
         valid = self.risk_manager.validate_action(scalar_action, self._returns)
         if not valid:
-            scalar_action = self.risk_manager.risk_adjusted_action(scalar_action, self._returns)
+            scalar_action = self.risk_manager.risk_adjusted_action(
+                scalar_action, self._returns
+            )
             act_arr = np.zeros_like(act_arr) + scalar_action
             if self.terminate:
                 obs, reward, done, truncated, info = self.env.step(act_arr)
@@ -47,6 +51,7 @@ class RiskAwareEnv(gym.Wrapper):
             info["risk_violation"] = True
             done = True
         return obs, reward, done, truncated, info
+
 
 try:
     from ray.rllib.algorithms.ppo import PPOTrainer
@@ -92,7 +97,11 @@ class Trainer:
         self.ray_config.setdefault("env", "TraderEnv")
         self.ray_config.setdefault("env_config", self.env_cfg)
 
-        risk_cfg = self.trainer_cfg.get("risk_management", {}) if isinstance(self.trainer_cfg, dict) else {}
+        risk_cfg = (
+            self.trainer_cfg.get("risk_management", {})
+            if isinstance(self.trainer_cfg, dict)
+            else {}
+        )
         self.risk_enabled = bool(risk_cfg.get("enabled"))
         if self.risk_enabled:
             rc = RiskfolioConfig(
@@ -131,6 +140,7 @@ class Trainer:
             return env
 
         ray_register_env("TraderEnv", creator)
+
     def train(self):
         print(
             f"[Trainer] Starting training with configs:\n  env={self.env_cfg}\n  model={self.model_cfg}\n  trainer={self.trainer_cfg}"

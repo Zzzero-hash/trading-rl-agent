@@ -26,10 +26,7 @@ def test_calculate_max_drawdown():
 def test_calculate_sortino_ratio():
     returns = pd.Series([0.01, -0.02, 0.03, -0.01])
     downside = np.clip(returns, -np.inf, 0)
-    expected = (
-        returns.mean() * 252
-        / (np.sqrt(np.mean(downside**2)) * np.sqrt(252))
-    )
+    expected = returns.mean() * 252 / (np.sqrt(np.mean(downside**2)) * np.sqrt(252))
     result = metrics.calculate_sortino_ratio(returns)
     assert np.isclose(result, expected)
 

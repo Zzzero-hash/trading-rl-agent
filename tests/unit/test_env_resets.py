@@ -29,5 +29,3 @@ def test_reset_restores_state(tmp_path):
     obs, _ = env.reset()
     assert env.day == 0
     assert isinstance(obs, (list, np.ndarray))
-
-

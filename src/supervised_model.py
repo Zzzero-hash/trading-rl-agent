@@ -24,10 +24,9 @@ from dataclasses import asdict, dataclass, field
 import logging
 from typing import Any, Dict, List, Tuple
 
-from sklearn.metrics import accuracy_score, precision_score, recall_score
-
 import numpy as np
 import ray
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset

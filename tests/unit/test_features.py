@@ -1,12 +1,13 @@
-import sys
+import importlib.util
+import logging
 from pathlib import Path
+import sys
+import types
+
 import numpy as np
 import pandas as pd
-import pytest
 import pandas_ta as pta
-import importlib.util
-import types
-import logging
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 

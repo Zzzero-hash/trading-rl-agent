@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional
 
 import ray
 from ray import tune
+
 # TD3 has been removed from Ray RLlib 2.38.0+, use SAC instead
 from ray.rllib.algorithms.sac import SACConfig
 from ray.rllib.utils.framework import try_import_torch
@@ -183,5 +184,3 @@ def optimize_sac_hyperparams(
     logger.info(f"Best SAC config: {best_config}")
 
     return analysis
-
-

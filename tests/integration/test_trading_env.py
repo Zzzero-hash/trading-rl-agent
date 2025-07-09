@@ -2,18 +2,24 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.envs.finrl_trading_env import TradingEnv, env_creator, register_env
+from trading_rl_agent.envs.finrl_trading_env import (
+    TradingEnv,
+    env_creator,
+    register_env,
+)
 
 
 @pytest.fixture
 def sample_csv(tmp_path):
-    df = pd.DataFrame({
-        "open": [1.0, 2.0, 3.0],
-        "high": [1.0, 2.0, 3.0],
-        "low": [1.0, 2.0, 3.0],
-        "close": [1.0, 2.0, 3.0],
-        "volume": [1.0, 1.0, 1.0],
-    })
+    df = pd.DataFrame(
+        {
+            "open": [1.0, 2.0, 3.0],
+            "high": [1.0, 2.0, 3.0],
+            "low": [1.0, 2.0, 3.0],
+            "close": [1.0, 2.0, 3.0],
+            "volume": [1.0, 1.0, 1.0],
+        }
+    )
     path = tmp_path / "data.csv"
     df.to_csv(path, index=False)
     return str(path)

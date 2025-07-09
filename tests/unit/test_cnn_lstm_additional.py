@@ -1,6 +1,6 @@
-import yaml
-import torch
 import pytest
+import torch
+import yaml
 
 from trading_rl_agent.models.cnn_lstm import CNNLSTMModel, _load_config
 
@@ -14,7 +14,9 @@ def test_load_config_from_path(tmp_path):
 
 
 def test_forward_invalid_features():
-    model = CNNLSTMModel(input_dim=3, config={"cnn_filters": [4], "cnn_kernel_sizes": [2]})
+    model = CNNLSTMModel(
+        input_dim=3, config={"cnn_filters": [4], "cnn_kernel_sizes": [2]}
+    )
     x = torch.randn(2, 5, 4)  # wrong feature dimension
     with pytest.raises(ValueError):
         model(x)

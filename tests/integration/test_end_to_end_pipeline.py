@@ -1,14 +1,14 @@
-import sys
-from pathlib import Path
-from unittest.mock import Mock, patch
-import types
 import importlib.util
+from pathlib import Path
+import sys
+import types
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 if "structlog" not in sys.modules:
-    import types
     import logging
+    import types
 
     stub = types.SimpleNamespace(
         BoundLogger=object,
@@ -37,18 +37,21 @@ if "structlog" not in sys.modules:
 if "trading_rl_agent" not in sys.modules:
 
     pkg = types.ModuleType("trading_rl_agent")
-    pkg.__path__ = [str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")]
+    pkg.__path__ = [
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+    ]
     sys.modules["trading_rl_agent"] = pkg
 
 if "nltk.sentiment.vader" not in sys.modules:
     dummy = types.ModuleType("nltk.sentiment.vader")
+
     class DummySIA:
         def polarity_scores(self, text):
             return {"compound": 0.0}
+
     dummy.SentimentIntensityAnalyzer = DummySIA
     sys.modules["nltk.sentiment.vader"] = dummy
 
-import pytest
 import pytest
 
 base_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
@@ -86,6 +89,7 @@ PortfolioManager = pm_mod.PortfolioManager
 @pytest.mark.e2e
 def test_data_ingestion_training_portfolio(tmp_path, benchmark):
     """End-to-end test: data ingestion → training → portfolio update."""
+
     # ---------------------- Data Ingestion ----------------------
     def create_data():
         return fetch_synthetic_data(n_samples=50)
@@ -99,9 +103,17 @@ def test_data_ingestion_training_portfolio(tmp_path, benchmark):
     benchmark.extra_info["pipeline_time"] = pipeline_time
 
     # ----------------------- Agent Training ---------------------
-    env_cfg = {"dataset_paths": [str(csv_path)], "window_size": 5, "initial_balance": 1000}
+    env_cfg = {
+        "dataset_paths": [str(csv_path)],
+        "window_size": 5,
+        "initial_balance": 1000,
+    }
     model_cfg = {"architecture": "ppo"}
-    trainer_cfg = {"algorithm": "ppo", "num_iterations": 1, "ray_config": {"env": "TraderEnv"}}
+    trainer_cfg = {
+        "algorithm": "ppo",
+        "num_iterations": 1,
+        "ray_config": {"env": "TraderEnv"},
+    }
 
     with (
         patch("ray.init"),

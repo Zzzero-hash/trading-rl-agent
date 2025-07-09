@@ -380,7 +380,7 @@ def ray_tune_optimization(
         search_space.update(custom_search_space)
 
     if ray_resources_per_trial is None:
-         ray_resources_per_trial = {"cpu": 1, "gpu": int(torch.cuda.is_available())}
+        ray_resources_per_trial = {"cpu": 1, "gpu": int(torch.cuda.is_available())}
 
     train_fn = tune.with_parameters(
         train_single_trial,

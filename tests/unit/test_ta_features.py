@@ -1,11 +1,18 @@
-import numpy as np
-import pandas as pd
-import pytest
-import pandas_ta as ta
 import importlib.util
 from pathlib import Path
 
-feature_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "features.py"
+import numpy as np
+import pandas as pd
+import pandas_ta as ta
+import pytest
+
+feature_path = (
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "trading_rl_agent"
+    / "data"
+    / "features.py"
+)
 spec = importlib.util.spec_from_file_location("features", feature_path)
 features = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(features)

@@ -1,10 +1,11 @@
+import runpy
 import sys
 from unittest.mock import patch
-import runpy
 
 import pytest
 
 from trading_rl_agent.main import main
+
 pytestmark = pytest.mark.integration
 
 
@@ -21,10 +22,10 @@ def test_main_when_main(sample_config_files):
     ]
     with (
         patch.object(sys, "argv", test_args),
--        patch("src.main.Trainer") as mock_trainer_class,
--        patch("src.main.main") as mock_main,
-+        patch("src.main.Trainer"),
-+        patch("src.main.main"),
+        -patch("src.main.Trainer") as mock_trainer_class,
+        -patch("src.main.main") as mock_main,
+        +patch("src.main.Trainer"),
+        +patch("src.main.main"),
     ):
         runpy.run_path("src/main.py")
         assert callable(main)

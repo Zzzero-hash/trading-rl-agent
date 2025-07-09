@@ -18,10 +18,10 @@ class FeaturePipeline:
 
     def __init__(
         self,
-        technical: Optional[TechnicalIndicators] = None,
-        microstructure: Optional[MarketMicrostructure] = None,
-        cross_asset: Optional[CrossAssetFeatures] = None,
-        alternative: Optional[AlternativeDataFeatures] = None,
+        technical: TechnicalIndicators | None = None,
+        microstructure: MarketMicrostructure | None = None,
+        cross_asset: CrossAssetFeatures | None = None,
+        alternative: AlternativeDataFeatures | None = None,
     ) -> None:
         self.technical = technical or TechnicalIndicators()
         self.microstructure = microstructure or MarketMicrostructure()
@@ -32,8 +32,8 @@ class FeaturePipeline:
     def transform(
         self,
         df: pd.DataFrame,
-        cross_df: Optional[pd.DataFrame] = None,
-        sentiment: Optional[pd.Series] = None,
+        cross_df: pd.DataFrame | None = None,
+        sentiment: pd.Series | None = None,
     ) -> pd.DataFrame:
         """Apply all feature generators sequentially. Modifies the input DataFrame in place."""
         self.technical.calculate_all_indicators(df)

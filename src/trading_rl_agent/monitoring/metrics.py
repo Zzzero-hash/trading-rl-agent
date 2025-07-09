@@ -13,7 +13,7 @@ class MetricsCollector:
 
     def __init__(self) -> None:
         self.logger = get_logger(self.__class__.__name__)
-        self.history: List[Dict[str, Any]] = []
+        self.history: list[dict[str, Any]] = []
 
     def log_metrics(self, metrics: Any) -> None:
         """Log metrics and store them in memory."""
@@ -27,6 +27,6 @@ class MetricsCollector:
         self.history.append(metrics_dict)
         self.logger.info("Metrics logged", extra={"metrics": metrics_dict})
 
-    def get_latest(self) -> Optional[Dict[str, Any]]:
+    def get_latest(self) -> dict[str, Any] | None:
         """Return the most recently logged metrics."""
         return self.history[-1] if self.history else None

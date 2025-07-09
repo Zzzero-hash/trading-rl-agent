@@ -49,10 +49,10 @@ if "nltk.sentiment.vader" not in sys.modules:
         def polarity_scores(self, text):
             """
             Return a neutral sentiment score for the given text.
-            
+
             Parameters:
                 text (str): The input text to analyze.
-            
+
             Returns:
                 dict: A dictionary with a single key 'compound' set to 0.0, indicating neutral sentiment.
             """
@@ -80,7 +80,7 @@ pytestmark = pytest.mark.unit
 def _sample_returns():
     """
     Generate reproducible sample daily return series for two assets over 60 days.
-    
+
     Returns:
         dict: A dictionary with keys "A" and "B", each mapping to a pandas Series of simulated daily returns for 60 consecutive dates.
     """
@@ -94,7 +94,7 @@ def _sample_returns():
 def test_var_and_cvar():
     """
     Test that RiskManager calculates portfolio VaR and CVaR correctly for a sample portfolio.
-    
+
     Asserts that VaR is non-negative, CVaR is at least as large as VaR, CVaR exceeds VaR by at least 10%, and VaR falls within a reasonable daily range for the provided synthetic returns.
     """
     rm = RiskManager()
@@ -113,7 +113,7 @@ def test_var_and_cvar():
 def test_correlation_and_concentration():
     """
     Test the calculation of correlation and concentration risk metrics in the RiskManager.
-    
+
     Verifies that correlation and concentration risks are within valid bounds for typical and edge-case portfolio weights, including maximum and minimum concentration scenarios.
     """
     rm = RiskManager()
@@ -139,7 +139,7 @@ def test_correlation_and_concentration():
 def test_kelly_position_size():
     """
     Test the Kelly position size calculation of the RiskManager for various scenarios.
-    
+
     Verifies that the calculated position size is within expected bounds for profitable, unprofitable, and high win rate scenarios, and that the method adheres to the properties of the Kelly formula.
     """
     rm = RiskManager()

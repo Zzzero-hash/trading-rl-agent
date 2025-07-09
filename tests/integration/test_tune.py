@@ -468,5 +468,3 @@ class TestTuneErrorHandling:
 
             # Should still call tune.run with empty search space
             mock_tune_run.assert_called_once()
-
-

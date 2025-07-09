@@ -3,7 +3,9 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^(docs/_build/|\.doctrees/|\.buildinfo$|searchindex\.js$)
       - id: end-of-file-fixer
+        exclude: ^(docs/_build/|\.doctrees/|\.buildinfo$|searchindex\.js$)
       - id: check-yaml
       - id: check-added-large-files
         args: ["--maxkb=50000"] # 50MB max
@@ -14,6 +16,7 @@ repos:
       - id: debug-statements
       - id: detect-private-key
       - id: mixed-line-ending
+        exclude: ^(docs/_build/|\.doctrees/|\.buildinfo$|searchindex\.js$)
       - id: check-json
         exclude: ^(coverage\.json)$
       - id: check-toml
@@ -114,7 +117,6 @@ repos:
         language: system
         files: \.ipynb$
         require_serial: false
-
 
       - id: run-tests
         name: Run unit tests

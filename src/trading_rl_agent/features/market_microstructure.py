@@ -38,9 +38,10 @@ class MarketMicrostructure:
             result["high"].astype(float) - result["low"].astype(float)
         ) / result["close"].replace(0, np.nan)
         result["close_open_diff"] = result["close"] - result["open"]
-        result["volume_imbalance"] = result["volume"] - result["volume"].rolling(
-            self.config.volume_window, min_periods=1
-        ).mean()
+        result["volume_imbalance"] = (
+            result["volume"]
+            - result["volume"].rolling(self.config.volume_window, min_periods=1).mean()
+        )
         return result
 
     def get_feature_names(self) -> list[str]:

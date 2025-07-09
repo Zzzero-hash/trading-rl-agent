@@ -33,9 +33,11 @@ class CrossAssetFeatures:
         result["_ref_close"] = ref_close
         result["ret"] = np.log(result["close"] / result["close"].shift(1))
         result["ref_ret"] = np.log(ref_close / ref_close.shift(1))
-        result[f"corr_{self.config.prefix}"] = result["ret"].rolling(
-            self.config.corr_window, min_periods=1
-        ).corr(result["ref_ret"])
+        result[f"corr_{self.config.prefix}"] = (
+            result["ret"]
+            .rolling(self.config.corr_window, min_periods=1)
+            .corr(result["ref_ret"])
+        )
         result.drop(columns=["_ref_close", "ret", "ref_ret"], inplace=True)
         return result
 

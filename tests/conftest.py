@@ -89,8 +89,8 @@ def finrl_trading_env(finrl_sample_data):
 
     except ImportError:
         # Fallback to simple TradingEnv using synthetic data
-        from trading_rl_agent.envs.finrl_trading_env import TradingEnv
         from tests.unit.test_data_utils import get_dynamic_test_config
+        from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 
         cfg = get_dynamic_test_config(
             {
@@ -152,6 +152,7 @@ def production_dataset_path():
 
 # Backward compatibility - alias for existing tests
 trading_env = finrl_trading_env
+
 
 @pytest.fixture
 def basic_trading_env(sample_csv_file):

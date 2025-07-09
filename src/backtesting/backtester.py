@@ -45,7 +45,7 @@ class Backtester:
         latency_steps = round(self.latency_seconds)
 
         class PolicyStrategy(bt.Strategy):
-            params = dict(policy=None, latency=0)
+            params = {"policy": None, "latency": 0}
 
             def __init__(self):
                 self.policy = self.p.policy

@@ -1,7 +1,7 @@
-import sys
-from pathlib import Path
-import types
 import logging
+from pathlib import Path
+import sys
+import types
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -61,9 +61,10 @@ for pkg in ["features", "portfolio", "risk"]:
         sys.modules[key] = mod
 
 from datetime import datetime
+
 import pytest
 
-from trading_rl_agent.monitoring import MetricsCollector, AlertManager, Dashboard
+from trading_rl_agent.monitoring import AlertManager, Dashboard, MetricsCollector
 from trading_rl_agent.risk.manager import RiskMetrics
 
 pytestmark = pytest.mark.unit

@@ -74,4 +74,5 @@ class WeightedEnsembleAgent:
 
 class EnsembleAgent(WeightedEnsembleAgent):
     """Backward-compatible alias for :class:`WeightedEnsembleAgent`."""
+
     pass

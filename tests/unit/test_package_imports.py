@@ -1,7 +1,7 @@
-import sys
-from pathlib import Path
-import types
 import logging
+from pathlib import Path
+import sys
+import types
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -31,27 +31,33 @@ if "structlog" not in sys.modules:
     sys.modules["structlog"] = stub
 
 if "src.envs.finrl_trading_env" not in sys.modules:
-    sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(register_env=lambda: None)
+    sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(
+        register_env=lambda: None
+    )
 
 if "trading_rl_agent" not in sys.modules:
     pkg = types.ModuleType("trading_rl_agent")
-    pkg.__path__ = [str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")]
+    pkg.__path__ = [
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+    ]
     sys.modules["trading_rl_agent"] = pkg
 
 if "nltk.sentiment.vader" not in sys.modules:
     dummy = types.ModuleType("nltk.sentiment.vader")
+
     class DummySIA:
         def polarity_scores(self, text):
             """
             Return a neutral sentiment score for the given text.
-            
+
             Parameters:
                 text (str): The input text to analyze.
-            
+
             Returns:
                 dict: A dictionary with a single key "compound" set to 0.0, indicating neutral sentiment.
             """
             return {"compound": 0.0}
+
     dummy.SentimentIntensityAnalyzer = DummySIA
     sys.modules["nltk.sentiment.vader"] = dummy
 base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"

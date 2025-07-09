@@ -1,7 +1,7 @@
-import sys
-from pathlib import Path
-import types
 import logging
+from pathlib import Path
+import sys
+import types
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -32,7 +32,9 @@ if "structlog" not in sys.modules:
 
 if "trading_rl_agent" not in sys.modules:
     pkg = types.ModuleType("trading_rl_agent")
-    pkg.__path__ = [str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")]
+    pkg.__path__ = [
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+    ]
     sys.modules["trading_rl_agent"] = pkg
 
 base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"

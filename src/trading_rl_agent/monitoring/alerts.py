@@ -12,7 +12,7 @@ class AlertManager:
 
     def __init__(self) -> None:
         self.logger = get_logger(self.__class__.__name__)
-        self.alerts: List[str] = []
+        self.alerts: list[str] = []
 
     def send_alert(self, message: str) -> None:
         """Send an alert message."""

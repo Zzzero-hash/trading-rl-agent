@@ -66,6 +66,7 @@ def load_agent(agent_type: str, state_dim: int, action_dim: int, checkpoint: str
         return agent
     if agent_type == "ppo":
         from trading_rl_agent.agents.ppo_agent import PPOAgent
+
         agent = PPOAgent(state_dim=state_dim, action_dim=action_dim)
         agent.load(checkpoint)
         return agent

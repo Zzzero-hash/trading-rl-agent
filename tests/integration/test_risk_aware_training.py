@@ -1,15 +1,16 @@
-import sys
 from pathlib import Path
+import sys
+from unittest.mock import Mock, patch
+
 import numpy as np
 import pandas as pd
-from unittest.mock import Mock, patch
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 if "structlog" not in sys.modules:
-    import types
     import logging
+    import types
 
     stub = types.SimpleNamespace(
         BoundLogger=object,
@@ -39,14 +40,17 @@ from trading_rl_agent.agents.trainer import Trainer
 
 pytestmark = pytest.mark.integration
 
+
 def test_risk_aware_training(tmp_path):
-    df = pd.DataFrame({
-        "open": [1.0] * 20,
-        "high": [1.0] * 20,
-        "low": [1.0] * 20,
-        "close": [1.0] * 20,
-        "volume": [1.0] * 20,
-    })
+    df = pd.DataFrame(
+        {
+            "open": [1.0] * 20,
+            "high": [1.0] * 20,
+            "low": [1.0] * 20,
+            "close": [1.0] * 20,
+            "volume": [1.0] * 20,
+        }
+    )
     csv_path = tmp_path / "data.csv"
     df.to_csv(csv_path, index=False)
 
@@ -77,4 +81,3 @@ def test_risk_aware_training(tmp_path):
         trainer.train()
         assert tuner_cls.called
         assert tuner.fit.called
-

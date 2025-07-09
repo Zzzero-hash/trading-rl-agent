@@ -1,9 +1,9 @@
-import tempfile
 from pathlib import Path
+import sys
+import tempfile
 
 import pytest
 import yaml
-import sys
 
 import trading_rl_agent.agents as _agents
 

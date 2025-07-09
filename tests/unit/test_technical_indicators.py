@@ -1,7 +1,7 @@
-import sys
-from pathlib import Path
-import types
 import logging
+from pathlib import Path
+import sys
+import types
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -49,10 +49,10 @@ if "nltk.sentiment.vader" not in sys.modules:
         def polarity_scores(self, text):
             """
             Return a dictionary with a neutral compound sentiment score for the given text.
-            
+
             Parameters:
                 text (str): The input text to analyze.
-            
+
             Returns:
                 dict: A dictionary containing a single key 'compound' with a value of 0.0.
             """
