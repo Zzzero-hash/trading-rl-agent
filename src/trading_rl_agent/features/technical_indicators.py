@@ -128,6 +128,7 @@ class TechnicalIndicators:
             fast=self.config.macd_fast,
             slow=self.config.macd_slow,
             signal=self.config.macd_signal,
+            talib=False,
         )
         df["macd"] = macd_df[
             f"MACD_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
