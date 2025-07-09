@@ -2,37 +2,30 @@
 
 This section provides practical examples of using the Trading RL Agent.
 
-## Basic Training Example
+## Quick Start Example
 
 ```python
-from src.agents.sac_agent import SACAgent
-from src.envs.trading_env import TradingEnv
-from src.agents.configs import SACConfig
+from trading_rl_agent import ConfigManager, PortfolioManager
+from trading_rl_agent.agents import SACAgent
+from trading_rl_agent.data.pipeline import load_cached_csvs
 
-# Create environment
-env_config = {
-    'dataset_paths': ['data/advanced_trading_dataset_*.csv'],
-    'window_size': 50,
-    'initial_balance': 10000,
-    'transaction_cost': 0.001,
-    'use_cnn_lstm_features': True
-}
-env = TradingEnv(env_config)
+# Load configuration and dataset
+cfg = ConfigManager("configs/production.yaml").load_config()
+train_df = load_cached_csvs("data/raw")
 
-# Create agent
-agent_config = SACConfig(
-    learning_rate=3e-4,
-    batch_size=256,
-    buffer_size=1000000,
-    tau=0.005
-)
-agent = SACAgent(
-    state_dim=env.observation_space.shape[0],
-    action_dim=env.action_space.shape[0],
-    config=agent_config
-)
+# Create and train agent
+agent = SACAgent(cfg.agent)
+agent.train(train_df)
 
-# Train the agent
+# Launch paper trading
+portfolio = PortfolioManager(initial_capital=100000)
+portfolio.start_live_trading(agent)
+
+```
+
+## Basic Training Loop
+
+```python
 for episode in range(1000):
     state, _ = env.reset()
     episode_reward = 0
@@ -58,8 +51,8 @@ for episode in range(1000):
 ## Data Processing Example
 
 ```python
-from src.data.features import generate_features
-from src.data.live import fetch_live_data
+from trading_rl_agent.data.features import generate_features
+from trading_rl_agent.data.live import fetch_live_data
 import pandas as pd
 
 # Load historical data
@@ -83,7 +76,7 @@ print(features_df.head())
 ## Hyperparameter Optimization Example
 
 ```python
-from src.optimization.ray_tune_optimizer import RayTuneOptimizer
+from trading_rl_agent.optimization.ray_tune_optimizer import RayTuneOptimizer
 from ray import tune
 
 # Define hyperparameter search space
@@ -116,9 +109,9 @@ print(f"Best config: {results.best_config}")
 ## Live Trading Example
 
 ```python
-from src.agents.sac_agent import SACAgent
-from src.data.live import LiveDataProvider
-from src.trading.portfolio import Portfolio
+from trading_rl_agent.agents.sac_agent import SACAgent
+from trading_rl_agent.data.live import LiveDataProvider
+from trading_rl_agent.trading.portfolio import Portfolio
 import time
 
 # Load trained agent
@@ -158,7 +151,7 @@ while True:
 ## Custom Environment Example
 
 ```python
-from src.envs.trading_env import TradingEnv
+from trading_rl_agent.envs.trading_env import TradingEnv
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
@@ -229,8 +222,8 @@ env = CustomTradingEnv(config)
 ## Model Evaluation Example
 
 ```python
-from src.evaluation.evaluator import ModelEvaluator
-from src.utils.metrics import calculate_trading_metrics
+from trading_rl_agent.evaluation.evaluator import ModelEvaluator
+from trading_rl_agent.utils.metrics import calculate_trading_metrics
 import matplotlib.pyplot as plt
 
 # Load trained model
@@ -271,8 +264,8 @@ plt.show()
 ## Backtesting Example
 
 ```python
-from src.backtesting.backtester import Backtester
-from src.data.historical import HistoricalDataProvider
+from trading_rl_agent.backtesting.backtester import Backtester
+from trading_rl_agent.data.historical import HistoricalDataProvider
 from datetime import datetime
 
 # Load historical data
@@ -316,9 +309,9 @@ backtester.generate_report(results, 'backtest_report.html')
 ## Advanced Configuration Example
 
 ```python
-from src.agents.configs import SACConfig
-from src.optimization.config import OptimizationConfig
-from src.data.config import DataConfig
+from trading_rl_agent.agents.configs import SACConfig
+from trading_rl_agent.optimization.config import OptimizationConfig
+from trading_rl_agent.data.config import DataConfig
 
 # Advanced SAC configuration
 sac_config = SACConfig(

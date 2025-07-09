@@ -8,7 +8,7 @@ import yaml
 
 from finrl.meta.data_processor import DataProcessor
 from finrl.meta.preprocessor.preprocessors import FeatureEngineer
-from src.data.synthetic import generate_gbm_prices
+from trading_rl_agent.data.synthetic import generate_gbm_prices
 
 
 def load_real_data(config_path: str) -> pd.DataFrame:

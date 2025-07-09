@@ -26,13 +26,12 @@ Test Execution Time: ~45 seconds
 
 ```
 tests/
-├── test_agents/              # RL agent testing
-├── test_data/               # Data processing tests
-├── test_envs/               # Trading environment tests
-├── test_models/             # CNN+LSTM model tests
-├── test_optimization/       # Hyperparameter optimization tests
-├── test_utils/              # Utility function tests
-└── conftest.py             # Shared fixtures
+├── unit/          # isolated unit tests
+├── integration/   # multi-component integration tests
+├── performance/   # benchmarks and optimization
+├── smoke/         # minimal smoke tests for CI
+├── conftest.py    # shared fixtures
+└── conftest_extra.py
 ```
 
 ## 🚀 Running Tests
@@ -44,8 +43,10 @@ tests/
 pytest
 
 # Run specific test categories
-pytest tests/test_agents/
-pytest tests/test_models/
+pytest -m unit
+pytest -m integration
+pytest -m performance
+pytest -m smoke
 
 # Run with coverage
 pytest --cov=src --cov-report=html
@@ -70,7 +71,7 @@ pytest --cov=src --cov-report=html
 
 ```ini
 [tool:pytest]
-testpaths = tests
+testpaths = tests/unit tests/integration tests/performance tests/smoke
 python_files = test_*.py
 python_classes = Test*
 python_functions = test_*
