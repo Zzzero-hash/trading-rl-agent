@@ -9,7 +9,7 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
-from src.data.live import fetch_live_data
+from trading_rl_agent.data.live import fetch_live_data
 
 
 class TestFetchLiveData:

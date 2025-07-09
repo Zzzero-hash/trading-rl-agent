@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.data_pipeline import PipelineConfig, generate_features, split_by_date
+from trading_rl_agent.data_pipeline import PipelineConfig, generate_features, split_by_date
 
 
 def test_sma_computation():

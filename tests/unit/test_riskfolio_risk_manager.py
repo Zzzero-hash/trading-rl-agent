@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.risk import RiskfolioConfig, RiskfolioRiskManager
+from trading_rl_agent.risk import RiskfolioConfig, RiskfolioRiskManager
 
 
 @pytest.fixture

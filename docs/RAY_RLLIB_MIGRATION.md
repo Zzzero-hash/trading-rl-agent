@@ -61,7 +61,7 @@ config.training(
 ### 3. Hyperparameter Optimization
 
 ```python
-from src.optimization.rl_optimization import optimize_sac_hyperparams
+from trading_rl_agent.optimization.rl_optimization import optimize_sac_hyperparams
 
 results = optimize_sac_hyperparams(env_config, num_samples=20)
 ```
@@ -78,8 +78,8 @@ While TD3 is no longer available in Ray RLlib, this project maintains a **custom
 ### Usage of Custom TD3
 
 ```python
-from src.agents.td3_agent import TD3Agent
-from src.agents.configs import TD3Config
+from trading_rl_agent.agents.td3_agent import TD3Agent
+from trading_rl_agent.agents.configs import TD3Config
 
 # Create custom TD3 agent
 config = TD3Config(

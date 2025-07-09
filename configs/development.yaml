@@ -1,0 +1,18 @@
+environment: development
+debug: true
+
+data:
+  data_path: data/dev.csv
+  feature_window: 30
+  real_time_enabled: false
+
+model:
+  model_save_path: models/dev_model.pth
+
+agent:
+  agent_type: sac
+  total_timesteps: 10000
+
+monitoring:
+  log_level: DEBUG
+  mlflow_enabled: false

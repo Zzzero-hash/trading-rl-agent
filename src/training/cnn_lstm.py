@@ -5,7 +5,7 @@ sentiment analysis and technical indicators. It supports both classification
 and regression tasks for market prediction.
 
 Example usage:
->>> from src.training.cnn_lstm import CNNLSTMTrainer, TrainingConfig
+>>> from trading_rl_agent.training.cnn_lstm import CNNLSTMTrainer, TrainingConfig
 >>> trainer = CNNLSTMTrainer()
 >>> model = trainer.train_from_config('src/configs/training/cnn_lstm_train.yaml')
 """
@@ -27,9 +27,9 @@ import pytorch_lightning as pl
 from pytorch_forecasting import TimeSeriesDataSet
 import yaml
 
-from src.data.features import generate_features
-from src.data.sentiment import SentimentAnalyzer, SentimentConfig
-from src.models.cnn_lstm import CNNLSTMModel
+from trading_rl_agent.data.features import generate_features
+from trading_rl_agent.data.sentiment import SentimentAnalyzer, SentimentConfig
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 
 
 # Define a simple load_data function if not available
@@ -528,34 +528,11 @@ class CNNLSTMTrainer:
 # Example training configuration
 def create_example_config() -> str:
     """Create an example training configuration file."""
-    config = {
-        "data": {
-            "source": {"type": "csv", "path": "data/sample_data.csv"},
-            "symbols": ["AAPL", "GOOGL", "TSLA"],
-        },
-        "training": {
-            "sequence_length": 60,
-            "prediction_horizon": 1,
-            "learning_rate": 0.001,
-            "batch_size": 32,
-            "epochs": 100,
-            "include_sentiment": True,
-            "use_attention": True,
-            "model_config": {
-                "cnn_filters": [64, 128],
-                "cnn_kernel_sizes": [3, 5],
-                "lstm_units": 256,
-                "dropout": 0.2,
-            },
-        },
-    }
-
+    config_mgr = ConfigManager()
+    cfg = config_mgr.get_config()
     config_path = "src/configs/training/cnn_lstm_train.yaml"
     os.makedirs(os.path.dirname(config_path), exist_ok=True)
-
-    with open(config_path, "w") as f:
-        yaml.safe_dump(config, f, default_flow_style=False)
-
+    config_mgr.save_config(cfg, config_path)
     return config_path
 
 

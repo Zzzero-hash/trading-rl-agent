@@ -43,10 +43,11 @@ optuna>=3.0.0,<4.0.0         # Hyperparameter optimization
 feedparser>=6.0.0,<7.0.0    # RSS feed parsing for news sentiment
 empyrical>=0.5.3
 vaderSentiment>=3.3.2
+nltk>=3.8,<4.0.0
 typer[all]>=0.9.0
 
 # Add missing dependencies for web requests, HTML parsing, and system monitoring
-requests>=2.28.0,<3.0.0  # HTTP requests for sentiment and data fetching
+requests>=2.32.4  # HTTP requests for sentiment and data fetching
 beautifulsoup4>=4.11.0,<5.0.0  # HTML parsing for sentiment scraping
 psutil>=5.9.0,<6.0
 backtrader>=1.9.78
@@ -62,7 +63,10 @@ ipython>=8.10.0  # avoid CVE-2023-**; latest upstream is 9.4.0
 finrl>=0.3.7
 alpaca-py>=0.4.0
 alpaca-trade-api>=2.3.0,<3.1.1
+alpha_vantage>=2.3.1
 ccxt>=1.66.32
 stockstats>=0.4.0
 # Using pandas_ta and ta libraries for technical analysis
+aiohttp>=3.10.11 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
 zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability

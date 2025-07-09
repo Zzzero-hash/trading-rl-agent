@@ -5,7 +5,7 @@ import pytest
 import ray
 import torch
 
-from src.supervised_model import (
+from trading_rl_agent.supervised_model import (
     ModelConfig,
     TrainingConfig,
     TrendPredictor,
@@ -15,7 +15,7 @@ from src.supervised_model import (
     save_model,
     select_best_model,
 )
-from src.supervised_model import train_supervised  # Use Ray remote version
+from trading_rl_agent.supervised_model import train_supervised  # Use Ray remote version
 
 # Configure logging
 logging.basicConfig(

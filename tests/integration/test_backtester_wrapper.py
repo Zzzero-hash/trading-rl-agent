@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from src.backtesting import Backtester
+from trading_rl_agent.backtesting import Backtester
 
 
 def test_backtester_runs_basic_strategy():

@@ -1,0 +1,18 @@
+environment: staging
+debug: false
+
+data:
+  data_path: data/stage.csv
+  feature_window: 40
+  real_time_enabled: true
+
+model:
+  model_save_path: models/stage_model.pth
+
+agent:
+  agent_type: sac
+  total_timesteps: 500000
+
+monitoring:
+  log_level: INFO
+  mlflow_enabled: true

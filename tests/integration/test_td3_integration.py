@@ -7,9 +7,9 @@ import numpy as np
 import pytest
 import torch
 
-from src.agents.configs import TD3Config
-from src.agents.td3_agent import TD3Agent
-from src.envs.finrl_trading_env import TradingEnv
+from trading_rl_agent.agents.configs import TD3Config
+from trading_rl_agent.agents.td3_agent import TD3Agent
+from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 
 pytestmark = pytest.mark.integration
 
@@ -17,7 +17,7 @@ pytestmark = pytest.mark.integration
 @pytest.fixture
 def td3_config():
     """Create TD3 config optimized for integration testing."""
-    from src.agents.configs import TD3Config
+    from trading_rl_agent.agents.configs import TD3Config
 
     return TD3Config(
         learning_rate=1e-3,

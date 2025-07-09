@@ -2,12 +2,17 @@
 
 Production-ready hybrid CNN+LSTM + Reinforcement Learning system for algorithmic trading.
 
+The restructured codebase introduces a **YAML-driven configuration system** via
+`ConfigManager` and a parallelized `data.pipeline` for fetching and processing
+market data.
+
 ## 📚 Core Documentation
 
 ### Quick Start
 
 - [`getting_started.md`](getting_started.md) - Installation and basic usage
 - [`EVALUATION_GUIDE.md`](EVALUATION_GUIDE.md) - Agent evaluation and performance analysis
+- [`performance.md`](performance.md) - Benchmark results for data pipelines and training
 
 ### Architecture & Development
 
@@ -99,11 +104,12 @@ pip install -r requirements-test.txt
 ## 🚀 Quick Setup
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Install core dependencies
+pip install -r requirements-production.txt
 
-# Generate data via FinRL
-python ../finrl_data_loader.py --config ../configs/finrl_real_data.yaml
+# Generate sample data using the new pipeline
+python -m trading_rl_agent.data.pipeline \
+    --config src/configs/data/pipeline.yaml
 
 # Run comprehensive tests
 pytest tests/ -v

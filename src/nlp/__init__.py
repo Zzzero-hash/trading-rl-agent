@@ -16,7 +16,7 @@ from __future__ import annotations
 import datetime
 from typing import Dict
 
-from src.data.sentiment import (
+from trading_rl_agent.data.sentiment import (
     NewsSentimentProvider,
     SentimentData,
     SocialSentimentProvider,
