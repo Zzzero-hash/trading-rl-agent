@@ -25,6 +25,14 @@ class MarketMicrostructure:
 
     def add_microstructure_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Add basic microstructure features to ``df``."""
+        required_columns = ["high", "low", "close", "open", "volume"]
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {missing_columns}")
+
+        if df.empty:
+            return df.copy()
+
         result = df.copy()
         result["hl_spread"] = (
             result["high"].astype(float) - result["low"].astype(float)
