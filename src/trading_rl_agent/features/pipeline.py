@@ -35,14 +35,13 @@ class FeaturePipeline:
         cross_df: Optional[pd.DataFrame] = None,
         sentiment: Optional[pd.Series] = None,
     ) -> pd.DataFrame:
-        """Apply all feature generators sequentially."""
-        result = df.copy()
-        result = self.technical.calculate_all_indicators(result)
-        result = self.microstructure.add_microstructure_features(result)
+        """Apply all feature generators sequentially. Modifies the input DataFrame in place."""
+        self.technical.calculate_all_indicators(df)
+        self.microstructure.add_microstructure_features(df)
         if cross_df is not None:
-            result = self.cross_asset.add_cross_asset_features(result, cross_df)
-        result = self.alternative.add_alternative_features(result, sentiment)
-        return result
+            self.cross_asset.add_cross_asset_features(df, cross_df)
+        self.alternative.add_alternative_features(df, sentiment)
+        return df
 
     def get_feature_names(self) -> list[str]:
         """Return names of all features that can be generated."""
