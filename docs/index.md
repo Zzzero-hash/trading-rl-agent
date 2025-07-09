@@ -35,6 +35,16 @@ PRE_COMMIT_SETUP
 api_reference
 ```
 
+```{toctree}
+:maxdepth: 2
+:caption: Additional Guides:
+
+MIGRATION_GUIDE
+ROADMAP
+CLEANUP_PLAN
+COMPREHENSIVE_TESTING_FRAMEWORK
+```
+
 ## Quick Start
 
 ```python
