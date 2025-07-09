@@ -127,3 +127,7 @@ The following tasks are tracked from the codebase TODOs:
 
 - [x] Migrate training scripts into `src/training` and integrate Ray Tune sweeps.
 - [ ] Provide sentiment and risk scoring APIs in `src/nlp`.
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

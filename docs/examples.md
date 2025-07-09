@@ -387,3 +387,7 @@ opt_config = OptimizationConfig(
     checkpoint_frequency=10
 )
 ```
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

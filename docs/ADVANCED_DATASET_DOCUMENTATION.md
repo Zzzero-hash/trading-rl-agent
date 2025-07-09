@@ -343,3 +343,7 @@ print(results["best_config"])
 The `custom_search_space` and `ray_resources_per_trial` parameters let you
 override default hyperparameters and specify CPU/GPU allocation for each Ray
 trial.
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

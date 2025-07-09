@@ -669,3 +669,7 @@ This comprehensive testing framework provides robust validation for the trading 
 - **Developer Tools**: Flexible test runner and debugging support
 
 The framework ensures code quality, reliability, and maintainability while supporting rapid development and deployment of trading RL agents.
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).
