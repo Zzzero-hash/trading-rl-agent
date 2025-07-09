@@ -501,3 +501,7 @@ sed -i 's/from src\./from trading_rl_agent\./g' tests/**/*.py
 **💡 Pro Tip**: Start with paper trading when testing the new features. The production-grade architecture includes comprehensive safety mechanisms, but it's always best to validate thoroughly before using real capital.
 
 **🚀 Ready to migrate to production-grade trading systems!**
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

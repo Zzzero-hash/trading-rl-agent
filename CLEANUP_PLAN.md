@@ -278,3 +278,7 @@ This comprehensive plan builds upon our proven hybrid CNN+LSTM + RL foundation t
 - **Storage**: Optimized with organized experiment outputs
 
 **Repository is now Phase 3 ready with zero technical debt and a solid foundation for multi-asset portfolio development.**
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

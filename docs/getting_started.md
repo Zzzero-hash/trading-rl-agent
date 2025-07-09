@@ -198,3 +198,7 @@ The evaluation metrics will be saved in `outputs/eval.json`.
 - **Issues**: GitHub issue tracker for bug reports and feature requests
 
 **Current Achievement**: ~733 tests defined with sample data. Larger datasets are optional. Automated quality checks ensure consistency. Metrics are illustrative ✨
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

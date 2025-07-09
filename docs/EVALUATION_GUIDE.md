@@ -272,3 +272,7 @@ debug_results = debugger.evaluate_with_diagnostics(
 See [`evaluation_example.ipynb`](../evaluation_example.ipynb) for a brief
 walkthrough of running the evaluation script inside a Jupyter notebook and
 visualizing the resulting metrics.
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).
