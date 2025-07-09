@@ -46,6 +46,7 @@ __all__ = [
 _OPTIONAL_IMPORTS = {
     "Trainer": (".agents.trainer", "Trainer"),
     "WeightedEnsembleAgent": (".agents.policy_utils", "WeightedEnsembleAgent"),
+    "EnsembleAgent": (".agents.policy_utils", "EnsembleAgent"),
     "CallablePolicy": (".agents.policy_utils", "CallablePolicy"),
     "weighted_policy_mapping": (".agents.policy_utils", "weighted_policy_mapping"),
     "PortfolioManager": (".portfolio.manager", "PortfolioManager"),
