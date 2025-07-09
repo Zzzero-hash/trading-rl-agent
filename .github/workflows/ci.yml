@@ -30,6 +30,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest pytest-cov flake8
         pip install -e .
+    - name: Build documentation
+      run: make -C docs html
+    - name: Link check documentation
+      run: make -C docs linkcheck
     - name: Install pre-commit
       run: pip install pre-commit
 
