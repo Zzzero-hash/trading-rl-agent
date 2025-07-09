@@ -146,3 +146,7 @@ agent = TD3Agent(config, state_dim=10, action_dim=3)
 ---
 
 **Note**: This migration ensures compatibility with Ray 2.38.0+ while maintaining all the continuous control capabilities needed for trading applications.
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

@@ -280,3 +280,7 @@ This hybrid architecture successfully demonstrates how supervised learning can e
   - Can ensemble any number of RLlib-compatible policies.
 
 The agents consume observations from `TradingEnv`, take actions, and optionally contribute to ensemble decisions. This modular setup makes it straightforward to swap out or update individual components while keeping the overall pipeline intact.
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

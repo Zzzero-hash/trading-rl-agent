@@ -78,3 +78,7 @@ portfolio.start_live_trading(agent)
 - ✅ **Ray RLlib 2.38.0+** compatibility (SAC with **FinRL** integration; custom TD3 retained for experimentation)
 - ✅ **Automated quality checks** integrated
   _Metrics are illustrative and rely on sample data._
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

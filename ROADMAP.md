@@ -178,3 +178,7 @@ All core functionality working - environment testing framework complete!
 ---
 
 **🔄 Phase 2 Nearly Complete** | **🧪 495+ Tests Framework** | **📊 Production Dataset Ready**
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).
