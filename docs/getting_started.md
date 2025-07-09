@@ -150,9 +150,9 @@ Try the quick demo script to see the pieces working together:
 python scripts/train_sample.py
 ```
 
-This command loads a sample dataset (or generates synthetic data), builds a
-`FeaturePipeline`, trains a lightweight `PPOAgent` for a few steps and writes
-two files under `./outputs/`:
+This command loads the bundled dataset from `samples/sample_data.csv`, builds a
+`FeaturePipeline`, trains a lightweight `PPOAgent` for a few steps and writes two
+files under `./outputs/`:
 
 - `sample_data.csv` – the processed dataset used for training
 - `ppo_agent_checkpoint.zip` – the saved agent checkpoint
