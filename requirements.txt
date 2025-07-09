@@ -66,7 +66,3 @@ alpaca-trade-api>=2.3.0,<3.1.1
 alpha_vantage>=2.3.1
 ccxt>=1.66.32
 stockstats>=0.4.0
-
-# Using pandas_ta and ta libraries for technical analysis
-aiohttp>=3.10.11 # not directly required, pinned by Snyk to avoid a vulnerability
-zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
