@@ -47,6 +47,15 @@ if "nltk.sentiment.vader" not in sys.modules:
 
     class DummySIA:
         def polarity_scores(self, text):
+            """
+            Return a neutral sentiment score for the given text.
+            
+            Parameters:
+                text (str): The input text to analyze.
+            
+            Returns:
+                dict: A dictionary with a single key 'compound' set to 0.0, indicating neutral sentiment.
+            """
             return {"compound": 0.0}
 
     dummy.SentimentIntensityAnalyzer = DummySIA
@@ -69,6 +78,12 @@ pytestmark = pytest.mark.unit
 
 
 def _sample_returns():
+    """
+    Generate reproducible sample daily return series for two assets over 60 days.
+    
+    Returns:
+        dict: A dictionary with keys "A" and "B", each mapping to a pandas Series of simulated daily returns for 60 consecutive dates.
+    """
     np.random.seed(42)  # Seed the random number generator for reproducibility
     dates = pd.date_range("2023-01-01", periods=60)
     a = pd.Series(np.random.normal(0, 0.01, len(dates)), index=dates)
@@ -77,6 +92,11 @@ def _sample_returns():
 
 
 def test_var_and_cvar():
+    """
+    Test that RiskManager calculates portfolio VaR and CVaR correctly for a sample portfolio.
+    
+    Asserts that VaR is non-negative, CVaR is at least as large as VaR, CVaR exceeds VaR by at least 10%, and VaR falls within a reasonable daily range for the provided synthetic returns.
+    """
     rm = RiskManager()
     rm.update_returns_data(_sample_returns())
     weights = {"A": 0.5, "B": 0.5}
@@ -91,6 +111,11 @@ def test_var_and_cvar():
 
 
 def test_correlation_and_concentration():
+    """
+    Test the calculation of correlation and concentration risk metrics in the RiskManager.
+    
+    Verifies that correlation and concentration risks are within valid bounds for typical and edge-case portfolio weights, including maximum and minimum concentration scenarios.
+    """
     rm = RiskManager()
     data = _sample_returns()
     rm.update_returns_data(data)
@@ -112,6 +137,11 @@ def test_correlation_and_concentration():
 
 
 def test_kelly_position_size():
+    """
+    Test the Kelly position size calculation of the RiskManager for various scenarios.
+    
+    Verifies that the calculated position size is within expected bounds for profitable, unprofitable, and high win rate scenarios, and that the method adheres to the properties of the Kelly formula.
+    """
     rm = RiskManager()
     # Test with profitable scenario (positive expected return)
     size = rm.calculate_kelly_position_size(0.1, 0.6, 0.05, 0.02)

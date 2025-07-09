@@ -42,6 +42,15 @@ if "nltk.sentiment.vader" not in sys.modules:
     dummy = types.ModuleType("nltk.sentiment.vader")
     class DummySIA:
         def polarity_scores(self, text):
+            """
+            Return a neutral sentiment score for the given text.
+            
+            Parameters:
+                text (str): The input text to analyze.
+            
+            Returns:
+                dict: A dictionary with a single key "compound" set to 0.0, indicating neutral sentiment.
+            """
             return {"compound": 0.0}
     dummy.SentimentIntensityAnalyzer = DummySIA
     sys.modules["nltk.sentiment.vader"] = dummy
@@ -58,10 +67,16 @@ pytestmark = pytest.mark.unit
 
 
 def test_execution_package_missing():
+    """
+    Test that importing 'trading_rl_agent.execution' raises a ModuleNotFoundError.
+    """
     with pytest.raises(ModuleNotFoundError):
         import trading_rl_agent.execution  # noqa: F401
 
 
 def test_monitoring_package_missing():
+    """
+    Test that importing the 'trading_rl_agent.monitoring' subpackage raises a ModuleNotFoundError.
+    """
     with pytest.raises(ModuleNotFoundError):
         import trading_rl_agent.monitoring  # noqa: F401

@@ -47,6 +47,15 @@ if "nltk.sentiment.vader" not in sys.modules:
 
     class DummySIA:
         def polarity_scores(self, text):
+            """
+            Return a dictionary with a neutral compound sentiment score for the given text.
+            
+            Parameters:
+                text (str): The input text to analyze.
+            
+            Returns:
+                dict: A dictionary containing a single key 'compound' with a value of 0.0.
+            """
             return {"compound": 0.0}
 
     dummy.SentimentIntensityAnalyzer = DummySIA
