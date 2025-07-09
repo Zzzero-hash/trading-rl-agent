@@ -2,16 +2,20 @@
 """Unified CLI for Trading RL System using Typer."""
 import ast
 import importlib
-from typing import List
+from pathlib import Path
+import sys
+
+# Add src to Python path
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 import pandas as pd
 import typer
 
+from backtesting.backtester import Backtester
 from evaluate_agent import main as eval_main
 from finrl_data_loader import load_real_data, load_synthetic_data
-from trading_rl_agent.backtesting import Backtester
-from trading_rl_agent.training.cnn_lstm import CNNLSTMTrainer
-from trading_rl_agent.training.rl import main as rl_main
+from training.cnn_lstm import CNNLSTMTrainer
+from training.rl import main as rl_main
 
 # Module-level default options to avoid function calls in defaults
 GEN_DATA_CONFIG = typer.Option(..., help="Path to data config YAML")
@@ -124,7 +128,7 @@ def serve(
     try:
         from ray import serve as ray_serve
 
-        from trading_rl_agent.serve_deployment import deployment_graph
+        from serve_deployment import deployment_graph
     except ImportError:
         typer.secho(
             "Ray Serve is not installed or src.serve_deployment missing.",
