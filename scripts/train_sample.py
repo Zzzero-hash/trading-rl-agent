@@ -57,14 +57,15 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 DATA_PATH = OUTPUT_DIR / "sample_data.csv"
 CHECKPOINT_PATH = OUTPUT_DIR / "ppo_agent_checkpoint.zip"
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 def load_data() -> pd.DataFrame:
     """Load bundled sample dataset or generate synthetic data."""
     packaged = Path(__file__).resolve().parents[1] / "data" / "sample_data.csv"
     if packaged.exists():
-        print(f"Loading bundled dataset from {packaged}")
+        logging.info(f"Loading bundled dataset from {packaged}")
         return pd.read_csv(packaged)
-    print("Bundled sample dataset not found, generating synthetic data.")
+    logging.info("Bundled sample dataset not found, generating synthetic data.")
     return fetch_synthetic_data(n_samples=120)
 
 
