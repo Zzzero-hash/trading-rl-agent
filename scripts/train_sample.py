@@ -1,8 +1,10 @@
-import sys
-import types
 import logging
 from pathlib import Path
+import sys
+import types
+
 import pandas as pd
+
 
 # ---------------------------------------------------------------------------
 # Optional dependency stubs
@@ -44,23 +46,26 @@ def stub_optional_dependencies():
         dummy.SentimentIntensityAnalyzer = DummySIA
         sys.modules["nltk.sentiment.vader"] = dummy
 
+
 stub_optional_dependencies()
 # ---------------------------------------------------------------------------
 # Add src to Python path so the package is importable without installation
 # ---------------------------------------------------------------------------
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from trading_rl_agent import PPOAgent
 from trading_rl_agent.data.synthetic import fetch_synthetic_data
 from trading_rl_agent.features import FeaturePipeline
-from trading_rl_agent import PPOAgent
-
 
 OUTPUT_DIR = Path("./outputs")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 DATA_PATH = OUTPUT_DIR / "sample_data.csv"
 CHECKPOINT_PATH = OUTPUT_DIR / "ppo_agent_checkpoint.zip"
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 def load_data() -> pd.DataFrame:
     """Load bundled sample dataset or generate synthetic data."""

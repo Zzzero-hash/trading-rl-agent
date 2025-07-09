@@ -23,6 +23,7 @@ except ImportError:  # pragma: no cover - Ray optional
     serve = None
 
 from agents.sac_agent import SACAgent
+
 from configs.hyperparameters import get_agent_config
 
 if RAY_AVAILABLE and serve:

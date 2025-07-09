@@ -48,7 +48,9 @@ def load_ccxt(
     since = ex.parse8601(f"{start}T00:00:00Z")
     ohlcv = ex.fetch_ohlcv(symbol, timeframe=tf, since=since)
 
-    df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
+    df = pd.DataFrame(
+        ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"]
+    )
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     if end:
         df = df[df["timestamp"] <= pd.to_datetime(end)]

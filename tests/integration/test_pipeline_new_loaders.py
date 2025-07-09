@@ -1,10 +1,11 @@
+from pathlib import Path
+import sys
+import types
+
 import pandas as pd
+import pytest
 import ray
 import yaml
-import pytest
-import types
-import sys
-from pathlib import Path
 
 if "structlog" not in sys.modules:
     stub = types.SimpleNamespace(
@@ -47,7 +48,11 @@ from pathlib import Path
 
 spec = importlib.util.spec_from_file_location(
     "trading_rl_agent.data.pipeline",
-    Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "pipeline.py",
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "trading_rl_agent"
+    / "data"
+    / "pipeline.py",
 )
 pipeline = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pipeline)  # type: ignore
@@ -57,14 +62,16 @@ run_pipeline = pipeline.run_pipeline
 
 @pytest.fixture(autouse=True)
 def dummy_loaders(monkeypatch):
-    df = pd.DataFrame({
-        "timestamp": [pd.Timestamp("2024-01-01")],
-        "open":      [1],
-        "high":      [2],
-        "low":       [3],
-        "close":     [4],
-        "volume":    [5],
-    })
+    df = pd.DataFrame(
+        {
+            "timestamp": [pd.Timestamp("2024-01-01")],
+            "open": [1],
+            "high": [2],
+            "low": [3],
+            "close": [4],
+            "volume": [5],
+        }
+    )
     monkeypatch.setattr(
         pipeline,
         "load_yfinance",

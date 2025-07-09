@@ -232,7 +232,9 @@ class TestHyperparamOptimization:
         from trading_rl_agent.optimization.cnn_lstm_optimization import (
             get_default_search_space,
         )
-        from trading_rl_agent.optimization.rl_optimization import _get_default_sac_search_space
+        from trading_rl_agent.optimization.rl_optimization import (
+            _get_default_sac_search_space,
+        )
 
         # Test CNN-LSTM search space
         cnn_lstm_space = get_default_search_space()
@@ -245,7 +247,6 @@ class TestHyperparamOptimization:
         sac_space = _get_default_sac_search_space()
         assert isinstance(sac_space, dict)
         assert "twin_q" in sac_space
-
 
 
 class TestHyperparamOptimizationEdgeCases:

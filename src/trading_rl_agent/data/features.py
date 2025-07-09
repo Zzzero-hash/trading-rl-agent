@@ -73,9 +73,7 @@ def compute_stochastic(
 
 def compute_adx(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
     """Compute Average Directional Index (ADX) using pandas-ta."""
-    adx = ta.adx(
-        high=df["high"], low=df["low"], close=df["close"], length=timeperiod
-    )
+    adx = ta.adx(high=df["high"], low=df["low"], close=df["close"], length=timeperiod)
     df[f"adx_{timeperiod}"] = adx.iloc[:, 0].fillna(0.0)
     return df
 

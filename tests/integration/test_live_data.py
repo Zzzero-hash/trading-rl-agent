@@ -383,7 +383,6 @@ class TestFetchLiveDataDataTypes:
             assert (result["volume"] >= 0).all()
 
 
-
 class TestFetchLiveDataCompatibility:
     """Test compatibility with other data fetching functions."""
 

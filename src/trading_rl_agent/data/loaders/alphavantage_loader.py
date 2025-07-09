@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -18,7 +18,7 @@ def load_alphavantage(
     start: str,
     end: str,
     interval: str = "day",
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
 ) -> pd.DataFrame:
     """Load OHLCV data from Alpha Vantage.
 
@@ -45,16 +45,20 @@ def load_alphavantage(
 
     ts = TimeSeries(key=api_key, output_format="pandas")
 
-    if interval == "day":
     try:
+        # Fetch raw data (tuple assumed: DataFrame, metadata)
         if interval == "day":
-            data, _ = ts.get_daily(symbol, outputsize="full")
+            raw: Any = ts.get_daily(symbol, outputsize="full")  # type: ignore
         else:
             intr_map = {"hour": "60min", "minute": "1min"}
             iv = intr_map.get(interval, interval)
-            data, _ = ts.get_intraday(symbol, interval=iv, outputsize="full")
+            raw: Any = ts.get_intraday(symbol, interval=iv, outputsize="full")  # type: ignore
+        # Assume first element is DataFrame
+        data = raw[0]
     except Exception as e:
-        raise RuntimeError(f"Failed to fetch data from Alpha Vantage for symbol {symbol}: {e}")
+        raise RuntimeError(
+            f"Failed to fetch data from Alpha Vantage for symbol {symbol}: {e}"
+        )
 
     # Columns like '1. open', etc -> take last part after space
     data.rename(columns=lambda c: c.split(" ")[-1], inplace=True)
@@ -62,7 +66,9 @@ def load_alphavantage(
     data.reset_index(inplace=True)
 
     data["timestamp"] = pd.to_datetime(data["timestamp"])
-    mask = (data["timestamp"] >= pd.to_datetime(start)) & (data["timestamp"] <= pd.to_datetime(end))
+    mask = (data["timestamp"] >= pd.to_datetime(start)) & (
+        data["timestamp"] <= pd.to_datetime(end)
+    )
     data = data.loc[mask]
 
     data = data[["timestamp", "open", "high", "low", "close", "volume"]]

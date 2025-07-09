@@ -6,13 +6,15 @@ from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 
 
 def make_env(tmp_path, reward_type="profit"):
-    df = pd.DataFrame({
-        "open": [1, 2, 3, 4],
-        "high": [1, 2, 3, 4],
-        "low": [1, 2, 3, 4],
-        "close": [1, 2, 3, 4],
-        "volume": [1, 1, 1, 1],
-    })
+    df = pd.DataFrame(
+        {
+            "open": [1, 2, 3, 4],
+            "high": [1, 2, 3, 4],
+            "low": [1, 2, 3, 4],
+            "close": [1, 2, 3, 4],
+            "volume": [1, 1, 1, 1],
+        }
+    )
     csv = tmp_path / "prices.csv"
     df.to_csv(csv, index=False)
     cfg = {"dataset_paths": [str(csv)], "reward_type": reward_type}
@@ -48,8 +50,11 @@ def test_risk_adjusted_reward(tmp_path):
     _, r2, *_ = env.step(np.zeros(env.action_space.shape))
     assert isinstance(r2, float)
 
+
 def test_invalid_reward_type(tmp_path):
-    df = pd.DataFrame({"open": [1], "high": [1], "low": [1], "close": [1], "volume": [1]})
+    df = pd.DataFrame(
+        {"open": [1], "high": [1], "low": [1], "close": [1], "volume": [1]}
+    )
     csv = tmp_path / "d.csv"
     df.to_csv(csv, index=False)
     cfg = {"dataset_paths": [str(csv)], "reward_type": "unknown"}

@@ -262,8 +262,6 @@ class TestEnvironmentEdgeCases:
             # Acceptable to raise an error for extreme data
             assert "inf" in str(e).lower() or "nan" in str(e).lower()
 
-
-
         # Rewards should be numeric
         assert isinstance(trading_result[1], (int, float))
         assert isinstance(trader_result[1], (int, float))

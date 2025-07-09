@@ -66,7 +66,6 @@ portfolio = PortfolioManager(initial_capital=100000)
 portfolio.start_live_trading(agent)
 ```
 
-
 ## ⚙️ Configuration
 
 The hybrid system uses environment-specific configurations:

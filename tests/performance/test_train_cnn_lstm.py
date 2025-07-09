@@ -11,15 +11,14 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-
 import yaml
 
 from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 from trading_rl_agent.training.cnn_lstm import (
     CNNLSTMTrainer,
+    TimeSeriesDataModule,
     TrainingConfig,
     create_example_config,
-    TimeSeriesDataModule,
 )
 
 pytestmark = pytest.mark.integration
@@ -187,7 +186,6 @@ class TestCNNLSTMTrainer:
         assert hasattr(self.trainer.model, "model")
         assert isinstance(self.trainer.model.model, CNNLSTMModel)
         assert self.trainer.model.model.input_dim == input_dim
-
 
     @patch("torch.save")
     def test_save_model(self, mock_torch_save):

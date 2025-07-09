@@ -1,8 +1,9 @@
 import os
-import pandas as pd
-import pytest
 import sys
 import types
+
+import pandas as pd
+import pytest
 
 if "structlog" not in sys.modules:
     stub = types.SimpleNamespace(
@@ -32,14 +33,24 @@ if "structlog" not in sys.modules:
 import importlib.util
 from pathlib import Path
 
-base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "loaders"
+base = (
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "trading_rl_agent"
+    / "data"
+    / "loaders"
+)
 
-spec_yf = importlib.util.spec_from_file_location("load_yfinance", base / "yfinance_loader.py")
+spec_yf = importlib.util.spec_from_file_location(
+    "load_yfinance", base / "yfinance_loader.py"
+)
 yf_mod = importlib.util.module_from_spec(spec_yf)
 spec_yf.loader.exec_module(yf_mod)  # type: ignore
 load_yfinance = yf_mod.load_yfinance
 
-spec_av = importlib.util.spec_from_file_location("load_alphavantage", base / "alphavantage_loader.py")
+spec_av = importlib.util.spec_from_file_location(
+    "load_alphavantage", base / "alphavantage_loader.py"
+)
 av_mod = importlib.util.module_from_spec(spec_av)
 spec_av.loader.exec_module(av_mod)  # type: ignore
 load_alphavantage = av_mod.load_alphavantage
@@ -52,7 +63,9 @@ load_ccxt = ccxt_mod.load_ccxt
 pytestmark = [pytest.mark.integration, pytest.mark.network]
 
 
-@pytest.mark.skipif(load_yfinance.__globals__.get("yf") is None, reason="yfinance not installed")
+@pytest.mark.skipif(
+    load_yfinance.__globals__.get("yf") is None, reason="yfinance not installed"
+)
 def test_yfinance_loader_live():
     df = load_yfinance("AAPL", start="2023-01-01", end="2023-01-05", interval="day")
     assert isinstance(df, pd.DataFrame)
@@ -60,7 +73,10 @@ def test_yfinance_loader_live():
     assert {"timestamp", "open", "high", "low", "close", "volume"}.issubset(df.columns)
 
 
-@pytest.mark.skipif(load_alphavantage.__globals__.get("TimeSeries") is None, reason="alpha_vantage not installed")
+@pytest.mark.skipif(
+    load_alphavantage.__globals__.get("TimeSeries") is None,
+    reason="alpha_vantage not installed",
+)
 def test_alphavantage_loader_live(monkeypatch):
     monkeypatch.setenv("ALPHAVANTAGE_API_KEY", "demo")
     df = load_alphavantage("IBM", start="2023-01-01", end="2023-01-10", interval="day")
@@ -69,7 +85,9 @@ def test_alphavantage_loader_live(monkeypatch):
     assert {"timestamp", "open", "high", "low", "close", "volume"}.issubset(df.columns)
 
 
-@pytest.mark.skipif(load_ccxt.__globals__.get("ccxt") is None, reason="ccxt not installed")
+@pytest.mark.skipif(
+    load_ccxt.__globals__.get("ccxt") is None, reason="ccxt not installed"
+)
 def test_ccxt_loader_live():
     try:
         df = load_ccxt(

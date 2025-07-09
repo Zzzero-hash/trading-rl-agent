@@ -1,11 +1,11 @@
 """Unit tests for PPOAgent wrapper."""
 
-import sys
-from pathlib import Path
-import types
 import logging
 import os
+from pathlib import Path
+import sys
 import tempfile
+import types
 
 import numpy as np
 import pytest

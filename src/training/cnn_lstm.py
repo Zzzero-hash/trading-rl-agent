@@ -21,12 +21,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from dotenv import load_dotenv
 import numpy as np
 import pandas as pd
+from pytorch_forecasting import TimeSeriesDataSet
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import pytorch_lightning as pl
-from pytorch_forecasting import TimeSeriesDataSet
 import yaml
 
+from trading_rl_agent.core.config import ConfigManager
 from trading_rl_agent.data.features import generate_features
 from trading_rl_agent.data.sentiment import SentimentAnalyzer, SentimentConfig
 from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
@@ -97,7 +98,9 @@ class TrainingConfig:
 class TimeSeriesDataModule(pl.LightningDataModule):
     """Lightning DataModule using ``TimeSeriesDataSet`` for sequence generation."""
 
-    def __init__(self, features: np.ndarray, targets: np.ndarray, config: TrainingConfig):
+    def __init__(
+        self, features: np.ndarray, targets: np.ndarray, config: TrainingConfig
+    ):
         super().__init__()
         self.features = features
         self.targets = targets
@@ -157,14 +160,23 @@ class TimeSeriesDataModule(pl.LightningDataModule):
 class CNNLSTMLightning(pl.LightningModule):
     """Lightning module wrapping :class:`CNNLSTMModel`."""
 
-    def __init__(self, input_dim: int, config: TrainingConfig, model_cfg: Optional[dict[str, Any]] = None):
+    def __init__(
+        self,
+        input_dim: int,
+        config: TrainingConfig,
+        model_cfg: Optional[dict[str, Any]] = None,
+    ):
         super().__init__()
-        cfg = model_cfg or config.model_config or {
-            "cnn_filters": [64, 128],
-            "cnn_kernel_sizes": [3, 5],
-            "lstm_units": 256,
-            "dropout": 0.2,
-        }
+        cfg = (
+            model_cfg
+            or config.model_config
+            or {
+                "cnn_filters": [64, 128],
+                "cnn_kernel_sizes": [3, 5],
+                "lstm_units": 256,
+                "dropout": 0.2,
+            }
+        )
         self.model = CNNLSTMModel(
             input_dim=input_dim,
             output_size=cfg.get("output_size", 3),
@@ -492,9 +504,7 @@ class CNNLSTMTrainer:
 
         logger.info(f"Model saved to {self.config.model_save_path}")
 
-    def train_from_config(
-        self, config_path: str
-    ) -> CNNLSTMModel:
+    def train_from_config(self, config_path: str) -> CNNLSTMModel:
         """Train model from YAML configuration file."""
         with open(config_path) as f:
             config_dict = yaml.safe_load(f)

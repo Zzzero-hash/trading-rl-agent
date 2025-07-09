@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence, Dict
+from typing import Dict
 
 import numpy as np
 from riskfolio import RiskFunctions
@@ -21,7 +22,7 @@ class RiskfolioRiskManager:
     def __init__(self, config: RiskfolioConfig) -> None:
         self.config = config
 
-    def calculate_risk(self, returns: Sequence[float]) -> Dict[str, float]:
+    def calculate_risk(self, returns: Sequence[float]) -> dict[str, float]:
         """Calculate portfolio risk metrics using historical VaR."""
         if len(returns) == 0:
             raise ValueError("Returns sequence cannot be empty")
@@ -41,4 +42,3 @@ class RiskfolioRiskManager:
     def risk_adjusted_action(self, action: float, returns: Sequence[float]) -> float:
         """Return zero if the action violates risk policies."""
         return action if self.validate_action(action, returns) else 0.0
-

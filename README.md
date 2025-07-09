@@ -150,7 +150,7 @@ risk_manager = RiskManager(
 
 ### **Advanced Feature Engineering**
 
- - **📊 Technical Indicators**: 150+ technical indicators powered by pandas-ta
+- **📊 Technical Indicators**: 150+ technical indicators powered by pandas-ta
 - **🔗 Cross-Asset Features**: Correlation and regime detection
 - **📰 Alternative Data**: News sentiment, economic indicators
 - **🕒 Real-Time Processing**: Sub-second feature calculation
@@ -448,6 +448,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 ---
 
 <a id="disclaimer"></a>
+
 ## ⚠️ **Disclaimer**
 
 **For educational and research purposes only.** This system is designed for algorithmic trading research and development. Always:
@@ -471,4 +472,3 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 **🚀 Ready to revolutionize algorithmic trading with production-grade RL systems!**
 
 ---
-

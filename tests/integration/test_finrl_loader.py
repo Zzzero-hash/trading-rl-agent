@@ -1,5 +1,6 @@
-import yaml
 from pathlib import Path
+
+import yaml
 
 from finrl_data_loader import load_synthetic_data
 
@@ -17,4 +18,3 @@ def test_load_synthetic_data(tmp_path):
     assert not df.empty
     assert {"open", "high", "low", "close", "volume"}.issubset(df.columns)
     assert "macd" in df.columns
-

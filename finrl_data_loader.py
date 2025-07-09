@@ -1,20 +1,21 @@
 """Simple FinRL-based data loading utilities."""
+
 import argparse
 from pathlib import Path
 from typing import List
 
+from finrl.meta.data_processor import DataProcessor
+from finrl.meta.preprocessor.preprocessors import FeatureEngineer
 import pandas as pd
 import yaml
 
-from finrl.meta.data_processor import DataProcessor
-from finrl.meta.preprocessor.preprocessors import FeatureEngineer
 from trading_rl_agent.data.synthetic import generate_gbm_prices
 
 
 def load_real_data(config_path: str) -> pd.DataFrame:
     """Load real market data using FinRL's DataProcessor."""
     try:
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             cfg = yaml.safe_load(f)
     except (FileNotFoundError, yaml.YAMLError) as e:
         raise ValueError(f"Failed to load config file {config_path}: {e}")
@@ -51,7 +52,7 @@ def load_real_data(config_path: str) -> pd.DataFrame:
 def load_synthetic_data(config_path: str) -> pd.DataFrame:
     """Generate synthetic data and apply FinRL feature engineering."""
     try:
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             cfg = yaml.safe_load(f)
     except (FileNotFoundError, yaml.YAMLError) as e:
         raise ValueError(f"Failed to load config file {config_path}: {e}")
@@ -70,7 +71,7 @@ def load_synthetic_data(config_path: str) -> pd.DataFrame:
     if sigma <= 0:
         raise ValueError("sigma must be positive")
 
-    frames: List[pd.DataFrame] = []
+    frames: list[pd.DataFrame] = []
     for i in range(n_symbols):
         df = generate_gbm_prices(n_days, mu=mu, sigma=sigma)
         df["symbol"] = f"SYN_{i+1}"

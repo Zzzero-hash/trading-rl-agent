@@ -1,6 +1,6 @@
+import pytest
 import torch
 import yaml
-import pytest
 
 from trading_rl_agent.models import CNNLSTMModel
 
@@ -23,7 +23,15 @@ def test_invalid_config(tmp_path):
 
 
 def test_feature_mismatch():
-    model = CNNLSTMModel(input_dim=4, config={"cnn_filters": [2], "cnn_kernel_sizes": [2], "lstm_units": 4, "dropout":0.0})
+    model = CNNLSTMModel(
+        input_dim=4,
+        config={
+            "cnn_filters": [2],
+            "cnn_kernel_sizes": [2],
+            "lstm_units": 4,
+            "dropout": 0.0,
+        },
+    )
     bad_input = torch.randn(1, 5, 3)
     with pytest.raises(ValueError):
         model(bad_input)

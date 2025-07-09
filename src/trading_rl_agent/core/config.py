@@ -24,9 +24,17 @@ except ImportError:
     HYDRA_AVAILABLE = False
 
 from .exceptions import ConfigurationError, TradingSystemError
-from .logging import get_logger
 
-logger = get_logger(__name__)
+# Import logger with fallback
+try:
+    from .logging import get_logger
+
+    logger = get_logger(__name__)
+except ImportError:
+    # Fallback to basic logging if structlog is not available
+    import logging
+
+    logger = logging.getLogger(__name__)
 
 
 @dataclass

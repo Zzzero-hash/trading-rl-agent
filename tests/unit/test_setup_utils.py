@@ -4,10 +4,10 @@ Test setup utilities for integration tests.
 
 import numpy as np
 
+from tests.unit.test_data_utils import TestDataManager, get_dynamic_test_config
 from trading_rl_agent.agents.configs import TD3Config
 from trading_rl_agent.agents.td3_agent import TD3Agent
 from trading_rl_agent.envs.finrl_trading_env import TradingEnv
-from tests.unit.test_data_utils import TestDataManager, get_dynamic_test_config
 
 
 def setup_test_env(env_cfg=None, td3_config=None):

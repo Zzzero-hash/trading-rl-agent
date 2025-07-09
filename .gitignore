@@ -87,3 +87,8 @@ docker-compose*.yml
 
 # Kubernetes manifests
 yaml
+
+# Documentation build
+docs/_build/
+docs/_autosummary/
+*.doctree

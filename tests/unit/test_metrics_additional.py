@@ -24,7 +24,9 @@ def test_information_ratio_and_tracking_error():
     assert te > 0
     # Information ratio should equal mean(excess)/std(excess)*sqrt(252)
     excess = returns - benchmark
-    expected_info = excess.mean() / excess.std() * np.sqrt(metrics.TRADING_DAYS_PER_YEAR)
+    expected_info = (
+        excess.mean() / excess.std() * np.sqrt(metrics.TRADING_DAYS_PER_YEAR)
+    )
     assert np.isclose(info, expected_info)
 
 
@@ -49,6 +51,7 @@ def test_comprehensive_metrics_keys():
     }
     assert expected_keys.issubset(result.keys())
 
+
 def test_to_series_and_beta():
     data = [0.01, 0.02]
     series = metrics._to_series(data)
@@ -56,6 +59,7 @@ def test_to_series_and_beta():
     bench = [0.0, 0.01]
     beta = metrics.calculate_beta(data, bench)
     assert isinstance(beta, float)
+
 
 def test_information_ratio_zero_te():
     r = [0.01, 0.01, 0.01]

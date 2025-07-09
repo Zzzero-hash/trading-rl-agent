@@ -9,8 +9,8 @@ import yaml
 from .features import generate_features
 from .historical import fetch_historical_data
 from .live import fetch_live_data
+from .loaders import load_alphavantage, load_ccxt, load_yfinance
 from .synthetic import fetch_synthetic_data
-from .loaders import load_yfinance, load_alphavantage, load_ccxt
 
 
 @ray.remote

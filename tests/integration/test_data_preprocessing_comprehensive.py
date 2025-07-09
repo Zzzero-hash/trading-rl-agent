@@ -3,15 +3,15 @@ Comprehensive test suite for data preprocessing utilities.
 Tests all data processing functionality including feature generation, normalization, and pipeline integration.
 """
 
+import logging
 from pathlib import Path
 import shutil
+import sys
 import tempfile
+import types
 from unittest.mock import Mock, patch
 import warnings
 
-import sys
-import types
-import logging
 import numpy as np
 import pandas as pd
 import pytest
