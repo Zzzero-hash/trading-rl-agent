@@ -7,41 +7,44 @@ import pandas as pd
 # ---------------------------------------------------------------------------
 # Optional dependency stubs
 # ---------------------------------------------------------------------------
-if "structlog" not in sys.modules:
-    stub = types.SimpleNamespace(
-        BoundLogger=object,
-        stdlib=types.SimpleNamespace(
-            ProcessorFormatter=object,
+def stub_optional_dependencies():
+    """Stub optional dependencies to avoid import errors."""
+    if "structlog" not in sys.modules:
+        stub = types.SimpleNamespace(
             BoundLogger=object,
-            LoggerFactory=lambda: None,
-            filter_by_level=lambda *a, **k: None,
-            add_logger_name=lambda *a, **k: None,
-            add_log_level=lambda *a, **k: None,
-            PositionalArgumentsFormatter=lambda: None,
-            wrap_for_formatter=lambda f: f,
-        ),
-        processors=types.SimpleNamespace(
-            TimeStamper=lambda **_: None,
-            StackInfoRenderer=lambda **_: None,
-            format_exc_info=lambda **_: None,
-            UnicodeDecoder=lambda **_: None,
-        ),
-        dev=types.SimpleNamespace(ConsoleRenderer=lambda **_: None),
-        configure=lambda **_: None,
-        get_logger=lambda name=None: logging.getLogger(name),
-    )
-    sys.modules["structlog"] = stub
+            stdlib=types.SimpleNamespace(
+                ProcessorFormatter=object,
+                BoundLogger=object,
+                LoggerFactory=lambda: None,
+                filter_by_level=lambda *a, **k: None,
+                add_logger_name=lambda *a, **k: None,
+                add_log_level=lambda *a, **k: None,
+                PositionalArgumentsFormatter=lambda: None,
+                wrap_for_formatter=lambda f: f,
+            ),
+            processors=types.SimpleNamespace(
+                TimeStamper=lambda **_: None,
+                StackInfoRenderer=lambda **_: None,
+                format_exc_info=lambda **_: None,
+                UnicodeDecoder=lambda **_: None,
+            ),
+            dev=types.SimpleNamespace(ConsoleRenderer=lambda **_: None),
+            configure=lambda **_: None,
+            get_logger=lambda name=None: logging.getLogger(name),
+        )
+        sys.modules["structlog"] = stub
 
-if "nltk.sentiment.vader" not in sys.modules:
-    dummy = types.ModuleType("nltk.sentiment.vader")
+    if "nltk.sentiment.vader" not in sys.modules:
+        dummy = types.ModuleType("nltk.sentiment.vader")
 
-    class DummySIA:
-        def polarity_scores(self, text):
-            return {"compound": 0.0}
+        class DummySIA:
+            def polarity_scores(self, text):
+                return {"compound": 0.0}
 
-    dummy.SentimentIntensityAnalyzer = DummySIA
-    sys.modules["nltk.sentiment.vader"] = dummy
+        dummy.SentimentIntensityAnalyzer = DummySIA
+        sys.modules["nltk.sentiment.vader"] = dummy
 
+stub_optional_dependencies()
 # ---------------------------------------------------------------------------
 # Add src to Python path so the package is importable without installation
 # ---------------------------------------------------------------------------
