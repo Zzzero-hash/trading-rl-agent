@@ -217,3 +217,7 @@ This project relies on PyTorch's built-in dynamic quantization utilities.
    :undoc-members:
    :show-inheritance:
 ```
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

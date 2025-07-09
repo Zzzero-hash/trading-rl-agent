@@ -447,6 +447,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ---
 
+<a id="disclaimer"></a>
 ## ⚠️ **Disclaimer**
 
 **For educational and research purposes only.** This system is designed for algorithmic trading research and development. Always:

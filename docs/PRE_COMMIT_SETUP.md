@@ -107,3 +107,7 @@ The following hooks are configured and **all passing**:
 - Security vulnerabilities are detected but don't block commits (manual hook)
 - All notebook outputs are automatically cleared to avoid large diffs
 - The setup allows the team to gradually improve code quality without blocking development
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).

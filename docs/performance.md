@@ -11,3 +11,7 @@ The synthetic data generation and feature engineering pipeline completes in **un
 A single PPO training iteration using the mocked trainer completes in **under 3 ms**.
 
 These numbers come from the `pytest-benchmark` results in `tests/integration/test_end_to_end_pipeline.py`.
+
+--
+
+For legal and safety notes see the [project disclaimer](disclaimer.md).
