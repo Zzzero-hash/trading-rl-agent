@@ -8,17 +8,15 @@ dataset builder, with comprehensive monitoring and evaluation capabilities.
 import argparse
 import json
 import logging
-from pathlib import Path
 import sys
-from typing import Optional
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
-import torch
-import torch.nn as nn
-import torch.optim as optim
+from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
 
 # Add src to Python path
@@ -37,9 +35,11 @@ class CNNLSTMTrainer:
     """Comprehensive trainer for CNN+LSTM models with robust dataset integration."""
 
     def __init__(
-        self, model_config: dict, training_config: dict, device: Optional[str] = None
+        self,
+        model_config: dict,
+        training_config: dict,
+        device: str | None = None,
     ):
-
         self.model_config = model_config
         self.training_config = training_config
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -57,7 +57,7 @@ class CNNLSTMTrainer:
         self,
         sequences: np.ndarray,
         targets: np.ndarray,
-        save_path: Optional[str] = None,
+        save_path: str | None = None,
     ) -> dict:
         """Train the CNN+LSTM model from prepared sequences."""
 
@@ -92,7 +92,11 @@ class CNNLSTMTrainer:
 
         criterion = nn.MSELoss()
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="min", patience=5, factor=0.5, verbose=True
+            optimizer,
+            mode="min",
+            patience=5,
+            factor=0.5,
+            verbose=True,
         )
 
         # Training loop
@@ -130,7 +134,7 @@ class CNNLSTMTrainer:
             if epoch % 10 == 0:
                 logger.info(
                     f"Epoch {epoch:3d}: Train Loss: {train_loss:.6f}, "
-                    f"Val Loss: {val_loss:.6f}, Val MAE: {val_metrics['mae']:.6f}"
+                    f"Val Loss: {val_loss:.6f}, Val MAE: {val_metrics['mae']:.6f}",
                 )
 
             # Early stopping check
@@ -153,7 +157,10 @@ class CNNLSTMTrainer:
         return training_summary
 
     def _create_dataloader(
-        self, X: np.ndarray, y: np.ndarray, shuffle: bool
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        shuffle: bool,
     ) -> DataLoader:
         """Create a PyTorch DataLoader from numpy arrays."""
 
@@ -166,14 +173,17 @@ class CNNLSTMTrainer:
         return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
     def _train_epoch(
-        self, dataloader: DataLoader, optimizer: optim.Optimizer, criterion: nn.Module
+        self,
+        dataloader: DataLoader,
+        optimizer: optim.Optimizer,
+        criterion: nn.Module,
     ) -> float:
         """Train for one epoch."""
 
         self.model.train()
         total_loss = 0.0
 
-        for batch_idx, (data, target) in enumerate(dataloader):
+        for _batch_idx, (data, target) in enumerate(dataloader):
             data, target = data.to(self.device), target.to(self.device)
 
             optimizer.zero_grad()
@@ -191,7 +201,9 @@ class CNNLSTMTrainer:
         return total_loss / len(dataloader)
 
     def _validate_epoch(
-        self, dataloader: DataLoader, criterion: nn.Module
+        self,
+        dataloader: DataLoader,
+        criterion: nn.Module,
     ) -> tuple[float, dict]:
         """Validate for one epoch."""
 
@@ -220,9 +232,7 @@ class CNNLSTMTrainer:
         metrics = {
             "mae": mean_absolute_error(targets, predictions),
             "rmse": np.sqrt(mean_squared_error(targets, predictions)),
-            "correlation": (
-                np.corrcoef(targets, predictions)[0, 1] if len(targets) > 1 else 0.0
-            ),
+            "correlation": (np.corrcoef(targets, predictions)[0, 1] if len(targets) > 1 else 0.0),
         }
 
         return avg_loss, metrics
@@ -238,20 +248,16 @@ class CNNLSTMTrainer:
         targets = y_val.flatten()
 
         # Comprehensive metrics
-        metrics = {
+        return {
             "mse": mean_squared_error(targets, predictions),
             "mae": mean_absolute_error(targets, predictions),
             "rmse": np.sqrt(mean_squared_error(targets, predictions)),
-            "correlation": (
-                np.corrcoef(targets, predictions)[0, 1] if len(targets) > 1 else 0.0
-            ),
+            "correlation": (np.corrcoef(targets, predictions)[0, 1] if len(targets) > 1 else 0.0),
             "std_predictions": np.std(predictions),
             "std_targets": np.std(targets),
             "mean_predictions": np.mean(predictions),
             "mean_targets": np.mean(targets),
         }
-
-        return metrics
 
     def _save_checkpoint(self, save_path: str, epoch: int, val_loss: float):
         """Save model checkpoint."""
@@ -273,7 +279,8 @@ class CNNLSTMTrainer:
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
 
         self.model = CNNLSTMModel(
-            input_dim=input_dim, config=checkpoint["model_config"]
+            input_dim=input_dim,
+            config=checkpoint["model_config"],
         )
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.to(self.device)
@@ -284,7 +291,7 @@ class CNNLSTMTrainer:
 
         logger.info(f"Model loaded from {checkpoint_path}")
 
-    def plot_training_history(self, save_path: Optional[str] = None):
+    def plot_training_history(self, save_path: str | None = None):
         """Plot training history."""
 
         fig, axes = plt.subplots(2, 2, figsize=(15, 10))
@@ -364,14 +371,21 @@ def main():
         help="Stock symbols to include",
     )
     parser.add_argument(
-        "--start-date", default="2020-01-01", help="Start date for data"
+        "--start-date",
+        default="2020-01-01",
+        help="Start date for data",
     )
     parser.add_argument("--end-date", default="2024-12-31", help="End date for data")
     parser.add_argument(
-        "--sequence-length", type=int, default=60, help="Sequence length for LSTM"
+        "--sequence-length",
+        type=int,
+        default=60,
+        help="Sequence length for LSTM",
     )
     parser.add_argument(
-        "--output-dir", default="outputs/cnn_lstm_training", help="Output directory"
+        "--output-dir",
+        default="outputs/cnn_lstm_training",
+        help="Output directory",
     )
     parser.add_argument("--load-dataset", help="Path to existing dataset directory")
     parser.add_argument("--gpu", action="store_true", help="Use GPU if available")
@@ -393,7 +407,7 @@ def main():
             sequences = np.load(dataset_dir / "sequences.npy")
             targets = np.load(dataset_dir / "targets.npy")
 
-            with open(dataset_dir / "metadata.json") as f:
+            with Path(dataset_dir / "metadata.json").open(dataset_dir / "metadata.json") as f:
                 _ = json.load(f)  # Load for validation but don't use
         else:
             logger.info("Building new dataset...")
@@ -426,10 +440,10 @@ def main():
         training_config = create_training_config()
 
         # Save configurations
-        with open(output_dir / "model_config.json", "w") as f:
+        with Path(output_dir / "model_config.json").open(output_dir / "model_config.json", "w") as f:
             json.dump(model_config, f, indent=2)
 
-        with open(output_dir / "training_config.json", "w") as f:
+        with Path(output_dir / "training_config.json").open(output_dir / "training_config.json", "w") as f:
             json.dump(training_config, f, indent=2)
 
         # Step 3: Train the model
@@ -437,21 +451,25 @@ def main():
         logger.info(f"Using device: {device}")
 
         trainer = CNNLSTMTrainer(
-            model_config=model_config, training_config=training_config, device=device
+            model_config=model_config,
+            training_config=training_config,
+            device=device,
         )
 
         model_save_path = output_dir / "best_model.pth"
 
         training_summary = trainer.train_from_dataset(
-            sequences=sequences, targets=targets, save_path=str(model_save_path)
+            sequences=sequences,
+            targets=targets,
+            save_path=str(model_save_path),
         )
 
         # Step 4: Save training summary and plots
-        with open(output_dir / "training_summary.json", "w") as f:
+        with Path(output_dir / "training_summary.json").open(output_dir / "training_summary.json", "w") as f:
             json.dump(training_summary, f, indent=2, default=str)
 
         trainer.plot_training_history(
-            save_path=str(output_dir / "training_history.png")
+            save_path=str(output_dir / "training_history.png"),
         )
 
         # Step 5: Create real-time inference example
@@ -468,13 +486,15 @@ def main():
                 },
             }
 
-            with open(output_dir / "realtime_inference_config.json", "w") as f:
+            with Path(output_dir / "realtime_inference_config.json").open(
+                output_dir / "realtime_inference_config.json", "w"
+            ) as f:
                 json.dump(rt_config, f, indent=2)
 
         logger.info("✅ Training pipeline completed successfully!")
         logger.info(f"📊 Best validation loss: {training_summary['best_val_loss']:.6f}")
         logger.info(
-            f"📈 Final correlation: {training_summary['final_metrics']['correlation']:.4f}"
+            f"📈 Final correlation: {training_summary['final_metrics']['correlation']:.4f}",
         )
         logger.info(f"💾 Model saved to: {model_save_path}")
         logger.info(f"📋 Summary saved to: {output_dir}")
@@ -482,7 +502,7 @@ def main():
         return training_summary
 
     except Exception as e:
-        logger.error(f"❌ Training pipeline failed: {e}")
+        logger.exception(f"❌ Training pipeline failed: {e}")
         raise
 
 

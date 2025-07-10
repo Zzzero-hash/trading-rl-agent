@@ -28,11 +28,7 @@ def setup_test_env(env_cfg=None, td3_config=None):
         obs = obs.flatten()
     state_dim = obs.shape[0]
     # For continuous action, force action_dim=1 (Box shape)
-    if (
-        hasattr(env.action_space, "shape")
-        and env.action_space.shape is not None
-        and len(env.action_space.shape) > 0
-    ):
+    if hasattr(env.action_space, "shape") and env.action_space.shape is not None and len(env.action_space.shape) > 0:
         action_dim = env.action_space.shape[0]
     else:
         action_dim = 1

@@ -3,21 +3,20 @@
 Verify the documentation and code quality setup.
 """
 
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 
 def check_tool(tool_name: str, command: list[str]) -> bool:
     """Check if a tool is installed and working."""
     try:
-        result = subprocess.run(command, capture_output=True, text=True)
+        result = subprocess.run(command, check=False, capture_output=True, text=True)
         if result.returncode == 0:
             print(f"✅ {tool_name}: Available")
             return True
-        else:
-            print(f"❌ {tool_name}: Error - {result.stderr.strip()}")
-            return False
+        print(f"❌ {tool_name}: Error - {result.stderr.strip()}")
+        return False
     except FileNotFoundError:
         print(f"❌ {tool_name}: Not found")
         return False
@@ -43,9 +42,8 @@ def check_files(project_root: Path) -> bool:
     if missing_files:
         print(f"❌ Missing files: {missing_files}")
         return False
-    else:
-        print("✅ All required configuration files present")
-        return True
+    print("✅ All required configuration files present")
+    return True
 
 
 def main() -> int:
@@ -90,16 +88,15 @@ def main() -> int:
         print("🎉 Setup verification PASSED!")
         print("\nNext steps:")
         print(
-            "1. Run 'python scripts/dev.py setup' to configure development environment"
+            "1. Run 'python scripts/dev.py setup' to configure development environment",
         )
         print("2. Run 'python scripts/dev.py format' to format existing code")
         print("3. Run 'python scripts/build_docs.py' to build documentation")
         print("4. Run 'python scripts/dev.py quality' for full quality check")
         return 0
-    else:
-        print("❌ Setup verification FAILED!")
-        print("\nPlease address the issues above and run this script again.")
-        return 1
+    print("❌ Setup verification FAILED!")
+    print("\nPlease address the issues above and run this script again.")
+    return 1
 
 
 if __name__ == "__main__":

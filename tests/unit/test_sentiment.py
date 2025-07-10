@@ -4,8 +4,6 @@ Tests the new comprehensive sentiment analysis capabilities.
 """
 
 import datetime
-from pathlib import Path
-import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -20,6 +18,8 @@ from trading_rl_agent.data.sentiment import (
     update_sentiment,
 )
 
+NEUTRAL_THRESHOLD = 0.1
+
 
 class TestSentimentData:
     """Test SentimentData dataclass."""
@@ -28,7 +28,11 @@ class TestSentimentData:
         """Test creating SentimentData objects."""
         timestamp = datetime.datetime.now()
         data = SentimentData(
-            symbol="AAPL", score=0.5, magnitude=0.8, timestamp=timestamp, source="news"
+            symbol="AAPL",
+            score=0.5,
+            magnitude=0.8,
+            timestamp=timestamp,
+            source="news",
         )
 
         assert data.symbol == "AAPL"
@@ -267,8 +271,8 @@ class TestSentimentIntegration:
                     "title": "Apple shows strong growth",
                     "description": "Company beats expectations",
                     "publishedAt": "2024-01-01T10:00:00Z",
-                }
-            ]
+                },
+            ],
         }
         mock_get.return_value = mock_response
 
@@ -303,10 +307,18 @@ class TestSentimentIntegration:
         test_data = [
             SentimentData("TEST", 0.8, 0.9, now, "news"),  # High confidence, recent
             SentimentData(
-                "TEST", -0.5, 0.3, now - datetime.timedelta(hours=12), "social"
+                "TEST",
+                -0.5,
+                0.3,
+                now - datetime.timedelta(hours=12),
+                "social",
             ),  # Low confidence, older
             SentimentData(
-                "TEST", 0.2, 0.7, now - datetime.timedelta(hours=1), "news"
+                "TEST",
+                0.2,
+                0.7,
+                now - datetime.timedelta(hours=1),
+                "news",
             ),  # Medium confidence, recent
         ]
 
@@ -377,7 +389,7 @@ class TestRealAPISentiment:
         data = provider.fetch_sentiment("AAPL", days_back=1)
         assert len(data) > 0
         for d in data:
-            assert d.source == "news_scrape" or d.source == "news_mock"
+            assert d.source in {"news_scrape", "news_mock"}
 
     @patch("src.data.sentiment.requests.get", side_effect=Exception("API fail"))
     @patch("src.data.sentiment.BeautifulSoup", side_effect=Exception("Scrape fail"))

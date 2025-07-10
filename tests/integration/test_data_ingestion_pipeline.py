@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import pytest
 
 from trading_rl_agent.data_pipeline import (
     PipelineConfig,
@@ -18,10 +17,13 @@ def test_sma_computation():
             "low": np.arange(5),
             "close": [1, 2, 3, 4, 5],
             "volume": 1,
-        }
+        },
     )
     cfg = PipelineConfig(
-        sma_windows=[3], momentum_windows=[], rsi_window=2, vol_window=2
+        sma_windows=[3],
+        momentum_windows=[],
+        rsi_window=2,
+        vol_window=2,
     )
     result = generate_features(df, cfg)
     expected = [np.nan, np.nan, 2.0, 3.0, 4.0]
@@ -33,7 +35,7 @@ def test_split_by_date_no_overlap():
         {
             "timestamp": pd.date_range("2021-01-01", periods=7, freq="D"),
             "close": np.arange(7),
-        }
+        },
     )
     train, val, test = split_by_date(df, "2021-01-03", "2021-01-06")
     assert len(train) == 2
@@ -54,10 +56,13 @@ def test_generate_features_with_missing_values():
             "low": [1.0, 2.0, 3.0],
             "close": [1.0, np.nan, 3.0],
             "volume": 1,
-        }
+        },
     )
     cfg = PipelineConfig(
-        sma_windows=[2], momentum_windows=[1], rsi_window=2, vol_window=2
+        sma_windows=[2],
+        momentum_windows=[1],
+        rsi_window=2,
+        vol_window=2,
     )
     result = generate_features(df, cfg)
     # Should keep same number of rows

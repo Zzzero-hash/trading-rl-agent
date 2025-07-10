@@ -3,9 +3,9 @@
 Simple validation script to check if mypy errors are resolved.
 """
 
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 
 def run_mypy_check():
@@ -16,6 +16,7 @@ def run_mypy_check():
         # Run mypy on the src directory
         result = subprocess.run(
             ["python", "-m", "mypy", "src/", "--show-error-codes"],
+            check=False,
             cwd=Path(__file__).parent,
             capture_output=True,
             text=True,
@@ -25,11 +26,10 @@ def run_mypy_check():
             print("✅ No mypy errors found!")
             print("🎉 All type checking issues have been resolved!")
             return True
-        else:
-            print("❌ Mypy errors found:")
-            print(result.stdout)
-            print(result.stderr)
-            return False
+        print("❌ Mypy errors found:")
+        print(result.stdout)
+        print(result.stderr)
+        return False
 
     except Exception as e:
         print(f"❌ Error running mypy: {e}")
@@ -51,9 +51,8 @@ def check_mypy_config():
     if "[mypy-build_datasets]" in content:
         print("✅ mypy.ini has been updated with proper module patterns")
         return True
-    else:
-        print("❌ mypy.ini still has old wildcard patterns")
-        return False
+    print("❌ mypy.ini still has old wildcard patterns")
+    return False
 
 
 def main():
@@ -71,9 +70,8 @@ def main():
         print("\n🎉 SUCCESS: All issues have been resolved!")
         print("🚀 The restructured codebase is ready for development!")
         return True
-    else:
-        print("\n❌ ISSUES FOUND: Some problems still exist")
-        return False
+    print("\n❌ ISSUES FOUND: Some problems still exist")
+    return False
 
 
 if __name__ == "__main__":

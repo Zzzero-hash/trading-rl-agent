@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Unified CLI for Trading RL System using Typer."""
+
 import ast
 import importlib
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
@@ -17,15 +18,31 @@ from finrl_data_loader import load_real_data, load_synthetic_data
 from training.cnn_lstm import CNNLSTMTrainer
 from training.rl import main as rl_main
 
+# Optional imports for Ray Serve functionality
+try:
+    from ray import serve as ray_serve
+
+    from serve_deployment import deployment_graph
+
+    RAY_SERVE_AVAILABLE = True
+except ImportError:
+    ray_serve = None
+    deployment_graph = None
+    RAY_SERVE_AVAILABLE = False
+
 # Module-level default options to avoid function calls in defaults
 GEN_DATA_CONFIG = typer.Option(..., help="Path to data config YAML")
 GEN_DATA_SYNTHETIC = typer.Option(False, help="Generate synthetic data")
 
 TRAIN_TYPE = typer.Option(
-    ..., "--type", "-t", help="Type of training: 'rl' or 'cnn-lstm'"
+    ...,
+    "--type",
+    "-t",
+    help="Type of training: 'rl' or 'cnn-lstm'",
 )
 TRAIN_CONFIGS = typer.Argument(
-    ..., help="Config files for training (1 for cnn-lstm, 2 for rl)"
+    ...,
+    help="Config files for training (1 for cnn-lstm, 2 for rl)",
 )
 TRAIN_NUM_WORKERS = typer.Option(0, help="Number of parallel workers for RL training")
 TRAIN_NUM_GPUS = typer.Option(0, help="Number of GPUs for RL training")
@@ -35,7 +52,8 @@ BT_PRICE_COLUMN = typer.Option("close", help="Column for price series")
 BT_SLIPPAGE_PCT = typer.Option(0.0, help="Slippage percentage")
 BT_LATENCY = typer.Option(0.0, help="Latency in seconds")
 BT_POLICY = typer.Option(
-    "lambda p: 'hold'", help="Policy as lambda string or module:func"
+    "lambda p: 'hold'",
+    help="Policy as lambda string or module:func",
 )
 
 SERVE_PREDICTOR_PATH = typer.Option(None, help="Path to predictor model checkpoint")
@@ -55,28 +73,23 @@ def generate_data(
     synthetic: bool = GEN_DATA_SYNTHETIC,
 ):
     """Generate or load market data using FinRL utilities."""
-    if synthetic:
-        df = load_synthetic_data(config)
-    else:
-        df = load_real_data(config)
+    df = load_synthetic_data(config) if synthetic else load_real_data(config)
     typer.echo(df.head())
 
 
 # train command
 @app.command(help="Train models")
 def train(
-    type: str = TRAIN_TYPE,
+    train_type: str = TRAIN_TYPE,
     configs: list[str] = TRAIN_CONFIGS,
     num_workers: int = TRAIN_NUM_WORKERS,
     num_gpus: int = TRAIN_NUM_GPUS,
 ):
     """Train RL or CNN-LSTM models based on config."""
-    if type == "cnn-lstm":
+    if train_type == "cnn-lstm":
         trainer = CNNLSTMTrainer()
         trainer.train_from_config(configs[0])
     else:
-        import sys
-
         sys.argv = [
             "rl_main",
             "--data",
@@ -107,13 +120,14 @@ def backtest(
         module_name, func_name = policy.split(":", 1)
         module = importlib.import_module(module_name)
         policy_func = getattr(module, func_name)
-    except Exception:
-        # Safely evaluate simple literal expressions (e.g., predefined lambdas not supported here)
+    except (ValueError, ImportError, AttributeError):
+        # Safely evaluate simple literal expressions (e.g., predefined lambdas not
+        # supported here)
         try:
             policy_func = ast.literal_eval(policy)
-        except Exception as err:
+        except (ValueError, SyntaxError) as err:
             typer.secho(f"Invalid policy expression: {err}", fg=typer.colors.RED)
-            raise typer.Exit(code=1)
+            raise typer.Exit(code=1) from err
     bt = Backtester(slippage_pct=slippage_pct, latency_seconds=latency)
     results = bt.run_backtest(prices=prices, policy=policy_func)
     typer.echo(results)
@@ -125,11 +139,7 @@ def serve(
     predictor_path: str = SERVE_PREDICTOR_PATH,
 ):
     """Start a Ray Serve deployment for inference."""
-    try:
-        from ray import serve as ray_serve
-
-        from serve_deployment import deployment_graph
-    except ImportError:
+    if not RAY_SERVE_AVAILABLE:
         typer.secho(
             "Ray Serve is not installed or src.serve_deployment missing.",
             fg=typer.colors.RED,
@@ -149,8 +159,6 @@ def evaluate(
     window_size: int = EVAL_WINDOW_SIZE,
 ):
     """Evaluate an RL agent and report performance metrics."""
-    import sys
-
     sys.argv = [
         "evaluate_agent",
         "--data",

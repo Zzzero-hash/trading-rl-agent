@@ -1,8 +1,7 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest.mock import Mock, patch
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -49,7 +48,7 @@ def test_risk_aware_training(tmp_path):
             "low": [1.0] * 20,
             "close": [1.0] * 20,
             "volume": [1.0] * 20,
-        }
+        },
     )
     csv_path = tmp_path / "data.csv"
     df.to_csv(csv_path, index=False)

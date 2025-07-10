@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import gymnasium as gym
-from gymnasium import spaces
 import numpy as np
+from gymnasium import spaces
 from sb3_contrib import QRDQN
 
 
@@ -12,7 +12,10 @@ class DummyDiscreteEnv(gym.Env):
     def __init__(self, state_dim: int, action_dim: int):
         super().__init__()
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(state_dim,), dtype=np.float32
+            low=-np.inf,
+            high=np.inf,
+            shape=(state_dim,),
+            dtype=np.float32,
         )
         self.action_space = spaces.Discrete(action_dim)
 

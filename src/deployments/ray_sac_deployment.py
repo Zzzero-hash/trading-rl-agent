@@ -6,9 +6,7 @@ SAC agent used in this repository.
 """
 
 import asyncio
-import os
-import sys
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -33,7 +31,9 @@ if RAY_AVAILABLE and serve:
         """Ray Serve deployment for SAC agent."""
 
         def __init__(
-            self, model_path: Optional[str] = None, config: Optional[dict] = None
+            self,
+            model_path: str | None = None,
+            config: dict | None = None,
         ):
             self.config = config or get_agent_config("enhanced_sac")
             self.state_dim = self.config.get("state_dim", 10)
@@ -54,7 +54,7 @@ if RAY_AVAILABLE and serve:
                     print(f"⚠️ Failed to load model: {e}")
 
             print(
-                f"✅ SAC Serve deployment initialized with state_dim={self.state_dim}, action_dim={self.action_dim}"
+                f"✅ SAC Serve deployment initialized with state_dim={self.state_dim}, action_dim={self.action_dim}",
             )
 
         async def __call__(self, request: dict[str, Any]) -> dict[str, Any]:
@@ -82,18 +82,21 @@ if RAY_AVAILABLE and serve:
                 }
 
     def create_sac_deployment_graph(
-        model_path: Optional[str] = None, config: Optional[dict] = None
+        model_path: str | None = None,
+        config: dict | None = None,
     ):
         """Create SAC deployment graph for Ray Serve."""
         return SACServeDeployment.bind(model_path, config)
 
     def deploy_sac_model(
-        model_path: Optional[str] = None,
-        config: Optional[dict] = None,
+        model_path: str | None = None,
+        config: dict | None = None,
         deployment_name: str = "sac-model",
     ):
         deployment = SACServeDeployment.options(
-            name=deployment_name, num_replicas=1, ray_actor_options={"num_cpus": 1}
+            name=deployment_name,
+            num_replicas=1,
+            ray_actor_options={"num_cpus": 1},
         ).bind(model_path, config)
         serve.run(deployment, name=deployment_name)
         print(f"✅ SAC model deployed as '{deployment_name}'")
@@ -105,7 +108,9 @@ else:
         """Fallback SAC deployment when Ray is unavailable."""
 
         def __init__(
-            self, model_path: Optional[str] = None, config: Optional[dict] = None
+            self,
+            model_path: str | None = None,
+            config: dict | None = None,
         ):
             print("⚠️ Ray not available - using fallback SAC deployment")
             self.agent = SACAgent(state_dim=10, action_dim=3, config=None)
@@ -116,13 +121,14 @@ else:
             return {"action": action.tolist(), "status": "fallback"}
 
     def create_sac_deployment_graph(
-        model_path: Optional[str] = None, config: Optional[dict] = None
+        model_path: str | None = None,
+        config: dict | None = None,
     ):
         return SACServeDeployment(model_path, config)
 
     def deploy_sac_model(
-        model_path: Optional[str] = None,
-        config: Optional[dict] = None,
+        model_path: str | None = None,
+        config: dict | None = None,
         deployment_name: str = "sac-model",
     ):
         print("⚠️ Ray not available - skipping SAC model deployment")
@@ -130,9 +136,9 @@ else:
 
 
 def start_sac_serve_cluster(
-    model_path: Optional[str] = None,
-    config: Optional[dict] = None,
-    cluster_config: Optional[dict] = None,
+    model_path: str | None = None,
+    config: dict | None = None,
+    cluster_config: dict | None = None,
 ):
     """Start Ray cluster and deploy SAC model."""
     if not RAY_AVAILABLE:
@@ -158,16 +164,16 @@ def get_sac_serve_handle(deployment_name: str = "sac-model"):
     if not RAY_AVAILABLE:
         return None
     try:
-        handle = serve.get_deployment(deployment_name).get_handle()
-        return handle
+        return serve.get_deployment(deployment_name).get_handle()
     except Exception as e:  # pragma: no cover - serve runtime
         print(f"⚠️ Failed to get SAC deployment handle: {e}")
         return None
 
 
 async def predict_with_sac_serve(
-    observation: np.ndarray, deployment_name: str = "sac-model"
-) -> Optional[np.ndarray]:
+    observation: np.ndarray,
+    deployment_name: str = "sac-model",
+) -> np.ndarray | None:
     """Make prediction using deployed SAC model."""
     handle = get_sac_serve_handle(deployment_name)
     if handle is None:
@@ -177,9 +183,8 @@ async def predict_with_sac_serve(
         response = await handle.remote(request)
         if response.get("status") == "success":
             return np.array(response["action"])
-        else:
-            print(f"⚠️ SAC prediction failed: {response.get('error', 'Unknown error')}")
-            return None
+        print(f"⚠️ SAC prediction failed: {response.get('error', 'Unknown error')}")
+        return None
     except Exception as e:  # pragma: no cover - serve runtime
         print(f"⚠️ SAC serve prediction error: {e}")
         return None

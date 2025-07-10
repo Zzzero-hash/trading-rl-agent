@@ -13,7 +13,7 @@ def test_load_csv_parses_columns_and_dtypes(tmp_path):
             "low": np.arange(3, dtype=float) - 1,
             "close": np.arange(3, dtype=float) + 2,
             "volume": np.arange(3, dtype=int),
-        }
+        },
     )
     csv = tmp_path / "data.csv"
     data.to_csv(csv, index=False)

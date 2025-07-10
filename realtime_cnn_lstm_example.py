@@ -7,8 +7,8 @@ market data processing and prediction.
 
 import json
 import logging
-from pathlib import Path
 import time
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -47,13 +47,14 @@ class RealTimeCNNLSTMPredictor:
 
         # Initialize and load model
         self.model = CNNLSTMModel(
-            input_dim=input_dim, config=checkpoint["model_config"]
+            input_dim=input_dim,
+            config=checkpoint["model_config"],
         )
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.eval()
 
         logger.info(
-            f"Model loaded: {input_dim} features, {checkpoint['epoch']} epochs trained"
+            f"Model loaded: {input_dim} features, {checkpoint['epoch']} epochs trained",
         )
 
     def predict_next_return(self, market_data: pd.DataFrame) -> dict:
@@ -84,18 +85,17 @@ class RealTimeCNNLSTMPredictor:
             }
 
             self.prediction_history.append(result)
-
-            return result
-
-        except Exception as e:
-            logger.error(f"Prediction failed: {e}")
+        except Exception:
+            logger.exception("Prediction failed")
             return {
                 "timestamp": pd.Timestamp.now().isoformat(),
                 "prediction": 0.0,
                 "confidence": 0.0,
                 "signal": "HOLD",
-                "error": str(e),
+                "error": "Prediction failed",
             }
+        else:
+            return result
 
     def _generate_signal(self, prediction: float, confidence: float) -> str:
         """Generate trading signal from prediction."""
@@ -110,14 +110,13 @@ class RealTimeCNNLSTMPredictor:
 
         if prediction > strong_signal_threshold:
             return "STRONG_BUY"
-        elif prediction > weak_signal_threshold:
+        if prediction > weak_signal_threshold:
             return "BUY"
-        elif prediction < -strong_signal_threshold:
+        if prediction < -strong_signal_threshold:
             return "STRONG_SELL"
-        elif prediction < -weak_signal_threshold:
+        if prediction < -weak_signal_threshold:
             return "SELL"
-        else:
-            return "HOLD"
+        return "HOLD"
 
     def get_prediction_summary(self) -> dict:
         """Get summary of recent predictions."""
@@ -137,20 +136,20 @@ class RealTimeCNNLSTMPredictor:
             "avg_prediction": np.mean(predictions),
             "std_prediction": np.std(predictions),
             "avg_confidence": np.mean(confidences),
-            "signal_distribution": {
-                signal: signals.count(signal) for signal in set(signals)
-            },
+            "signal_distribution": {signal: signals.count(signal) for signal in set(signals)},
             "latest_prediction": recent_predictions[-1] if recent_predictions else None,
         }
 
 
 def simulate_realtime_trading(
-    predictor: RealTimeCNNLSTMPredictor, symbols: list[str], n_iterations: int = 50
+    predictor: RealTimeCNNLSTMPredictor,
+    symbols: list[str],
+    n_iterations: int = 50,
 ) -> dict:
     """Simulate real-time trading with synthetic data."""
 
     logger.info(
-        f"🔄 Starting real-time trading simulation for {n_iterations} iterations..."
+        f"🔄 Starting real-time trading simulation for {n_iterations} iterations...",
     )
 
     results = []
@@ -184,7 +183,7 @@ def simulate_realtime_trading(
             logger.info(
                 f"Iteration {i}: {symbol} -> {prediction_result['signal']} "
                 f"(pred: {prediction_result['prediction']:.4f}, "
-                f"conf: {prediction_result['confidence']:.2f})"
+                f"conf: {prediction_result['confidence']:.2f})",
             )
             logger.info(f"  Summary: {summary['signal_distribution']}")
 
@@ -247,18 +246,21 @@ def main():
 
         # Initialize predictor
         predictor = RealTimeCNNLSTMPredictor(
-            model_checkpoint=model_path, dataset_version_dir=str(latest_dataset)
+            model_checkpoint=model_path,
+            dataset_version_dir=str(latest_dataset),
         )
 
         # Run simulation
         symbols = ["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"]
         simulation_results = simulate_realtime_trading(
-            predictor=predictor, symbols=symbols, n_iterations=30
+            predictor=predictor,
+            symbols=symbols,
+            n_iterations=30,
         )
 
         # Save results
         output_path = "outputs/realtime_simulation_results.json"
-        with open(output_path, "w") as f:
+        with Path(output_path).open(output_path, "w") as f:
             json.dump(simulation_results, f, indent=2, default=str)
 
         logger.info(f"💾 Simulation results saved to {output_path}")
@@ -271,8 +273,8 @@ def main():
         single_result = predictor.predict_next_return(test_data)
         logger.info(f"Test prediction: {single_result}")
 
-    except Exception as e:
-        logger.error(f"❌ Real-time example failed: {e}")
+    except Exception:
+        logger.exception("❌ Real-time example failed")
         raise
 
 

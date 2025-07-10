@@ -30,7 +30,7 @@ def sample_csv(tmp_path):
             "low": np.linspace(1, 2, 60),
             "close": np.linspace(1, 2, 60),
             "volume": np.ones(60),
-        }
+        },
     )
     path = tmp_path / "data.csv"
     df.to_csv(path, index=False)
@@ -39,7 +39,7 @@ def sample_csv(tmp_path):
 
 def test_reset_includes_model_pred(sample_csv, dummy_model):
     env = TradingEnv(
-        {"dataset_paths": [sample_csv], "window_size": 5, "model_path": dummy_model}
+        {"dataset_paths": [sample_csv], "window_size": 5, "model_path": dummy_model},
     )
     obs, _ = env.reset()
     assert "model_pred" in obs
@@ -48,7 +48,7 @@ def test_reset_includes_model_pred(sample_csv, dummy_model):
 
 def test_step_includes_model_pred(sample_csv, dummy_model):
     env = TradingEnv(
-        {"dataset_paths": [sample_csv], "window_size": 5, "model_path": dummy_model}
+        {"dataset_paths": [sample_csv], "window_size": 5, "model_path": dummy_model},
     )
     env.reset()
     obs, _, _, _, _ = env.step(0)

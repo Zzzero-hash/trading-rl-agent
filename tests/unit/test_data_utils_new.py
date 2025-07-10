@@ -7,13 +7,11 @@ Provides elegant solutions for test data management:
 3. Automatic cleanup after tests
 """
 
-from contextlib import contextmanager
-from datetime import datetime, timedelta
 import logging
-import os
-from pathlib import Path
 import tempfile
-from typing import Any, Dict, List, Optional
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -29,7 +27,8 @@ class DataManager:
         self.temp_files: list[Path] = []
 
     def find_available_datasets(
-        self, pattern: str = "*training_data*.csv"
+        self,
+        pattern: str = "*training_data*.csv",
     ) -> list[str]:
         """Dynamically find available dataset files."""
         available_files = []
@@ -49,7 +48,10 @@ class DataManager:
         return available_files
 
     def generate_synthetic_dataset(
-        self, n_days: int = 100, start_price: float = 100.0, volatility: float = 0.02
+        self,
+        n_days: int = 100,
+        start_price: float = 100.0,
+        volatility: float = 0.02,
     ) -> pd.DataFrame:
         """Generate synthetic trading data for testing."""
         np.random.seed(42)  # Reproducible for tests
@@ -84,13 +86,15 @@ class DataManager:
                     "low": low,
                     "close": close_price,
                     "volume": volume,
-                }
+                },
             )
 
         return pd.DataFrame(data)
 
     def create_test_dataset(
-        self, file_path: Optional[str] = None, cleanup_on_exit: bool = True
+        self,
+        file_path: str | None = None,
+        cleanup_on_exit: bool = True,
     ) -> str:
         """Create a test dataset, either from existing data or synthetic."""
         # First try to find existing datasets
@@ -106,7 +110,10 @@ class DataManager:
         if file_path is None:
             # Create a temporary file
             temp_file = tempfile.NamedTemporaryFile(
-                mode="w", suffix=".csv", delete=False, prefix="test_trading_data_"
+                mode="w",
+                suffix=".csv",
+                delete=False,
+                prefix="test_trading_data_",
             )
             file_path = temp_file.name
             temp_file.close()
@@ -147,7 +154,7 @@ def managed_test_data(data_dir: str = "data", **kwargs):
 
 
 def get_dynamic_test_config(
-    base_config: Optional[dict[str, Any]] = None,
+    base_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Get a test configuration with dynamically discovered or generated test data."""
     manager = DataManager()

@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 
 from trading_rl_agent.backtesting import Backtester
 

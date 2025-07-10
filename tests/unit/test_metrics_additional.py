@@ -24,9 +24,7 @@ def test_information_ratio_and_tracking_error():
     assert te > 0
     # Information ratio should equal mean(excess)/std(excess)*sqrt(252)
     excess = returns - benchmark
-    expected_info = (
-        excess.mean() / excess.std() * np.sqrt(metrics.TRADING_DAYS_PER_YEAR)
-    )
+    expected_info = excess.mean() / excess.std() * np.sqrt(metrics.TRADING_DAYS_PER_YEAR)
     assert np.isclose(info, expected_info)
 
 

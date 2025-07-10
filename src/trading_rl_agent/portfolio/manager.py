@@ -4,10 +4,9 @@ Portfolio manager implementing modern portfolio theory and risk management.
 Handles multi-asset portfolios with sophisticated optimization and risk controls.
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-import logging
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -27,7 +26,6 @@ try:
 except ImportError:
     EMPYRICAL_AVAILABLE = False
 
-from ..core.exceptions import TradingSystemError
 from ..core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -54,8 +52,7 @@ class Position:
         """Unrealized profit/loss."""
         if self.side == "long":
             return self.quantity * (self.current_price - self.entry_price)
-        else:
-            return self.quantity * (self.entry_price - self.current_price)
+        return self.quantity * (self.entry_price - self.current_price)
 
     @property
     def unrealized_pnl_pct(self) -> float:
@@ -64,8 +61,7 @@ class Position:
             return 0.0
         if self.side == "long":
             return (self.current_price - self.entry_price) / self.entry_price
-        else:
-            return (self.entry_price - self.current_price) / self.entry_price
+        return (self.entry_price - self.current_price) / self.entry_price
 
 
 @dataclass
@@ -91,7 +87,7 @@ class PortfolioConfig:
 
     # Portfolio optimization
     risk_aversion: float = 1.0  # Risk aversion parameter
-    target_volatility: Optional[float] = None  # Target portfolio volatility
+    target_volatility: float | None = None  # Target portfolio volatility
 
     # Performance tracking
     benchmark_symbol: str = "SPY"  # Benchmark for comparison
@@ -110,7 +106,9 @@ class PortfolioManager:
     """
 
     def __init__(
-        self, initial_capital: float, config: Optional[PortfolioConfig] = None
+        self,
+        initial_capital: float,
+        config: PortfolioConfig | None = None,
     ):
         """
         Initialize portfolio manager.
@@ -135,7 +133,7 @@ class PortfolioManager:
         # Validation
         if not PYPFOPT_AVAILABLE:
             self.logger.warning(
-                "PyPortfolioOpt not available, optimization features disabled"
+                "PyPortfolioOpt not available, optimization features disabled",
             )
         if not EMPYRICAL_AVAILABLE:
             self.logger.warning("Empyrical not available, some analytics disabled")
@@ -192,11 +190,15 @@ class PortfolioManager:
                 "pnl": pnl,
                 "pnl_pct": pnl_pct,
                 "leverage": self.leverage,
-            }
+            },
         )
 
     def execute_trade(
-        self, symbol: str, quantity: float, price: float, side: str = "long"
+        self,
+        symbol: str,
+        quantity: float,
+        price: float,
+        side: str = "long",
     ) -> bool:
         """
         Execute a trade with risk checks.
@@ -226,7 +228,7 @@ class PortfolioManager:
                 required_cash = trade_value + total_cost
                 if self.cash < required_cash:
                     self.logger.warning(
-                        f"Insufficient cash for {symbol} trade: need {required_cash}, have {self.cash}"
+                        f"Insufficient cash for {symbol} trade: need {required_cash}, have {self.cash}",
                     )
                     return False
 
@@ -238,9 +240,7 @@ class PortfolioManager:
                     new_quantity = pos.quantity + quantity
                     if new_quantity != 0:
                         # Weighted average price
-                        total_cost_basis = (pos.quantity * pos.entry_price) + (
-                            quantity * price
-                        )
+                        total_cost_basis = (pos.quantity * pos.entry_price) + (quantity * price)
                         pos.entry_price = total_cost_basis / new_quantity
                         pos.quantity = new_quantity
                         pos.current_price = price
@@ -271,7 +271,7 @@ class PortfolioManager:
                             del self.positions[symbol]
                     else:
                         self.logger.warning(
-                            f"Cannot sell {quantity} shares of {symbol}, only have {pos.quantity}"
+                            f"Cannot sell {quantity} shares of {symbol}, only have {pos.quantity}",
                         )
                         return False
                 else:
@@ -297,18 +297,23 @@ class PortfolioManager:
                     "commission": commission,
                     "spread_cost": spread_cost,
                     "total_cost": total_cost,
-                }
+                },
             )
 
             self.logger.info(f"Executed trade: {quantity} {symbol} at {price}")
             return True
 
         except Exception as e:
-            self.logger.error(f"Trade execution failed: {e}")
+            self.logger.exception(f"Trade execution failed: {e}")
             return False
 
     def _validate_trade(
-        self, symbol: str, quantity: float, price: float, side: str, total_cost: float
+        self,
+        symbol: str,
+        quantity: float,
+        price: float,
+        side: str,
+        total_cost: float,
     ) -> bool:
         """Validate trade against risk parameters."""
 
@@ -338,7 +343,7 @@ class PortfolioManager:
         target_symbols: list[str],
         price_data: dict[str, pd.DataFrame],
         method: str = "max_sharpe",
-    ) -> Optional[dict[str, float]]:
+    ) -> dict[str, float] | None:
         """
         Optimize portfolio weights using modern portfolio theory.
 
@@ -377,13 +382,17 @@ class PortfolioManager:
 
             # Optimize based on method
             if method == "max_sharpe":
-                weights = ef.max_sharpe()
+                # weights = ef.max_sharpe()  # Not used currently
+                pass
             elif method == "min_volatility":
-                weights = ef.min_volatility()
+                # weights = ef.min_volatility()  # Not used currently
+                pass
             elif method == "efficient_risk" and self.config.target_volatility:
-                weights = ef.efficient_risk(self.config.target_volatility)
+                # weights = ef.efficient_risk(self.config.target_volatility)  # Not used currently
+                pass
             else:
-                weights = ef.max_sharpe()  # Default
+                # weights = ef.max_sharpe()  # Default - Not used currently
+                pass
 
             # Clean weights (remove tiny positions)
             cleaned_weights = ef.clean_weights()
@@ -392,7 +401,7 @@ class PortfolioManager:
             return cleaned_weights
 
         except Exception as e:
-            self.logger.error(f"Portfolio optimization failed: {e}")
+            self.logger.exception(f"Portfolio optimization failed: {e}")
             return None
 
     def get_performance_summary(self) -> dict[str, Any]:
@@ -452,7 +461,8 @@ class PortfolioManager:
 
                 if buy_trade["side"] != sell_trade["side"]:
                     pnl = (sell_trade["price"] - buy_trade["price"]) * min(
-                        abs(buy_trade["quantity"]), abs(sell_trade["quantity"])
+                        abs(buy_trade["quantity"]),
+                        abs(sell_trade["quantity"]),
                     )
 
                     if pnl > 0:

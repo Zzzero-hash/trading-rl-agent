@@ -1,5 +1,5 @@
 import types
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -21,21 +21,29 @@ def test_train_invokes_tuner(tmp_path, sample_csv_file):
     with (
         patch.object(trainer_module.ray, "is_initialized", return_value=False),
         patch.object(
-            trainer_module.ray, "init", lambda **kw: calls.setdefault("init", kw)
+            trainer_module.ray,
+            "init",
+            lambda **kw: calls.setdefault("init", kw),
         ),
         patch.object(trainer_module, "register_env", lambda: None),
         patch.object(
-            trainer_module.ray, "shutdown", lambda: calls.setdefault("shutdown", True)
+            trainer_module.ray,
+            "shutdown",
+            lambda: calls.setdefault("shutdown", True),
         ),
         patch.object(trainer_module.tune, "Tuner") as tuner_cls,
     ):
         tuner = types.SimpleNamespace(fit=lambda: calls.setdefault("fit", True))
         tuner_cls.return_value = tuner
         t = trainer_module.Trainer(
-            env_cfg, model_cfg, trainer_cfg, save_dir=str(tmp_path)
+            env_cfg,
+            model_cfg,
+            trainer_cfg,
+            save_dir=str(tmp_path),
         )
         t.train()
-    assert calls.get("fit") and calls.get("shutdown")
+    assert calls.get("fit")
+    assert calls.get("shutdown")
 
 
 def test_evaluate_and_test_not_implemented(tmp_path, sample_csv_file):
@@ -46,7 +54,10 @@ def test_evaluate_and_test_not_implemented(tmp_path, sample_csv_file):
         patch.object(trainer_module, "register_env"),
     ):
         t = trainer_module.Trainer(
-            env_cfg, model_cfg, trainer_cfg, save_dir=str(tmp_path)
+            env_cfg,
+            model_cfg,
+            trainer_cfg,
+            save_dir=str(tmp_path),
         )
         with pytest.raises(NotImplementedError):
             t.evaluate()

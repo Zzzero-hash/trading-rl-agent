@@ -1,26 +1,25 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import pandas as pd
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 try:
     import empyrical
 except ImportError as e:
     raise ImportError(
-        "The 'empyrical' library is required but not installed. Please install it using 'pip install empyrical'."
+        "The 'empyrical' library is required but not installed. Please install it using 'pip install empyrical'.",
     ) from e
-
-import pandas as pd
 
 try:  # FinRL 0.4+
     from finrl.env.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
 except Exception:  # FinRL 0.3.x
-    from finrl.meta.env_stock_trading.env_stocktrading import (
-        StockTradingEnv as _FinRLTradingEnv,
-    )
+    from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv as _FinRLTradingEnv
 
 
 class TradingEnv(_FinRLTradingEnv):
@@ -39,11 +38,11 @@ class TradingEnv(_FinRLTradingEnv):
             frames = [pd.read_csv(p) for p in data_paths]
             df = pd.concat(frames, ignore_index=True)
         except FileNotFoundError as e:  # pragma: no cover - simple error path
-            raise FileNotFoundError(f"Could not find data file: {e}")
+            raise FileNotFoundError(f"Could not find data file: {e}") from e
         except pd.errors.EmptyDataError as e:  # pragma: no cover
-            raise ValueError(f"Empty or invalid CSV data: {e}")
+            raise ValueError(f"Empty or invalid CSV data: {e}") from e
         except Exception as e:  # pragma: no cover
-            raise ValueError(f"Error reading CSV data: {e}")
+            raise ValueError(f"Error reading CSV data: {e}") from e
 
         if "tic" not in df.columns:  # pragma: no cover - simple defaults
             df["tic"] = cfg.get("symbol", "TIC")
@@ -57,7 +56,7 @@ class TradingEnv(_FinRLTradingEnv):
         self.reward_type = cfg.get("reward_type", "profit")
         if self.reward_type not in valid_reward_types:
             raise ValueError(
-                f"Invalid reward_type: {self.reward_type}. Must be one of {valid_reward_types}"
+                f"Invalid reward_type: {self.reward_type}. Must be one of {valid_reward_types}",
             )
         self.risk_penalty = float(cfg.get("risk_penalty", 0.1))
         num_stock_shares = cfg.get("num_stock_shares", [0] * stock_dim)

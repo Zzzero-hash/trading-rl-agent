@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+
 import pandas as pd
 
 try:
@@ -11,7 +13,10 @@ except ModuleNotFoundError:  # Allow import when yfinance not installed
 
 
 def fetch_live_data(
-    symbol: str, start: str, end: str, timestep: str = "day"
+    symbol: str,
+    start: str,
+    end: str,
+    timestep: str = "day",
 ) -> pd.DataFrame:
     """Fetch live OHLCV data via ``yfinance``.
 
@@ -35,8 +40,7 @@ def fetch_live_data(
 
     if yf is None:
         raise ImportError(
-            "yfinance package is required for fetch_live_data."
-            " Install with `pip install yfinance`."
+            "yfinance package is required for fetch_live_data. Install with `pip install yfinance`.",
         )
 
     interval_map = {
@@ -49,16 +53,14 @@ def fetch_live_data(
     df = yf.Ticker(symbol).history(start=start, end=end, interval=interval)
     if df.empty:
         return pd.DataFrame(
-            columns=["timestamp", "open", "high", "low", "close", "volume"]
+            columns=["timestamp", "open", "high", "low", "close", "volume"],
         )
 
     df = df[["Open", "High", "Low", "Close", "Volume"]].copy()
     df.columns = ["open", "high", "low", "close", "volume"]
     df.index.name = "timestamp"
-    try:
+    with contextlib.suppress(AttributeError):
         df.index = df.index.tz_localize(None)
-    except AttributeError:
-        pass
     df["timestamp"] = df.index
     df.reset_index(drop=True, inplace=True)
     return df

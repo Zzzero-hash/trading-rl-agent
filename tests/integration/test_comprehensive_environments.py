@@ -3,14 +3,9 @@ Comprehensive tests for all environment interactions.
 Tests environment reset, step, reward calculation, and edge cases.
 """
 
-from pathlib import Path
-from unittest.mock import Mock, patch
-
-import gymnasium as gym
 import numpy as np
 import pandas as pd
 import pytest
-import torch
 
 from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 
@@ -61,7 +56,7 @@ class TestEnvironmentInteractions:
             # Discrete action space
             for action in range(trading_env.action_space.n):
                 obs, reward, done, truncated, info = trading_env.step(action)
-                assert isinstance(reward, (int, float))
+                assert isinstance(reward, int | float)
                 assert isinstance(done, bool)
                 assert isinstance(truncated, bool)
                 assert isinstance(info, dict)
@@ -72,7 +67,7 @@ class TestEnvironmentInteractions:
             # Continuous action space
             action = trading_env.action_space.sample()
             obs, reward, done, truncated, info = trading_env.step(action)
-            assert isinstance(reward, (int, float))
+            assert isinstance(reward, int | float)
             assert isinstance(done, bool)
             assert isinstance(truncated, bool)
             assert isinstance(info, dict)
@@ -83,7 +78,7 @@ class TestEnvironmentInteractions:
 
         if isinstance(obs, dict):
             # Dict observation space
-            for key, value in obs.items():
+            for value in obs.values():
                 assert isinstance(value, np.ndarray)
                 assert value.dtype in [np.float32, np.float64]
         else:
@@ -108,7 +103,7 @@ class TestEnvironmentInteractions:
                 break
 
         # Rewards should be numeric
-        assert all(isinstance(r, (int, float)) for r in rewards)
+        assert all(isinstance(r, int | float) for r in rewards)
 
         # Rewards should be finite (not inf or nan)
         assert all(np.isfinite(r) for r in rewards)
@@ -148,7 +143,7 @@ class TestEnvironmentInteractions:
         expected_keys = ["balance"]
         for key in expected_keys:
             if key in info:
-                assert isinstance(info[key], (int, float))
+                assert isinstance(info[key], int | float)
 
 
 class TestEnvironmentEdgeCases:
@@ -164,7 +159,7 @@ class TestEnvironmentEdgeCases:
                 "low": [99.0],
                 "close": [100.5],
                 "volume": [1000],
-            }
+            },
         )
 
         csv_path = tmp_path / "minimal_data.csv"
@@ -177,7 +172,8 @@ class TestEnvironmentEdgeCases:
         }
 
         with pytest.raises((ValueError, IndexError)):
-            env = TradingEnv(config)
+            # env = TradingEnv(config)  # Not used outside this line
+            TradingEnv(config)
 
     def test_environment_with_invalid_config(self):
         """Test environment behavior with invalid configuration."""
@@ -192,7 +188,7 @@ class TestEnvironmentEdgeCases:
                     "dataset_paths": [],  # Empty paths
                     "window_size": -1,  # Invalid window size
                     "initial_balance": -1000,  # Negative balance
-                }
+                },
             )
 
     def test_environment_with_missing_files(self):
@@ -232,7 +228,7 @@ class TestEnvironmentEdgeCases:
                 "low": [1e10, 1e-10, float("inf"), -float("inf"), np.nan],
                 "close": [1e10, 1e-10, float("inf"), -float("inf"), np.nan],
                 "volume": [1e15, 0, -1000, np.nan, 1],
-            }
+            },
         )
 
         csv_path = tmp_path / "extreme_data.csv"
@@ -253,7 +249,7 @@ class TestEnvironmentEdgeCases:
             if isinstance(obs, dict):
                 for value in obs.values():
                     assert np.isfinite(
-                        value
+                        value,
                     ).all(), "Observation contains non-finite values"
             else:
                 assert np.isfinite(obs).all(), "Observation contains non-finite values"
@@ -261,10 +257,6 @@ class TestEnvironmentEdgeCases:
         except (ValueError, RuntimeError) as e:
             # Acceptable to raise an error for extreme data
             assert "inf" in str(e).lower() or "nan" in str(e).lower()
-
-        # Rewards should be numeric
-        assert isinstance(trading_result[1], (int, float))
-        assert isinstance(trader_result[1], (int, float))
 
     def test_environment_state_preservation(self, trading_env):
         """Test that environment state is properly preserved."""
@@ -285,7 +277,7 @@ class TestEnvironmentEdgeCases:
 
         if initial_balance is not None and current_balance is not None:
             # Balance might change due to rewards/costs
-            assert isinstance(current_balance, (int, float))
+            assert isinstance(current_balance, int | float)
 
         if initial_step is not None and current_step is not None:
             assert current_step > initial_step, "Step counter should increase"
@@ -320,7 +312,6 @@ class TestEnvironmentPerformance:
     def test_environment_memory_usage(self, trading_env):
         """Test that environment doesn't leak memory."""
         import gc
-        import sys
 
         # Get initial memory usage
         initial_objects = len(gc.get_objects())
@@ -341,9 +332,7 @@ class TestEnvironmentPerformance:
         object_increase = final_objects - initial_objects
 
         # Allow some increase but not excessive
-        assert (
-            object_increase < 1500
-        ), f"Memory usage increased by {object_increase} objects"
+        assert object_increase < 1500, f"Memory usage increased by {object_increase} objects"
 
 
 class TestEnvironmentConfigurationVariations:
@@ -366,9 +355,8 @@ class TestEnvironmentConfigurationVariations:
             for value in obs.values():
                 if hasattr(value, "shape") and len(value.shape) > 1:
                     assert value.shape[0] == window_size
-        else:
-            if len(obs.shape) > 1:
-                assert obs.shape[0] == window_size
+        elif len(obs.shape) > 1:
+            assert obs.shape[0] == window_size
 
     @pytest.mark.parametrize("initial_balance", [1000, 10000, 100000])
     def test_different_initial_balances(self, sample_csv_file, initial_balance):

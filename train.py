@@ -6,15 +6,16 @@ Usage: python train.py [--config CONFIG_FILE]
 
 import argparse
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,9 @@ def main():
     """Main training function."""
     parser = argparse.ArgumentParser(description="Train Trading RL Agent")
     parser.add_argument(
-        "--config", default="configs/production.yaml", help="Configuration file path"
+        "--config",
+        default="configs/production.yaml",
+        help="Configuration file path",
     )
     parser.add_argument(
         "--data-samples",
@@ -32,10 +35,15 @@ def main():
         help="Number of data samples to generate",
     )
     parser.add_argument(
-        "--training-steps", type=int, default=10000, help="Number of RL training steps"
+        "--training-steps",
+        type=int,
+        default=10000,
+        help="Number of RL training steps",
     )
     parser.add_argument(
-        "--output-dir", default="outputs", help="Output directory for models and data"
+        "--output-dir",
+        default="outputs",
+        help="Output directory for models and data",
     )
 
     args = parser.parse_args()
@@ -95,7 +103,7 @@ def main():
             action = agent.select_action(state)
 
             # Simple reward (placeholder)
-            reward = np.random.normal(0, 0.1)
+            # reward = np.random.normal(0, 0.1)  # Not used currently
 
             # Log progress
             if step % 1000 == 0:
@@ -109,7 +117,7 @@ def main():
         # Step 4: Test the agent
         logger.info("🧪 Step 4: Testing trained agent...")
         test_actions = []
-        for i in range(10):
+        for _i in range(10):
             idx = np.random.randint(0, len(numeric_df))
             state = torch.FloatTensor(numeric_df.iloc[idx].values)
             action = agent.select_action(state)
@@ -129,9 +137,7 @@ def main():
             test_actions.append(discrete_action)
 
         action_names = ["BUY", "SELL", "HOLD"]
-        action_counts = {
-            name: test_actions.count(i) for i, name in enumerate(action_names)
-        }
+        action_counts = {name: test_actions.count(i) for i, name in enumerate(action_names)}
         logger.info(f"   Test actions: {action_counts}")
 
         # Step 5: Generate summary
@@ -149,7 +155,7 @@ def main():
         import json
 
         summary_file = output_dir / "production_training_summary.json"
-        with open(summary_file, "w") as f:
+        with Path(summary_file).open(summary_file, "w") as f:
             json.dump(summary, f, indent=2)
 
         logger.info("✅ Production training completed successfully!")
@@ -159,7 +165,7 @@ def main():
         return summary
 
     except Exception as e:
-        logger.error(f"❌ Training failed: {e}")
+        logger.exception(f"❌ Training failed: {e}")
         raise
 
 

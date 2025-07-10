@@ -1,7 +1,6 @@
 """Tests for live data fetching functionality."""
 
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -37,7 +36,9 @@ class TestFetchLiveData:
 
             # Check that yfinance was called correctly
             mock_ticker.history.assert_called_once_with(
-                start="2023-01-01", end="2023-01-03", interval="1d"
+                start="2023-01-01",
+                end="2023-01-03",
+                interval="1d",
             )
 
             # Check result structure
@@ -71,19 +72,25 @@ class TestFetchLiveData:
             # Test day mapping
             fetch_live_data("AAPL", "2023-01-01", "2023-01-02", "day")
             mock_ticker.history.assert_called_with(
-                start="2023-01-01", end="2023-01-02", interval="1d"
+                start="2023-01-01",
+                end="2023-01-02",
+                interval="1d",
             )
 
             # Test hour mapping
             fetch_live_data("AAPL", "2023-01-01", "2023-01-02", "hour")
             mock_ticker.history.assert_called_with(
-                start="2023-01-01", end="2023-01-02", interval="1h"
+                start="2023-01-01",
+                end="2023-01-02",
+                interval="1h",
             )
 
             # Test minute mapping
             fetch_live_data("AAPL", "2023-01-01", "2023-01-02", "minute")
             mock_ticker.history.assert_called_with(
-                start="2023-01-01", end="2023-01-02", interval="1m"
+                start="2023-01-01",
+                end="2023-01-02",
+                interval="1m",
             )
 
     def test_fetch_live_data_custom_interval(self):
@@ -106,7 +113,9 @@ class TestFetchLiveData:
             # Test custom interval (not in mapping)
             fetch_live_data("AAPL", "2023-01-01", "2023-01-02", "5m")
             mock_ticker.history.assert_called_with(
-                start="2023-01-01", end="2023-01-02", interval="5m"
+                start="2023-01-01",
+                end="2023-01-02",
+                interval="5m",
             )
 
     def test_fetch_live_data_empty_response(self):
@@ -277,7 +286,9 @@ class TestFetchLiveData:
             result = fetch_live_data("AAPL", "2023-01-01", "2023-01-02")
 
             mock_ticker.history.assert_called_with(
-                start="2023-01-01", end="2023-01-02", interval="1d"
+                start="2023-01-01",
+                end="2023-01-02",
+                interval="1d",
             )
             assert len(result) == 1
 
@@ -318,9 +329,11 @@ class TestFetchLiveDataErrorHandling:
         mock_ticker = Mock()
         mock_ticker.history.return_value = mock_history_data
 
-        with patch("yfinance.Ticker", return_value=mock_ticker):
-            with pytest.raises(KeyError):
-                fetch_live_data("AAPL", "2023-01-01", "2023-01-02", "day")
+        with (
+            patch("yfinance.Ticker", return_value=mock_ticker),
+            pytest.raises(KeyError),
+        ):
+            fetch_live_data("AAPL", "2023-01-01", "2023-01-02", "day")
 
 
 class TestFetchLiveDataDataTypes:

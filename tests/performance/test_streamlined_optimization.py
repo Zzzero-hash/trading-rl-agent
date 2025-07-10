@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test script for streamlined optimization."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 
@@ -25,7 +25,10 @@ def test_optimization():
 
         print("   • Running optimization with 2 trials...")
         results = optimize_cnn_lstm(
-            features=features, targets=targets, num_samples=2, max_epochs_per_trial=5
+            features=features,
+            targets=targets,
+            num_samples=2,
+            max_epochs_per_trial=5,
         )
 
         assert results.get("method") == "optuna"

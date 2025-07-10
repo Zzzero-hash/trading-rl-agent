@@ -5,8 +5,7 @@ Centralized logging configuration for the trading system.
 import logging
 import logging.config
 from pathlib import Path
-import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 import structlog
 
@@ -78,9 +77,9 @@ DEFAULT_LOG_CONFIG = {
 
 
 def setup_logging(
-    config: Optional[dict[str, Any]] = None,
+    config: dict[str, Any] | None = None,
     log_level: str = "INFO",
-    log_dir: Optional[Path] = None,
+    log_dir: Path | None = None,
     structured: bool = True,
 ) -> None:
     """
@@ -102,7 +101,7 @@ def setup_logging(
         config = DEFAULT_LOG_CONFIG.copy()
 
     # Update file paths with log_dir
-    for handler_name, handler_config in config["handlers"].items():
+    for handler_config in config["handlers"].values():
         if "filename" in handler_config:
             filename = handler_config["filename"]
             handler_config["filename"] = str(log_dir / Path(filename).name)

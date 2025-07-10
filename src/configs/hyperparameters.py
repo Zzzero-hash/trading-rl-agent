@@ -4,11 +4,11 @@ This module provides a centralized configuration system for all RL agents
 with support for YAML configs, environment variables, and dynamic loading.
 """
 
-from dataclasses import asdict, dataclass, field
 import json
 import os
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
 
@@ -22,7 +22,7 @@ class PPOConfig:
     gamma: float = 0.99
     gae_lambda: float = 0.95
     clip_ratio: float = 0.2
-    clip_vf_ratio: Optional[float] = None  # None means no clipping
+    clip_vf_ratio: float | None = None  # None means no clipping
 
     # Training parameters
     batch_size: int = 256
@@ -171,13 +171,11 @@ class EnsembleConfig:
             "sac": {"enabled": True, "weight": 0.3},
             "td3": {"enabled": True, "weight": 0.2},
             "rainbow_dqn": {"enabled": True, "weight": 0.2},
-        }
+        },
     )
 
     # Consensus methods
-    consensus_method: str = (
-        "weighted_voting"  # weighted_voting, majority_voting, confidence_weighted
-    )
+    consensus_method: str = "weighted_voting"  # weighted_voting, majority_voting, confidence_weighted
     confidence_threshold: float = 0.7
 
     # Dynamic weighting
@@ -203,30 +201,35 @@ class EnsembleConfig:
 class ConfigManager:
     """Centralized configuration management system."""
 
-    def __init__(self, config_dir: Optional[str] = None):
+    def __init__(self, config_dir: str | None = None):
         self.config_dir = Path(config_dir) if config_dir else Path("configs")
         self.config_dir.mkdir(exist_ok=True)
 
     def load_config(
-        self, config_type: str, config_name: str = "default"
+        self,
+        config_type: str,
+        config_name: str = "default",
     ) -> dict[str, Any]:
         """Load configuration from YAML file."""
         config_file = self.config_dir / f"{config_type}_{config_name}.yaml"
 
         if config_file.exists():
-            with open(config_file) as f:
+            with config_file.open("r") as f:
                 return yaml.safe_load(f)
         else:
             # Return default configuration
             return self._get_default_config(config_type)
 
     def save_config(
-        self, config: dict[str, Any], config_type: str, config_name: str = "default"
+        self,
+        config: dict[str, Any],
+        config_type: str,
+        config_name: str = "default",
     ) -> None:
         """Save configuration to YAML file."""
         config_file = self.config_dir / f"{config_type}_{config_name}.yaml"
 
-        with open(config_file, "w") as f:
+        with config_file.open("w") as f:
             yaml.dump(config, f, default_flow_style=False)
 
     def _get_default_config(self, config_type: str) -> dict[str, Any]:
@@ -242,11 +245,12 @@ class ConfigManager:
         config_class = config_classes.get(config_type)
         if config_class:
             return asdict(config_class())
-        else:
-            raise ValueError(f"Unknown config type: {config_type}")
+        raise ValueError(f"Unknown config type: {config_type}")
 
     def get_config_from_env(
-        self, config_type: str, prefix: Optional[str] = None
+        self,
+        config_type: str,
+        prefix: str | None = None,
     ) -> dict[str, Any]:
         """Load configuration from environment variables."""
         if prefix is None:
@@ -277,7 +281,9 @@ config_manager = ConfigManager()
 
 
 def get_agent_config(
-    agent_type: str, config_name: str = "default", env_override: bool = True
+    agent_type: str,
+    config_name: str = "default",
+    env_override: bool = True,
 ) -> dict[str, Any]:
     """Get agent configuration with optional environment override."""
     # Load base config
@@ -292,7 +298,9 @@ def get_agent_config(
 
 
 def save_agent_config(
-    config: dict[str, Any], agent_type: str, config_name: str = "default"
+    config: dict[str, Any],
+    agent_type: str,
+    config_name: str = "default",
 ) -> None:
     """Save agent configuration."""
     config_manager.save_config(config, agent_type, config_name)

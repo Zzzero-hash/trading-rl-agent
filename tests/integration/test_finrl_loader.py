@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import yaml
 
 from finrl_data_loader import load_synthetic_data
@@ -12,7 +10,7 @@ def test_load_synthetic_data(tmp_path):
         "output": str(tmp_path / "synth.csv"),
     }
     cfg_path = tmp_path / "cfg.yaml"
-    with open(cfg_path, "w") as f:
+    with Path(cfg_path).open(cfg_path, "w") as f:
         yaml.dump(cfg, f)
     df = load_synthetic_data(str(cfg_path))
     assert not df.empty

@@ -3,7 +3,7 @@ from __future__ import annotations
 """Minimal dashboard utilities."""
 
 from dataclasses import asdict, is_dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..core.logging import get_logger
 

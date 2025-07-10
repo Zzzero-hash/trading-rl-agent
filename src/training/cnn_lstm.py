@@ -10,21 +10,21 @@ Example usage:
 >>> model = trainer.train_from_config('src/configs/training/cnn_lstm_train.yaml')
 """
 
-from dataclasses import dataclass
 import logging
 import os
-from pathlib import Path
 import pickle
-from typing import Any, Optional
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
-from dotenv import load_dotenv
 import numpy as np
 import pandas as pd
-from pytorch_forecasting import TimeSeriesDataSet
 import pytorch_lightning as pl
 import torch
-import torch.nn as nn
 import yaml
+from dotenv import load_dotenv
+from pytorch_forecasting import TimeSeriesDataSet
+from torch import nn
 
 from trading_rl_agent.core.config import ConfigManager
 from trading_rl_agent.data.features import generate_features
@@ -37,20 +37,19 @@ def load_data(config: dict[str, Any]) -> pd.DataFrame:
     """Load data from configuration."""
     if "path" in config:
         return pd.read_csv(config["path"])
-    else:
-        # Return dummy data for testing
+    # Return dummy data for testing
 
-        dates = pd.date_range(start="2023-01-01", end="2024-01-01", freq="D")
-        np.random.seed(42)
-        data = {
-            "timestamp": dates,
-            "open": 100 + np.random.randn(len(dates)).cumsum(),
-            "high": 100 + np.random.randn(len(dates)).cumsum() + 1,
-            "low": 100 + np.random.randn(len(dates)).cumsum() - 1,
-            "close": 100 + np.random.randn(len(dates)).cumsum(),
-            "volume": np.random.randint(1000000, 10000000, len(dates)),
-        }
-        return pd.DataFrame(data)
+    dates = pd.date_range(start="2023-01-01", end="2024-01-01", freq="D")
+    np.random.seed(42)
+    data = {
+        "timestamp": dates,
+        "open": 100 + np.random.randn(len(dates)).cumsum(),
+        "high": 100 + np.random.randn(len(dates)).cumsum() + 1,
+        "low": 100 + np.random.randn(len(dates)).cumsum() - 1,
+        "close": 100 + np.random.randn(len(dates)).cumsum(),
+        "volume": np.random.randint(1000000, 10000000, len(dates)),
+    }
+    return pd.DataFrame(data)
 
 
 logger = logging.getLogger(__name__)
@@ -68,7 +67,7 @@ class TrainingConfig:
     # test_split is automatically 1 - train_split - val_split
 
     # Model configuration
-    model_config: Optional[dict[str, Any]] = None
+    model_config: dict[str, Any] | None = None
     use_attention: bool = True
 
     # Training configuration
@@ -97,16 +96,20 @@ class TimeSeriesDataModule(pl.LightningDataModule):
     """Lightning DataModule using ``TimeSeriesDataSet`` for sequence generation."""
 
     def __init__(
-        self, features: np.ndarray, targets: np.ndarray, config: TrainingConfig
+        self,
+        features: np.ndarray,
+        targets: np.ndarray,
+        config: TrainingConfig,
     ):
         super().__init__()
         self.features = features
         self.targets = targets
         self.config = config
 
-    def setup(self, stage: Optional[str] = None):
+    def setup(self, stage: str | None = None):
         df = pd.DataFrame(
-            self.features, columns=[f"f{i}" for i in range(self.features.shape[1])]
+            self.features,
+            columns=[f"f{i}" for i in range(self.features.shape[1])],
         )
         df["target"] = self.targets
         df["time_idx"] = np.arange(len(df))
@@ -128,7 +131,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         val_end = int(n * (self.config.train_split + self.config.val_split))
 
         self.train_dataset = TimeSeriesDataSet.from_dataset(
-            self.dataset, df[df["time_idx"] < train_end], stop_randomization=True
+            self.dataset,
+            df[df["time_idx"] < train_end],
+            stop_randomization=True,
         )
         self.val_dataset = TimeSeriesDataSet.from_dataset(
             self.dataset,
@@ -136,22 +141,30 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             stop_randomization=True,
         )
         self.test_dataset = TimeSeriesDataSet.from_dataset(
-            self.dataset, df[df["time_idx"] >= val_end], stop_randomization=True
+            self.dataset,
+            df[df["time_idx"] >= val_end],
+            stop_randomization=True,
         )
 
     def train_dataloader(self):
         return self.train_dataset.to_dataloader(
-            train=True, batch_size=self.config.batch_size, shuffle=True
+            train=True,
+            batch_size=self.config.batch_size,
+            shuffle=True,
         )
 
     def val_dataloader(self):
         return self.val_dataset.to_dataloader(
-            train=False, batch_size=self.config.batch_size, shuffle=False
+            train=False,
+            batch_size=self.config.batch_size,
+            shuffle=False,
         )
 
     def test_dataloader(self):
         return self.test_dataset.to_dataloader(
-            train=False, batch_size=self.config.batch_size, shuffle=False
+            train=False,
+            batch_size=self.config.batch_size,
+            shuffle=False,
         )
 
 
@@ -162,7 +175,7 @@ class CNNLSTMLightning(pl.LightningModule):
         self,
         input_dim: int,
         config: TrainingConfig,
-        model_cfg: Optional[dict[str, Any]] = None,
+        model_cfg: dict[str, Any] | None = None,
     ):
         super().__init__()
         cfg = (
@@ -213,7 +226,7 @@ class CNNLSTMLightning(pl.LightningModule):
 class CNNLSTMTrainer:
     """Main trainer class for CNN-LSTM models."""
 
-    def __init__(self, config: Optional[TrainingConfig] = None):
+    def __init__(self, config: TrainingConfig | None = None):
         load_dotenv()
         self.config = config or TrainingConfig()
         self.model = None
@@ -227,7 +240,9 @@ class CNNLSTMTrainer:
             self.sentiment_analyzer = SentimentAnalyzer(sentiment_config)
 
     def prepare_data(
-        self, df: pd.DataFrame, symbols: Optional[list[str]] = None
+        self,
+        df: pd.DataFrame,
+        symbols: list[str] | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Prepare data for training including sentiment features."""
         # Validate input data
@@ -247,7 +262,8 @@ class CNNLSTMTrainer:
             import warnings
 
             warnings.warn(
-                "Feature generation resulted in empty DataFrame; creating minimal DataFrame for testing."
+                "Feature generation resulted in empty DataFrame; creating minimal DataFrame for testing.",
+                stacklevel=2,
             )
             # Create a minimal dataframe with at least one row for testing
             feature_cols = [
@@ -279,10 +295,7 @@ class CNNLSTMTrainer:
                     "sentiment",
                 ]
                 df_features = pd.DataFrame(
-                    [
-                        {col: np.nan for col in feature_cols}
-                        for _ in range(self.config.sequence_length)
-                    ]
+                    [{col: np.nan for col in feature_cols} for _ in range(self.config.sequence_length)],
                 )
 
         # Add sentiment features if enabled
@@ -305,11 +318,9 @@ class CNNLSTMTrainer:
             # Create target from price changes as fallback
             if len(df_features) < 2:
                 raise ValueError(
-                    "Insufficient data for target calculation (need at least 2 rows)"
+                    "Insufficient data for target calculation (need at least 2 rows)",
                 )
-            df_features["target"] = (
-                df_features["close"].pct_change().shift(-self.config.prediction_horizon)
-            )
+            df_features["target"] = df_features["close"].pct_change().shift(-self.config.prediction_horizon)
             target_column = "target"
 
         # Remove rows with NaN values
@@ -320,11 +331,7 @@ class CNNLSTMTrainer:
             raise ValueError("No data remaining after NaN removal")
 
         # Separate features and targets
-        feature_columns = [
-            col
-            for col in df_clean.columns
-            if col not in ["target", "label", "timestamp"]
-        ]
+        feature_columns = [col for col in df_clean.columns if col not in ["target", "label", "timestamp"]]
         features = df_clean[feature_columns].values.astype(np.float32)
         targets = df_clean[target_column].values.astype(np.float32)
 
@@ -335,11 +342,11 @@ class CNNLSTMTrainer:
         # Error handling for empty or mismatched features
         if features.size == 0:
             raise ValueError(
-                "No features available after preprocessing. Check feature engineering and NaN removal."
+                "No features available after preprocessing. Check feature engineering and NaN removal.",
             )
         if len(features.shape) != 2:
             raise ValueError(
-                f"Features must be 2D (samples, features), got shape {features.shape}"
+                f"Features must be 2D (samples, features), got shape {features.shape}",
             )
 
         # Robust error handling for missing/empty columns (check original input)
@@ -351,9 +358,11 @@ class CNNLSTMTrainer:
                 raise ValueError(f"Column '{col}' is empty or all NaN")
 
         # Check if we have enough data for sequence generation after cleaning
-        if len(features) < self.config.sequence_length + self.config.prediction_horizon:
+        min_required = self.config.sequence_length + self.config.prediction_horizon
+        if len(features) < min_required:
             raise ValueError(
-                f"Insufficient data for sequence generation: need at least {self.config.sequence_length + self.config.prediction_horizon} rows, got {len(features)} after preprocessing"
+                f"Insufficient data for sequence generation: need at least {min_required} rows, "
+                f"got {len(features)} after preprocessing",
             )
 
         # Normalize features if requested
@@ -363,7 +372,7 @@ class CNNLSTMTrainer:
             self.scaler = StandardScaler()
             features = self.scaler.fit_transform(features)
         logger.info(
-            f"Prepared data shape: features={features.shape}, targets={targets.shape}"
+            f"Prepared data shape: features={features.shape}, targets={targets.shape}",
         )
         return features, targets
 
@@ -371,7 +380,7 @@ class CNNLSTMTrainer:
         self,
         df: pd.DataFrame,
         symbols: list[str],
-        forex_pairs: Optional[list[str]] = None,
+        forex_pairs: list[str] | None = None,
     ) -> pd.DataFrame:
         """Add sentiment features to the dataframe, including forex pairs."""
         import importlib
@@ -381,9 +390,10 @@ class CNNLSTMTrainer:
         for symbol in symbols:
             try:
                 sentiment_scores = []
-                for _, row in df.iterrows():
+                for _, _row in df.iterrows():
                     score = self.sentiment_analyzer.get_symbol_sentiment(
-                        symbol, days_back=1
+                        symbol,
+                        days_back=1,
                     )
                     sentiment_scores.append(score)
                 sentiment_df[f"sentiment_{symbol}"] = sentiment_scores
@@ -396,7 +406,7 @@ class CNNLSTMTrainer:
         if forex_pairs:
             try:
                 forex_mod = importlib.import_module("src.data.forex_sentiment")
-                get_forex_sentiment = getattr(forex_mod, "get_forex_sentiment")
+                get_forex_sentiment = forex_mod.get_forex_sentiment
                 for pair in forex_pairs:
                     sentiment_scores = []
                     sentiment_data = get_forex_sentiment(pair)
@@ -405,7 +415,7 @@ class CNNLSTMTrainer:
                         sentiment_scores.append(score)
                     sentiment_df[f"forex_sentiment_{pair}"] = sentiment_scores
                     sentiment_df[f"forex_sentiment_{pair}_abs"] = np.abs(
-                        sentiment_scores
+                        sentiment_scores,
                     )
             except Exception as e:
                 logger.warning(f"Failed to add forex sentiment: {e}")
@@ -415,7 +425,9 @@ class CNNLSTMTrainer:
         return sentiment_df
 
     def create_data_module(
-        self, features: np.ndarray, targets: np.ndarray
+        self,
+        features: np.ndarray,
+        targets: np.ndarray,
     ) -> TimeSeriesDataModule:
         """Create a :class:`TimeSeriesDataModule` from arrays."""
 
@@ -428,7 +440,9 @@ class CNNLSTMTrainer:
         return module
 
     def initialize_model(
-        self, input_dim: int, model_config: Optional[dict[str, Any]] = None
+        self,
+        input_dim: int,
+        model_config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the CNN-LSTM model."""
 
@@ -452,7 +466,7 @@ class CNNLSTMTrainer:
         logger.info(f"Model configuration: {model_config}")
 
         logger.info(
-            f"Initialized model with {sum(p.numel() for p in self.model.parameters())} parameters"
+            f"Initialized model with {sum(p.numel() for p in self.model.parameters())} parameters",
         )
 
     def fit(self, datamodule: TimeSeriesDataModule) -> None:
@@ -464,7 +478,7 @@ class CNNLSTMTrainer:
                     monitor="val_loss",
                     patience=self.config.early_stopping_patience,
                     mode="min",
-                )
+                ),
             )
 
         trainer = pl.Trainer(
@@ -497,14 +511,14 @@ class CNNLSTMTrainer:
             scaler_dir = Path(self.config.scaler_save_path).parent
             scaler_dir.mkdir(parents=True, exist_ok=True)
 
-            with open(self.config.scaler_save_path, "wb") as f:
+            with Path(self.config.scaler_save_path).open(self.config.scaler_save_path, "wb") as f:
                 pickle.dump(self.scaler, f)
 
         logger.info(f"Model saved to {self.config.model_save_path}")
 
     def train_from_config(self, config_path: str) -> CNNLSTMModel:
         """Train model from YAML configuration file."""
-        with open(config_path) as f:
+        with Path(config_path).open(config_path) as f:
             config_dict = yaml.safe_load(f)
 
         # Update training config

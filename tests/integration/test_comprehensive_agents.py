@@ -1,8 +1,5 @@
 """Comprehensive agent tests."""
 
-import numpy as np
-import pytest
-
 
 class TestAgentInitialization:
     """Test agent initialization and configuration."""

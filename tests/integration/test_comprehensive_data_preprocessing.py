@@ -3,29 +3,17 @@ Comprehensive tests for data preprocessing utilities.
 Tests feature engineering, data validation, preprocessing pipelines, and edge cases.
 """
 
-from pathlib import Path
-from unittest.mock import Mock, patch
-
 import numpy as np
 import pandas as pd
 import pytest
 from sklearn.preprocessing import StandardScaler
-import torch
 
 # Import data utilities
 from trading_rl_agent.data.features import (
-    compute_adx,
     compute_atr,
-    compute_bollinger_bands,
     compute_ema,
-    compute_macd,
-    compute_obv,
-    compute_stochastic,
-    compute_williams_r,
     detect_doji,
-    detect_engulfing,
     detect_hammer,
-    detect_shooting_star,
     generate_features,
 )
 from trading_rl_agent.data.preprocessing import create_sequences
@@ -45,7 +33,7 @@ class TestFeatureEngineering:
                 "high": constant_prices,
                 "low": constant_prices,
                 "volume": [1000] * len(constant_prices),
-            }
+            },
         )
 
         # Should handle constant prices
@@ -60,12 +48,14 @@ class TestFeatureEngineering:
 
         # Single value
         single_data = pd.DataFrame(
-            {"close": [100], "high": [100], "low": [100], "volume": [1000]}
+            {"close": [100], "high": [100], "low": [100], "volume": [1000]},
         )
 
         # Should handle single values gracefully
         data_ema_single = compute_ema(
-            single_data.copy(), price_col="close", timeperiod=1
+            single_data.copy(),
+            price_col="close",
+            timeperiod=1,
         )
         ema_single = data_ema_single["ema_1"]
         assert len(ema_single) == 1
@@ -80,15 +70,13 @@ class TestFeatureEngineering:
                 "high": [102, 103, 104],
                 "low": [98, 99, 100],
                 "close": [100.1, 101.05, 102.02],  # Very close to open
-            }
+            },
         )
 
         # Get doji pattern series
         doji_pattern = detect_doji(doji_data)["doji"]
         assert len(doji_pattern) == 3
-        assert (
-            doji_pattern.iloc[-1] == 1
-        )  # Last candle should be doji (returns 1, not True)
+        assert doji_pattern.iloc[-1] == 1  # Last candle should be doji (returns 1, not True)
 
         # Create test data for hammer pattern
         hammer_data = pd.DataFrame(
@@ -97,7 +85,7 @@ class TestFeatureEngineering:
                 "high": [101, 102, 103],
                 "low": [95, 96, 97],  # Long lower shadow
                 "close": [100.5, 101.5, 102.5],
-            }
+            },
         )
 
         hammer_pattern = detect_hammer(hammer_data)
@@ -123,7 +111,7 @@ class TestFeatureEngineering:
                 "low": [p * (1 - abs(np.random.normal(0, 0.01))) for p in prices],
                 "close": prices,
                 "volume": np.random.randint(1000, 10000, 100),
-            }
+            },
         )
 
         # Generate features
@@ -161,7 +149,7 @@ class TestDataValidation:
                 "high": [101, 102, np.nan, 104, 105],
                 "low": [99, 100, 101, np.nan, 103],
                 "volume": [1000, 1100, 1200, 1300, np.nan],
-            }
+            },
         )
 
         # Test that feature computation handles NaNs
@@ -180,7 +168,7 @@ class TestDataValidation:
                 "high": [101, 102, 103, 104, 105],
                 "low": [99, 100, 101, 102, 103],
                 "volume": [1000, 1100, 1200, 1300, 1400],
-            }
+            },
         )
 
         # Should handle infinite values gracefully
@@ -203,7 +191,7 @@ class TestDataValidation:
                 "high": ["101", "102", "103"],
                 "low": ["99", "100", "101"],
                 "volume": ["1000", "1100", "1200"],
-            }
+            },
         )
 
         # Convert to numeric
@@ -220,7 +208,7 @@ class TestDataValidation:
                 "high": [-99, -100, -101],
                 "low": [-101, -102, -103],
                 "volume": [1000, 1100, 1200],
-            }
+            },
         )
 
         # Technical indicators should handle negative prices
@@ -235,7 +223,7 @@ class TestDataValidation:
                 "high": [1e10 + 1, 1e10 + 2, 1e10 + 3],
                 "low": [1e10 - 1, 1e10, 1e10 + 1],
                 "volume": [1000, 1100, 1200],
-            }
+            },
         )
 
         ema_df = compute_ema(large_data.copy(), timeperiod=2)
@@ -365,13 +353,11 @@ class TestDataPipelineIntegration:
 
         # Extract features for ML
         feature_columns = [
-            col
-            for col in enhanced_data.columns
-            if col not in ["open", "high", "low", "close", "volume"]
+            col for col in enhanced_data.columns if col not in ["open", "high", "low", "close", "volume"]
         ]
         features = enhanced_data[feature_columns].copy()
         datetime_cols = features.select_dtypes(
-            include=["datetime", "datetimetz"]
+            include=["datetime", "datetimetz"],
         ).columns
         for col in datetime_cols:
             features[col] = pd.to_datetime(features[col]).view("int64")
@@ -434,7 +420,7 @@ class TestDataValidationPipeline:
                 "low": [99, 100, 101, 102, 103],
                 "close": [100, 101, 102, 103, 104],
                 "volume": [1000, 0, -100, 1300, 1400],  # Zero and negative volume
-            }
+            },
         )
 
         # Validation checks
@@ -445,9 +431,7 @@ class TestDataValidationPipeline:
 
         # Check for infinite values
         numeric_cols = problematic_data.select_dtypes(include=[np.number]).columns
-        quality_issues["infinite_values"] = sum(
-            np.isinf(problematic_data[col]).sum() for col in numeric_cols
-        )
+        quality_issues["infinite_values"] = sum(np.isinf(problematic_data[col]).sum() for col in numeric_cols)
 
         # Check for negative volumes
         if "volume" in problematic_data.columns:
@@ -473,7 +457,7 @@ class TestDataValidationPipeline:
                 "low": [99, 100, 101, 102, 103],
                 "close": [100, 101, 102, 103, 104],
                 "volume": [1000, 0, 1200, 1300, 1400],
-            }
+            },
         )
 
         # Clean data
@@ -493,9 +477,7 @@ class TestDataValidationPipeline:
 
         # Validate cleaning
         assert not cleaned_data.isna().any().any()  # No missing values
-        assert (
-            not np.isinf(cleaned_data.select_dtypes(include=[np.number])).any().any()
-        )  # No infinite values
+        assert not np.isinf(cleaned_data.select_dtypes(include=[np.number])).any().any()  # No infinite values
         if "volume" in cleaned_data.columns:
             assert (cleaned_data["volume"] > 0).all()  # All positive volumes
 

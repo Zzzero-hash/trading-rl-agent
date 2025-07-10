@@ -4,17 +4,13 @@ Test suite for TD3 (Twin Delayed DDPG) agent.
 
 import os
 import tempfile
-from unittest.mock import MagicMock, patch
 
-import gymnasium as gym
 import numpy as np
 import pytest
 import torch
-import torch.nn as nn
 
 from trading_rl_agent.agents.configs import TD3Config
 from trading_rl_agent.agents.td3_agent import TD3Agent
-from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 
 
 @pytest.fixture(autouse=True)
@@ -161,7 +157,11 @@ class TestTD3Agent:
         # Fill replay buffer
         for i in range(len(states)):
             td3_agent.replay_buffer.add(
-                states[i], actions[i], rewards[i], next_states[i], dones[i]
+                states[i],
+                actions[i],
+                rewards[i],
+                next_states[i],
+                dones[i],
             )
 
         # Get initial parameters
@@ -177,19 +177,22 @@ class TestTD3Agent:
         actor_changed = any(
             not torch.equal(initial, current)
             for initial, current in zip(
-                initial_actor_params, td3_agent.actor.parameters()
+                initial_actor_params,
+                td3_agent.actor.parameters(),
             )
         )
         critic_1_changed = any(
             not torch.equal(initial, current)
             for initial, current in zip(
-                initial_critic_1_params, td3_agent.critic_1.parameters()
+                initial_critic_1_params,
+                td3_agent.critic_1.parameters(),
             )
         )
         critic_2_changed = any(
             not torch.equal(initial, current)
             for initial, current in zip(
-                initial_critic_2_params, td3_agent.critic_2.parameters()
+                initial_critic_2_params,
+                td3_agent.critic_2.parameters(),
             )
         )
 
@@ -207,7 +210,11 @@ class TestTD3Agent:
         # Fill replay buffer
         for i in range(len(states)):
             td3_agent.replay_buffer.add(
-                states[i], actions[i], rewards[i], next_states[i], dones[i]
+                states[i],
+                actions[i],
+                rewards[i],
+                next_states[i],
+                dones[i],
             )
 
         # Get initial actor parameters
@@ -220,7 +227,8 @@ class TestTD3Agent:
         actor_unchanged = all(
             torch.equal(initial, current)
             for initial, current in zip(
-                initial_actor_params, td3_agent.actor.parameters()
+                initial_actor_params,
+                td3_agent.actor.parameters(),
             )
         )
         assert actor_unchanged
@@ -232,7 +240,8 @@ class TestTD3Agent:
         actor_changed = any(
             not torch.equal(initial, current)
             for initial, current in zip(
-                initial_actor_params, td3_agent.actor.parameters()
+                initial_actor_params,
+                td3_agent.actor.parameters(),
             )
         )
         assert actor_changed
@@ -244,19 +253,17 @@ class TestTD3Agent:
         # Fill replay buffer
         for i in range(len(states)):
             td3_agent.replay_buffer.add(
-                states[i], actions[i], rewards[i], next_states[i], dones[i]
+                states[i],
+                actions[i],
+                rewards[i],
+                next_states[i],
+                dones[i],
             )
 
         # Get initial target parameters
-        initial_actor_target_params = [
-            p.clone() for p in td3_agent.actor_target.parameters()
-        ]
-        initial_critic_1_target_params = [
-            p.clone() for p in td3_agent.critic_1_target.parameters()
-        ]
-        initial_critic_2_target_params = [
-            p.clone() for p in td3_agent.critic_2_target.parameters()
-        ]
+        initial_actor_target_params = [p.clone() for p in td3_agent.actor_target.parameters()]
+        initial_critic_1_target_params = [p.clone() for p in td3_agent.critic_1_target.parameters()]
+        initial_critic_2_target_params = [p.clone() for p in td3_agent.critic_2_target.parameters()]
 
         # Train for several steps
         for _ in range(10):
@@ -266,19 +273,22 @@ class TestTD3Agent:
         actor_target_changed = any(
             not torch.equal(initial, current)
             for initial, current in zip(
-                initial_actor_target_params, td3_agent.actor_target.parameters()
+                initial_actor_target_params,
+                td3_agent.actor_target.parameters(),
             )
         )
         critic_1_target_changed = any(
             not torch.equal(initial, current)
             for initial, current in zip(
-                initial_critic_1_target_params, td3_agent.critic_1_target.parameters()
+                initial_critic_1_target_params,
+                td3_agent.critic_1_target.parameters(),
             )
         )
         critic_2_target_changed = any(
             not torch.equal(initial, current)
             for initial, current in zip(
-                initial_critic_2_target_params, td3_agent.critic_2_target.parameters()
+                initial_critic_2_target_params,
+                td3_agent.critic_2_target.parameters(),
             )
         )
 
@@ -312,17 +322,20 @@ class TestTD3Agent:
 
             # Compare parameters
             for p1, p2 in zip(
-                td3_agent.actor.parameters(), new_agent.actor.parameters()
+                td3_agent.actor.parameters(),
+                new_agent.actor.parameters(),
             ):
                 assert torch.equal(p1, p2)
 
             for p1, p2 in zip(
-                td3_agent.critic_1.parameters(), new_agent.critic_1.parameters()
+                td3_agent.critic_1.parameters(),
+                new_agent.critic_1.parameters(),
             ):
                 assert torch.equal(p1, p2)
 
             for p1, p2 in zip(
-                td3_agent.critic_2.parameters(), new_agent.critic_2.parameters()
+                td3_agent.critic_2.parameters(),
+                new_agent.critic_2.parameters(),
             ):
                 assert torch.equal(p1, p2)
 
@@ -377,7 +390,11 @@ class TestTD3Agent:
         # Fill replay buffer
         for i in range(len(states)):
             td3_agent.replay_buffer.add(
-                states[i], actions[i], rewards[i], next_states[i], dones[i]
+                states[i],
+                actions[i],
+                rewards[i],
+                next_states[i],
+                dones[i],
             )
 
         # Train and check metrics
@@ -419,20 +436,20 @@ class TestTD3Agent:
         critic_1_params_changed = any(
             not torch.equal(initial, current)
             for initial, current in zip(
-                initial_critic_1_params, td3_agent.critic_1.parameters()
+                initial_critic_1_params,
+                td3_agent.critic_1.parameters(),
             )
         )
         critic_2_params_changed = any(
             not torch.equal(initial, current)
             for initial, current in zip(
-                initial_critic_2_params, td3_agent.critic_2.parameters()
+                initial_critic_2_params,
+                td3_agent.critic_2.parameters(),
             )
         )
 
         # At least one critic should have learned (parameters changed)
-        assert (
-            critic_1_params_changed or critic_2_params_changed
-        ), "At least one critic should have learned"
+        assert critic_1_params_changed or critic_2_params_changed, "At least one critic should have learned"
 
 
 class TestTD3Config:

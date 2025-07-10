@@ -1,19 +1,26 @@
 from __future__ import annotations
 
 import random
-from typing import Callable, Dict
+from typing import TYPE_CHECKING
 
-from gymnasium import spaces
 import numpy as np
 from ray.rllib.policy.policy import Policy
 from ray.rllib.policy.policy_map import PolicyMap
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from gymnasium import spaces
 
 
 class CallablePolicy(Policy):
     """Wrap a callable into an RLlib Policy."""
 
     def __init__(
-        self, obs_space: spaces.Space, action_space: spaces.Space, func: Callable
+        self,
+        obs_space: spaces.Space,
+        action_space: spaces.Space,
+        func: Callable,
     ):
         super().__init__(obs_space, action_space, {})
         if not callable(func):
@@ -74,5 +81,3 @@ class WeightedEnsembleAgent:
 
 class EnsembleAgent(WeightedEnsembleAgent):
     """Backward-compatible alias for :class:`WeightedEnsembleAgent`."""
-
-    pass

@@ -6,21 +6,18 @@ for the trading system.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
-import warnings
+from datetime import datetime
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
 try:
-    from scipy import stats
-
+    # Future scipy support for advanced statistics
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
 
-from ..core.exceptions import TradingSystemError
 from ..core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -78,7 +75,7 @@ class RiskManager:
     - Automated risk controls
     """
 
-    def __init__(self, risk_limits: Optional[RiskLimits] = None):
+    def __init__(self, risk_limits: RiskLimits | None = None):
         """
         Initialize risk manager.
 
@@ -89,23 +86,23 @@ class RiskManager:
         self.logger = get_logger(self.__class__.__name__)
 
         # Risk state
-        self.current_metrics: Optional[RiskMetrics] = None
+        self.current_metrics: RiskMetrics | None = None
         self.risk_alerts: list[dict] = []
         self.historical_metrics: list[RiskMetrics] = []
 
         # Market data for calculations
         self._returns_data: dict[str, pd.Series] = {}
-        self._benchmark_returns: Optional[pd.Series] = None
+        self._benchmark_returns: pd.Series | None = None
 
         if not SCIPY_AVAILABLE:
             self.logger.warning(
-                "SciPy not available, some risk calculations may be limited"
+                "SciPy not available, some risk calculations may be limited",
             )
 
     def update_returns_data(
         self,
         returns_data: dict[str, pd.Series],
-        benchmark_returns: Optional[pd.Series] = None,
+        benchmark_returns: pd.Series | None = None,
     ) -> None:
         """
         Update returns data for risk calculations.
@@ -159,9 +156,7 @@ class RiskManager:
             if total_weight == 0:
                 return 0.0
 
-            normalized_weights = {
-                k: v / total_weight for k, v in filtered_weights.items()
-            }
+            normalized_weights = {k: v / total_weight for k, v in filtered_weights.items()}
 
             # Calculate portfolio returns
             weight_series = pd.Series(normalized_weights)
@@ -170,9 +165,7 @@ class RiskManager:
 
             if len(portfolio_returns) < 30:  # Need sufficient data
                 self.logger.warning("Insufficient data for reliable VaR calculation")
-                return (
-                    portfolio_returns.std() * 2.33
-                )  # Approximate using normal distribution
+                return portfolio_returns.std() * 2.33  # Approximate using normal distribution
 
             # Calculate VaR using historical simulation
             var_value = np.percentile(portfolio_returns, confidence_level * 100)
@@ -183,11 +176,13 @@ class RiskManager:
             return abs(var_scaled)
 
         except Exception as e:
-            self.logger.error(f"VaR calculation failed: {e}")
+            self.logger.exception(f"VaR calculation failed: {e}")
             return 0.0
 
     def calculate_portfolio_cvar(
-        self, weights: dict[str, float], confidence_level: float = 0.05
+        self,
+        weights: dict[str, float],
+        confidence_level: float = 0.05,
     ) -> float:
         """
         Calculate Conditional Value at Risk (CVaR/Expected Shortfall).
@@ -220,9 +215,7 @@ class RiskManager:
 
             # Normalize weights
             total_weight = sum(filtered_weights.values())
-            normalized_weights = {
-                k: v / total_weight for k, v in filtered_weights.items()
-            }
+            normalized_weights = {k: v / total_weight for k, v in filtered_weights.items()}
             weight_series = pd.Series(normalized_weights)
 
             portfolio_returns = (returns_matrix * weight_series).sum(axis=1).dropna()
@@ -239,7 +232,7 @@ class RiskManager:
             return cvar_value
 
         except Exception as e:
-            self.logger.error(f"CVaR calculation failed: {e}")
+            self.logger.exception(f"CVaR calculation failed: {e}")
             return self.calculate_portfolio_var(weights, confidence_level) * 1.3
 
     def calculate_portfolio_drawdown(self, weights: dict[str, float]) -> float:
@@ -264,7 +257,7 @@ class RiskManager:
                 return 0.0
 
             weight_series = pd.Series(
-                {k: v / total_weight for k, v in filtered_weights.items()}
+                {k: v / total_weight for k, v in filtered_weights.items()},
             )
             portfolio_returns = (returns_df * weight_series).sum(axis=1).dropna()
 
@@ -276,34 +269,35 @@ class RiskManager:
             drawdowns = (cumulative_returns - rolling_max) / rolling_max
             return abs(drawdowns.min())
         except Exception as e:
-            self.logger.error(f"Drawdown calculation failed: {e}")
+            self.logger.exception(f"Drawdown calculation failed: {e}")
             return 0.0
 
     def calculate_sharpe_ratio(
-        self, portfolio_returns: pd.Series, risk_free_rate: float = 0.02
+        self,
+        portfolio_returns: pd.Series,
+        risk_free_rate: float = 0.02,
     ) -> float:
         """Calculate Sharpe ratio."""
         try:
             if len(portfolio_returns) < 2:
                 return 0.0
 
-            excess_returns = (
-                portfolio_returns.mean() - risk_free_rate / 252
-            )  # Daily risk-free rate
+            excess_returns = portfolio_returns.mean() - risk_free_rate / 252  # Daily risk-free rate
             volatility = portfolio_returns.std()
 
             if volatility == 0:
                 return 0.0
 
-            sharpe = (excess_returns / volatility) * np.sqrt(252)  # Annualized
-            return sharpe
+            return (excess_returns / volatility) * np.sqrt(252)  # Annualized
 
         except Exception as e:
-            self.logger.error(f"Sharpe ratio calculation failed: {e}")
+            self.logger.exception(f"Sharpe ratio calculation failed: {e}")
             return 0.0
 
     def calculate_sortino_ratio(
-        self, portfolio_returns: pd.Series, risk_free_rate: float = 0.02
+        self,
+        portfolio_returns: pd.Series,
+        risk_free_rate: float = 0.02,
     ) -> float:
         """Calculate Sortino ratio (downside deviation)."""
         try:
@@ -321,11 +315,10 @@ class RiskManager:
             if downside_deviation == 0:
                 return float("inf")
 
-            sortino = (excess_returns / downside_deviation) * np.sqrt(252)
-            return sortino
+            return (excess_returns / downside_deviation) * np.sqrt(252)
 
         except Exception as e:
-            self.logger.error(f"Sortino ratio calculation failed: {e}")
+            self.logger.exception(f"Sortino ratio calculation failed: {e}")
             return 0.0
 
     def calculate_beta(self, portfolio_returns: pd.Series) -> float:
@@ -336,7 +329,7 @@ class RiskManager:
 
             # Align returns
             aligned_data = pd.DataFrame(
-                {"portfolio": portfolio_returns, "benchmark": self._benchmark_returns}
+                {"portfolio": portfolio_returns, "benchmark": self._benchmark_returns},
             ).dropna()
 
             if len(aligned_data) < 10:  # Need sufficient data
@@ -349,11 +342,10 @@ class RiskManager:
             if benchmark_variance == 0:
                 return 1.0
 
-            beta = covariance / benchmark_variance
-            return beta
+            return covariance / benchmark_variance
 
         except Exception as e:
-            self.logger.error(f"Beta calculation failed: {e}")
+            self.logger.exception(f"Beta calculation failed: {e}")
             return 1.0
 
     def calculate_correlation_risk(self, weights: dict[str, float]) -> float:
@@ -361,9 +353,7 @@ class RiskManager:
         try:
             # Get returns for weighted assets
             weighted_assets = [
-                asset
-                for asset, weight in weights.items()
-                if weight != 0 and asset in self._returns_data
+                asset for asset, weight in weights.items() if weight != 0 and asset in self._returns_data
             ]
 
             if len(weighted_assets) < 2:
@@ -391,11 +381,10 @@ class RiskManager:
             if total_weight_pairs == 0:
                 return 0.0
 
-            avg_correlation = total_correlation / total_weight_pairs
-            return avg_correlation
+            return total_correlation / total_weight_pairs
 
         except Exception as e:
-            self.logger.error(f"Correlation risk calculation failed: {e}")
+            self.logger.exception(f"Correlation risk calculation failed: {e}")
             return 0.0
 
     def calculate_concentration_risk(self, weights: dict[str, float]) -> float:
@@ -409,9 +398,7 @@ class RiskManager:
 
             # Normalize weights
             total_weight = sum(non_zero_weights.values())
-            normalized_weights = {
-                k: v / total_weight for k, v in non_zero_weights.items()
-            }
+            normalized_weights = {k: v / total_weight for k, v in non_zero_weights.items()}
 
             # Calculate Herfindahl index
             herfindahl = sum(w**2 for w in normalized_weights.values())
@@ -422,15 +409,16 @@ class RiskManager:
             if n_assets == 1:
                 return 1.0
 
-            concentration_risk = herfindahl
-            return concentration_risk
+            return herfindahl
 
         except Exception as e:
-            self.logger.error(f"Concentration risk calculation failed: {e}")
+            self.logger.exception(f"Concentration risk calculation failed: {e}")
             return 0.0
 
     def check_risk_limits(
-        self, portfolio_weights: dict[str, float], portfolio_value: float
+        self,
+        portfolio_weights: dict[str, float],
+        portfolio_value: float,
     ) -> list[dict[str, Any]]:
         """
         Check portfolio against risk limits.
@@ -447,9 +435,9 @@ class RiskManager:
         try:
             # Calculate current metrics
             current_var = self.calculate_portfolio_var(portfolio_weights)
-            current_cvar = self.calculate_portfolio_cvar(portfolio_weights)
+            # current_cvar = self.calculate_portfolio_cvar(portfolio_weights)  # Not used currently
             correlation_risk = self.calculate_correlation_risk(portfolio_weights)
-            concentration_risk = self.calculate_concentration_risk(portfolio_weights)
+            # concentration_risk = self.calculate_concentration_risk(portfolio_weights)  # Not used currently
             drawdown = self.calculate_portfolio_drawdown(portfolio_weights)
 
             # Check VaR limit
@@ -460,7 +448,7 @@ class RiskManager:
                         "current_value": current_var,
                         "limit": self.risk_limits.max_portfolio_var,
                         "severity": "high",
-                    }
+                    },
                 )
 
             # Check position size limits
@@ -473,7 +461,7 @@ class RiskManager:
                             "current_value": abs(weight),
                             "limit": self.risk_limits.max_position_size,
                             "severity": "medium",
-                        }
+                        },
                     )
 
             # Check correlation risk
@@ -484,7 +472,7 @@ class RiskManager:
                         "current_value": correlation_risk,
                         "limit": self.risk_limits.max_correlation,
                         "severity": "medium",
-                    }
+                    },
                 )
 
             # Check drawdown limit
@@ -495,13 +483,13 @@ class RiskManager:
                         "current_value": drawdown,
                         "limit": self.risk_limits.max_drawdown,
                         "severity": "high",
-                    }
+                    },
                 )
 
             return violations
 
         except Exception as e:
-            self.logger.error(f"Risk limit check failed: {e}")
+            self.logger.exception(f"Risk limit check failed: {e}")
             return []
 
     def calculate_kelly_position_size(
@@ -539,16 +527,16 @@ class RiskManager:
 
             # Apply safety constraints
             kelly_fraction = max(0, kelly_fraction)  # No negative positions
-            kelly_fraction = min(kelly_fraction, max_kelly_fraction)  # Cap at max
-
-            return kelly_fraction
+            return min(kelly_fraction, max_kelly_fraction)  # Cap at max
 
         except Exception as e:
-            self.logger.error(f"Kelly position size calculation failed: {e}")
+            self.logger.exception(f"Kelly position size calculation failed: {e}")
             return 0.0
 
     def generate_risk_report(
-        self, portfolio_weights: dict[str, float], portfolio_value: float
+        self,
+        portfolio_weights: dict[str, float],
+        portfolio_value: float,
     ) -> dict[str, Any]:
         """Generate comprehensive risk report."""
         try:
@@ -556,7 +544,7 @@ class RiskManager:
             portfolio_returns = None
             if self._returns_data:
                 available_assets = set(portfolio_weights.keys()) & set(
-                    self._returns_data.keys()
+                    self._returns_data.keys(),
                 )
                 if available_assets:
                     returns_df = pd.DataFrame()
@@ -566,10 +554,7 @@ class RiskManager:
 
                     if not returns_df.empty:
                         weight_series = pd.Series(
-                            {
-                                asset: portfolio_weights[asset]
-                                for asset in returns_df.columns
-                            }
+                            {asset: portfolio_weights[asset] for asset in returns_df.columns},
                         )
                         portfolio_returns = (returns_df * weight_series).sum(axis=1)
 
@@ -596,7 +581,8 @@ class RiskManager:
                     "correlation_limit": self.risk_limits.max_correlation,
                 },
                 "risk_violations": self.check_risk_limits(
-                    portfolio_weights, portfolio_value
+                    portfolio_weights,
+                    portfolio_value,
                 ),
             }
 
@@ -613,7 +599,7 @@ class RiskManager:
             return report
 
         except Exception as e:
-            self.logger.error(f"Risk report generation failed: {e}")
+            self.logger.exception(f"Risk report generation failed: {e}")
             return {"timestamp": datetime.now(), "error": str(e)}
 
     def _calculate_max_drawdown(self, returns: pd.Series) -> float:

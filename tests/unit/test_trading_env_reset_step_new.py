@@ -22,4 +22,5 @@ def test_reset_clears_history(sample_csv_file):
 def test_dataset_path_string(sample_csv_file):
     env = TradingEnv({"dataset_paths": sample_csv_file})
     obs, info = env.reset()
-    assert obs is not None and isinstance(info, dict)
+    assert obs is not None
+    assert isinstance(info, dict)

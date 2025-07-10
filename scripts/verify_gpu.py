@@ -13,16 +13,19 @@ def check_nvidia_smi():
     """Check if nvidia-smi is available and working."""
     try:
         result = subprocess.run(
-            ["nvidia-smi"], capture_output=True, text=True, timeout=10
+            ["nvidia-smi"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         if result.returncode == 0:
             print("✅ nvidia-smi is working:")
             print(result.stdout)
             return True
-        else:
-            print("❌ nvidia-smi failed:")
-            print(result.stderr)
-            return False
+        print("❌ nvidia-smi failed:")
+        print(result.stderr)
+        return False
     except FileNotFoundError:
         print("❌ nvidia-smi not found - NVIDIA drivers may not be installed")
         return False
@@ -51,9 +54,8 @@ def check_pytorch_cuda():
                 print(f"✅ GPU {i}: {gpu_name}")
 
             return True
-        else:
-            print("❌ CUDA not available in PyTorch")
-            return False
+        print("❌ CUDA not available in PyTorch")
+        return False
 
     except ImportError:
         print("❌ PyTorch not installed")
@@ -93,7 +95,7 @@ def check_pynvml():
             memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
             print(f"  GPU {i}: {name}")
             print(
-                f"    Memory: {memory_info.used / 1024**2:.0f}MB / {memory_info.total / 1024**2:.0f}MB"
+                f"    Memory: {memory_info.used / 1024**2:.0f}MB / {memory_info.total / 1024**2:.0f}MB",
             )
 
         return True

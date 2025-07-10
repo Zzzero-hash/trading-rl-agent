@@ -1,7 +1,7 @@
 import logging
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -33,7 +33,7 @@ if "structlog" not in sys.modules:
 if "trading_rl_agent" not in sys.modules:
     pkg = types.ModuleType("trading_rl_agent")
     pkg.__path__ = [
-        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"),
     ]
     sys.modules["trading_rl_agent"] = pkg
 
@@ -45,11 +45,11 @@ for pkg_name in ["features"]:
         mod.__path__ = [str(base / pkg_name)]
         sys.modules[key] = mod
 
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
-import pytest  # noqa: E402
+import numpy as np
+import pandas as pd
+import pytest
 
-from trading_rl_agent.features.pipeline import FeaturePipeline  # noqa: E402
+from trading_rl_agent.features.pipeline import FeaturePipeline
 
 
 class DummyTechnicalIndicators:
@@ -74,7 +74,7 @@ def test_feature_pipeline_basic():
             "low": np.arange(1, n + 1, dtype=float) - 1,
             "close": np.arange(1, n + 1, dtype=float) + 0.5,
             "volume": np.arange(100, 100 + n, dtype=float),
-        }
+        },
     )
     ref = pd.DataFrame({"close": np.linspace(10, 10 + n - 1, n)})
 

@@ -20,7 +20,8 @@ def test_to_tensor_various_types():
     assert _to_tensor(arr).dtype == torch.float32
     assert _to_tensor(df).dtype == torch.float32
     t = _to_tensor(tens)
-    assert t.dtype == torch.float32 and t.shape == tens.shape
+    assert t.dtype == torch.float32
+    assert t.shape == tens.shape
 
 
 def test_evaluate_model_classification_metrics():

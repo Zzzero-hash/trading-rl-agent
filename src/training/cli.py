@@ -22,7 +22,9 @@ def main(argv=None):
 
     tune_parser = subparsers.add_parser("tune", help="Run Ray Tune sweep")
     tune_parser.add_argument(
-        "configs", nargs="+", help="One or more YAML files defining search space"
+        "configs",
+        nargs="+",
+        help="One or more YAML files defining search space",
     )
 
     args = parser.parse_args(argv)
@@ -40,7 +42,7 @@ def main(argv=None):
                 str(args.num_gpus),
             ]
             + (["--cluster-config", args.cluster_config] if args.cluster_config else [])
-            + (["--local-mode"] if args.local_mode else [])
+            + (["--local-mode"] if args.local_mode else []),
         )
     elif args.command == "cnn-lstm":
         trainer = cnn_lstm.CNNLSTMTrainer()

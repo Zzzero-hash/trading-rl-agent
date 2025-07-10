@@ -14,10 +14,10 @@ Example usage:
 
 from .cnn_lstm_optimization import optimize_cnn_lstm
 from .model_utils import (
-    get_model_summary,
-    profile_model_inference,
     detect_gpus,
+    get_model_summary,
     optimal_gpu_config,
+    profile_model_inference,
     run_hyperparameter_optimization,
 )
 
@@ -26,20 +26,20 @@ try:
     from .rl_optimization import optimize_sac_hyperparams
 
     __all__ = [
+        "detect_gpus",
+        "get_model_summary",
+        "optimal_gpu_config",
         "optimize_cnn_lstm",
         "optimize_sac_hyperparams",
-        "get_model_summary",
         "profile_model_inference",
-        "detect_gpus",
-        "optimal_gpu_config",
         "run_hyperparameter_optimization",
     ]
 except ImportError:
     __all__ = [
-        "optimize_cnn_lstm",
-        "get_model_summary",
-        "profile_model_inference",
         "detect_gpus",
+        "get_model_summary",
         "optimal_gpu_config",
+        "optimize_cnn_lstm",
+        "profile_model_inference",
         "run_hyperparameter_optimization",
     ]

@@ -4,7 +4,7 @@ Configuration management for the trading system.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
 
@@ -90,7 +90,7 @@ class InfrastructureConfig:
     distributed: bool = False
     num_workers: int = 4
     gpu_enabled: bool = True
-    ray_address: Optional[str] = None
+    ray_address: str | None = None
 
     # Storage
     model_registry_path: str = "models"
@@ -121,7 +121,7 @@ class SystemConfig:
 class ConfigManager:
     """Centralized configuration management."""
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):
+    def __init__(self, config_path: str | Path | None = None):
         """
         Initialize configuration manager.
 
@@ -129,10 +129,11 @@ class ConfigManager:
             config_path: Path to configuration file
         """
         self.config_path = Path(config_path) if config_path else None
-        self._config: Optional[SystemConfig] = None
+        self._config: SystemConfig | None = None
 
     def load_config(
-        self, config_path: Optional[Union[str, Path]] = None
+        self,
+        config_path: str | Path | None = None,
     ) -> SystemConfig:
         """
         Load configuration from file or create default.
@@ -151,20 +152,22 @@ class ConfigManager:
 
         if self.config_path and self.config_path.exists():
             try:
-                with open(self.config_path) as f:
+                with Path(self.config_path).open() as f:
                     config_dict = yaml.safe_load(f)
                 self._config = self._dict_to_config(config_dict)
             except Exception as e:
                 raise ConfigurationError(
-                    f"Failed to load config from {self.config_path}: {e}"
-                )
+                    f"Failed to load config from {self.config_path}: {e}",
+                ) from e
         else:
             self._config = SystemConfig()
 
         return self._config
 
     def save_config(
-        self, config: SystemConfig, path: Optional[Union[str, Path]] = None
+        self,
+        config: SystemConfig,
+        path: str | Path | None = None,
     ) -> None:
         """
         Save configuration to file.
@@ -180,7 +183,7 @@ class ConfigManager:
         save_path.parent.mkdir(parents=True, exist_ok=True)
 
         config_dict = self._config_to_dict(config)
-        with open(save_path, "w") as f:
+        with Path(save_path).open("w") as f:
             yaml.dump(config_dict, f, default_flow_style=False, indent=2)
 
     def get_config(self) -> SystemConfig:
@@ -216,7 +219,7 @@ class ConfigManager:
             rl=RLConfig(**config_dict.get("rl", {})),
             risk=RiskConfig(**config_dict.get("risk", {})),
             infrastructure=InfrastructureConfig(
-                **config_dict.get("infrastructure", {})
+                **config_dict.get("infrastructure", {}),
             ),
         )
 
@@ -238,7 +241,8 @@ class ConfigManager:
         for key, value in updates.items():
             if hasattr(config, key):
                 if isinstance(value, dict) and hasattr(
-                    getattr(config, key), "__dict__"
+                    getattr(config, key),
+                    "__dict__",
                 ):
                     self._apply_updates(getattr(config, key), value)
                 else:

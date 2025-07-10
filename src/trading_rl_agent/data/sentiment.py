@@ -10,16 +10,16 @@ Example usage:
 >>> news_sentiment = analyzer.analyze_news_sentiment('AAPL', days_back=7)
 """
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 import datetime
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any
 
+import requests
 from bs4 import BeautifulSoup
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import requests
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class SentimentData:
     magnitude: float  # 0.0 to 1.0 (confidence level)
     timestamp: datetime.datetime
     source: str  # 'news', 'social', 'analyst', etc.
-    raw_data: Optional[dict[str, Any]] = None
+    raw_data: dict[str, Any] | None = None
 
 
 class SentimentProvider(ABC):
@@ -48,13 +48,12 @@ class SentimentProvider(ABC):
     @abstractmethod
     def fetch_sentiment(self, symbol: str, days_back: int = 1) -> list[SentimentData]:
         """Fetch sentiment data for a symbol."""
-        pass
 
 
 class NewsSentimentProvider(SentimentProvider):
     """News-based sentiment provider using Yahoo Finance scraping only."""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         self.api_key = api_key  # Unused, for test compatibility
 
     def fetch_sentiment(self, symbol: str, days_back: int = 1) -> list[SentimentData]:
@@ -78,7 +77,8 @@ class NewsSentimentProvider(SentimentProvider):
 
     @staticmethod
     def _get_mock_news_sentiment_static(
-        symbol: str, days_back: int
+        symbol: str,
+        days_back: int,
     ) -> list[SentimentData]:
         """Generate mock news sentiment data for testing."""
         import random
@@ -95,12 +95,14 @@ class NewsSentimentProvider(SentimentProvider):
                     timestamp=datetime.datetime.now() - datetime.timedelta(days=i),
                     source="news_mock",
                     raw_data={"mock": True},
-                )
+                ),
             )
         return sentiment_data
 
     def _scrape_headlines_sentiment(
-        self, symbol: str, days_back: int
+        self,
+        symbol: str,
+        days_back: int,
     ) -> list[SentimentData]:
         """Scrape news headlines from Yahoo Finance and analyze sentiment (robust)."""
         url = f"https://finance.yahoo.com/quote/{symbol}/news?p={symbol}"
@@ -108,7 +110,7 @@ class NewsSentimentProvider(SentimentProvider):
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                 "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            )
+            ),
         }
 
         try:
@@ -117,7 +119,7 @@ class NewsSentimentProvider(SentimentProvider):
             # Handle rate limiting gracefully
             if resp.status_code == 429:
                 logger.warning(
-                    f"Rate limited by Yahoo Finance for {symbol}, using fallback data"
+                    f"Rate limited by Yahoo Finance for {symbol}, using fallback data",
                 )
                 time.sleep(1)  # Brief pause before fallback
                 raise requests.exceptions.HTTPError("Rate limited")
@@ -144,7 +146,7 @@ class NewsSentimentProvider(SentimentProvider):
 
             if not headlines:
                 logger.warning(
-                    f"No headlines found for {symbol} on Yahoo Finance, using fallback"
+                    f"No headlines found for {symbol} on Yahoo Finance, using fallback",
                 )
                 return self._get_mock_news_sentiment_static(symbol, days_back)
 
@@ -160,7 +162,7 @@ class NewsSentimentProvider(SentimentProvider):
                         timestamp=now - datetime.timedelta(minutes=i * 10),
                         source="news_scrape",
                         raw_data={"headline": headline},
-                    )
+                    ),
                 )
             return sentiment_data
 
@@ -189,7 +191,7 @@ class NewsSentimentProvider(SentimentProvider):
 class SocialSentimentProvider(SentimentProvider):
     """Social media sentiment provider."""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         self.api_key = api_key
 
     def fetch_sentiment(self, symbol: str, days_back: int = 1) -> list[SentimentData]:
@@ -198,7 +200,9 @@ class SocialSentimentProvider(SentimentProvider):
         return self._get_mock_social_sentiment(symbol, days_back)
 
     def _get_mock_social_sentiment(
-        self, symbol: str, days_back: int
+        self,
+        symbol: str,
+        days_back: int,
     ) -> list[SentimentData]:
         """Generate mock social sentiment data."""
         import random
@@ -216,7 +220,7 @@ class SocialSentimentProvider(SentimentProvider):
                     timestamp=datetime.datetime.now() - datetime.timedelta(days=i),
                     source="social_mock",
                     raw_data={"mock": True},
-                )
+                ),
             )
         return sentiment_data
 
@@ -227,8 +231,8 @@ class SentimentConfig:
 
     enable_news: bool = True
     enable_social: bool = True
-    social_api_key: Optional[str] = None
-    news_api_key: Optional[str] = None  # Added for test compatibility
+    social_api_key: str | None = None
+    news_api_key: str | None = None  # Added for test compatibility
     cache_duration_hours: int = 1
     sentiment_weight: float = 0.2  # Weight in final feature vector
 
@@ -236,7 +240,7 @@ class SentimentConfig:
 class SentimentAnalyzer:
     """Main sentiment analysis coordinator."""
 
-    def __init__(self, config: Optional[SentimentConfig] = None):
+    def __init__(self, config: SentimentConfig | None = None):
         self.config = config or SentimentConfig()
         self.providers: list[SentimentProvider] = []
         self.sentiment_cache: dict[str, list[SentimentData]] = {}
@@ -269,7 +273,9 @@ class SentimentAnalyzer:
         return total_weighted_score / total_weight if total_weight > 0 else 0.0
 
     def fetch_all_sentiment(
-        self, symbol: str, days_back: int = 1
+        self,
+        symbol: str,
+        days_back: int = 1,
     ) -> list[SentimentData]:
         """Fetch sentiment from all providers."""
         cache_key = f"{symbol}_{days_back}"
@@ -288,7 +294,7 @@ class SentimentAnalyzer:
                 all_sentiment.extend(sentiment_data)
             except Exception as e:
                 logger.warning(
-                    f"Provider {provider.__class__.__name__} failed for {symbol}: {e}"
+                    f"Provider {provider.__class__.__name__} failed for {symbol}: {e}",
                 )
 
         # Cache results
@@ -313,7 +319,9 @@ class SentimentAnalyzer:
         return age_hours < self.config.cache_duration_hours
 
     def get_sentiment_features(
-        self, symbols: list[str], days_back: int = 1
+        self,
+        symbols: list[str],
+        days_back: int = 1,
     ) -> dict[str, float]:
         """Get sentiment features for multiple symbols suitable for ML models."""
         features = {}
@@ -321,7 +329,7 @@ class SentimentAnalyzer:
             sentiment_score = self.get_symbol_sentiment(symbol, days_back)
             features[f"sentiment_{symbol}"] = sentiment_score
             features[f"sentiment_{symbol}_abs"] = abs(
-                sentiment_score
+                sentiment_score,
             )  # Magnitude feature
         return features
 

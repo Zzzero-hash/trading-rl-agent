@@ -82,7 +82,7 @@ def get_sentiment_scores(symbol: str, days_back: int = 1) -> dict[str, float]:
 
 
 __all__ = [
+    "get_sentiment_scores",
     "score_news_sentiment",
     "score_social_sentiment",
-    "get_sentiment_scores",
 ]

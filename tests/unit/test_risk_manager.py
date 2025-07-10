@@ -1,7 +1,7 @@
 import logging
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -32,13 +32,13 @@ if "structlog" not in sys.modules:
 
 if "src.envs.finrl_trading_env" not in sys.modules:
     sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(
-        register_env=lambda: None
+        register_env=lambda: None,
     )
 
 if "trading_rl_agent" not in sys.modules:
     pkg = types.ModuleType("trading_rl_agent")
     pkg.__path__ = [
-        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"),
     ]
     sys.modules["trading_rl_agent"] = pkg
 
@@ -95,7 +95,8 @@ def test_var_and_cvar():
     """
     Test that RiskManager calculates portfolio VaR and CVaR correctly for a sample portfolio.
 
-    Asserts that VaR is non-negative, CVaR is at least as large as VaR, CVaR exceeds VaR by at least 10%, and VaR falls within a reasonable daily range for the provided synthetic returns.
+    Asserts that VaR is non-negative, CVaR is at least as large as VaR, CVaR exceeds VaR by at least 10%,
+    and VaR falls within a reasonable daily range for the provided synthetic returns.
     """
     rm = RiskManager()
     rm.update_returns_data(_sample_returns())
@@ -140,7 +141,8 @@ def test_kelly_position_size():
     """
     Test the Kelly position size calculation of the RiskManager for various scenarios.
 
-    Verifies that the calculated position size is within expected bounds for profitable, unprofitable, and high win rate scenarios, and that the method adheres to the properties of the Kelly formula.
+    Verifies that the calculated position size is within expected bounds for profitable, unprofitable, and
+    high win rate scenarios, and that the method adheres to the properties of the Kelly formula.
     """
     rm = RiskManager()
     # Test with profitable scenario (positive expected return)
@@ -159,7 +161,10 @@ def test_kelly_position_size():
     expected_return, win_rate, avg_win, avg_loss = 0.08, 0.55, 0.04, 0.03
     kelly_raw = (expected_return * win_rate - (1 - win_rate) * avg_loss) / avg_win
     size_calculated = rm.calculate_kelly_position_size(
-        expected_return, win_rate, avg_win, avg_loss
+        expected_return,
+        win_rate,
+        avg_win,
+        avg_loss,
     )
     if kelly_raw > 0:
         assert size_calculated > 0  # Should be positive when Kelly formula is positive

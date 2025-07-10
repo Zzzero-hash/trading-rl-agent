@@ -1,6 +1,6 @@
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -48,11 +48,7 @@ from pathlib import Path
 
 spec = importlib.util.spec_from_file_location(
     "trading_rl_agent.data.pipeline",
-    Path(__file__).resolve().parents[2]
-    / "src"
-    / "trading_rl_agent"
-    / "data"
-    / "pipeline.py",
+    Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "pipeline.py",
 )
 pipeline = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pipeline)  # type: ignore
@@ -70,7 +66,7 @@ def dummy_loaders(monkeypatch):
             "low": [3],
             "close": [4],
             "volume": [5],
-        }
+        },
     )
     monkeypatch.setattr(
         pipeline,

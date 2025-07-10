@@ -7,7 +7,6 @@ and create statistics and features based on candlestick characteristics.
 
 import numpy as np
 import pandas as pd
-import pandas_ta as ta
 
 
 def compute_candle_stats(df: pd.DataFrame) -> pd.DataFrame:
@@ -33,9 +32,7 @@ def compute_candle_stats(df: pd.DataFrame) -> pd.DataFrame:
     # Body position within range (0 = at bottom, 1 = at top)
     min_price = df[["open", "close"]].min(axis=1)
     max_price = df[["open", "close"]].max(axis=1)
-    df["body_position"] = (
-        ((min_price - df["low"]) + (max_price - df["low"])) / 2
-    ) / df["range_size"]
+    df["body_position"] = (((min_price - df["low"]) + (max_price - df["low"])) / 2) / df["range_size"]
 
     # Body type (1 = bullish, -1 = bearish, 0 = doji)
     df["body_type"] = np.sign(df["close"] - df["open"])
@@ -82,18 +79,14 @@ def compute_all_candle_patterns(df: pd.DataFrame) -> pd.DataFrame:
     df = detect_harami(df)
 
     # Compute statistical candle features
-    df = compute_candle_stats(df)
-
-    return df
+    return compute_candle_stats(df)
 
 
 # Individual pattern detection functions
 def detect_inside_bar(df: pd.DataFrame) -> pd.DataFrame:
     df2 = df.copy()
     df2["inside_bar"] = (
-        ((df2["high"] < df2["high"].shift(1)) & (df2["low"] > df2["low"].shift(1)))
-        .fillna(False)
-        .astype(int)
+        ((df2["high"] < df2["high"].shift(1)) & (df2["low"] > df2["low"].shift(1))).fillna(False).astype(int)
     )
     return df2
 
@@ -101,9 +94,7 @@ def detect_inside_bar(df: pd.DataFrame) -> pd.DataFrame:
 def detect_outside_bar(df: pd.DataFrame) -> pd.DataFrame:
     df2 = df.copy()
     df2["outside_bar"] = (
-        ((df2["high"] > df2["high"].shift(1)) & (df2["low"] < df2["low"].shift(1)))
-        .fillna(False)
-        .astype(int)
+        ((df2["high"] > df2["high"].shift(1)) & (df2["low"] < df2["low"].shift(1))).fillna(False).astype(int)
     )
     return df2
 
@@ -116,9 +107,7 @@ def detect_tweezer_top(df: pd.DataFrame) -> pd.DataFrame:
 
 def detect_tweezer_bottom(df: pd.DataFrame) -> pd.DataFrame:
     df2 = df.copy()
-    df2["tweezer_bottom"] = (
-        (df2["low"] == df2["low"].shift(1)).fillna(False).astype(int)
-    )
+    df2["tweezer_bottom"] = (df2["low"] == df2["low"].shift(1)).fillna(False).astype(int)
     return df2
 
 
@@ -129,15 +118,7 @@ def detect_three_white_soldiers(df: pd.DataFrame) -> pd.DataFrame:
         o0, c0 = df2["open"].iloc[i - 2], df2["close"].iloc[i - 2]
         o1, c1 = df2["open"].iloc[i - 1], df2["close"].iloc[i - 1]
         o2, c2 = df2["open"].iloc[i], df2["close"].iloc[i]
-        if (
-            c0 > o0
-            and c1 > o1
-            and c2 > o2
-            and o1 > o0
-            and o2 > o1
-            and c1 > c0
-            and c2 > c1
-        ):
+        if c0 > o0 and c1 > o1 and c2 > o2 and o1 > o0 and o2 > o1 and c1 > c0 and c2 > c1:
             res[i] = 1
     df2["three_white_soldiers"] = res
     return df2
@@ -150,15 +131,7 @@ def detect_three_black_crows(df: pd.DataFrame) -> pd.DataFrame:
         o0, c0 = df2["open"].iloc[i - 2], df2["close"].iloc[i - 2]
         o1, c1 = df2["open"].iloc[i - 1], df2["close"].iloc[i - 1]
         o2, c2 = df2["open"].iloc[i], df2["close"].iloc[i]
-        if (
-            c0 < o0
-            and c1 < o1
-            and c2 < o2
-            and o1 < o0
-            and o2 < o1
-            and c1 < c0
-            and c2 < c1
-        ):
+        if c0 < o0 and c1 < o1 and c2 < o2 and o1 < o0 and o2 < o1 and c1 < c0 and c2 < c1:
             res[i] = 1
     df2["three_black_crows"] = res
     return df2
@@ -196,10 +169,10 @@ def detect_harami(df: pd.DataFrame) -> pd.DataFrame:
         o1, c1 = df2["open"].iloc[i - 1], df2["close"].iloc[i - 1]
         o2, c2 = df2["open"].iloc[i], df2["close"].iloc[i]
         # Bullish harami: first bearish, second bullish inside body
-        if c1 < o1 and c2 > o2 and o2 > c1 and c2 < o1:
+        if c1 < o1 and c2 > o2 > c1 and c2 < o1:
             bullish[i] = 1
         # Bearish harami: first bullish, second bearish inside body
-        if c1 > o1 and c2 < o2 and o2 < c1 and c2 > o1:
+        if c1 > o1 and c2 < o2 < c1 and c2 > o1:
             bearish[i] = 1
     df2["bullish_harami"] = bullish
     df2["bearish_harami"] = bearish

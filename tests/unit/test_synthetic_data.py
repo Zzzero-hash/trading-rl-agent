@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-import pytest
 
 from trading_rl_agent.data.synthetic import fetch_synthetic_data
 
@@ -51,4 +49,5 @@ def test_minute_frequency_length():
     # Verify frequency and length
     diffs = df["timestamp"].diff().dropna().unique()
     assert len(df) == 61
-    assert len(diffs) == 1 and diffs[0] == pd.Timedelta(minutes=1)
+    assert len(diffs) == 1
+    assert diffs[0] == pd.Timedelta(minutes=1)

@@ -7,18 +7,22 @@ Usage: python evaluate.py [--agent AGENT_PATH] [--data DATA_PATH]
 import argparse
 import json
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import torch
 
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
+from trading_rl_agent.agents.ppo_agent import PPOAgent
+
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -37,7 +41,10 @@ def main():
         help="Trading data CSV file",
     )
     parser.add_argument(
-        "--initial-capital", type=float, default=10000.0, help="Initial trading capital"
+        "--initial-capital",
+        type=float,
+        default=10000.0,
+        help="Initial trading capital",
     )
     parser.add_argument(
         "--output-dir",
@@ -60,9 +67,6 @@ def main():
 
         # Step 2: Load agent
         logger.info("🤖 Loading trained agent...")
-        import torch
-
-        from trading_rl_agent.agents.ppo_agent import PPOAgent
 
         state_dim = df.shape[1]
         agent = PPOAgent(state_dim=state_dim, action_dim=3)
@@ -112,7 +116,7 @@ def main():
                         "price": entry_price,
                         "step": i,
                         "action": action_names[discrete_action],
-                    }
+                    },
                 )
             elif discrete_action == 1 and position == 1:  # SELL when holding position
                 position = 0
@@ -126,16 +130,14 @@ def main():
                         "step": i,
                         "profit": profit,
                         "action": action_names[discrete_action],
-                    }
+                    },
                 )
 
             # Update portfolio value
             if position == 1:
                 current_price = 100 * (1 + price_change)
                 unrealized_pnl = (
-                    (current_price - entry_price) / entry_price * capital
-                    if "entry_price" in locals()
-                    else 0
+                    (current_price - entry_price) / entry_price * capital if "entry_price" in locals() else 0
                 )
                 portfolio_values.append(capital + unrealized_pnl)
             else:
@@ -157,11 +159,7 @@ def main():
         max_drawdown = np.min(drawdown) * 100
 
         # Calculate Sharpe ratio (assuming 0% risk-free rate)
-        sharpe_ratio = (
-            np.mean(returns) / np.std(returns) * np.sqrt(252)
-            if np.std(returns) > 0
-            else 0
-        )
+        sharpe_ratio = np.mean(returns) / np.std(returns) * np.sqrt(252) if np.std(returns) > 0 else 0
 
         # Win rate
         profitable_trades = [t for t in trades if t.get("profit", 0) > 0]
@@ -202,17 +200,17 @@ def main():
         output_dir.mkdir(parents=True, exist_ok=True)
 
         report_file = output_dir / "production_evaluation_report.json"
-        with open(report_file, "w") as f:
+        with report_file.open("w") as f:
             json.dump(report, f, indent=2, default=str)
 
         logger.info(f"📊 Detailed report saved to: {report_file}")
         logger.info("✅ Production evaluation completed!")
 
-        return report
-
-    except Exception as e:
-        logger.error(f"❌ Evaluation failed: {e}")
+    except Exception:
+        logger.exception("❌ Evaluation failed")
         raise
+    else:
+        return report
 
 
 if __name__ == "__main__":

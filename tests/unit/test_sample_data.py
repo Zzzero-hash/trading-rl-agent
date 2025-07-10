@@ -5,7 +5,6 @@ Test script to verify that the sample_data.csv file works with our training pipe
 
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 
@@ -45,8 +44,7 @@ def test_sample_data():
         if missing_cols:
             print(f"❌ Missing required columns: {missing_cols}")
             return False
-        else:
-            print("✅ All required columns present")
+        print("✅ All required columns present")
 
         # Check for targets
         if "target" in df.columns:
@@ -60,10 +58,10 @@ def test_sample_data():
         total_missing = df.isnull().sum().sum()
         print("📊 Data quality:")
         print(
-            f"   • Missing values: {total_missing:,} ({total_missing/df.size*100:.2f}%)"
+            f"   • Missing values: {total_missing:,} ({total_missing / df.size * 100:.2f}%)",
         )
         print(
-            f"   • Complete rows: {len(df.dropna()):,} ({len(df.dropna())/len(df)*100:.1f}%)"
+            f"   • Complete rows: {len(df.dropna()):,} ({len(df.dropna()) / len(df) * 100:.1f}%)",
         )
 
         # Check symbols and date range
@@ -74,23 +72,25 @@ def test_sample_data():
         if "timestamp" in df.columns:
             try:
                 df["timestamp"] = pd.to_datetime(
-                    df["timestamp"], format="mixed", errors="coerce"
+                    df["timestamp"],
+                    format="mixed",
+                    errors="coerce",
                 )
                 valid_timestamps = df["timestamp"].notna().sum()
                 print(
-                    f"   • Valid timestamps: {valid_timestamps:,} ({valid_timestamps/len(df)*100:.1f}%)"
+                    f"   • Valid timestamps: {valid_timestamps:,} ({valid_timestamps / len(df) * 100:.1f}%)",
                 )
                 if valid_timestamps > 0:
                     print(
-                        f"   • Date range: {df['timestamp'].min().date()} to {df['timestamp'].max().date()}"
+                        f"   • Date range: {df['timestamp'].min().date()} to {df['timestamp'].max().date()}",
                     )
                     print(
-                        f"   • Days covered: {(df['timestamp'].max() - df['timestamp'].min()).days}"
+                        f"   • Days covered: {(df['timestamp'].max() - df['timestamp'].min()).days}",
                     )
             except Exception as e:
                 print(f"   ⚠️ Timestamp parsing issue: {e}")
                 print(
-                    f"   • Raw timestamp sample: {df['timestamp'].iloc[0] if len(df) > 0 else 'N/A'}"
+                    f"   • Raw timestamp sample: {df['timestamp'].iloc[0] if len(df) > 0 else 'N/A'}",
                 )
 
         # Test basic feature engineering works
@@ -115,9 +115,9 @@ def test_sample_data():
         print(f"✅ Data volume: {len(df):,} records")
         print(f"✅ Feature count: {len(df.columns)} columns")
         print(
-            f"{'✅' if 'target' in df.columns else '⚠️'} Targets: {'Present' if 'target' in df.columns else 'Need generation'}"
+            f"{'✅' if 'target' in df.columns else '⚠️'} Targets: {'Present' if 'target' in df.columns else 'Need generation'}",
         )
-        print(f"✅ Quality: {(1-total_missing/df.size)*100:.1f}% complete")
+        print(f"✅ Quality: {(1 - total_missing / df.size) * 100:.1f}% complete")
 
         print("\n🚀 sample_data.csv is ready for CNN-LSTM training!")
         print("📁 Use this file in your training scripts")

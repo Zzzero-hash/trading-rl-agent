@@ -3,11 +3,9 @@
 Debug script to understand the environment termination issue.
 """
 
-import os
-import sys
 import tempfile
+from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from trading_rl_agent.envs.trading_env import TradingEnv
@@ -21,7 +19,9 @@ def debug_environment():
     data = pd.DataFrame(
         {
             "timestamp": pd.date_range(
-                "2024-01-01", periods=20, freq="D"
+                "2024-01-01",
+                periods=20,
+                freq="D",
             ),  # Only 20 days
             "symbol": ["TEST"] * 20,
             "open": [100.0] * 20,
@@ -29,7 +29,7 @@ def debug_environment():
             "low": [99.0] * 20,
             "close": [100.0] * 20,
             "volume": [1000] * 20,
-        }
+        },
     )
 
     # Save to temporary file
@@ -64,7 +64,7 @@ def debug_environment():
             obs, reward, done, truncated, info = env.step(0)  # Hold action
             step_count += 1
             print(
-                f"Step {step_count}: current_step={env.current_step}, done={done}, truncated={truncated}"
+                f"Step {step_count}: current_step={env.current_step}, done={done}, truncated={truncated}",
             )
 
             if done or truncated:
@@ -75,7 +75,7 @@ def debug_environment():
 
     finally:
         # Clean up
-        os.unlink(csv_path)
+        Path(csv_path).unlink()
 
 
 if __name__ == "__main__":

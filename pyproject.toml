@@ -1,5 +1,5 @@
 [tool.black]
-line-length = 88
+line-length = 120
 target-version = ['py310', 'py311', 'py312']
 include = '\.pyi?$'
 exclude = '''
@@ -30,7 +30,7 @@ include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
-line_length = 88
+line_length = 120
 known_first_party = ["src"]
 known_third_party = [
     "numpy", "pandas", "torch", "ray", "gymnasium", "yfinance",
@@ -41,29 +41,213 @@ sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 skip_glob = ["*/__init__.py"]
 force_sort_within_sections = true
 
-[tool.flake8]
-max-line-length = 88
-extend-ignore = [
-    "E203",  # whitespace before ':'
-    "E501",  # line too long (handled by black)
-    "W503",  # line break before binary operator
-    "W504",  # line break after binary operator
-]
+[tool.ruff]
+# Exclude a variety of commonly ignored directories
 exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
     ".git",
-    "__pycache__",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
     "build",
     "dist",
-    ".venv",
+    "node_modules",
+    "venv",
+    "__pycache__",
+    "*.egg-info",
     ".pytest_cache",
     "ray_results",
     "optimization_results",
     "experiments",
+    "htmlcov",
+    "docs/_build",
+    "*.ipynb",  # Exclude Jupyter notebooks
 ]
-per-file-ignores = [
-    "__init__.py:F401",  # imported but unused
-    "tests/*:S101",      # assert statements in tests
+
+# Same as Black
+line-length = 120
+indent-width = 4
+
+# Assume Python 3.11+
+target-version = "py311"
+
+[tool.ruff.lint]
+# Enable pycodestyle (`E`), Pyflakes (`F`), and pyupgrade (`UP`) rules
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "I",    # isort
+    "N",    # pep8-naming
+    "C90",  # mccabe complexity
+    "S",    # bandit security
+    "PTH",  # flake8-use-pathlib
+    "RUF",  # ruff-specific rules
+    "PIE",  # flake8-pie
+    "T20",  # flake8-print
+    "RET",  # flake8-return
+    "ARG",  # flake8-unused-arguments
+    "ERA",  # eradicate commented code
+    "PL",   # pylint
+    "PERF", # perflint
+    "FURB", # refurb
+    "LOG",  # flake8-logging
+    "A",    # flake8-builtins
+    "COM",  # flake8-commas
+    "DTZ",  # flake8-datetimez
+    "EM",   # flake8-errmsg
+    "FA",   # flake8-future-annotations
+    "ICN",  # flake8-import-conventions
+    "ISC",  # flake8-implicit-str-concat
+    "PT",   # flake8-pytest-style
+    "Q",    # flake8-quotes
+    "RSE",  # flake8-raise
+    "TCH",  # flake8-type-checking
+    "TID",  # flake8-tidy-imports
+    "TRY",  # tryceratops
+    "FLY",  # flynt
 ]
+
+# Never try to fix these
+unfixable = [
+    "ERA",  # eradicate: don't remove commented code automatically
+    "F841", # unused-variable: let developer decide
+    "T20",  # flake8-print: don't remove prints automatically
+]
+
+ignore = [
+    # Allow non-abstract empty methods in abstract base classes
+    "B027",
+    # Allow boolean positional values in function calls, like `dict.get(... True)`
+    "FBT003",
+    # Ignore checks for possible passwords
+    "S105", "S106", "S107",
+    # Allow module imports not at top of file (needed for dynamic imports, path manipulation)
+    "E402",
+    # Allow datetime without timezone (acceptable for local development/testing)
+    "DTZ001", "DTZ003", "DTZ005",
+    # Allow try-else patterns (these are often stylistic preferences)
+    "TRY300", "TRY301", "TRY401",
+    # Allow unused arguments in certain contexts (common in interfaces, test doubles)
+    "ARG001", "ARG002", "ARG005",
+    # Allow commented code (might be needed for documentation/examples)
+    "ERA001",
+    # Allow pathlib and os.path mixing (transitional period)
+    "PTH103", "PTH110", "PTH118", "PTH120", "PTH123", "PTH208",
+    # Allow certain test patterns
+    "PT011", "PT012", "PT017",
+    # Allow root logger usage (in scripts and examples)
+    "LOG015",
+    # Allow certain style choices
+    "N802", "N803", "N806", "N811", "N814", "N999",
+    "S108", "S301", "S311",
+    "SIM105", "SIM108", "SIM115", "SIM117",
+    "TRY002", "TRY004",
+    "UP035",
+    "RUF003", "RUF012",
+    "B007",
+    "F821", "F841",
+    "PLW0603", "PLW2901",
+    "PERF401",
+    "E501",  # Line length handled by formatter
+    # Ignore complexity
+    "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
+    # Allow print statements (useful for CLI tools and debugging)
+    "T201", "T203",
+    # Allow assert statements in tests
+    "S101",
+    # Allow subprocess without shell=False (we need shell commands)
+    "S602", "S603", "S607",
+    # Allow hardcoded bind to all interfaces (for development servers)
+    "S104",
+    # Allow try-except-pass (useful for optional imports)
+    "S110",
+    # Allow subprocess.run with shell=True (needed for complex commands)
+    "S602",
+    # Don't require error messages in exceptions during prototyping
+    "EM101", "EM102", "EM103",
+    # Allow long exception messages
+    "TRY003",
+    # Don't require type annotations everywhere (gradually typed codebase)
+    "ANN",
+    # Allow relative imports
+    "TID252",
+    # Allow string formatting in logging
+    "G002", "G003", "G004",
+    # Allow magic values
+    "PLR2004",
+    # Allow broad exception catching during development
+    "BLE001",
+    # Allow implicit namespace packages
+    "INP001",
+    # Allow zip without strict
+    "B905",
+    # Ignore isinstance tuple to union conversions (compatibility with older type checkers)
+    "UP038",
+    # Allow imports that are not at the top level (some Ray imports need to be conditional)
+    "PLC0415",
+    # Ignore trailing comma rule to avoid conflicts with formatter
+    "COM812",
+]
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs
+indent-style = "space"
+
+# Like Black, respect magic trailing commas
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending
+line-ending = "auto"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = ["PLR2004", "S101", "TID252", "ARG", "PLR0913"]
+# Allow imports in __init__.py files
+"**/__init__.py" = ["F401", "F403", "F405"]
+# Allow print statements in CLI scripts
+"cli.py" = ["T201"]
+"main.py" = ["T201"]
+"train.py" = ["T201"]
+"evaluate.py" = ["T201"]
+"**/scripts/**" = ["T201"]
+# Allow subprocess in setup scripts
+"setup*.py" = ["S602", "S603", "S607"]
+"dev-*.sh" = ["S602", "S603", "S607"]
+
+[tool.ruff.lint.mccabe]
+# Unlike Flake8, default to a complexity level of 10
+max-complexity = 15
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "trading_rl_agent"]
+known-third-party = [
+    "numpy", "pandas", "torch", "ray", "gymnasium", "yfinance",
+    "ta", "scipy", "matplotlib", "seaborn", "plotly", "pytest",
+    "pyyaml", "tqdm", "wandb", "optuna", "sklearn", "backtrader"
+]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.mypy]
 python_version = "3.11"

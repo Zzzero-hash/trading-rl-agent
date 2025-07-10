@@ -1,7 +1,7 @@
 import logging
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -32,13 +32,13 @@ if "structlog" not in sys.modules:
 
 if "src.envs.finrl_trading_env" not in sys.modules:
     sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(
-        register_env=lambda: None
+        register_env=lambda: None,
     )
 
 if "trading_rl_agent" not in sys.modules:
     pkg = types.ModuleType("trading_rl_agent")
     pkg.__path__ = [
-        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"),
     ]
     sys.modules["trading_rl_agent"] = pkg
 
@@ -67,18 +67,19 @@ for pkg in ["features", "portfolio", "risk"]:
         mod = types.ModuleType(key)
         mod.__path__ = [str(base / pkg)]
         sys.modules[key] = mod
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
-import pytest  # noqa: E402
+import pytest
 
-import trading_rl_agent.features.technical_indicators as ti  # noqa: E402
+import trading_rl_agent.features.technical_indicators as ti
 
 pytestmark = pytest.mark.unit
 
 
 def test_get_feature_names():
     cfg = ti.IndicatorConfig(
-        sma_periods=[3], ema_periods=[5], obv_enabled=False, vwap_enabled=False
+        sma_periods=[3],
+        ema_periods=[5],
+        obv_enabled=False,
+        vwap_enabled=False,
     )
     indicator = ti.TechnicalIndicators(cfg)
     names = indicator.get_feature_names()

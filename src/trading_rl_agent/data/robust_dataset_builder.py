@@ -13,19 +13,18 @@ Features:
 - Data quality validation and monitoring
 """
 
-from dataclasses import dataclass
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import pickle
-from typing import Optional
 import warnings
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import RobustScaler
 import yfinance as yf
+from sklearn.preprocessing import RobustScaler
 
 from trading_rl_agent.data.features import generate_features
 from trading_rl_agent.data.synthetic import fetch_synthetic_data
@@ -63,7 +62,7 @@ class DatasetConfig:
 
     # Output
     output_dir: str = "data/robust_dataset"
-    version_tag: Optional[str] = None
+    version_tag: str | None = None
     save_metadata: bool = True
 
 
@@ -139,13 +138,12 @@ class RobustDatasetBuilder:
                 # Add synthetic data to reach minimum samples
                 samples_needed = max(
                     0,
-                    self.config.min_samples_per_symbol
-                    - len(real_df if "real_df" in locals() else []),
+                    self.config.min_samples_per_symbol - len(real_df if "real_df" in locals() else []),
                 )
 
                 if samples_needed > 0 or self.config.real_data_ratio < 1.0:
                     synthetic_samples = int(
-                        samples_needed / (1 - max(0.1, self.config.real_data_ratio))
+                        samples_needed / (1 - max(0.1, self.config.real_data_ratio)),
                     )
                     synthetic_df = self._fetch_synthetic_data(symbol, synthetic_samples)
                     synthetic_df["symbol"] = symbol
@@ -158,7 +156,8 @@ class RobustDatasetBuilder:
                 logger.warning(f"  ⚠️ Failed to fetch data for {symbol}: {e}")
                 # Fallback to synthetic data only
                 synthetic_df = self._fetch_synthetic_data(
-                    symbol, self.config.min_samples_per_symbol
+                    symbol,
+                    self.config.min_samples_per_symbol,
                 )
                 synthetic_df["symbol"] = symbol
                 synthetic_df["data_source"] = "synthetic"
@@ -172,7 +171,7 @@ class RobustDatasetBuilder:
 
         # Sort by timestamp for time series consistency
         combined_df = combined_df.sort_values(["symbol", "timestamp"]).reset_index(
-            drop=True
+            drop=True,
         )
 
         self.metadata["raw_data"] = {
@@ -184,7 +183,7 @@ class RobustDatasetBuilder:
         }
 
         logger.info(
-            f"📈 Collected {len(combined_df)} total samples ({real_data_count} real, {synthetic_data_count} synthetic)"
+            f"📈 Collected {len(combined_df)} total samples ({real_data_count} real, {synthetic_data_count} synthetic)",
         )
 
         return combined_df
@@ -222,7 +221,7 @@ class RobustDatasetBuilder:
                     "Low": "low",
                     "Close": "close",
                     "Volume": "volume",
-                }
+                },
             )
 
             # Reset index to get timestamp as column
@@ -231,9 +230,7 @@ class RobustDatasetBuilder:
 
             # Keep only OHLCV columns
             required_cols = ["timestamp", "open", "high", "low", "close", "volume"]
-            df = df[required_cols]
-
-            return df
+            return df[required_cols]
 
         except Exception as e:
             logger.warning(f"Failed to fetch real data for {symbol}: {e}")
@@ -259,14 +256,12 @@ class RobustDatasetBuilder:
         elif any(forex in symbol.upper() for forex in ["USD", "EUR", "GBP", "JPY"]):
             volatility = 0.01  # Lower for forex
 
-        df = fetch_synthetic_data(
+        return fetch_synthetic_data(
             n_samples=n_samples,
             timeframe=timeframe,
             volatility=volatility,
             symbol=symbol,
         )
-
-        return df
 
     def _validate_and_clean(self, df: pd.DataFrame) -> pd.DataFrame:
         """Validate data quality and clean issues."""
@@ -307,7 +302,7 @@ class RobustDatasetBuilder:
         removal_rate = (initial_count - cleaned_count) / initial_count
 
         if removal_rate > self.config.missing_value_threshold:
-            warnings.warn(f"High data removal rate: {removal_rate:.2%}")
+            warnings.warn(f"High data removal rate: {removal_rate:.2%}", stacklevel=2)
 
         self.metadata["data_cleaning"] = {
             "initial_samples": initial_count,
@@ -316,7 +311,7 @@ class RobustDatasetBuilder:
         }
 
         logger.info(
-            f"  ✓ Cleaned data: {cleaned_count} samples ({removal_rate:.2%} removed)"
+            f"  ✓ Cleaned data: {cleaned_count} samples ({removal_rate:.2%} removed)",
         )
 
         return df
@@ -365,14 +360,10 @@ class RobustDatasetBuilder:
             "total_features": len(feature_cols),
             "feature_types": {
                 "technical_indicators": sum(
-                    1
-                    for col in feature_cols
-                    if any(ind in col for ind in ["sma", "ema", "rsi", "macd", "bb"])
+                    1 for col in feature_cols if any(ind in col for ind in ["sma", "ema", "rsi", "macd", "bb"])
                 ),
                 "temporal_features": sum(
-                    1
-                    for col in feature_cols
-                    if any(temp in col for temp in ["hour", "day", "month", "quarter"])
+                    1 for col in feature_cols if any(temp in col for temp in ["hour", "day", "month", "quarter"])
                 ),
                 "volatility_features": sum(1 for col in feature_cols if "vol" in col),
                 "returns_features": sum(1 for col in feature_cols if "return" in col),
@@ -381,7 +372,7 @@ class RobustDatasetBuilder:
 
         logger.info(f"  ✓ Generated {len(feature_cols)} features")
 
-        return featured_df[["timestamp", "symbol"] + feature_cols]
+        return featured_df[["timestamp", "symbol", *feature_cols]]
 
     def _add_temporal_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Add temporal features that help LSTM understand time patterns."""
@@ -418,8 +409,7 @@ class RobustDatasetBuilder:
 
             # Volatility regime
             df["volatility_regime"] = (
-                df["close"].pct_change().rolling(20).std()
-                > df["close"].pct_change().rolling(100).std()
+                df["close"].pct_change().rolling(20).std() > df["close"].pct_change().rolling(100).std()
             ).astype(int)
 
             # Momentum regime
@@ -438,7 +428,7 @@ class RobustDatasetBuilder:
             # Realized volatility (multiple windows)
             for window in [5, 10, 20]:
                 df[f"realized_vol_{window}"] = returns.rolling(window).std() * np.sqrt(
-                    252
+                    252,
                 )
 
             # Volatility of volatility
@@ -463,17 +453,13 @@ class RobustDatasetBuilder:
             symbol_df = df[df["symbol"] == symbol].copy()
 
             # Remove non-numeric columns for feature matrix
-            feature_cols = [
-                col for col in self.feature_columns if col in symbol_df.columns
-            ]
+            feature_cols = [col for col in self.feature_columns if col in symbol_df.columns]
             features = symbol_df[feature_cols].values
 
             # Create target variable (future return)
             if "close" in symbol_df.columns:
                 returns = (
-                    symbol_df["close"]
-                    .pct_change(self.config.prediction_horizon)
-                    .shift(-self.config.prediction_horizon)
+                    symbol_df["close"].pct_change(self.config.prediction_horizon).shift(-self.config.prediction_horizon)
                 )
                 target_values = returns.values
             else:
@@ -482,15 +468,13 @@ class RobustDatasetBuilder:
 
             # Generate sequences with overlap
             step_size = max(
-                1, int(self.config.sequence_length * (1 - self.config.overlap_ratio))
+                1,
+                int(self.config.sequence_length * (1 - self.config.overlap_ratio)),
             )
 
             for i in range(
                 0,
-                len(features)
-                - self.config.sequence_length
-                - self.config.prediction_horizon
-                + 1,
+                len(features) - self.config.sequence_length - self.config.prediction_horizon + 1,
                 step_size,
             ):
                 # Extract sequence
@@ -510,13 +494,11 @@ class RobustDatasetBuilder:
             "prediction_horizon": self.config.prediction_horizon,
             "overlap_ratio": self.config.overlap_ratio,
             "total_sequences": len(sequences_array),
-            "features_per_timestep": (
-                sequences_array.shape[2] if len(sequences_array.shape) == 3 else 0
-            ),
+            "features_per_timestep": (sequences_array.shape[2] if len(sequences_array.shape) == 3 else 0),
         }
 
         logger.info(
-            f"  ✓ Created {len(sequences_array)} sequences of shape {sequences_array.shape}"
+            f"  ✓ Created {len(sequences_array)} sequences of shape {sequences_array.shape}",
         )
 
         return sequences_array, targets_array
@@ -538,7 +520,7 @@ class RobustDatasetBuilder:
 
         # Save scaler for real-time use
         scaler_path = self.output_dir / "feature_scaler.pkl"
-        with open(scaler_path, "wb") as f:
+        with Path(scaler_path).open("wb") as f:
             pickle.dump(self.scaler, f)
 
         logger.info(f"  ✓ Features scaled and scaler saved to {scaler_path}")
@@ -560,13 +542,16 @@ class RobustDatasetBuilder:
         # Check shapes
         if len(sequences) != len(targets):
             raise ValueError(
-                f"Sequence count {len(sequences)} != target count {len(targets)}"
+                f"Sequence count {len(sequences)} != target count {len(targets)}",
             )
 
         # Check for reasonable value ranges
         seq_std = np.std(sequences)
         if seq_std < 1e-6:
-            warnings.warn("Very low variance in sequences - check scaling")
+            warnings.warn(
+                "Very low variance in sequences - check scaling",
+                stacklevel=2,
+            )
 
         # Log quality metrics
         self.metadata["data_quality"] = {
@@ -596,7 +581,7 @@ class RobustDatasetBuilder:
 
         # Save feature columns
         features_path = self.output_dir / "feature_columns.json"
-        with open(features_path, "w") as f:
+        with Path(features_path).open("w") as f:
             json.dump(self.feature_columns, f, indent=2)
 
         # Save complete metadata
@@ -614,7 +599,7 @@ class RobustDatasetBuilder:
         }
 
         metadata_path = self.output_dir / "metadata.json"
-        with open(metadata_path, "w") as f:
+        with Path(metadata_path).open("w") as f:
             json.dump(self.metadata, f, indent=2, default=str)
 
         # Create summary
@@ -639,13 +624,13 @@ class RealTimeDatasetLoader:
         self.dataset_dir = Path(dataset_version_dir)
 
         # Load metadata and scaler
-        with open(self.dataset_dir / "metadata.json") as f:
+        with (self.dataset_dir / "metadata.json").open("r") as f:
             self.metadata = json.load(f)
 
-        with open(self.dataset_dir / "feature_columns.json") as f:
+        with (self.dataset_dir / "feature_columns.json").open("r") as f:
             self.feature_columns = json.load(f)
 
-        with open(self.dataset_dir / "feature_scaler.pkl", "rb") as f:
+        with (self.dataset_dir / "feature_scaler.pkl").open("rb") as f:
             self.scaler = pickle.load(f)
 
         self.config = DatasetConfig(**self.metadata["dataset_info"]["config"])
@@ -667,11 +652,10 @@ class RealTimeDatasetLoader:
         if len(scaled_features) >= self.config.sequence_length:
             sequence = scaled_features[-self.config.sequence_length :]
             return sequence.reshape(1, self.config.sequence_length, -1)
-        else:
-            # Pad with zeros if insufficient data
-            padded = np.zeros((self.config.sequence_length, len(self.feature_columns)))
-            padded[-len(scaled_features) :] = scaled_features
-            return padded.reshape(1, self.config.sequence_length, -1)
+        # Pad with zeros if insufficient data
+        padded = np.zeros((self.config.sequence_length, len(self.feature_columns)))
+        padded[-len(scaled_features) :] = scaled_features
+        return padded.reshape(1, self.config.sequence_length, -1)
 
 
 def create_example_config() -> DatasetConfig:

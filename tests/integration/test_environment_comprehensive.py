@@ -17,7 +17,7 @@ def test_step_returns_expected_structure(mock_trading_env):
     action = np.zeros(mock_trading_env.action_space.shape)
     obs, reward, terminated, truncated, info = mock_trading_env.step(action)
     assert isinstance(obs, np.ndarray)
-    assert isinstance(reward, (int, float))
+    assert isinstance(reward, int | float)
     assert isinstance(terminated, bool)
     assert isinstance(truncated, bool)
     assert isinstance(info, dict)

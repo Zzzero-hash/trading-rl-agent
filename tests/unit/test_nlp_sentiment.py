@@ -1,7 +1,6 @@
 import datetime
 from unittest.mock import patch
 
-import pandas as pd
 import pytest
 
 from trading_rl_agent.data.features import generate_features

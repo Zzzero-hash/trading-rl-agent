@@ -13,7 +13,7 @@ def make_env(tmp_path, **overrides):
             "low": np.arange(6, dtype=float) - 1,
             "close": np.arange(6, dtype=float),
             "volume": np.ones(6),
-        }
+        },
     )
     csv = tmp_path / "prices.csv"
     df.to_csv(csv, index=False)

@@ -1,8 +1,8 @@
 """Utilities for hyperparameter tuning with Ray Tune."""
 
 import ray
-from ray import tune
 import yaml
+from ray import tune
 
 from trading_rl_agent.envs.finrl_trading_env import register_env
 
@@ -14,17 +14,17 @@ def _convert_value(value):
             return tune.grid_search(value["grid_search"])
         if "choice" in value:
             return tune.choice(value["choice"])
-        if "uniform" in value and isinstance(value["uniform"], (list, tuple)):
+        if "uniform" in value and isinstance(value["uniform"], list | tuple):
             low, high = value["uniform"]
             return tune.uniform(low, high)
-        if "randint" in value and isinstance(value["randint"], (list, tuple)):
+        if "randint" in value and isinstance(value["randint"], list | tuple):
             low, high = value["randint"]
             return tune.randint(low, high)
     return value
 
 
 def _load_search_space(path):
-    with open(path) as f:
+    with Path(path).open(path) as f:
         cfg = yaml.safe_load(f) or {}
 
     def _recurse_convert(obj):
@@ -53,12 +53,12 @@ def run_tune(config_paths):
         loaded_space = _load_search_space(path)
         if not isinstance(loaded_space, dict):
             raise ValueError(
-                f"Expected a dict from _load_search_space, got {type(loaded_space).__name__}"
+                f"Expected a dict from _load_search_space, got {type(loaded_space).__name__}",
             )
         search_space.update(loaded_space)
 
     algorithm = search_space.pop("algorithm", "PPO")
-    env_cfg = search_space.pop("env_config", {})
+    # env_cfg = search_space.pop("env_config", {})  # Retrieved but not used currently
 
     search_space.setdefault("env", "TraderEnv")
 
@@ -66,7 +66,8 @@ def run_tune(config_paths):
         ray.init()
     register_env()
 
-    analysis = tune.run(
+    # analysis = tune.run(  # Results not used currently
+    tune.run(
         algorithm,
         config=search_space,
         storage_path="tune",

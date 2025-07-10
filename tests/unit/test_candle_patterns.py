@@ -2,46 +2,35 @@
 Tests for candlestick pattern detection functions.
 """
 
-import numpy as np
 import pandas as pd
-import pytest
 
 from trading_rl_agent.data.candle_patterns import (
     compute_candle_stats,
-    detect_dark_cloud_cover,
     detect_harami,
     detect_inside_bar,
     detect_outside_bar,
-    detect_piercing_line,
     detect_three_black_crows,
     detect_three_white_soldiers,
-    detect_tweezer_bottom,
-    detect_tweezer_top,
 )
 
 # Import the original functions to compare with advanced patterns
-from trading_rl_agent.data.features import detect_doji
+from trading_rl_agent.data.features import detect_doji, detect_engulfing, detect_hammer
 from trading_rl_agent.data.features import detect_doji as features_detect_doji
-from trading_rl_agent.data.features import detect_engulfing
 from trading_rl_agent.data.features import detect_engulfing as features_detect_engulfing
-from trading_rl_agent.data.features import detect_evening_star
-from trading_rl_agent.data.features import detect_hammer
 from trading_rl_agent.data.features import detect_hammer as features_detect_hammer
-from trading_rl_agent.data.features import detect_morning_star, detect_shooting_star
 
 
 def create_test_df():
     """Create a basic DataFrame for testing"""
-    df = pd.DataFrame(
+    return pd.DataFrame(
         {
             "open": [10, 12, 14, 15, 16, 15, 14, 13, 15, 16],
             "high": [15, 14, 16, 17, 18, 16, 15, 17, 18, 17],
             "low": [8, 10, 13, 14, 15, 14, 13, 12, 14, 15],
             "close": [12, 14, 15, 16, 15, 14, 13, 15, 16, 14],
             "volume": [1000, 1500, 2000, 1800, 1600, 1400, 1200, 2200, 2400, 1400],
-        }
+        },
     )
-    return df
 
 
 def test_detect_doji():
@@ -53,7 +42,7 @@ def test_detect_doji():
             "high": [15, 14, 17, 17, 18],
             "low": [8, 10, 13, 14, 15],
             "close": [12, 14, 15, 15, 16],
-        }
+        },
     )
 
     result = detect_doji(df)
@@ -77,7 +66,7 @@ def test_detect_hammer():
             "high": [13, 12, 10.2, 10, 9.5],
             "low": [11, 10, 9.8, 7, 8.5],
             "close": [11, 10, 9.9, 9.3, 9.2],
-        }
+        },
     )
 
     result = detect_hammer(df)
@@ -100,7 +89,7 @@ def test_detect_inside_bar():
             "high": [15, 14, 13.8, 16],
             "low": [8, 10, 10.2, 13],
             "close": [12, 13, 13.7, 15],
-        }
+        },
     )
 
     result = detect_inside_bar(df)
@@ -113,9 +102,7 @@ def test_detect_inside_bar():
 
     # Other candles should not be inside bars
     assert result["inside_bar"][0] == 0  # First candle has no previous
-    assert (
-        result["inside_bar"][3] == 0
-    )  # Not inside previous (high=16 > prev_high=13.8)
+    assert result["inside_bar"][3] == 0  # Not inside previous (high=16 > prev_high=13.8)
 
 
 def test_detect_outside_bar():
@@ -126,7 +113,7 @@ def test_detect_outside_bar():
             "high": [15, 14, 16, 16],
             "low": [8, 10, 8, 13],
             "close": [12, 13, 15, 15],
-        }
+        },
     )
 
     result = detect_outside_bar(df)
@@ -150,7 +137,7 @@ def test_detect_engulfing():
             "high": [13, 12, 12, 14],
             "low": [11, 9, 8, 9],
             "close": [11, 9.5, 11.5, 13],
-        }
+        },
     )
 
     result = detect_engulfing(df)
@@ -177,7 +164,7 @@ def test_detect_three_white_soldiers():
             "high": [13, 14, 15, 16, 17],
             "low": [9, 10, 11, 12, 13],
             "close": [11, 13, 14, 15, 16],
-        }
+        },
     )
 
     result = detect_three_white_soldiers(df)
@@ -200,7 +187,7 @@ def test_detect_three_black_crows():
             "high": [17, 14.5, 13.5, 12.5, 11.5],
             "low": [13, 12, 11, 10, 9],
             "close": [14, 12.5, 11.5, 10.5, 9.5],
-        }
+        },
     )
 
     result = detect_three_black_crows(df)
@@ -221,7 +208,7 @@ def test_detect_harami():
             "high": [16, 12.5, 11.5, 11],
             "low": [14, 9, 10, 9],
             "close": [12, 9.5, 11, 10.5],
-        }
+        },
     )
 
     result = detect_harami(df)
@@ -248,7 +235,7 @@ def test_compute_candle_stats():
             "high": [15, 14, 16, 17],
             "low": [8, 10, 13, 14],
             "close": [12, 14, 15, 16],
-        }
+        },
     )
 
     result = compute_candle_stats(df)
@@ -284,7 +271,7 @@ def test_compatibility_with_original_detectors():
             "high": [15, 14, 16, 17, 18],
             "low": [8, 10, 13, 14, 15],
             "close": [12, 14, 15, 16, 15],
-        }
+        },
     )
 
     # Test doji detection matches
@@ -315,7 +302,7 @@ def test_complex_pattern_combination():
             "high": [15.0, 12.0, 12.0, 10.0, 13.0, 15.0, 16.0, 15.0, 13.5, 12.5],
             "low": [8.0, 9.0, 8.0, 7.0, 9.0, 11.5, 14.0, 13.0, 11.0, 11.0],
             "close": [11.0, 10.0, 11.5, 9.5, 12.0, 14.0, 15.0, 13.0, 11.5, 12.0],
-        }
+        },
     )
 
     # Apply all pattern detection functions

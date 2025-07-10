@@ -3,7 +3,6 @@ import json
 import numpy as np
 import pandas as pd
 import pytest
-import torch
 
 from trading_rl_agent.optimization import cnn_lstm_optimization as mod
 
@@ -14,7 +13,10 @@ def test_ray_tune_optimization_unavailable(monkeypatch):
     features = np.random.randn(10, 3)
     targets = np.random.randn(10)
     result = mod.ray_tune_optimization(
-        features, targets, num_samples=2, max_epochs_per_trial=1
+        features,
+        targets,
+        num_samples=2,
+        max_epochs_per_trial=1,
     )
     assert isinstance(result, dict)
     assert result.get("method") == "simple_grid_search"
@@ -75,7 +77,8 @@ def test_train_single_trial_exception(monkeypatch):
     config = {"sequence_length": 3}
     metrics = mod.train_single_trial(config, features, targets, max_epochs=1)
     assert metrics["val_loss"] == float("inf")
-    assert "error" in metrics and "bad" in metrics["error"]
+    assert "error" in metrics
+    assert "bad" in metrics["error"]
 
 
 def test_optimize_cnn_lstm_streamlined_ray_branch(tmp_path, monkeypatch):

@@ -3,18 +3,16 @@ Data preprocessing utilities for trading RL agent.
 Provides functions for data standardization, sequence creation, and normalization.
 """
 
-from typing import Optional, Tuple, Union
-
 import numpy as np
-from numpy.lib.stride_tricks import sliding_window_view
 import pandas as pd
+from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 def create_sequences(
-    data: Union[np.ndarray, pd.DataFrame],
+    data: np.ndarray | pd.DataFrame,
     sequence_length: int,
-    target_column: Optional[str] = None,
+    target_column: str | None = None,
     stride: int = 1,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -44,11 +42,7 @@ def create_sequences(
     targets = np.asarray(targets)
 
     if len(features) <= sequence_length:
-        seq_shape = (
-            (0, sequence_length, features.shape[1])
-            if features.ndim > 1
-            else (0, sequence_length)
-        )
+        seq_shape = (0, sequence_length, features.shape[1]) if features.ndim > 1 else (0, sequence_length)
         return np.empty(seq_shape), np.empty((0, 1))
 
     windows = sliding_window_view(features, sequence_length, axis=0)[:-1]
@@ -65,7 +59,7 @@ def preprocess_trading_data(
     sequence_length: int = 20,
     target_column: str = "close",
     normalize_method: str = "minmax",
-) -> tuple[np.ndarray, np.ndarray, Union[StandardScaler, MinMaxScaler]]:
+) -> tuple[np.ndarray, np.ndarray, StandardScaler | MinMaxScaler]:
     """Complete preprocessing pipeline for trading data."""
 
     df = data.copy()
@@ -83,7 +77,9 @@ def preprocess_trading_data(
         raise ValueError(f"Unknown normalization method: {normalize_method}")
 
     normalized = pd.DataFrame(
-        scaler.fit_transform(df), columns=df.columns, index=df.index
+        scaler.fit_transform(df),
+        columns=df.columns,
+        index=df.index,
     )
 
     sequences, targets = create_sequences(normalized, sequence_length, target_column)

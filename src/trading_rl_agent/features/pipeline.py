@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
-import pandas as pd
+from typing import TYPE_CHECKING
 
 from ..core.logging import get_logger
 from .alternative_data import AlternativeDataFeatures
 from .cross_asset import CrossAssetFeatures
 from .market_microstructure import MarketMicrostructure
 from .technical_indicators import TechnicalIndicators
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 class FeaturePipeline:

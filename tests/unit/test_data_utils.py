@@ -7,13 +7,10 @@ Provides elegant solutions for test data management:
 3. Automatic cleanup after tests
 """
 
-from contextlib import contextmanager
-from datetime import datetime, timedelta
 import logging
-import os
+from contextlib import contextmanager
 from pathlib import Path
-import tempfile
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -29,7 +26,8 @@ class TestDataManager:
         self.temp_files: list[Path] = []
 
     def find_available_datasets(
-        self, pattern: str = "*training_data*.csv"
+        self,
+        pattern: str = "*training_data*.csv",
     ) -> list[str]:
         """Dynamically find available dataset files."""
         available_files = []
@@ -49,7 +47,10 @@ class TestDataManager:
         return available_files
 
     def generate_synthetic_dataset(
-        self, n_days: int = 100, start_price: float = 100.0, volatility: float = 0.02
+        self,
+        n_days: int = 100,
+        start_price: float = 100.0,
+        volatility: float = 0.02,
     ) -> pd.DataFrame:
         """Generate synthetic trading data for testing."""
         np.random.seed(42)  # Reproducible for tests
@@ -84,7 +85,7 @@ class TestDataManager:
                     "low": low,
                     "close": close_price,
                     "volume": volume,
-                }
+                },
             )
 
         df = pd.DataFrame(data)
@@ -101,7 +102,8 @@ class TestDataManager:
         return df
 
     def get_or_create_test_dataset(
-        self, required_columns: Optional[list[str]] = None
+        self,
+        required_columns: list[str] | None = None,
     ) -> str:
         """Get existing dataset or create synthetic one for testing."""
 
@@ -120,22 +122,21 @@ class TestDataManager:
                     missing_cols = set(required_columns) - set(df.columns)
                     if missing_cols:
                         logger.warning(
-                            f"Dataset missing columns {missing_cols}, generating synthetic data"
+                            f"Dataset missing columns {missing_cols}, generating synthetic data",
                         )
                         return self._create_temp_dataset(required_columns)
                 except Exception as e:
                     logger.warning(
-                        f"Error reading {dataset_path}: {e}, generating synthetic data"
+                        f"Error reading {dataset_path}: {e}, generating synthetic data",
                     )
                     return self._create_temp_dataset(required_columns)
 
             return dataset_path
-        else:
-            # Generate synthetic dataset
-            logger.info("No existing datasets found, generating synthetic test data")
-            return self._create_temp_dataset(required_columns)
+        # Generate synthetic dataset
+        logger.info("No existing datasets found, generating synthetic test data")
+        return self._create_temp_dataset(required_columns)
 
-    def _create_temp_dataset(self, required_columns: Optional[list[str]] = None) -> str:
+    def _create_temp_dataset(self, required_columns: list[str] | None = None) -> str:
         """Create temporary synthetic dataset."""
         df = self.generate_synthetic_dataset()
 
@@ -155,7 +156,9 @@ class TestDataManager:
                         df[col] = 1000000
                     elif "timestamp" in col.lower() or "date" in col.lower():
                         df[col] = pd.date_range(
-                            start="2023-01-01", periods=len(df), freq="D"
+                            start="2023-01-01",
+                            periods=len(df),
+                            freq="D",
                         )
                     else:
                         df[col] = 0.0
@@ -190,7 +193,8 @@ class TestDataManager:
 
 @contextmanager
 def dataset_context(
-    data_dir: str = "data", required_columns: Optional[list[str]] = None
+    data_dir: str = "data",
+    required_columns: list[str] | None = None,
 ):
     """Context manager for test dataset with automatic cleanup."""
     manager = TestDataManager(data_dir)
@@ -202,7 +206,7 @@ def dataset_context(
 
 
 def get_dynamic_test_config(
-    base_config: Optional[dict[str, Any]] = None,
+    base_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Get test configuration with dynamically discovered or generated dataset."""
 

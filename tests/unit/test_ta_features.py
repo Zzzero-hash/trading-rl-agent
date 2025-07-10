@@ -3,16 +3,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pandas_ta as pta
 import pandas_ta as ta
-import pytest
 
-feature_path = (
-    Path(__file__).resolve().parents[2]
-    / "src"
-    / "trading_rl_agent"
-    / "data"
-    / "features.py"
-)
+feature_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "features.py"
 spec = importlib.util.spec_from_file_location("features", feature_path)
 features = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(features)
@@ -64,7 +58,7 @@ def test_compute_atr_constant():
             "high": prices,
             "low": prices,
             "close": prices,
-        }
+        },
     )
     df_atr = compute_atr(df.copy(), timeperiod=5)
     # ATR should start at zero for constant series
@@ -91,9 +85,13 @@ def test_compute_stochastic_constant():
     prices = np.ones(n) * 5.0
     df = pd.DataFrame({"high": prices, "low": prices, "close": prices})
     df_stoch = compute_stochastic(
-        df.copy(), fastk_period=3, slowk_period=3, slowd_period=3
+        df.copy(),
+        fastk_period=3,
+        slowk_period=3,
+        slowd_period=3,
     )
-    assert "stoch_k" in df_stoch.columns and "stoch_d" in df_stoch.columns
+    assert "stoch_k" in df_stoch.columns
+    assert "stoch_d" in df_stoch.columns
     # Compare with pandas-ta output for expected behavior
     expected = pta.stoch(
         high=df["high"],
@@ -121,7 +119,10 @@ def test_compute_stochastic_full():
     df = pd.DataFrame({"high": prices, "low": np.zeros(10), "close": prices})
     # Use minimal periods so warm-up is minimal
     df_stoch = compute_stochastic(
-        df.copy(), fastk_period=1, slowk_period=1, slowd_period=1
+        df.copy(),
+        fastk_period=1,
+        slowk_period=1,
+        slowd_period=1,
     )
     # After first period, values are 100
     assert (df_stoch["stoch_k"][1:] == 100.0).all()

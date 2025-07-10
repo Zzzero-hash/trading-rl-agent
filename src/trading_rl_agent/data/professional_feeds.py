@@ -5,12 +5,11 @@ Industry-grade data providers for production trading systems.
 Supports Alpaca, Yahoo Finance, and extensible to Bloomberg/Refinitiv.
 """
 
-from datetime import datetime, timedelta
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any
 
-import numpy as np
 import pandas as pd
 
 try:
@@ -20,7 +19,7 @@ try:
 except ImportError:
     ALPACA_AVAILABLE = False
     logging.warning(
-        "Alpaca Trade API not available. Install with: pip install alpaca-trade-api"
+        "Alpaca Trade API not available. Install with: pip install alpaca-trade-api",
     )
 
 try:
@@ -79,7 +78,7 @@ class ProfessionalDataProvider:
 
         if not api_key or not secret_key:
             raise ValueError(
-                "Alpaca API credentials required. Set ALPACA_API_KEY and ALPACA_SECRET_KEY"
+                "Alpaca API credentials required. Set ALPACA_API_KEY and ALPACA_SECRET_KEY",
             )
 
         self.alpaca_api = tradeapi.REST(api_key, secret_key, base_url, api_version="v2")
@@ -87,7 +86,9 @@ class ProfessionalDataProvider:
         # Initialize FinRL processor if available
         if FINRL_ALPACA_AVAILABLE:
             self.finrl_processor = AlpacaProcessor(
-                API_KEY=api_key, API_SECRET=secret_key, API_BASE_URL=base_url
+                API_KEY=api_key,
+                API_SECRET=secret_key,
+                API_BASE_URL=base_url,
             )
 
         logger.info("Alpaca Markets data provider initialized")
@@ -130,7 +131,7 @@ class ProfessionalDataProvider:
             data = self._get_yahoo_data(symbols, start_date, end_date)
         else:
             raise NotImplementedError(
-                f"Data retrieval not implemented for {self.provider}"
+                f"Data retrieval not implemented for {self.provider}",
             )
 
         if include_features and not data.empty:
@@ -140,7 +141,11 @@ class ProfessionalDataProvider:
         return data
 
     def _get_alpaca_data(
-        self, symbols: list[str], start_date: str, end_date: str, timeframe: str
+        self,
+        symbols: list[str],
+        start_date: str,
+        end_date: str,
+        timeframe: str,
     ) -> pd.DataFrame:
         """Get data from Alpaca Markets."""
         try:
@@ -184,16 +189,18 @@ class ProfessionalDataProvider:
                 combined_data = pd.concat(all_data, ignore_index=True)
                 combined_data["date"] = pd.to_datetime(combined_data["date"])
                 return combined_data
-            else:
-                logger.error("No data retrieved from Alpaca")
-                return pd.DataFrame()
+            logger.error("No data retrieved from Alpaca")
+            return pd.DataFrame()
 
         except Exception as e:
-            logger.error(f"Alpaca data retrieval error: {e}")
+            logger.exception(f"Alpaca data retrieval error: {e}")
             return pd.DataFrame()
 
     def _get_yahoo_data(
-        self, symbols: list[str], start_date: str, end_date: str
+        self,
+        symbols: list[str],
+        start_date: str,
+        end_date: str,
     ) -> pd.DataFrame:
         """Get data from Yahoo Finance (fallback/development)."""
         try:
@@ -220,9 +227,7 @@ class ProfessionalDataProvider:
                         )
 
                         # Select relevant columns
-                        data = data[
-                            ["date", "symbol", "open", "high", "low", "close", "volume"]
-                        ]
+                        data = data[["date", "symbol", "open", "high", "low", "close", "volume"]]
                         all_data.append(data)
 
                 except Exception as e:
@@ -233,13 +238,12 @@ class ProfessionalDataProvider:
                 combined_data = pd.concat(all_data, ignore_index=True)
                 combined_data["date"] = pd.to_datetime(combined_data["date"])
                 return combined_data.sort_values(["symbol", "date"]).reset_index(
-                    drop=True
+                    drop=True,
                 )
-            else:
-                return pd.DataFrame()
+            return pd.DataFrame()
 
         except Exception as e:
-            logger.error(f"Yahoo Finance data retrieval error: {e}")
+            logger.exception(f"Yahoo Finance data retrieval error: {e}")
             return pd.DataFrame()
 
     def _add_technical_features(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -257,7 +261,7 @@ class ProfessionalDataProvider:
             return pd.concat(enhanced_data, ignore_index=True)
 
         except Exception as e:
-            logger.error(f"Feature generation error: {e}")
+            logger.exception(f"Feature generation error: {e}")
             return data
 
     def get_real_time_data(self, symbols: list[str]) -> dict[str, Any]:
@@ -272,10 +276,9 @@ class ProfessionalDataProvider:
         """
         if self.provider == "alpaca":
             return self._get_alpaca_real_time(symbols)
-        else:
-            raise NotImplementedError(
-                f"Real-time data not available for {self.provider}"
-            )
+        raise NotImplementedError(
+            f"Real-time data not available for {self.provider}",
+        )
 
     def _get_alpaca_real_time(self, symbols: list[str]) -> dict[str, Any]:
         """Get real-time data from Alpaca."""
@@ -293,7 +296,7 @@ class ProfessionalDataProvider:
             return quotes
 
         except Exception as e:
-            logger.error(f"Real-time data error: {e}")
+            logger.exception(f"Real-time data error: {e}")
             return {}
 
     def validate_connection(self) -> bool:
@@ -303,15 +306,14 @@ class ProfessionalDataProvider:
                 account = self.alpaca_api.get_account()
                 logger.info(f"Alpaca connection validated. Account: {account.id}")
                 return True
-            elif self.provider == "yahoo":
+            if self.provider == "yahoo":
                 # Test with a simple query
                 test_data = yf.download("AAPL", period="1d")
                 return not test_data.empty
-            else:
-                return False
+            return False
 
         except Exception as e:
-            logger.error(f"Connection validation failed: {e}")
+            logger.exception(f"Connection validation failed: {e}")
             return False
 
 
@@ -321,7 +323,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="Download professional market data")
     parser.add_argument(
-        "--symbols", required=True, help="Comma-separated symbols (e.g., AAPL,GOOGL)"
+        "--symbols",
+        required=True,
+        help="Comma-separated symbols (e.g., AAPL,GOOGL)",
     )
     parser.add_argument("--start", required=True, help="Start date (YYYY-MM-DD)")
     parser.add_argument(
@@ -330,11 +334,16 @@ def main():
         default=datetime.now().strftime("%Y-%m-%d"),
     )
     parser.add_argument(
-        "--provider", choices=["alpaca", "yahoo"], default="yahoo", help="Data provider"
+        "--provider",
+        choices=["alpaca", "yahoo"],
+        default="yahoo",
+        help="Data provider",
     )
     parser.add_argument("--output", help="Output CSV file", default="market_data.csv")
     parser.add_argument(
-        "--features", action="store_true", help="Include technical features"
+        "--features",
+        action="store_true",
+        help="Include technical features",
     )
 
     args = parser.parse_args()
