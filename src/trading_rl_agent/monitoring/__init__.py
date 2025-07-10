@@ -8,12 +8,12 @@ Provides real-time monitoring of trading system performance including:
 - Integration with monitoring tools
 """
 
-from .metrics import MetricsCollector
 from .alerts import AlertManager
 from .dashboard import Dashboard
+from .metrics import MetricsCollector
 
 __all__ = [
-    "MetricsCollector",
     "AlertManager",
     "Dashboard",
+    "MetricsCollector",
 ]

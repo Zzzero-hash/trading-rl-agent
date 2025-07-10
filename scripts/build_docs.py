@@ -3,14 +3,11 @@
 Comprehensive documentation build and quality check script.
 """
 
-import json
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import sys
-import time
-from typing import Any, Dict, List
+from pathlib import Path
 
 
 class DocumentationBuilder:
@@ -36,10 +33,11 @@ class DocumentationBuilder:
                 shutil.rmtree(autosummary_dir)
 
             print("✅ Build directory cleaned")
-            return True
         except Exception as e:
             print(f"❌ Failed to clean build directory: {e}")
             return False
+        else:
+            return True
 
     def generate_api_docs(self) -> bool:
         """Generate API documentation from source code."""
@@ -57,11 +55,10 @@ class DocumentationBuilder:
                 "--module-first",  # Put module documentation first
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
             if result.returncode == 0:
                 print("✅ API documentation generated")
-                return True
             else:
                 print(f"❌ Failed to generate API docs: {result.stderr}")
                 return False
@@ -72,6 +69,8 @@ class DocumentationBuilder:
         except Exception as e:
             print(f"❌ Error generating API docs: {e}")
             return False
+        else:
+            return True
 
     def build_html(self) -> bool:
         """Build HTML documentation."""
@@ -88,11 +87,10 @@ class DocumentationBuilder:
                 str(self.build_dir / "html"),
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
             if result.returncode == 0:
                 print("✅ HTML documentation built successfully")
-                return True
             else:
                 print("❌ HTML build failed:")
                 print(result.stdout)
@@ -105,6 +103,8 @@ class DocumentationBuilder:
         except Exception as e:
             print(f"❌ Error building HTML docs: {e}")
             return False
+        else:
+            return True
 
     def check_links(self) -> bool:
         """Check for broken links in documentation."""
@@ -119,15 +119,14 @@ class DocumentationBuilder:
                 str(self.build_dir / "linkcheck"),
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
             if result.returncode == 0:
                 print("✅ Link check passed")
                 return True
-            else:
-                print("⚠️ Some links may be broken - check linkcheck report")
-                # Don't fail on link check issues as they might be temporary
-                return True
+            print("⚠️ Some links may be broken - check linkcheck report")
+            # Don't fail on link check issues as they might be temporary
+            return True
 
         except Exception as e:
             print(f"⚠️ Link check failed: {e}")
@@ -146,15 +145,14 @@ class DocumentationBuilder:
                 str(self.build_dir / "doctest"),
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
             if result.returncode == 0:
                 print("✅ Documentation tests passed")
                 return True
-            else:
-                print("⚠️ Some documentation tests failed:")
-                print(result.stdout)
-                return True  # Don't fail build on doctest issues
+            print("⚠️ Some documentation tests failed:")
+            print(result.stdout)
+            return True  # Don't fail build on doctest issues
 
         except Exception as e:
             print(f"⚠️ Doctest failed: {e}")
@@ -177,14 +175,12 @@ class DocumentationBuilder:
 
             coverage_file = self.build_dir / "coverage" / "python.txt"
             if coverage_file.exists():
-                with open(coverage_file) as f:
+                with Path(coverage_file).open(coverage_file) as f:
                     coverage_content = f.read()
 
                 # Parse coverage results
                 lines = coverage_content.split("\n")
-                undocumented = [
-                    line for line in lines if "undocumented" in line.lower()
-                ]
+                undocumented = [line for line in lines if "undocumented" in line.lower()]
 
                 if undocumented:
                     print(f"⚠️ Found {len(undocumented)} undocumented items:")
@@ -215,7 +211,7 @@ class DocumentationBuilder:
                 str(self.build_dir / "latex"),
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
             if result.returncode != 0:
                 print(f"❌ LaTeX build failed: {result.stderr}")
@@ -225,14 +221,18 @@ class DocumentationBuilder:
             latex_dir = self.build_dir / "latex"
             pdf_cmd = ["make", "-C", str(latex_dir), "all-pdf"]
 
-            result = subprocess.run(pdf_cmd, capture_output=True, text=True)
+            result = subprocess.run(
+                pdf_cmd,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 print("✅ PDF documentation built successfully")
                 return True
-            else:
-                print("⚠️ PDF build failed (this is optional)")
-                return True  # PDF build is optional
+            print("⚠️ PDF build failed (this is optional)")
+            return True  # PDF build is optional
 
         except Exception as e:
             print(f"⚠️ PDF build failed: {e}")
@@ -270,7 +270,7 @@ class DocumentationBuilder:
             coverage_file = self.build_dir / "coverage" / "python.txt"
             if coverage_file.exists():
                 print(
-                    "📊 Coverage report available at: docs/_build/coverage/python.txt"
+                    "📊 Coverage report available at: docs/_build/coverage/python.txt",
                 )
             return True
         except Exception as e:
@@ -289,7 +289,10 @@ class DocumentationBuilder:
 
         try:
             os.chdir(html_dir)
-            subprocess.run([sys.executable, "-m", "http.server", str(port)])
+            subprocess.run(
+                [sys.executable, "-m", "http.server", str(port)],
+                check=False,
+            )
         except KeyboardInterrupt:
             print("\n👋 Server stopped")
 
@@ -330,14 +333,13 @@ class DocumentationBuilder:
             for step in failed_steps:
                 print(f"  - {step}")
             return False
-        else:
-            print("✅ Documentation build completed successfully!")
+        print("✅ Documentation build completed successfully!")
 
-            html_path = self.build_dir / "html" / "index.html"
-            if html_path.exists():
-                print(f"📖 Documentation available at: file://{html_path.absolute()}")
+        html_path = self.build_dir / "html" / "index.html"
+        if html_path.exists():
+            print(f"📖 Documentation available at: file://{html_path.absolute()}")
 
-            return True
+        return True
 
 
 def main() -> int:
@@ -346,12 +348,16 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="Build and validate documentation")
     parser.add_argument(
-        "--clean", action="store_true", help="Clean build directory only"
+        "--clean",
+        action="store_true",
+        help="Clean build directory only",
     )
     parser.add_argument("--html", action="store_true", help="Build HTML only")
     parser.add_argument("--pdf", action="store_true", help="Include PDF build")
     parser.add_argument(
-        "--serve", action="store_true", help="Serve documentation after build"
+        "--serve",
+        action="store_true",
+        help="Serve documentation after build",
     )
     parser.add_argument("--port", type=int, default=8000, help="Port for serving docs")
     parser.add_argument("--check", action="store_true", help="Run quality checks only")
@@ -365,21 +371,13 @@ def main() -> int:
         return 0 if builder.clean_build() else 1
 
     if args.html:
-        success = (
-            builder.clean_build()
-            and builder.generate_api_docs()
-            and builder.build_html()
-        )
+        success = builder.clean_build() and builder.generate_api_docs() and builder.build_html()
         if args.serve and success:
             builder.serve_docs(args.port)
         return 0 if success else 1
 
     if args.check:
-        success = (
-            builder.check_links()
-            and builder.run_doctests()
-            and builder.check_coverage()
-        )
+        success = builder.check_links() and builder.run_doctests() and builder.check_coverage()
         return 0 if success else 1
 
     # Full build

@@ -1,8 +1,8 @@
 import importlib.util
 import logging
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -45,24 +45,12 @@ if "trading_rl_agent.data" not in sys.modules:
     mod.__path__ = [str(base / "data")]
     sys.modules["trading_rl_agent.data"] = mod
 
-feature_path = (
-    Path(__file__).resolve().parents[2]
-    / "src"
-    / "trading_rl_agent"
-    / "data"
-    / "features.py"
-)
+feature_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "features.py"
 spec_feat = importlib.util.spec_from_file_location("features", feature_path)
 features = importlib.util.module_from_spec(spec_feat)
 spec_feat.loader.exec_module(features)
 
-preproc_path = (
-    Path(__file__).resolve().parents[2]
-    / "src"
-    / "trading_rl_agent"
-    / "data"
-    / "preprocessing.py"
-)
+preproc_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "preprocessing.py"
 spec_pre = importlib.util.spec_from_file_location("preprocessing", preproc_path)
 preprocessing = importlib.util.module_from_spec(spec_pre)
 spec_pre.loader.exec_module(preprocessing)
@@ -89,10 +77,12 @@ def test_preprocess_trading_data_pipeline():
             "low": np.arange(9, 19, dtype=float),
             "close": np.arange(10, 20, dtype=float),
             "volume": np.arange(1, 11, dtype=float),
-        }
+        },
     )
     seq, tgt, scaler = preprocess_trading_data(
-        df, sequence_length=3, target_column="close"
+        df,
+        sequence_length=3,
+        target_column="close",
     )
     # target column is excluded from the sequence features
     assert seq.shape == (7, 3, df.shape[1] - 1)
@@ -119,7 +109,7 @@ def test_create_sequences_stride_dataframe():
             "f1": np.arange(6, dtype=float),
             "f2": np.arange(10, 16, dtype=float),
             "target": np.arange(20, 26, dtype=float),
-        }
+        },
     )
     seq, tgt = create_sequences(df, sequence_length=2, target_column="target", stride=2)
 
@@ -127,7 +117,7 @@ def test_create_sequences_stride_dataframe():
         [
             [[0.0, 10.0], [1.0, 11.0]],
             [[2.0, 12.0], [3.0, 13.0]],
-        ]
+        ],
     )
     expected_tgt = np.array([[22.0], [24.0]])
 

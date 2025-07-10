@@ -5,9 +5,8 @@ Comprehensive test suite for professional data feeds, FinRL environment,
 and industry-standard features.
 """
 
-from datetime import datetime, timedelta
 import os
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -37,7 +36,7 @@ class TestProfessionalDataProvider:
                         "low": 98 + np.random.randn(),
                         "close": 101 + np.random.randn(),
                         "volume": 1000000 + np.random.randint(0, 500000),
-                    }
+                    },
                 )
 
         return pd.DataFrame(data)
@@ -113,7 +112,7 @@ class TestProfessionalDataProvider:
                 "low": np.random.randn(31) + 98,
                 "close": np.random.randn(31) + 101,
                 "volume": np.random.randint(100000, 1000000, 31),
-            }
+            },
         )
 
         mock_api = Mock()
@@ -204,7 +203,7 @@ class TestFinRLIntegration:
                         "macd": np.random.randn(),
                         "rsi_30": np.random.rand() * 100,
                         "cci_30": np.random.randn() * 100,
-                    }
+                    },
                 )
 
         return pd.DataFrame(data)
@@ -239,7 +238,7 @@ class TestFinRLIntegration:
         action = env.action_space.sample()
         next_obs, reward, done, truncated, info = env.step(action)
 
-        assert isinstance(reward, (int, float))
+        assert isinstance(reward, int | float)
         assert isinstance(done, bool)
         assert isinstance(truncated, bool)
 
@@ -298,26 +297,32 @@ class TestIndustryStandardMetrics:
         assert var_95 <= 0  # VaR should be negative
 
     def test_information_ratio_calculation(
-        self, sample_returns, sample_benchmark_returns
+        self,
+        sample_returns,
+        sample_benchmark_returns,
     ):
         """Test Information ratio calculation."""
         from trading_rl_agent.utils import metrics
 
         info_ratio = metrics.calculate_information_ratio(
-            sample_returns, sample_benchmark_returns
+            sample_returns,
+            sample_benchmark_returns,
         )
 
         assert isinstance(info_ratio, float)
         assert not np.isnan(info_ratio)
 
     def test_comprehensive_metrics_calculation(
-        self, sample_returns, sample_benchmark_returns
+        self,
+        sample_returns,
+        sample_benchmark_returns,
     ):
         """Test comprehensive metrics calculation."""
         from trading_rl_agent.utils import metrics
 
         metrics_dict = metrics.calculate_comprehensive_metrics(
-            sample_returns, sample_benchmark_returns
+            sample_returns,
+            sample_benchmark_returns,
         )
 
         # Check that all expected metrics are present
@@ -338,7 +343,7 @@ class TestIndustryStandardMetrics:
 
         for metric in expected_metrics:
             assert metric in metrics_dict
-            assert isinstance(metrics_dict[metric], (int, float))
+            assert isinstance(metrics_dict[metric], int | float)
 
 
 class TestRiskManagement:
@@ -355,7 +360,8 @@ class TestRiskManagement:
         volatility = 0.02  # 2% daily volatility
 
         position_size = risk_manager.calculate_position_size(
-            signal_strength, volatility
+            signal_strength,
+            volatility,
         )
 
         assert isinstance(position_size, float)
@@ -372,7 +378,8 @@ class TestRiskManagement:
         mock_portfolio = {"value": 1000000, "positions": {}}
 
         constrained_action = risk_manager.check_position_limits(
-            oversized_action, mock_portfolio
+            oversized_action,
+            mock_portfolio,
         )
 
         assert abs(constrained_action[0]) <= risk_manager.max_position_size
@@ -409,32 +416,33 @@ class TestModelServing:
         mock_rl_agent.select_action.return_value = np.array([0.3])
 
         # Create service with mocked models
-        with patch(
-            "src.deployment.model_serving.TradingModelService.load_cnn_lstm_model",
-            return_value=mock_cnn_lstm,
-        ):
-            with patch(
+        with (
+            patch(
+                "src.deployment.model_serving.TradingModelService.load_cnn_lstm_model",
+                return_value=mock_cnn_lstm,
+            ),
+            patch(
                 "src.deployment.model_serving.TradingModelService.load_rl_agent",
                 return_value=mock_rl_agent,
-            ):
+            ),
+        ):
+            service = TradingModelService("mock_model_path")
 
-                service = TradingModelService("mock_model_path")
+            # Test prediction
+            market_data = {
+                "open": 100.0,
+                "high": 102.0,
+                "low": 98.0,
+                "close": 101.0,
+                "volume": 1000000,
+            }
 
-                # Test prediction
-                market_data = {
-                    "open": 100.0,
-                    "high": 102.0,
-                    "low": 98.0,
-                    "close": 101.0,
-                    "volume": 1000000,
-                }
+            result = await service.predict(market_data)
 
-                result = await service.predict(market_data)
-
-                assert "action" in result
-                assert "confidence" in result
-                assert "risk_metrics" in result
-                assert isinstance(result["action"], np.ndarray)
+            assert "action" in result
+            assert "confidence" in result
+            assert "risk_metrics" in result
+            assert isinstance(result["action"], np.ndarray)
 
     def test_model_monitoring_metrics(self):
         """Test model monitoring and metrics collection."""

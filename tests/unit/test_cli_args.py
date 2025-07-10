@@ -15,7 +15,7 @@ def test_parser_required_args(tmp_path):
             str(tmp_path / "model.yaml"),
             "--trainer-config",
             str(tmp_path / "trainer.yaml"),
-        ]
+        ],
     )
     assert args.env_config.endswith("env.yaml")
     assert args.model_config.endswith("model.yaml")
@@ -40,7 +40,7 @@ def test_parser_all_args(tmp_path):
             str(tmp_path),
             "--train",
             "--eval",
-        ]
+        ],
     )
     assert args.seed == 123
     assert args.save_dir == str(tmp_path)

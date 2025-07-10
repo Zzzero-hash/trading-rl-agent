@@ -18,7 +18,7 @@ def sample_csv(tmp_path):
             "low": [1.0, 2.0, 3.0],
             "close": [1.0, 2.0, 3.0],
             "volume": [1.0, 1.0, 1.0],
-        }
+        },
     )
     path = tmp_path / "data.csv"
     df.to_csv(path, index=False)

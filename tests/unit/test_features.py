@@ -1,8 +1,8 @@
 import importlib.util
 import logging
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -46,13 +46,7 @@ if "trading_rl_agent.data" not in sys.modules:
     mod.__path__ = [str(base / "data")]
     sys.modules["trading_rl_agent.data"] = mod
 
-feature_path = (
-    Path(__file__).resolve().parents[2]
-    / "src"
-    / "trading_rl_agent"
-    / "data"
-    / "features.py"
-)
+feature_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "features.py"
 spec = importlib.util.spec_from_file_location("features", feature_path)
 features = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(features)
@@ -89,7 +83,8 @@ def test_compute_rsi_up_down():
     rsi_vals = pta.rsi(df["close"], length=3)
     # Check that non-NaN RSI values are between 0 and 100
     valid = rsi_vals.dropna()
-    assert (valid >= 0).all() and (valid <= 100).all()
+    assert (valid >= 0).all()
+    assert (valid <= 100).all()
 
 
 def test_compute_rolling_volatility():
@@ -123,7 +118,7 @@ def test_generate_features_dimensions(n_rows):
             "low": prices,
             "close": prices,
             "volume": np.ones(n_rows),
-        }
+        },
     )
     df_feat = generate_features(df)
     # Output rows may be fewer due to warm-up trimming
@@ -142,7 +137,7 @@ def test_generate_features_no_nan():
             "low": prices,
             "close": prices,
             "volume": np.ones(40),
-        }
+        },
     )
     df_feat = generate_features(df)
     core_cols = (

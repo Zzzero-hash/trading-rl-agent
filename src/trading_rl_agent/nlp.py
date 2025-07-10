@@ -2,8 +2,6 @@
 NLP utilities for sentiment scoring in Trading RL Agent.
 """
 
-from typing import Dict
-
 from trading_rl_agent.data.sentiment import (
     NewsSentimentProvider,
     SocialSentimentProvider,

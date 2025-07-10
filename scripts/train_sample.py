@@ -1,7 +1,7 @@
 import logging
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 import pandas as pd
 
@@ -63,7 +63,8 @@ DATA_PATH = OUTPUT_DIR / "sample_data.csv"
 CHECKPOINT_PATH = OUTPUT_DIR / "ppo_agent_checkpoint.zip"
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
 

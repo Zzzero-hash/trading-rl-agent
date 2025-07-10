@@ -1,9 +1,6 @@
 """Tests for Ray Tune utilities."""
 
-from pathlib import Path
-import shutil
-import tempfile
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -119,11 +116,12 @@ class TestLoadSearchSpace:
         }
 
         config_path = tmp_path / "search_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             yaml.dump(config, f)
 
         with patch(
-            "src.agents.tune._convert_value", side_effect=lambda x: f"converted_{x}"
+            "src.agents.tune._convert_value",
+            side_effect=lambda x: f"converted_{x}",
         ):
             result = _load_search_space(str(config_path))
 
@@ -135,7 +133,7 @@ class TestLoadSearchSpace:
     def test_load_search_space_empty_file(self, tmp_path):
         """Test loading search space from empty YAML file."""
         config_path = tmp_path / "empty_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             f.write("")  # Empty file
 
         result = _load_search_space(str(config_path))
@@ -144,7 +142,7 @@ class TestLoadSearchSpace:
     def test_load_search_space_none_config(self, tmp_path):
         """Test loading search space when YAML contains None."""
         config_path = tmp_path / "none_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             f.write("null\n")  # YAML for None
 
         result = _load_search_space(str(config_path))
@@ -159,14 +157,12 @@ class TestLoadSearchSpace:
         }
 
         config_path = tmp_path / "mixed_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             yaml.dump(config, f)
 
         # Mock _convert_value to only convert tune specs
         def mock_convert(value):
-            if isinstance(value, dict) and any(
-                k in value for k in ["grid_search", "choice", "uniform", "randint"]
-            ):
+            if isinstance(value, dict) and any(k in value for k in ["grid_search", "choice", "uniform", "randint"]):
                 return f"tune_object_{value}"
             return value
 
@@ -175,10 +171,7 @@ class TestLoadSearchSpace:
 
             assert result["tuned_param"] == "tune_object_{'grid_search': [1, 2, 3]}"
             assert result["fixed_param"] == 42
-            assert (
-                result["nested_config"]["inner_param"]
-                == "tune_object_{'choice': ['a', 'b']}"
-            )
+            assert result["nested_config"]["inner_param"] == "tune_object_{'choice': ['a', 'b']}"
 
 
 class TestRunTune:
@@ -194,18 +187,17 @@ class TestRunTune:
         }
 
         config_path = tmp_path / "tune_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             yaml.dump(config, f)
 
         with (
             patch("ray.init") as mock_ray_init,
-            patch("ray.is_initialized", return_value=False) as mock_ray_initialized,
+            patch("ray.is_initialized", return_value=False),
             patch("ray.tune.run") as mock_tune_run,
-            patch("ray.shutdown") as mock_ray_shutdown,
+            patch("ray.shutdown"),
             patch("src.agents.tune.register_env") as mock_register_env,
             patch("src.agents.tune._convert_value", side_effect=lambda x: x),
         ):
-
             run_tune(str(config_path))
 
             # Verify Ray initialization and environment registration
@@ -231,9 +223,9 @@ class TestRunTune:
         config_path1 = tmp_path / "config1.yaml"
         config_path2 = tmp_path / "config2.yaml"
 
-        with open(config_path1, "w") as f:
+        with config_path1.open("w") as f:
             yaml.dump(config1, f)
-        with open(config_path2, "w") as f:
+        with config_path2.open("w") as f:
             yaml.dump(config2, f)
 
         config_paths = [str(config_path1), str(config_path2)]
@@ -246,7 +238,6 @@ class TestRunTune:
             patch("src.agents.tune.register_env") as mock_register_env,
             patch("src.agents.tune._convert_value", side_effect=lambda x: x),
         ):
-
             run_tune(config_paths)
 
             mock_ray_is_initialized.assert_called_once()
@@ -260,7 +251,7 @@ class TestRunTune:
         config = {"algorithm": "DQN", "learning_rate": 0.001}
 
         config_path = tmp_path / "single_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             yaml.dump(config, f)
 
         with (
@@ -269,7 +260,6 @@ class TestRunTune:
             patch("src.agents.tune.register_env"),
             patch("src.agents.tune._convert_value", side_effect=lambda x: x),
         ):
-
             # Should handle string input by converting to list
             run_tune(str(config_path))
 
@@ -282,7 +272,7 @@ class TestRunTune:
         }
 
         config_path = tmp_path / "algo_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             yaml.dump(config, f)
 
         with (
@@ -291,7 +281,6 @@ class TestRunTune:
             patch("src.agents.tune.register_env"),
             patch("src.agents.tune._convert_value", side_effect=lambda x: x),
         ):
-
             run_tune(str(config_path))
 
             # Verify that algorithm was removed from search space
@@ -308,7 +297,7 @@ class TestRunTune:
         }
 
         config_path = tmp_path / "env_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             yaml.dump(config, f)
 
         with (
@@ -317,7 +306,6 @@ class TestRunTune:
             patch("src.agents.tune.register_env"),
             patch("src.agents.tune._convert_value", side_effect=lambda x: x),
         ):
-
             run_tune(str(config_path))
 
             # Verify that env_config was removed from search space
@@ -330,7 +318,7 @@ class TestRunTune:
         config = {"learning_rate": {"uniform": [0.001, 0.1]}, "batch_size": 32}
 
         config_path = tmp_path / "no_algo_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             yaml.dump(config, f)
 
         with (
@@ -339,11 +327,10 @@ class TestRunTune:
             patch("src.agents.tune.register_env"),
             patch("src.agents.tune._convert_value", side_effect=lambda x: x),
         ):
-
             run_tune(str(config_path))
 
             # Should use default algorithm
-            call_args = mock_tune_run.call_args
+            # call_args = mock_tune_run.call_args  # Not used currently
             # The algorithm should be used in the trainer configuration
             assert mock_tune_run.called
 
@@ -352,7 +339,7 @@ class TestRunTune:
         config = {"algorithm": "PPO", "learning_rate": {"uniform": [0.001, 0.1]}}
 
         config_path = tmp_path / "no_env_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             yaml.dump(config, f)
 
         with (
@@ -361,7 +348,6 @@ class TestRunTune:
             patch("src.agents.tune.register_env"),
             patch("src.agents.tune._convert_value", side_effect=lambda x: x),
         ):
-
             run_tune(str(config_path))
 
             # Should use default empty env_config
@@ -387,7 +373,7 @@ class TestTuneIntegration:
         }
 
         config_path = tmp_path / "complete_config.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             yaml.dump(config, f)
 
         with (
@@ -395,22 +381,15 @@ class TestTuneIntegration:
             patch("ray.tune.run") as mock_tune_run,
             patch("src.agents.tune.register_env") as mock_register_env,
         ):
-
             # Mock the tune conversion functions
             def mock_convert(value):
                 if isinstance(value, dict):
                     if "choice" in value:
                         return f"tune.choice({value['choice']})"
-                    elif "uniform" in value:
-                        return (
-                            f"tune.uniform({value['uniform'][0]}, "
-                            f"{value['uniform'][1]})"
-                        )
-                    elif "randint" in value:
-                        return (
-                            f"tune.randint({value['randint'][0]}, "
-                            f"{value['randint'][1]})"
-                        )
+                    if "uniform" in value:
+                        return f"tune.uniform({value['uniform'][0]}, {value['uniform'][1]})"
+                    if "randint" in value:
+                        return f"tune.randint({value['randint'][0]}, {value['randint'][1]})"
                 return value
 
             with patch("src.agents.tune._convert_value", side_effect=mock_convert):
@@ -446,7 +425,7 @@ class TestTuneErrorHandling:
     def test_load_search_space_invalid_yaml(self, tmp_path):
         """Test handling of invalid YAML file."""
         config_path = tmp_path / "invalid.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             f.write("invalid: yaml: content: [")
 
         with pytest.raises(yaml.YAMLError):
@@ -455,7 +434,7 @@ class TestTuneErrorHandling:
     def test_run_tune_empty_configs(self, tmp_path):
         """Test run_tune with empty configuration files."""
         config_path = tmp_path / "empty.yaml"
-        with open(config_path, "w") as f:
+        with config_path.open("w") as f:
             f.write("")
 
         with (
@@ -463,7 +442,6 @@ class TestTuneErrorHandling:
             patch("ray.tune.run") as mock_tune_run,
             patch("src.agents.tune.register_env"),
         ):
-
             run_tune(str(config_path))
 
             # Should still call tune.run with empty search space

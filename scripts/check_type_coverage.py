@@ -2,10 +2,10 @@
 """Checks the type coverage of the trading-rl-agent project using mypy."""
 
 import ast
-from pathlib import Path
 import subprocess
 import sys
-from typing import Any, Dict, List, Set, Tuple, Union
+from pathlib import Path
+from typing import Any
 
 
 class TypeHintChecker(ast.NodeVisitor):
@@ -28,9 +28,7 @@ class TypeHintChecker(ast.NodeVisitor):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Visit function definition."""
         has_return_annotation = node.returns is not None
-        has_arg_annotations = all(
-            arg.annotation is not None for arg in node.args.args if arg.arg != "self"
-        )
+        has_arg_annotations = all(arg.annotation is not None for arg in node.args.args if arg.arg != "self")
 
         is_typed = has_return_annotation and has_arg_annotations
 
@@ -46,9 +44,7 @@ class TypeHintChecker(ast.NodeVisitor):
         """Visit async function definition."""
         # Handle async functions the same way as regular functions
         has_return_annotation = node.returns is not None
-        has_arg_annotations = all(
-            arg.annotation is not None for arg in node.args.args if arg.arg != "self"
-        )
+        has_arg_annotations = all(arg.annotation is not None for arg in node.args.args if arg.arg != "self")
 
         is_typed = has_return_annotation and has_arg_annotations
 
@@ -64,7 +60,7 @@ class TypeHintChecker(ast.NodeVisitor):
 def check_file_type_coverage(file_path: Path) -> dict[str, Any]:
     """Check type hint coverage for a single file."""
     try:
-        with open(file_path, encoding="utf-8") as f:
+        with Path(file_path).open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         tree = ast.parse(content)
@@ -81,9 +77,7 @@ def check_file_type_coverage(file_path: Path) -> dict[str, Any]:
         total_callables = total_functions + total_methods
         typed_callables = typed_functions + typed_methods
 
-        coverage = (
-            (typed_callables / total_callables * 100) if total_callables > 0 else 100.0
-        )
+        coverage = (typed_callables / total_callables * 100) if total_callables > 0 else 100.0
 
         return {
             "coverage": coverage,
@@ -131,40 +125,32 @@ def check_project_type_coverage(src_dir: Path, min_coverage: float = 80.0) -> bo
             coverage = result["coverage"]
             status = "✅" if coverage >= min_coverage else "❌"
             print(
-                f"{status} {rel_path}: {coverage:.1f}% ({result['typed_callables']}/{result['total_callables']})"
+                f"{status} {rel_path}: {coverage:.1f}% ({result['typed_callables']}/{result['total_callables']})",
             )
 
             if coverage < min_coverage:
                 files_below_threshold.append((rel_path, result))
 
     # Overall statistics
-    overall_coverage = (
-        (total_typed / total_callables * 100) if total_callables > 0 else 100.0
-    )
+    overall_coverage = (total_typed / total_callables * 100) if total_callables > 0 else 100.0
 
     print("=" * 60)
     print(
-        f"Overall Coverage: {overall_coverage:.1f}% ({total_typed}/{total_callables})"
+        f"Overall Coverage: {overall_coverage:.1f}% ({total_typed}/{total_callables})",
     )
 
     if files_below_threshold:
         print(
-            f"\n❌ {len(files_below_threshold)} files below {min_coverage}% threshold:"
+            f"\n❌ {len(files_below_threshold)} files below {min_coverage}% threshold:",
         )
         for file_path, result in files_below_threshold:
             print(f"  - {file_path}: {result['coverage']:.1f}%")
 
             # Show untyped functions
             untyped_functions = [
-                f"    • {name} (line {line})"
-                for name, line, typed in result["functions"]
-                if not typed
+                f"    • {name} (line {line})" for name, line, typed in result["functions"] if not typed
             ]
-            untyped_methods = [
-                f"    • {name} (line {line})"
-                for name, line, typed in result["methods"]
-                if not typed
-            ]
+            untyped_methods = [f"    • {name} (line {line})" for name, line, typed in result["methods"] if not typed]
 
             if untyped_functions:
                 print("    Untyped functions:")
@@ -197,19 +183,22 @@ def run_mypy_check(src_dir: Path) -> bool:
 
     try:
         result = subprocess.run(
-            ["mypy", str(src_dir)], capture_output=True, text=True, timeout=300
+            ["mypy", str(src_dir)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=300,
         )
 
         if result.returncode == 0:
             print("✅ mypy type checking passed")
             return True
-        else:
-            print("❌ mypy type checking failed:")
-            print(result.stdout)
-            if result.stderr:
-                print("Errors:")
-                print(result.stderr)
-            return False
+        print("❌ mypy type checking failed:")
+        print(result.stdout)
+        if result.stderr:
+            print("Errors:")
+            print(result.stderr)
+        return False
 
     except subprocess.TimeoutExpired:
         print("⏰ mypy check timed out")
@@ -238,9 +227,8 @@ def main() -> int:
     if coverage_ok and mypy_ok:
         print("\n🎉 All type checking passed!")
         return 0
-    else:
-        print("\n💥 Type checking failed!")
-        return 1
+    print("\n💥 Type checking failed!")
+    return 1
 
 
 if __name__ == "__main__":

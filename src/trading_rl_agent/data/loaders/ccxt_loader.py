@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import pandas as pd
 
 try:
@@ -36,7 +34,7 @@ def load_ccxt(
     """
     if ccxt is None:
         raise ImportError(
-            "ccxt package is required for load_ccxt. Install with `pip install ccxt`."
+            "ccxt package is required for load_ccxt. Install with `pip install ccxt`.",
         )
 
     ex_class = getattr(ccxt, exchange)
@@ -49,7 +47,8 @@ def load_ccxt(
     ohlcv = ex.fetch_ohlcv(symbol, timeframe=tf, since=since)
 
     df = pd.DataFrame(
-        ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"]
+        ohlcv,
+        columns=["timestamp", "open", "high", "low", "close", "volume"],
     )
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     if end:

@@ -4,11 +4,9 @@ Comprehensive Cleanup Script for Trading RL Agent
 Streamlines the codebase by removing redundant files and organizing structure.
 """
 
-from datetime import datetime, timedelta
-import os
-from pathlib import Path
 import shutil
-from typing import Any, Dict, List
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 
 class TradingRLCleaner:
@@ -25,7 +23,7 @@ class TradingRLCleaner:
         print(f"\n📊 Cleaning optimization results (keeping last {keep_days} days)...")
 
         directories = ["optimization_results", "ray_results", "results_archive"]
-        cutoff_date = datetime.now() - timedelta(days=keep_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=keep_days)
 
         for dir_name in directories:
             dir_path = self.project_root / dir_name
@@ -36,19 +34,18 @@ class TradingRLCleaner:
 
             for subdir in dir_path.iterdir():
                 if subdir.is_dir():
-                    mod_time = datetime.fromtimestamp(subdir.stat().st_mtime)
+                    mod_time = datetime.fromtimestamp(
+                        subdir.stat().st_mtime,
+                        tz=UTC,
+                    )
 
                     if mod_time < cutoff_date:
-                        size_mb = sum(
-                            f.stat().st_size for f in subdir.rglob("*") if f.is_file()
-                        ) / (1024 * 1024)
+                        size_mb = sum(f.stat().st_size for f in subdir.rglob("*") if f.is_file()) / (1024 * 1024)
                         self.freed_space += size_mb
                         shutil.rmtree(subdir)
                         print(f"      🗑️  Removed old: {subdir.name} ({size_mb:.1f} MB)")
                     else:
-                        size_mb = sum(
-                            f.stat().st_size for f in subdir.rglob("*") if f.is_file()
-                        ) / (1024 * 1024)
+                        size_mb = sum(f.stat().st_size for f in subdir.rglob("*") if f.is_file()) / (1024 * 1024)
                         print(f"      ✅ Kept recent: {subdir.name} ({size_mb:.1f} MB)")
 
     def cleanup_cache_files(self) -> None:
@@ -69,20 +66,18 @@ class TradingRLCleaner:
         for pattern in cache_patterns:
             for path in self.project_root.glob(pattern):
                 if path.is_dir():
-                    size_mb = sum(
-                        f.stat().st_size for f in path.rglob("*") if f.is_file()
-                    ) / (1024 * 1024)
+                    size_mb = sum(f.stat().st_size for f in path.rglob("*") if f.is_file()) / (1024 * 1024)
                     self.freed_space += size_mb
                     shutil.rmtree(path)
                     print(
-                        f"   🗑️  Removed cache dir: {path.relative_to(self.project_root)}"
+                        f"   🗑️  Removed cache dir: {path.relative_to(self.project_root)}",
                     )
                 elif path.is_file():
                     size_mb = path.stat().st_size / (1024 * 1024)
                     self.freed_space += size_mb
                     path.unlink()
                     print(
-                        f"   🗑️  Removed cache file: {path.relative_to(self.project_root)}"
+                        f"   🗑️  Removed cache file: {path.relative_to(self.project_root)}",
                     )
 
     def run_cleanup(self, keep_optimization_days: int = 7) -> None:

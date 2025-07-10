@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pandas as pd
 import ray
-import ray.data as rdata
 import yaml
 
 from .features import generate_features
@@ -69,7 +68,7 @@ def run_pipeline(config_path: str):  # pragma: no cover
     dict[str, pandas.DataFrame]
         Mapping of ``source`` keys to DataFrames containing OHLCV data.
     """
-    with open(config_path) as f:
+    with Path(config_path).open() as f:
         cfg = yaml.safe_load(f)
 
     start = cfg.get("start")
@@ -175,9 +174,8 @@ def run_pipeline(config_path: str):  # pragma: no cover
 
     results = {}
     for key, df in zip(tasks.keys(), fetched):
-        if key.startswith("synthetic_"):
-            if "close" in df.columns:
-                df = generate_features(df)
+        if key.startswith("synthetic_") and "close" in df.columns:
+            df = generate_features(df)
         if key.startswith("live_"):
             df = generate_features(df)
 
@@ -196,7 +194,7 @@ if __name__ == "__main__":  # pragma: no cover
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Fetch OHLCV data pipeline for Coinbase and OANDA"
+        description="Fetch OHLCV data pipeline for Coinbase and OANDA",
     )
     parser.add_argument(
         "--config",

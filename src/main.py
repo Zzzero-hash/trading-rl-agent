@@ -1,11 +1,10 @@
 import argparse
-from datetime import datetime
-import platform
+from pathlib import Path
 
-import psutil
 import yaml
 
 from trading_rl_agent.agents.trainer import Trainer
+from trading_rl_agent.agents.tune import run_tune
 from trading_rl_agent.core.config import ConfigManager
 
 
@@ -13,7 +12,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Return the CLI argument parser for the main entry point."""
 
     parser = argparse.ArgumentParser(
-        description="Train or evaluate an RL trading agent"
+        description="Train or evaluate an RL trading agent",
     )
     parser.add_argument(
         "--config",
@@ -49,7 +48,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--eval", action="store_true", help="Run evaluation")
     parser.add_argument("--test", action="store_true", help="Run tests")
     parser.add_argument(
-        "--tune", action="store_true", help="Run Ray Tune hyperparameter search"
+        "--tune",
+        action="store_true",
+        help="Run Ray Tune hyperparameter search",
     )
     return parser
 
@@ -61,8 +62,6 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     if args.tune:
-        from agents.tune import run_tune
-
         if args.config:
             run_tune([args.config])
         else:
@@ -77,15 +76,23 @@ def main(argv: list[str] | None = None) -> None:
         trainer_cfg = system_cfg.rl.__dict__
     else:
         # Legacy separate configs
-        with open(args.env_config) as f:
+        env_cfg_path = Path(args.env_config)
+        model_cfg_path = Path(args.model_config)
+        trainer_cfg_path = Path(args.trainer_config)
+
+        with env_cfg_path.open() as f:
             env_cfg = yaml.safe_load(f)
-        with open(args.model_config) as f:
+        with model_cfg_path.open() as f:
             model_cfg = yaml.safe_load(f)
-        with open(args.trainer_config) as f:
+        with trainer_cfg_path.open() as f:
             trainer_cfg = yaml.safe_load(f)
 
     trainer = Trainer(
-        env_cfg, model_cfg, trainer_cfg, seed=args.seed, save_dir=args.save_dir
+        env_cfg,
+        model_cfg,
+        trainer_cfg,
+        seed=args.seed,
+        save_dir=args.save_dir,
     )
     if args.train:
         trainer.train()

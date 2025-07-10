@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -10,7 +10,7 @@ class EnsembleConfig:
         default_factory=lambda: {
             "sac": {"enabled": True, "config": None},
             "td3": {"enabled": True, "config": None},
-        }
+        },
     )
     ensemble_method: str = "weighted_average"
     weight_update_frequency: int = 1000
@@ -20,10 +20,10 @@ class EnsembleConfig:
     risk_adjustment: bool = True
     combination_method: str = "weighted_average"
     # Optional dimension parameters for compatibility
-    state_dim: Optional[int] = None
-    action_dim: Optional[int] = None
+    state_dim: int | None = None
+    action_dim: int | None = None
     # Support agent_configs as parameter name
-    agent_configs: Optional[dict[str, dict[str, Any]]] = None
+    agent_configs: dict[str, dict[str, Any]] | None = None
 
     def __post_init__(self) -> None:
         """Handle agent_configs alias and validation after initialization."""

@@ -1,6 +1,6 @@
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 
 import pytest
 import yaml
@@ -43,11 +43,11 @@ def sample_config_files(temp_dir):
     model_path = Path(temp_dir) / "model.yaml"
     trainer_path = Path(temp_dir) / "trainer.yaml"
 
-    with open(env_path, "w") as f:
+    with Path(env_path).open(env_path, "w") as f:
         yaml.dump(env_config, f)
-    with open(model_path, "w") as f:
+    with Path(model_path).open(model_path, "w") as f:
         yaml.dump(model_config, f)
-    with open(trainer_path, "w") as f:
+    with Path(trainer_path).open(trainer_path, "w") as f:
         yaml.dump(trainer_config, f)
 
     return str(env_path), str(model_path), str(trainer_path)

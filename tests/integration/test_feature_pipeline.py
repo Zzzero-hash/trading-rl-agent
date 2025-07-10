@@ -3,7 +3,6 @@ Integration tests for the data pipeline with advanced candle patterns.
 """
 
 import numpy as np
-import pandas as pd
 import pytest
 import torch
 
@@ -135,7 +134,8 @@ def test_pipeline_memory_usage():
     df = generate_gbm_prices(n_days=n_days, mu=0.0001, sigma=0.01, s0=100.0)
 
     # Generate features with advanced candles
-    result = generate_features(df, advanced_candles=True)
+    # result = generate_features(df, advanced_candles=True)  # Not used currently
+    generate_features(df, advanced_candles=True)
 
     # Get final memory usage
     final_memory = process.memory_info().rss / 1024 / 1024  # MB

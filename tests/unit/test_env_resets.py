@@ -12,7 +12,7 @@ def create_env(tmp_path):
             "low": np.arange(6, dtype=float),
             "close": np.arange(6, dtype=float),
             "volume": np.ones(6),
-        }
+        },
     )
     csv = tmp_path / "prices.csv"
     df.to_csv(csv, index=False)
@@ -28,4 +28,4 @@ def test_reset_restores_state(tmp_path):
 
     obs, _ = env.reset()
     assert env.day == 0
-    assert isinstance(obs, (list, np.ndarray))
+    assert isinstance(obs, list | np.ndarray)

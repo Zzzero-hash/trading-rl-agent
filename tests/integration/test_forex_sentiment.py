@@ -1,7 +1,4 @@
-import datetime
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from trading_rl_agent.data.forex_sentiment import (
     ForexSentimentData,
@@ -11,6 +8,8 @@ from trading_rl_agent.data.forex_sentiment import (
     get_yahoo_finance_url_for_forex,
     scrape_yahoo_finance_forex_headlines,
 )
+
+NEUTRAL_SENTIMENT_THRESHOLD = 0.1
 
 SAMPLE_HTML = """
 <html><body>
@@ -22,10 +21,7 @@ SAMPLE_HTML = """
 
 
 def test_get_yahoo_finance_url_for_forex():
-    assert (
-        get_yahoo_finance_url_for_forex("EURUSD")
-        == "https://finance.yahoo.com/quote/EURUSD=X/news?p=EURUSD=X"
-    )
+    assert get_yahoo_finance_url_for_forex("EURUSD") == "https://finance.yahoo.com/quote/EURUSD=X/news?p=EURUSD=X"
 
 
 @patch("src.data.forex_sentiment.requests.get")

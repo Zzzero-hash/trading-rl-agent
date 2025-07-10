@@ -2,7 +2,6 @@ from __future__ import annotations
 
 """Simple alert management utilities."""
 
-from typing import List
 
 from ..core.logging import get_logger
 

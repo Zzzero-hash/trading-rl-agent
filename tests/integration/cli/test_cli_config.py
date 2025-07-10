@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -42,7 +42,7 @@ def test_main_loads_configs_correctly(sample_config_files):
 
 def test_main_invalid_config_file(temp_dir):
     invalid_path = Path(temp_dir) / "invalid.yaml"
-    with open(invalid_path, "w") as f:
+    with Path(invalid_path).open(invalid_path, "w") as f:
         f.write("invalid: yaml: content: [")
     test_args = [
         "main.py",
@@ -53,9 +53,11 @@ def test_main_invalid_config_file(temp_dir):
         "--trainer-config",
         str(invalid_path),
     ]
-    with patch.object(sys, "argv", test_args):
-        with pytest.raises((yaml.YAMLError, FileNotFoundError)):
-            main()
+    with (
+        patch.object(sys, "argv", test_args),
+        pytest.raises((yaml.YAMLError, FileNotFoundError)),
+    ):
+        main()
 
 
 def test_main_missing_config_file():
@@ -68,6 +70,5 @@ def test_main_missing_config_file():
         "--trainer-config",
         "nonexistent.yaml",
     ]
-    with patch.object(sys, "argv", test_args):
-        with pytest.raises(FileNotFoundError):
-            main()
+    with patch.object(sys, "argv", test_args), pytest.raises(FileNotFoundError):
+        main()

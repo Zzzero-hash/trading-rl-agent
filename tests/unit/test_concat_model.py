@@ -1,6 +1,5 @@
-from gymnasium import spaces
-import numpy as np
 import torch
+from gymnasium import spaces
 
 from trading_rl_agent.models.concat_model import ConcatModel
 
@@ -10,7 +9,7 @@ def test_concat_model_output_shape():
         {
             "market_features": spaces.Box(-1.0, 1.0, shape=(5, 3)),
             "model_pred": spaces.Box(-1.0, 1.0, shape=(1,)),
-        }
+        },
     )
     action_space = spaces.Discrete(2)
     model = ConcatModel(

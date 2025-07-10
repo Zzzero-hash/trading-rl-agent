@@ -4,18 +4,14 @@ Provides fixtures for data management, environment setup, and test utilities.
 """
 
 import asyncio
-from collections.abc import Generator
-from datetime import datetime, timedelta
-import json
 import logging
 import os
-from pathlib import Path
 import shutil
-import sys
 import tempfile
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, Mock, patch
 import warnings
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 import gymnasium as gym
 import numpy as np
@@ -37,7 +33,10 @@ try:
 except ImportError:
 
     def generate_sample_price_data(
-        symbol="TEST", days=30, start_price=100.0, volatility=0.01
+        symbol="TEST",
+        days=30,
+        start_price=100.0,
+        volatility=0.01,
     ):
         """Fallback sample data generator for testing."""
         np.random.seed(42)
@@ -58,7 +57,7 @@ except ImportError:
                 "low": [p * (1 - abs(np.random.normal(0, 0.005))) for p in prices],
                 "close": prices,
                 "volume": [np.random.randint(1000, 10000) for _ in prices],
-            }
+            },
         )
 
 
@@ -130,15 +129,17 @@ def test_dataset():
         _test_manager = TestDataManager()
 
     required_columns = ["timestamp", "open", "high", "low", "close", "volume"]
-    dataset_path = _test_manager.get_or_create_test_dataset(required_columns)
-    return dataset_path
+    return _test_manager.get_or_create_test_dataset(required_columns)
 
 
 @pytest.fixture
 def sample_price_data():
     """Generate sample price data for testing."""
     return generate_sample_price_data(
-        symbol="TEST", days=100, start_price=100.0, volatility=0.02
+        symbol="TEST",
+        days=100,
+        start_price=100.0,
+        volatility=0.02,
     )
 
 
@@ -158,7 +159,6 @@ def multi_symbol_data():
 @pytest.fixture
 def sample_csv_path(tmp_path):
     """Create a temporary CSV file with ``TestDataManager``."""
-    import pandas as pd
 
     from tests.unit.test_data_utils import TestDataManager
 
@@ -176,7 +176,6 @@ def sample_csv_path(tmp_path):
 @pytest.fixture(scope="session")
 def sample_csv_path_session(tmp_path_factory):
     """Session-scoped CSV path generated with ``TestDataManager``."""
-    import pandas as pd
 
     from tests.unit.test_data_utils import TestDataManager
 
@@ -205,16 +204,21 @@ def noisy_data():
 
     # Add missing values
     missing_indices = np.random.choice(
-        df.index, size=int(0.05 * len(df)), replace=False
+        df.index,
+        size=int(0.05 * len(df)),
+        replace=False,
     )
     df.loc[missing_indices, "close"] = np.nan
 
     # Add outliers
     outlier_indices = np.random.choice(
-        df.index, size=int(0.02 * len(df)), replace=False
+        df.index,
+        size=int(0.02 * len(df)),
+        replace=False,
     )
     df.loc[outlier_indices, "close"] *= np.random.choice(
-        [0.1, 10.0], size=len(outlier_indices)
+        [0.1, 10.0],
+        size=len(outlier_indices),
     )
 
     return df
@@ -315,7 +319,7 @@ def mock_model():
 @pytest.fixture
 def simple_nn_model():
     """Create a simple neural network model for testing."""
-    import torch.nn as nn
+    from torch import nn
 
     class SimpleModel(nn.Module):
         def __init__(self, input_size=10, hidden_size=32, output_size=1):
@@ -353,7 +357,7 @@ def sample_yaml_config(tmp_path):
     }
 
     config_path = tmp_path / "test_config.yaml"
-    with open(config_path, "w") as f:
+    with Path(config_path).open(config_path, "w") as f:
         yaml.dump(config, f)
 
     return str(config_path)
@@ -371,7 +375,7 @@ def temp_config_dir(tmp_path):
         "window_size": 20,
         "initial_balance": 10000,
     }
-    with open(config_dir / "env.yaml", "w") as f:
+    with Path(config_dir / "env.yaml").open(config_dir / "env.yaml", "w") as f:
         yaml.dump(env_config, f)
 
     # Model config
@@ -380,12 +384,12 @@ def temp_config_dir(tmp_path):
         "learning_rate": 0.001,
         "hidden_layers": [64, 64],
     }
-    with open(config_dir / "model.yaml", "w") as f:
+    with Path(config_dir / "model.yaml").open(config_dir / "model.yaml", "w") as f:
         yaml.dump(model_config, f)
 
     # Training config
     train_config = {"total_timesteps": 10000, "eval_freq": 1000, "save_freq": 2000}
-    with open(config_dir / "train.yaml", "w") as f:
+    with Path(config_dir / "train.yaml").open(config_dir / "train.yaml", "w") as f:
         yaml.dump(train_config, f)
 
     return config_dir
@@ -442,8 +446,8 @@ def temp_dir():
 @pytest.fixture
 def captured_logs():
     """Capture log output for testing."""
-    from io import StringIO
     import logging
+    from io import StringIO
 
     log_capture_string = StringIO()
     ch = logging.StreamHandler(log_capture_string)
@@ -547,7 +551,7 @@ def integration_environment(sample_csv_path, trading_env_config):
     except ImportError:
         mocks["env"] = mock_trading_env()
 
-    yield mocks
+    return mocks
 
 
 @pytest.fixture
@@ -567,14 +571,14 @@ def end_to_end_setup(tmp_path, sample_price_data):
         "window_size": 10,
         "initial_balance": 10000,
     }
-    with open(env_config_path, "w") as f:
+    with Path(env_config_path).open(env_config_path, "w") as f:
         yaml.dump(env_config, f)
     configs["env"] = str(env_config_path)
 
     # Model config
     model_config_path = tmp_path / "model_config.yaml"
     model_config = {"architecture": "td3", "learning_rate": 0.001}
-    with open(model_config_path, "w") as f:
+    with Path(model_config_path).open(model_config_path, "w") as f:
         yaml.dump(model_config, f)
     configs["model"] = str(model_config_path)
 
@@ -583,7 +587,7 @@ def end_to_end_setup(tmp_path, sample_price_data):
     results_dir.mkdir()
     configs["results"] = str(results_dir)
 
-    yield configs
+    return configs
 
 
 # ============================================================================

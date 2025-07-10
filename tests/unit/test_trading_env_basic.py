@@ -13,7 +13,7 @@ def make_env(tmp_path, reward_type="profit"):
             "low": [1, 2, 3, 4],
             "close": [1, 2, 3, 4],
             "volume": [1, 1, 1, 1],
-        }
+        },
     )
     csv = tmp_path / "prices.csv"
     df.to_csv(csv, index=False)
@@ -24,7 +24,7 @@ def make_env(tmp_path, reward_type="profit"):
 def test_reset_and_step_returns(tmp_path):
     env = make_env(tmp_path)
     obs, info = env.reset()
-    assert isinstance(obs, (list, np.ndarray))
+    assert isinstance(obs, list | np.ndarray)
     assert info == {}
     action = np.zeros(env.action_space.shape)
     next_obs, reward, done, truncated, _ = env.step(action)
@@ -53,7 +53,7 @@ def test_risk_adjusted_reward(tmp_path):
 
 def test_invalid_reward_type(tmp_path):
     df = pd.DataFrame(
-        {"open": [1], "high": [1], "low": [1], "close": [1], "volume": [1]}
+        {"open": [1], "high": [1], "low": [1], "close": [1], "volume": [1]},
     )
     csv = tmp_path / "d.csv"
     df.to_csv(csv, index=False)

@@ -6,18 +6,11 @@ Tests cover:
 3. Ray Tune integration for hyperparameter optimization
 """
 
-from pathlib import Path
-import shutil
-import tempfile
-from unittest.mock import MagicMock, Mock, patch
-
-import numpy as np
-import pandas as pd
 import pytest
 import ray
-from ray import tune
 import torch
-import torch.nn as nn
+from ray import tune
+from torch import nn
 
 from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 from trading_rl_agent.optimization.model_utils import (
@@ -129,9 +122,7 @@ class TestGPUOperations:
         assert isinstance(config, dict)
         assert "use_gpu" in config
         # Fixed: Check both CUDA availability AND device count
-        assert config["use_gpu"] == (
-            torch.cuda.is_available() and torch.cuda.device_count() > 0
-        )
+        assert config["use_gpu"] == (torch.cuda.is_available() and torch.cuda.device_count() > 0)
 
         # More detailed tests if GPU is available AND has devices
         if torch.cuda.is_available() and torch.cuda.device_count() > 0:
@@ -163,7 +154,8 @@ class TestGPUDetectionRobustness:
 
 
 @pytest.mark.skipif(
-    not torch.cuda.is_available(), reason="CUDA not available for profiling"
+    not torch.cuda.is_available(),
+    reason="CUDA not available for profiling",
 )
 class TestModelProfiling:
     """Test model profiling."""
@@ -261,7 +253,10 @@ class TestHyperparamOptimizationEdgeCases:
         config_space = {"lr": tune.grid_search([0.01, 0.1])}
         try:
             run_hyperparameter_optimization(
-                bad_train_fn, config_space, num_samples=1, max_epochs_per_trial=1
+                bad_train_fn,
+                config_space,
+                num_samples=1,
+                max_epochs_per_trial=1,
             )
         except Exception as e:
             assert "fail" in str(e) or isinstance(e, RuntimeError)
@@ -275,6 +270,9 @@ class TestHyperparamOptimizationEdgeCases:
 
         config_space = {"lr": tune.grid_search([0.01])}
         analysis = run_hyperparameter_optimization(
-            dummy_train_fn, config_space, num_samples=1, max_epochs_per_trial=1
+            dummy_train_fn,
+            config_space,
+            num_samples=1,
+            max_epochs_per_trial=1,
         )
         assert analysis is not None

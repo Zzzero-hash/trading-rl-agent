@@ -2,12 +2,11 @@
 Asset-to-source mapping and Yahoo Finance scraping for forex pairs.
 """
 
-from dataclasses import dataclass
 import datetime
-from typing import Dict, List
+from dataclasses import dataclass
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
 
 @dataclass
@@ -27,7 +26,8 @@ def get_yahoo_finance_url_for_forex(pair: str) -> str:
 
 
 def scrape_yahoo_finance_forex_headlines(
-    pair: str, max_headlines: int = 15
+    pair: str,
+    max_headlines: int = 15,
 ) -> list[str]:
     url = get_yahoo_finance_url_for_forex(pair)
     resp = requests.get(url, timeout=10)
@@ -66,7 +66,7 @@ def get_forex_sentiment(pair: str) -> list[ForexSentimentData]:
                 timestamp=now,
                 source="no_sentiment",
                 raw_data={"error": str(e)},
-            )
+            ),
         ]
     now = datetime.datetime.now()
     sentiment_data = []
@@ -80,7 +80,7 @@ def get_forex_sentiment(pair: str) -> list[ForexSentimentData]:
                 timestamp=now - datetime.timedelta(minutes=i * 10),
                 source="yahoo_finance_scrape",
                 raw_data={"headline": headline},
-            )
+            ),
         )
     return sentiment_data
 

@@ -4,20 +4,20 @@ This module provides a simple, working hyperparameter optimization
 that handles both Ray Tune and fallback scenarios correctly.
 """
 
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import sys
-from typing import Any, Optional
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import ray
+import torch
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
 from sklearn.preprocessing import StandardScaler
-import torch
-import torch.nn as nn
+from torch import nn
 from torch.utils.data import DataLoader, TensorDataset, random_split
 
 # Add project root to path
@@ -26,7 +26,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 # Import after path setup
-from trading_rl_agent.models.cnn_lstm import CNNLSTMModel  # noqa: E402
+from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -54,7 +54,9 @@ def get_default_search_space() -> dict[str, Any]:
 
 
 def create_simple_dataset(
-    features: np.ndarray, targets: np.ndarray, sequence_length: int = 10
+    features: np.ndarray,
+    targets: np.ndarray,
+    sequence_length: int = 10,
 ) -> TensorDataset:
     """Create a simple dataset for optimization."""
 
@@ -135,7 +137,8 @@ def train_single_trial(
 
         # Setup optimizer and loss
         optimizer = torch.optim.Adam(
-            model.parameters(), lr=config.get("learning_rate", 0.001)
+            model.parameters(),
+            lr=config.get("learning_rate", 0.001),
         )
         criterion = nn.MSELoss()
 
@@ -202,7 +205,7 @@ def train_single_trial(
         }
 
     except Exception as e:
-        logger.error(f"Trial failed: {e}")
+        logger.exception(f"Trial failed: {e}")
         return {
             "val_loss": float("inf"),
             "train_loss": float("inf"),
@@ -257,14 +260,12 @@ def simple_grid_search(
             logger.info(f"New best score: {best_score:.4f}")
 
     # Create results summary
-    final_results = {
+    return {
         "best_config": best_config,
         "best_score": best_score,
         "all_results": results,
         "method": "simple_grid_search",
     }
-
-    return final_results
 
 
 def optimize_cnn_lstm_streamlined(
@@ -272,7 +273,7 @@ def optimize_cnn_lstm_streamlined(
     targets: np.ndarray,
     num_samples: int = 5,
     max_epochs_per_trial: int = 20,
-    output_dir: Optional[str] = None,
+    output_dir: str | None = None,
 ) -> dict[str, Any]:
     """Streamlined CNN-LSTM optimization.
 
@@ -305,27 +306,29 @@ def optimize_cnn_lstm_streamlined(
     # Ensure Ray cluster is initialized
     if not ray.is_initialized():
         raise RuntimeError(
-            "Ray cluster must be initialized before running optimization."
+            "Ray cluster must be initialized before running optimization.",
         )
     results = ray_tune_optimization(
-        features_scaled, targets, num_samples, max_epochs_per_trial
+        features_scaled,
+        targets,
+        num_samples,
+        max_epochs_per_trial,
     )
 
     # Save results
     results_path = Path(output_dir) / "optimization_results.json"
-    with open(results_path, "w") as f:
+    with results_path.open("w") as f:
         # Convert numpy types to JSON serializable
         def make_serializable(obj):
             if isinstance(obj, np.ndarray):
                 return obj.tolist()
-            elif isinstance(obj, (np.integer, np.floating)):
+            if isinstance(obj, np.integer | np.floating):
                 return float(obj)
-            elif isinstance(obj, dict):
+            if isinstance(obj, dict):
                 return {k: make_serializable(v) for k, v in obj.items()}
-            elif isinstance(obj, list):
+            if isinstance(obj, list):
                 return [make_serializable(item) for item in obj]
-            else:
-                return obj
+            return obj
 
         json_results = make_serializable(results)
         json.dump(json_results, f, indent=2)
@@ -369,7 +372,7 @@ def ray_tune_optimization(
     # Ensure Ray cluster is initialized once
     if not ray.is_initialized():
         raise RuntimeError(
-            "Ray cluster must be initialized before running Ray Tune optimization."
+            "Ray cluster must be initialized before running Ray Tune optimization.",
         )
 
     # Prepare search space
@@ -431,7 +434,10 @@ if __name__ == "__main__":
     targets = np.random.randn(100)
 
     results = optimize_cnn_lstm_streamlined(
-        features, targets, num_samples=3, max_epochs_per_trial=5
+        features,
+        targets,
+        num_samples=3,
+        max_epochs_per_trial=5,
     )
     print(f"Best configuration: {results['best_config']}")
     print(f"Best score: {results['best_score']:.4f}")

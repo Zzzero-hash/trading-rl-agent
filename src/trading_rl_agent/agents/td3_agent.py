@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import gymnasium as gym
-from gymnasium import spaces
 import numpy as np
+from gymnasium import spaces
 from stable_baselines3 import TD3
 
 
@@ -12,10 +12,16 @@ class DummyEnv(gym.Env):
     def __init__(self, state_dim: int, action_dim: int):
         super().__init__()
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(state_dim,), dtype=np.float32
+            low=-np.inf,
+            high=np.inf,
+            shape=(state_dim,),
+            dtype=np.float32,
         )
         self.action_space = spaces.Box(
-            low=-1.0, high=1.0, shape=(action_dim,), dtype=np.float32
+            low=-1.0,
+            high=1.0,
+            shape=(action_dim,),
+            dtype=np.float32,
         )
 
     def reset(self, *, seed: int | None = None, options=None):

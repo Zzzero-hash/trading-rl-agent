@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from setuptools import find_packages, setup
 
 setup(
@@ -6,7 +8,7 @@ setup(
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     python_requires=">=3.8",
-    install_requires=open("requirements.txt").read().splitlines(),
+    install_requires=Path("requirements.txt").read_text().splitlines(),
     entry_points={
         "console_scripts": [
             "trade-agent=src.main:main",

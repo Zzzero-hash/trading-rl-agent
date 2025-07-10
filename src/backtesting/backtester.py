@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Callable
+from typing import TYPE_CHECKING
 
 import backtrader as bt
 import pandas as pd
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 
 class Backtester:
@@ -15,7 +17,9 @@ class Backtester:
         self.latency_seconds = latency_seconds
 
     def run_backtest(
-        self, prices: Sequence[float], policy: Callable[[float], str]
+        self,
+        prices: Sequence[float],
+        policy: Callable[[float], str],
     ) -> pd.Series:
         """Run a backtest over a sequence of prices using ``policy``.
 
@@ -54,11 +58,7 @@ class Backtester:
             def next(self):
                 if len(self.data) <= self.latency:
                     return
-                price_obs = (
-                    self.data.close[-self.latency - 1]
-                    if self.latency
-                    else self.data.close[-1]
-                )
+                price_obs = self.data.close[-self.latency - 1] if self.latency else self.data.close[-1]
                 action = self.policy(price_obs)
                 if action == "buy":
                     self.buy()

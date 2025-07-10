@@ -3,7 +3,6 @@ Synthetic OHLCV data generator for testing purposes.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -13,7 +12,7 @@ def fetch_synthetic_data(
     n_samples: int,
     timeframe: str = "day",
     volatility: float = 0.01,
-    symbol: Optional[str] = None,
+    symbol: str | None = None,
 ) -> pd.DataFrame:
     """Generate synthetic OHLCV data.
 
@@ -52,14 +51,17 @@ def fetch_synthetic_data(
             "low": lows,
             "close": closes,
             "volume": volumes.astype(int),
-        }
+        },
     )
 
     return df.reset_index(drop=True)
 
 
 def generate_gbm_prices(
-    n_days: int, mu: float = 0.0002, sigma: float = 0.01, s0: float = 100.0
+    n_days: int,
+    mu: float = 0.0002,
+    sigma: float = 0.01,
+    s0: float = 100.0,
 ) -> pd.DataFrame:
     """
     Generate synthetic OHLCV data using Geometric Brownian Motion (GBM).
@@ -75,7 +77,10 @@ def generate_gbm_prices(
     """
     # Generate timestamps
     start_date = datetime.now().replace(
-        hour=0, minute=0, second=0, microsecond=0
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
     ) - timedelta(days=n_days)
     dates = [start_date + timedelta(days=i) for i in range(n_days)]
 
@@ -93,12 +98,12 @@ def generate_gbm_prices(
 
     # High is the max of open and close plus a random amount
     highs = np.maximum(opens, closes) * np.exp(
-        sigma * np.abs(np.random.normal(0, 0.5, n_days))
+        sigma * np.abs(np.random.normal(0, 0.5, n_days)),
     )
 
     # Low is the min of open and close minus a random amount
     lows = np.minimum(opens, closes) * np.exp(
-        -sigma * np.abs(np.random.normal(0, 0.5, n_days))
+        -sigma * np.abs(np.random.normal(0, 0.5, n_days)),
     )
 
     # Generate volume (correlated with price movement)
@@ -107,7 +112,7 @@ def generate_gbm_prices(
     volumes = volumes.astype(int)
 
     # Assemble DataFrame
-    df = pd.DataFrame(
+    return pd.DataFrame(
         {
             "timestamp": dates,
             "open": opens,
@@ -115,7 +120,5 @@ def generate_gbm_prices(
             "low": lows,
             "close": closes,
             "volume": volumes,
-        }
+        },
     )
-
-    return df

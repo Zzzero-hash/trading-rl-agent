@@ -92,3 +92,6 @@ yaml
 docs/_build/
 docs/_autosummary/
 *.doctree
+*.json
+*_errors.json
+ruff_*.json

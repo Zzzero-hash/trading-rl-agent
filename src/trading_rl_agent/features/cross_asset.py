@@ -1,7 +1,6 @@
 """Cross-asset correlation feature calculations."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -20,12 +19,14 @@ class CrossAssetConfig:
 class CrossAssetFeatures:
     """Compute rolling correlation with a reference asset."""
 
-    def __init__(self, config: Optional[CrossAssetConfig] = None) -> None:
+    def __init__(self, config: CrossAssetConfig | None = None) -> None:
         self.config = config or CrossAssetConfig()
         self.logger = get_logger(self.__class__.__name__)
 
     def add_cross_asset_features(
-        self, df: pd.DataFrame, reference: pd.DataFrame
+        self,
+        df: pd.DataFrame,
+        reference: pd.DataFrame,
     ) -> pd.DataFrame:
         """Add rolling correlation of ``df`` with ``reference``."""
         result = df.copy()
@@ -34,9 +35,7 @@ class CrossAssetFeatures:
         result["ret"] = np.log(result["close"] / result["close"].shift(1))
         result["ref_ret"] = np.log(ref_close / ref_close.shift(1))
         result[f"corr_{self.config.prefix}"] = (
-            result["ret"]
-            .rolling(self.config.corr_window, min_periods=1)
-            .corr(result["ref_ret"])
+            result["ret"].rolling(self.config.corr_window, min_periods=1).corr(result["ref_ret"])
         )
         result.drop(columns=["_ref_close", "ret", "ref_ret"], inplace=True)
         return result

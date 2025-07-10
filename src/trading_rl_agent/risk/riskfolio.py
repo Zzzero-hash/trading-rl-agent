@@ -6,7 +6,6 @@ integration with the Riskfolio portfolio optimization library.
 """
 
 from dataclasses import dataclass
-from typing import Dict
 
 import numpy as np
 
@@ -67,10 +66,7 @@ class RiskfolioRiskManager:
 
         # Check risk limit
         risk = self.calculate_risk(returns)
-        if risk.get("var", 0.0) > self.config.var_limit:
-            return False
-
-        return True
+        return not risk.get("var", 0.0) > self.config.var_limit
 
     def risk_adjusted_action(self, action: float, returns: np.ndarray) -> float:
         """

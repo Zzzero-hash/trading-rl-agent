@@ -15,7 +15,7 @@ from .riskfolio import RiskfolioConfig, RiskfolioRiskManager
 
 __all__ = [
     "RiskManager",
-    "kelly_position_size",
     "RiskfolioConfig",
     "RiskfolioRiskManager",
+    "kelly_position_size",
 ]

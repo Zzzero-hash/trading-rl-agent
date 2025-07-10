@@ -33,12 +33,12 @@ from .core.logging import get_logger, setup_logging
 
 __all__ = [
     "ConfigManager",
-    "SystemConfig",
-    "setup_logging",
-    "get_logger",
-    "TradingSystemError",
     "DataValidationError",
     "ModelError",
+    "SystemConfig",
+    "TradingSystemError",
+    "get_logger",
+    "setup_logging",
 ]
 
 # Optional heavy components mapped to their import paths.  These are imported
@@ -75,12 +75,12 @@ def __getattr__(name: str):
             obj = getattr(module, attr)
         except ModuleNotFoundError as exc:  # pragma: no cover - optional dep
             raise ImportError(
-                f"{name} requires optional ML dependencies. Install them to use this feature."
+                f"{name} requires optional ML dependencies. Install them to use this feature.",
             ) from exc
         except AttributeError as exc:
             raise ImportError(
                 f"The module '{module_name}' was found, but it does not contain the attribute '{attr}'. "
-                f"Ensure that all dependencies are installed and the module is correctly implemented."
+                f"Ensure that all dependencies are installed and the module is correctly implemented.",
             ) from exc
 
         globals()[name] = obj

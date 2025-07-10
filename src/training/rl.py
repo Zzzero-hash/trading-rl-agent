@@ -56,9 +56,7 @@ def main():
         if args.num_workers == 0:
             args.num_workers = cfg.infrastructure.num_workers
         if args.num_gpus == 0:
-            args.num_gpus = (
-                resources.get("GPU", 0) if cfg.infrastructure.gpu_enabled else 0
-            )
+            args.num_gpus = resources.get("GPU", 0) if cfg.infrastructure.gpu_enabled else 0
         window_size = cfg.data.feature_window
     else:
         if args.num_workers == 0:
@@ -68,11 +66,11 @@ def main():
             args.num_gpus = int(resources["GPU"])
         if not args.data:
             raise ValueError(
-                "Argument '--data' is required when '--config' is not provided."
+                "Argument '--data' is required when '--config' is not provided.",
             )
         if not args.model_path:
             raise ValueError(
-                "Argument '--model-path' is required when '--config' is not provided."
+                "Argument '--model-path' is required when '--config' is not provided.",
             )
         data_path = args.data
         model_path = args.model_path

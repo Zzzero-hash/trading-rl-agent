@@ -6,10 +6,7 @@ feature engineering in trading strategies.
 """
 
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, List, Optional, Union
 
-import numpy as np
 import pandas as pd
 import pandas_ta as ta
 
@@ -23,8 +20,8 @@ class IndicatorConfig:
     """Configuration for technical indicators."""
 
     # Moving averages
-    sma_periods: Optional[list[int]] = None
-    ema_periods: Optional[list[int]] = None
+    sma_periods: list[int] | None = None
+    ema_periods: list[int] | None = None
 
     # Momentum indicators
     rsi_period: int = 14
@@ -50,13 +47,10 @@ class IndicatorConfig:
 
 class TechnicalIndicators:
     """
-    Comprehensive technical indicators calculator using multiple libraries.
-
-    Supports both talib (C-based, fast) and pandas-ta (Python-based, flexible)
-    for maximum compatibility and performance.
+    Comprehensive technical indicators calculator using pandas-ta.
     """
 
-    def __init__(self, config: Optional[IndicatorConfig] = None):
+    def __init__(self, config: IndicatorConfig | None = None):
         self.config = config or IndicatorConfig()
         self.logger = get_logger(self.__class__.__name__)
 
@@ -64,8 +58,7 @@ class TechnicalIndicators:
             import pandas_ta  # noqa: F401
         except Exception as exc:  # pragma: no cover - import guard
             raise ImportError(
-                "pandas-ta is required for TechnicalIndicators. "
-                "Please install it with `pip install pandas-ta`."
+                "pandas-ta is required for TechnicalIndicators. Please install it with `pip install pandas-ta`.",
             ) from exc
 
         self.logger.info("Using pandas-ta for technical indicators")
@@ -99,12 +92,12 @@ class TechnicalIndicators:
             result_df = self._add_pattern_recognition(result_df)
 
             self.logger.info(
-                f"Calculated {len(result_df.columns) - len(df.columns)} indicators"
+                f"Calculated {len(result_df.columns) - len(df.columns)} indicators",
             )
             return result_df
 
         except Exception as e:
-            self.logger.error(f"Error calculating indicators: {e}")
+            self.logger.exception(f"Error calculating indicators: {e}")
             raise
 
     def _add_moving_averages(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -128,14 +121,9 @@ class TechnicalIndicators:
             fast=self.config.macd_fast,
             slow=self.config.macd_slow,
             signal=self.config.macd_signal,
-            talib=False,
         )
-        df["macd"] = macd_df[
-            f"MACD_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
-        ]
-        df["macd_signal"] = macd_df[
-            f"MACDs_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
-        ]
+        df["macd"] = macd_df[f"MACD_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"]
+        df["macd_signal"] = macd_df[f"MACDs_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"]
         df["macd_histogram"] = macd_df[
             f"MACDh_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
         ]
@@ -146,7 +134,9 @@ class TechnicalIndicators:
         """Add volatility-based indicators."""
         # Bollinger Bands
         bb = ta.bbands(
-            df["close"], length=self.config.bb_period, std=self.config.bb_std
+            df["close"],
+            length=self.config.bb_period,
+            std=self.config.bb_std,
         )
         df["bb_upper"] = bb[f"BBU_{self.config.bb_period}_{self.config.bb_std}"]
         df["bb_middle"] = bb[f"BBM_{self.config.bb_period}_{self.config.bb_std}"]
@@ -154,7 +144,10 @@ class TechnicalIndicators:
 
         # ATR (Average True Range)
         df["atr"] = ta.atr(
-            df["high"], df["low"], df["close"], length=self.config.atr_period
+            df["high"],
+            df["low"],
+            df["close"],
+            length=self.config.atr_period,
         )
 
         return df
@@ -191,7 +184,11 @@ class TechnicalIndicators:
         for name in pattern_names:
             try:
                 res = ta.cdl_pattern(
-                    df["open"], df["high"], df["low"], df["close"], name=name
+                    df["open"],
+                    df["high"],
+                    df["low"],
+                    df["close"],
+                    name=name,
                 )
                 if res is not None:
                     df[f"pattern_{name}"] = res.iloc[:, 0]

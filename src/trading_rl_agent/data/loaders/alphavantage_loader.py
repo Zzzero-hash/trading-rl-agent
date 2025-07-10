@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -37,7 +37,7 @@ def load_alphavantage(
     """
     if TimeSeries is None:
         raise ImportError(
-            "alpha_vantage package is required for load_alphavantage. Install with `pip install alpha_vantage`."
+            "alpha_vantage package is required for load_alphavantage. Install with `pip install alpha_vantage`.",
         )
 
     if api_key is None:
@@ -57,8 +57,8 @@ def load_alphavantage(
         data = raw[0]
     except Exception as e:
         raise RuntimeError(
-            f"Failed to fetch data from Alpha Vantage for symbol {symbol}: {e}"
-        )
+            f"Failed to fetch data from Alpha Vantage for symbol {symbol}: {e}",
+        ) from e
 
     # Columns like '1. open', etc -> take last part after space
     data.rename(columns=lambda c: c.split(" ")[-1], inplace=True)
@@ -66,9 +66,7 @@ def load_alphavantage(
     data.reset_index(inplace=True)
 
     data["timestamp"] = pd.to_datetime(data["timestamp"])
-    mask = (data["timestamp"] >= pd.to_datetime(start)) & (
-        data["timestamp"] <= pd.to_datetime(end)
-    )
+    mask = (data["timestamp"] >= pd.to_datetime(start)) & (data["timestamp"] <= pd.to_datetime(end))
     data = data.loc[mask]
 
     data = data[["timestamp", "open", "high", "low", "close", "volume"]]

@@ -16,7 +16,9 @@ def add_sentiment(df: pd.DataFrame, sentiment_col: str = "sentiment") -> pd.Data
 
 
 def compute_ema(
-    df: pd.DataFrame, price_col: str = "close", timeperiod: int = 20
+    df: pd.DataFrame,
+    price_col: str = "close",
+    timeperiod: int = 20,
 ) -> pd.DataFrame:
     """Compute Exponential Moving Average (EMA) using pandas-ta."""
     df[f"ema_{timeperiod}"] = ta.ema(df[price_col], length=timeperiod)
@@ -35,13 +37,18 @@ def compute_macd(df: pd.DataFrame, price_col: str = "close") -> pd.DataFrame:
 def compute_atr(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
     """Compute Average True Range (ATR) using pandas-ta."""
     df[f"atr_{timeperiod}"] = ta.atr(
-        high=df["high"], low=df["low"], close=df["close"], length=timeperiod
+        high=df["high"],
+        low=df["low"],
+        close=df["close"],
+        length=timeperiod,
     ).fillna(0.0)
     return df
 
 
 def compute_bollinger_bands(
-    df: pd.DataFrame, price_col: str = "close", timeperiod: int = 20
+    df: pd.DataFrame,
+    price_col: str = "close",
+    timeperiod: int = 20,
 ) -> pd.DataFrame:
     """Compute Bollinger Bands using pandas-ta."""
     bb = ta.bbands(df[price_col], length=timeperiod)
@@ -81,7 +88,10 @@ def compute_adx(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
 def compute_williams_r(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
     """Compute Williams %R using pandas-ta."""
     df[f"wr_{timeperiod}"] = ta.willr(
-        high=df["high"], low=df["low"], close=df["close"], length=timeperiod
+        high=df["high"],
+        low=df["low"],
+        close=df["close"],
+        length=timeperiod,
     )
     return df
 
@@ -94,9 +104,7 @@ def compute_obv(df: pd.DataFrame) -> pd.DataFrame:
 
 def detect_doji(df: pd.DataFrame) -> pd.DataFrame:
     """Detect Doji candlestick pattern: open ≈ close."""
-    df["doji"] = (
-        np.isclose(df["open"].astype(float), df["close"].astype(float))
-    ).astype(int)
+    df["doji"] = (np.isclose(df["open"].astype(float), df["close"].astype(float))).astype(int)
     return df
 
 
@@ -106,7 +114,7 @@ def detect_hammer(df: pd.DataFrame) -> pd.DataFrame:
     body = (df["close"] - df["open"]).abs().astype(float)
     # Shadows
     lower_shadow = (np.minimum(df["open"], df["close"]) - df["low"]).astype(float)
-    upper_shadow = (df["high"] - np.maximum(df["open"], df["close"])).astype(float)
+    # upper_shadow = (df["high"] - np.maximum(df["open"], df["close"])).astype(float)  # Not used currently
     # Hammer: lower shadow at least twice body
     df["hammer"] = (lower_shadow >= 2 * body).astype(int)
     return df
@@ -157,9 +165,7 @@ def detect_shooting_star(df: pd.DataFrame) -> pd.DataFrame:
     shooting_star = (
         (upper_shadow >= 2 * body)  # Long upper shadow
         & (lower_shadow <= body * 0.1)  # Very small lower shadow
-        & (
-            body <= (df_copy["high"] - df_copy["low"]) * 0.3
-        )  # Small body relative to range
+        & (body <= (df_copy["high"] - df_copy["low"]) * 0.3)  # Small body relative to range
     )
 
     df_copy["shooting_star"] = shooting_star.fillna(False).astype(int)
@@ -186,13 +192,11 @@ def detect_morning_star(df: pd.DataFrame) -> pd.DataFrame:
             abs(df_copy["close"].iloc[i - 1] - df_copy["open"].iloc[i - 1])
             < abs(df_copy["close"].iloc[i - 2] - df_copy["open"].iloc[i - 2]) * 0.3
         )
-        second_gap_down = df_copy["high"].iloc[i - 1] < df_copy["low"].iloc[i - 2]
+        # second_gap_down = df_copy["high"].iloc[i - 1] < df_copy["low"].iloc[i - 2]  # Not used currently
 
         # Third candle is bullish and closes above first candle's midpoint
         third_bullish = df_copy["close"].iloc[i] > df_copy["open"].iloc[i]
-        first_midpoint = (
-            df_copy["open"].iloc[i - 2] + df_copy["close"].iloc[i - 2]
-        ) / 2
+        first_midpoint = (df_copy["open"].iloc[i - 2] + df_copy["close"].iloc[i - 2]) / 2
         third_recovery = df_copy["close"].iloc[i] > first_midpoint
 
         if first_bearish and second_small and third_bullish and third_recovery:
@@ -223,13 +227,11 @@ def detect_evening_star(df: pd.DataFrame) -> pd.DataFrame:
             abs(df_copy["close"].iloc[i - 1] - df_copy["open"].iloc[i - 1])
             < abs(df_copy["close"].iloc[i - 2] - df_copy["open"].iloc[i - 2]) * 0.3
         )
-        second_gap_up = df_copy["low"].iloc[i - 1] > df_copy["high"].iloc[i - 2]
+        # second_gap_up = df_copy["low"].iloc[i - 1] > df_copy["high"].iloc[i - 2]  # Not used currently
 
         # Third candle is bearish and closes below first candle's midpoint
         third_bearish = df_copy["close"].iloc[i] < df_copy["open"].iloc[i]
-        first_midpoint = (
-            df_copy["open"].iloc[i - 2] + df_copy["close"].iloc[i - 2]
-        ) / 2
+        first_midpoint = (df_copy["open"].iloc[i - 2] + df_copy["close"].iloc[i - 2]) / 2
         third_decline = df_copy["close"].iloc[i] < first_midpoint
 
         if first_bullish and second_small and third_bearish and third_decline:
@@ -256,21 +258,19 @@ def compute_candle_features(df: pd.DataFrame, advanced: bool = True) -> pd.DataF
         from trading_rl_agent.data.candle_patterns import compute_all_candle_patterns
 
         return compute_all_candle_patterns(df)
-    else:
-        # Use basic patterns: assign Doji, then apply other patterns
-        df = df.copy()
-        df = detect_doji(df)
-        df = detect_hammer(df)
-        df = detect_engulfing(df)
-        df = detect_shooting_star(df)
-        df = detect_morning_star(df)
-        df = detect_evening_star(df)
-        return df
+    # Use basic patterns: assign Doji, then apply other patterns
+    df = df.copy()
+    df = detect_doji(df)
+    df = detect_hammer(df)
+    df = detect_engulfing(df)
+    df = detect_shooting_star(df)
+    df = detect_morning_star(df)
+    return detect_evening_star(df)
 
 
 def generate_features(
     df: pd.DataFrame,
-    ma_windows: list = [5, 10, 20],
+    ma_windows: list | None = None,
     rsi_window: int = 14,
     vol_window: int = 20,
     advanced_candles: bool = True,
@@ -289,6 +289,8 @@ def generate_features(
         DataFrame with all technical indicators and features applied
     """
     # Robust error handling for missing/empty columns and insufficient data
+    if ma_windows is None:
+        ma_windows = [5, 10, 20]
     required_cols = ["open", "high", "low", "close", "volume"]
     for col in required_cols:
         if col not in df.columns:
@@ -297,13 +299,14 @@ def generate_features(
             raise ValueError(f"Column '{col}' is empty or all NaN")
 
     # Calculate minimum required data length
-    min_required_length = max(ma_windows + [rsi_window, vol_window, 26, 20, 14, 9, 3])
+    min_required_length = max([*ma_windows, rsi_window, vol_window, 26, 20, 14, 9, 3])
     if len(df) < min_required_length:
         # For small datasets (like tests), proceed with warning but reduce indicators
         import warnings
 
         warnings.warn(
-            f"Insufficient data for full feature engineering (need at least {min_required_length} rows, got {len(df)}). Some features may be NaN."
+            f"Insufficient data for full feature engineering (need at least {min_required_length} rows, got {len(df)}). Some features may be NaN.",
+            stacklevel=2,
         )
         # Adjust parameters for small datasets
         if len(df) < 26:
@@ -323,7 +326,7 @@ def generate_features(
     df[f"rsi_{rsi_window}"] = ta.rsi(df["close"], length=rsi_window)
 
     df[f"vol_{vol_window}"] = df["log_return"].rolling(vol_window).std(
-        ddof=0
+        ddof=0,
     ) * np.sqrt(vol_window)
     df = add_sentiment(df)
 
@@ -354,13 +357,11 @@ def generate_features(
 
     # Drop initial rows based on the largest warm-up window across all indicators
     # Core MA/RSI/Vol windows
-    windows = ma_windows + [rsi_window, vol_window]
+    windows = [*ma_windows, rsi_window, vol_window]
     # Technical indicators warm-up periods: EMA, MACD slow & signal, ATR, Bollinger Bands, Stochastic, ADX, Williams %R
     # Adjust these windows for small datasets too
     if len(df) < min_required_length:
-        adjusted_windows = [
-            min(w, len(df) // 3) for w in [20, 26, 9, 14, 20, 14, 14, 14]
-        ]
+        adjusted_windows = [min(w, len(df) // 3) for w in [20, 26, 9, 14, 20, 14, 14, 14]]
         windows += adjusted_windows
     else:
         windows += [20, 26, 9, 14, 20, 14, 14, 14]
@@ -380,7 +381,8 @@ def generate_features(
         import warnings
 
         warnings.warn(
-            "Feature engineering resulted in empty DataFrame; returning single row with NaN values for testing."
+            "Feature engineering resulted in empty DataFrame; returning single row with NaN values for testing.",
+            stacklevel=2,
         )
 
     numeric_cols = df.select_dtypes(include=[np.number]).columns

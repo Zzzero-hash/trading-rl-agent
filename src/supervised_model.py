@@ -19,17 +19,21 @@ search (see the ``tune_example`` function at the bottom of this file).
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from dataclasses import asdict, dataclass, field
+import json
 import logging
-from typing import Any, Dict, List, Tuple
+import os
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
 import ray
-from sklearn.metrics import accuracy_score, precision_score, recall_score
 import torch
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +43,11 @@ def _to_tensor(data: Any) -> torch.Tensor:
     if torch.is_tensor(data):
         # If already a tensor, just ensure it's float32
         return data.to(dtype=torch.float32)
-    elif hasattr(data, "values"):
+    if hasattr(data, "values"):
         # Handle pandas DataFrame/Series
         return torch.tensor(data.values, dtype=torch.float32)
-    else:
-        # Handle numpy arrays and other array-like data
-        return torch.tensor(data, dtype=torch.float32)
+    # Handle numpy arrays and other array-like data
+    return torch.tensor(data, dtype=torch.float32)
 
 
 @dataclass
@@ -92,7 +95,9 @@ class TrendPredictor(nn.Module):
             in_ch = out_ch
         self.conv = nn.Sequential(*layers)
         self.lstm = nn.LSTM(
-            input_size=in_ch, hidden_size=cfg.lstm_units, batch_first=True
+            input_size=in_ch,
+            hidden_size=cfg.lstm_units,
+            batch_first=True,
         )
         self.dropout = nn.Dropout(cfg.dropout)
         self.fc = nn.Linear(cfg.lstm_units, cfg.output_size)
@@ -118,7 +123,9 @@ class TrendPredictor(nn.Module):
 
 
 def _split_data(
-    x: torch.Tensor, y: torch.Tensor, val_split: float
+    x: torch.Tensor,
+    y: torch.Tensor,
+    val_split: float,
 ) -> tuple[tuple[torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
     """Split tensors into train and validation sets chronologically."""
     n = x.shape[0]
@@ -189,10 +196,7 @@ def train_supervised(
 
     model = TrendPredictor(input_dim=x.shape[2], config=m_cfg).to(device)
 
-    if m_cfg.task == "classification":
-        criterion = nn.BCELoss()
-    else:
-        criterion = nn.MSELoss()
+    criterion = nn.BCELoss() if m_cfg.task == "classification" else nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=t_cfg.learning_rate)
 
     history = {"train_loss": [], "val_loss": [], "val_acc": []}
@@ -225,7 +229,7 @@ def train_supervised(
                     total_samples += xb.size(0)
         if len(y_val) == 0:
             logger.warning(
-                "Validation set is empty. Skipping validation for this epoch."
+                "Validation set is empty. Skipping validation for this epoch.",
             )
             continue
         val_loss /= len(y_val)
@@ -242,7 +246,10 @@ def train_supervised(
             )
         else:
             logger.info(
-                "Epoch %d: train_loss=%.4f val_loss=%.4f", epoch + 1, avg_loss, val_loss
+                "Epoch %d: train_loss=%.4f val_loss=%.4f",
+                epoch + 1,
+                avg_loss,
+                val_loss,
             )
 
     # Move model to CPU before returning to avoid CUDA serialization issues
@@ -257,7 +264,7 @@ def train_supervised_local(
     train_cfg: TrainingConfig | None = None,
 ) -> tuple[TrendPredictor, dict[str, list[float]]]:
     raise NotImplementedError(
-        "train_supervised_local has been removed. Use train_supervised (Ray) instead."
+        "train_supervised_local has been removed. Use train_supervised (Ray) instead.",
     )
 
 
@@ -270,7 +277,6 @@ def tune_example():
     #     train_cfg = TrainingConfig(**config.get("train", {}))
     #     _, history = train_supervised(features, targets, model_cfg, train_cfg)
     #     train.report(loss=history["val_loss"][-1])  # Updated for Ray 2.0+
-    pass
 
 
 def save_model(model: TrendPredictor, path: str) -> None:
@@ -285,7 +291,7 @@ def save_model(model: TrendPredictor, path: str) -> None:
             path,
         )
     except Exception as e:
-        raise RuntimeError(f"Failed to save model: {e}")
+        raise RuntimeError(f"Failed to save model: {e}") from e
 
 
 def load_model(path: str, device: str | torch.device | None = None) -> TrendPredictor:
@@ -301,7 +307,7 @@ def load_model(path: str, device: str | torch.device | None = None) -> TrendPred
         model.load_state_dict(checkpoint["state_dict"])
         return model
     except Exception as e:
-        raise RuntimeError(f"Failed to load model: {e}")
+        raise RuntimeError(f"Failed to load model: {e}") from e
 
 
 def evaluate_model(
@@ -314,10 +320,7 @@ def evaluate_model(
         raise ValueError("Features cannot be empty")
     if targets is None or len(targets) == 0:
         raise ValueError("Targets cannot be empty")
-    if isinstance(model_or_path, (str, bytes)):
-        model = load_model(model_or_path)
-    else:
-        model = model_or_path
+    model = load_model(model_or_path) if isinstance(model_or_path, (str, bytes)) else model_or_path
     device = next(model.parameters()).device
     x = _to_tensor(features).to(device)
     y = _to_tensor(targets).reshape(len(features), -1).to(device)
@@ -334,10 +337,9 @@ def evaluate_model(
         precision = precision_score(y_true, y_pred, zero_division=0)
         recall = recall_score(y_true, y_pred, zero_division=0)
         return {"accuracy": acc, "precision": precision, "recall": recall}
-    else:
-        mse = torch.mean((pred - y) ** 2).item()
-        mae = torch.mean(torch.abs(pred - y)).item()
-        return {"mse": mse, "mae": mae}
+    mse = torch.mean((pred - y) ** 2).item()
+    mae = torch.mean(torch.abs(pred - y)).item()
+    return {"mse": mse, "mae": mae}
 
 
 def predict_features(
@@ -348,7 +350,7 @@ def predict_features(
     """Return model prediction for ``recent_data``."""
     if callable(recent_data):
         raise ValueError(
-            "recent_data must be an array or tensor, not a function or method"
+            "recent_data must be an array or tensor, not a function or method",
         )
     if isinstance(model_or_path, (str, bytes)):
         model = load_model(model_or_path, device)
@@ -376,15 +378,13 @@ def predict_features(
 
 def select_best_model(log_dir: str) -> str:
     """Return path to the best model checkpoint inside ``log_dir``."""
-    import json
-    import os
 
     best_path = ""
     best_loss = float("inf")
     for root, _, files in os.walk(log_dir):
         if "metrics.json" in files:
             mpath = os.path.join(root, "metrics.json")
-            with open(mpath) as f:
+            with Path(mpath).open("r") as f:
                 metrics = json.load(f)
             loss = metrics.get("val_loss")
             if loss is not None and loss < best_loss:
@@ -397,13 +397,13 @@ def select_best_model(log_dir: str) -> str:
 
 
 __all__ = [
-    "TrendPredictor",
     "ModelConfig",
     "TrainingConfig",
-    "train_supervised",
-    "save_model",
-    "load_model",
+    "TrendPredictor",
     "evaluate_model",
+    "load_model",
     "predict_features",
+    "save_model",
     "select_best_model",
+    "train_supervised",
 ]

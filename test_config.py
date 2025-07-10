@@ -3,8 +3,8 @@
 Test script for the restructured trading RL agent configuration system.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -18,14 +18,7 @@ def test_configuration_system():
     try:
         # Test basic imports
         from trading_rl_agent.core.config import (
-            AgentConfig,
             ConfigManager,
-            DataConfig,
-            ExecutionConfig,
-            ModelConfig,
-            MonitoringConfig,
-            RiskConfig,
-            RLConfig,
             SystemConfig,
         )
 
@@ -45,7 +38,7 @@ def test_configuration_system():
 
         # Test configuration manager
         manager = ConfigManager()
-        managed_config = manager.get_config()
+        # managed_config = manager.get_config()  # Not used currently
         print("✅ ConfigManager working correctly")
 
         # Test configuration updates

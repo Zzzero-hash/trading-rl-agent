@@ -2,10 +2,10 @@
 
 import logging
 import os
-from pathlib import Path
 import sys
 import tempfile
 import types
+from pathlib import Path
 
 import numpy as np
 import pytest

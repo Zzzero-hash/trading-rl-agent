@@ -2,26 +2,31 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 import logging
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
-import torch
 from torch import nn
 from torch.utils.benchmark import Timer
 from torchinfo import summary
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
 
 def get_model_summary(
-    model: nn.Module, input_size: tuple[int, ...], **kwargs: Any
+    model: nn.Module,
+    input_size: tuple[int, ...],
+    **kwargs: Any,
 ) -> str:
     """Return a summary of the model using ``torchinfo.summary``."""
     return str(summary(model, input_size=input_size, **kwargs))
@@ -67,7 +72,7 @@ def profile_model_inference(
                     "gpu_memory_total_mb": int(info.total) / (1024 * 1024),
                     "gpu_memory_used_mb": int(info.used) / (1024 * 1024),
                     "gpu_memory_free_mb": int(info.free) / (1024 * 1024),
-                }
+                },
             )
         except Exception as exc:  # pragma: no cover - optional GPU info
             logger.warning("Failed to get GPU memory info: %s", exc)
@@ -103,18 +108,19 @@ def detect_gpus() -> dict[str, Any]:
                 {
                     "memory_used": int(mem.used) / (1024 * 1024),
                     "memory_free": int(mem.free) / (1024 * 1024),
-                }
+                },
             )
             try:
                 util = pynvml.nvmlDeviceGetUtilizationRates(handle)
                 dev.update(
-                    {"gpu_utilization": util.gpu, "memory_utilization": util.memory}
+                    {"gpu_utilization": util.gpu, "memory_utilization": util.memory},
                 )
             except Exception:
                 pass
             try:
                 temp = pynvml.nvmlDeviceGetTemperature(
-                    handle, pynvml.NVML_TEMPERATURE_GPU
+                    handle,
+                    pynvml.NVML_TEMPERATURE_GPU,
                 )
                 dev["temperature"] = temp
             except Exception:
@@ -145,17 +151,8 @@ def optimal_gpu_config(
     grad_memory_mb = model_params * 4 / (1024 * 1024)
     optimizer_memory_mb = model_params * 8 / (1024 * 1024)
     activation_factor = 2.0
-    activation_memory_mb = (
-        batch_size
-        * sequence_length
-        * feature_dim
-        * 4
-        * activation_factor
-        / (1024 * 1024)
-    )
-    total_memory_mb = (
-        param_memory_mb + grad_memory_mb + optimizer_memory_mb + activation_memory_mb
-    )
+    activation_memory_mb = batch_size * sequence_length * feature_dim * 4 * activation_factor / (1024 * 1024)
+    total_memory_mb = param_memory_mb + grad_memory_mb + optimizer_memory_mb + activation_memory_mb
     best_gpu = None
     max_free = 0
     for dev in gpu_info["devices"]:
@@ -168,10 +165,11 @@ def optimal_gpu_config(
                 "gpu_index": best_gpu["index"],
                 "gpu_name": best_gpu["name"],
                 "gpu_memory_free_mb": best_gpu.get(
-                    "memory_free", best_gpu["total_memory"]
+                    "memory_free",
+                    best_gpu["total_memory"],
                 ),
                 "estimated_memory_required_mb": total_memory_mb,
-            }
+            },
         )
         headroom = 0.8
         avail = rec["gpu_memory_free_mb"] * headroom
@@ -184,9 +182,7 @@ def optimal_gpu_config(
                 max_batch = 2 ** int(np.log2(max_batch))
                 max_batch = max(1, max_batch)
                 rec["recommended_batch_size"] = max_batch
-                rec["reason"] = (
-                    f"Using mixed precision and reduced batch size ({max_batch}) due to memory constraints"
-                )
+                rec["reason"] = f"Using mixed precision and reduced batch size ({max_batch}) due to memory constraints"
             else:
                 rec["reason"] = "Using mixed precision due to memory constraints"
         else:
@@ -212,7 +208,9 @@ def run_hyperparameter_optimization(
     else:
         search_alg = OptunaSearch(metric=metric, mode=mode)
     scheduler = ASHAScheduler(
-        max_t=max_epochs_per_trial, grace_period=1, reduction_factor=2
+        max_t=max_epochs_per_trial,
+        grace_period=1,
+        reduction_factor=2,
     )
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     experiment_name = f"hparam_opt_{timestamp}"
@@ -254,7 +252,7 @@ def run_hyperparameter_optimization(
     }
     import json
 
-    with open(output_path / "summary.json", "w") as f:
+    with (output_path / "summary.json").open("w") as f:
         json.dump(summary_data, f, indent=2)
     try:
         df = analysis.dataframe()

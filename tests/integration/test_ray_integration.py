@@ -1,6 +1,5 @@
-import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import gymnasium as gym
 import numpy as np
@@ -25,7 +24,10 @@ class FlattenWrapper(gym.ObservationWrapper):
         super().__init__(env)
         shape = int(np.prod(env.observation_space.shape))
         self.observation_space = gym.spaces.Box(
-            -np.inf, np.inf, shape=(shape,), dtype=np.float32
+            -np.inf,
+            np.inf,
+            shape=(shape,),
+            dtype=np.float32,
         )
 
     def observation(self, obs):
@@ -47,7 +49,7 @@ def test_ray_trainer_checkpoint(tmp_path):
             "low": [1.0] * 60,
             "close": [1.0] * 60,
             "volume": [1.0] * 60,
-        }
+        },
     )
     csv_path = tmp_path / "data.csv"
     df.to_csv(csv_path, index=False)
@@ -71,9 +73,6 @@ def test_ray_trainer_checkpoint(tmp_path):
     ray.shutdown()
 
     # `save` may return a path string or an object with a checkpoint path
-    if hasattr(save_result, "checkpoint"):
-        save_path = Path(save_result.checkpoint.path)
-    else:
-        save_path = Path(str(save_result))
+    save_path = Path(save_result.checkpoint.path) if hasattr(save_result, "checkpoint") else Path(str(save_result))
 
     assert save_path.is_dir()

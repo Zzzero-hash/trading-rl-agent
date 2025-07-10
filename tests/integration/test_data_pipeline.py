@@ -16,13 +16,15 @@ def dummy_fetch(monkeypatch):
             "low": [3] * 30,
             "close": [4] * 30,
             "volume": [5] * 30,
-        }
+        },
     )
     monkeypatch.setattr(
-        "src.data.pipeline.fetch_historical_data", lambda *_, **__: dummy_df
+        "src.data.pipeline.fetch_historical_data",
+        lambda *_, **__: dummy_df,
     )
     monkeypatch.setattr(
-        "src.data.pipeline.fetch_synthetic_data", lambda *_, **__: dummy_df
+        "src.data.pipeline.fetch_synthetic_data",
+        lambda *_, **__: dummy_df,
     )
     monkeypatch.setattr("src.data.pipeline.fetch_live_data", lambda *_, **__: dummy_df)
     return dummy_df

@@ -1,7 +1,7 @@
 import io
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.quantization import quantize_dynamic
 
 

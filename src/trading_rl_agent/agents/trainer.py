@@ -1,5 +1,4 @@
 # Basic Trainer implementation
-import glob
 import os
 
 import gymnasium as gym
@@ -15,7 +14,10 @@ class RiskAwareEnv(gym.Wrapper):
     """Environment wrapper applying risk management."""
 
     def __init__(
-        self, env: gym.Env, risk_manager: RiskfolioRiskManager, terminate: bool = True
+        self,
+        env: gym.Env,
+        risk_manager: RiskfolioRiskManager,
+        terminate: bool = True,
     ) -> None:
         super().__init__(env)
         self.risk_manager = risk_manager
@@ -33,7 +35,8 @@ class RiskAwareEnv(gym.Wrapper):
         valid = self.risk_manager.validate_action(scalar_action, self._returns)
         if not valid:
             scalar_action = self.risk_manager.risk_adjusted_action(
-                scalar_action, self._returns
+                scalar_action,
+                self._returns,
             )
             act_arr = np.zeros_like(act_arr) + scalar_action
             if self.terminate:
@@ -72,36 +75,23 @@ class Trainer:
         self.seed = seed
         self.save_dir = save_dir
 
-        self.ray_address = (
-            self.trainer_cfg.get("ray_address")
-            if isinstance(self.trainer_cfg, dict)
-            else None
-        )
+        self.ray_address = self.trainer_cfg.get("ray_address") if isinstance(self.trainer_cfg, dict) else None
         self.algorithm = (
-            self.trainer_cfg.get("algorithm", "ppo").lower()
-            if isinstance(self.trainer_cfg, dict)
-            else "ppo"
+            self.trainer_cfg.get("algorithm", "ppo").lower() if isinstance(self.trainer_cfg, dict) else "ppo"
         )
         self.num_iterations = (
             self.trainer_cfg.get(
-                "num_iterations", self.trainer_cfg.get("total_episodes", 10)
+                "num_iterations",
+                self.trainer_cfg.get("total_episodes", 10),
             )
             if isinstance(self.trainer_cfg, dict)
             else 10
         )
-        self.ray_config = (
-            self.trainer_cfg.get("ray_config", {})
-            if isinstance(self.trainer_cfg, dict)
-            else {}
-        )
+        self.ray_config = self.trainer_cfg.get("ray_config", {}) if isinstance(self.trainer_cfg, dict) else {}
         self.ray_config.setdefault("env", "TraderEnv")
         self.ray_config.setdefault("env_config", self.env_cfg)
 
-        risk_cfg = (
-            self.trainer_cfg.get("risk_management", {})
-            if isinstance(self.trainer_cfg, dict)
-            else {}
-        )
+        risk_cfg = self.trainer_cfg.get("risk_management", {}) if isinstance(self.trainer_cfg, dict) else {}
         self.risk_enabled = bool(risk_cfg.get("enabled"))
         if self.risk_enabled:
             rc = RiskfolioConfig(
@@ -125,7 +115,7 @@ class Trainer:
 
         os.makedirs(self.save_dir, exist_ok=True)
         print(
-            f"Initialized Trainer with seed={self.seed}, save_dir='{self.save_dir}', ray_address={self.ray_address}"
+            f"Initialized Trainer with seed={self.seed}, save_dir='{self.save_dir}', ray_address={self.ray_address}",
         )
 
     def _register_risk_env(self) -> None:
@@ -143,7 +133,7 @@ class Trainer:
 
     def train(self):
         print(
-            f"[Trainer] Starting training with configs:\n  env={self.env_cfg}\n  model={self.model_cfg}\n  trainer={self.trainer_cfg}"
+            f"[Trainer] Starting training with configs:\n  env={self.env_cfg}\n  model={self.model_cfg}\n  trainer={self.trainer_cfg}",
         )
 
         algo_cls = PPOTrainer if self.algorithm == "ppo" else DQNTrainer

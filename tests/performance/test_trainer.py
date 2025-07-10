@@ -1,10 +1,10 @@
 """Tests for the Trainer class."""
 
 import os
-from pathlib import Path
 import shutil
 import tempfile
-from unittest.mock import MagicMock, Mock, patch
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 import yaml
@@ -53,11 +53,11 @@ def config_files(temp_dir, sample_configs):
     model_path = Path(temp_dir) / "model_config.yaml"
     trainer_path = Path(temp_dir) / "trainer_config.yaml"
 
-    with open(env_path, "w") as f:
+    with Path(env_path).open(env_path, "w") as f:
         yaml.dump(env_cfg, f)
-    with open(model_path, "w") as f:
+    with Path(model_path).open(model_path, "w") as f:
         yaml.dump(model_cfg, f)
-    with open(trainer_path, "w") as f:
+    with Path(trainer_path).open(trainer_path, "w") as f:
         yaml.dump(trainer_cfg, f)
 
     return str(env_path), str(model_path), str(trainer_path)
@@ -75,9 +75,12 @@ class TestTrainerInitialization:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env") as mock_register,
         ):
-
             trainer = Trainer(
-                env_cfg, model_cfg, trainer_cfg, seed=123, save_dir=temp_dir
+                env_cfg,
+                model_cfg,
+                trainer_cfg,
+                seed=123,
+                save_dir=temp_dir,
             )
 
             assert trainer.env_cfg == env_cfg
@@ -102,7 +105,6 @@ class TestTrainerInitialization:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             assert trainer.ray_address == "ray://localhost:10001"
@@ -117,7 +119,6 @@ class TestTrainerInitialization:
             patch("ray.is_initialized", return_value=True),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             mock_ray_init.assert_not_called()
@@ -135,7 +136,6 @@ class TestTrainerInitialization:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             assert trainer.algorithm == "ppo"  # default
@@ -153,7 +153,6 @@ class TestTrainerInitialization:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             assert trainer.num_iterations == 15
@@ -169,7 +168,6 @@ class TestTrainerInitialization:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             assert trainer.algorithm == "ppo"  # default
@@ -192,7 +190,6 @@ class TestTrainerTraining:
             patch("ray.shutdown") as mock_shutdown,
             patch("src.agents.trainer.tune.Tuner") as mock_tuner_cls,
         ):
-
             mock_tuner = Mock()
             mock_tuner.fit.return_value = Mock()
             mock_tuner_cls.return_value = mock_tuner
@@ -217,7 +214,6 @@ class TestTrainerTraining:
             patch("ray.shutdown"),
             patch("src.agents.trainer.tune.Tuner") as mock_tuner_cls,
         ):
-
             mock_tuner = Mock()
             mock_tuner.fit.return_value = Mock()
             mock_tuner_cls.return_value = mock_tuner
@@ -240,7 +236,6 @@ class TestTrainerTraining:
             patch("ray.shutdown"),
             patch("src.agents.trainer.tune.Tuner") as mock_tuner_cls,
         ):
-
             mock_tuner = Mock()
             mock_tuner.fit.return_value = Mock()
             mock_tuner_cls.return_value = mock_tuner
@@ -264,7 +259,6 @@ class TestTrainerEvaluation:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             # Should have evaluate method
@@ -291,7 +285,6 @@ class TestTrainerTesting:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             # Should have test method
@@ -319,7 +312,6 @@ class TestTrainerErrorHandling:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             assert "env" in trainer.ray_config
@@ -339,7 +331,6 @@ class TestTrainerErrorHandling:
                 patch("ray.is_initialized", return_value=False),
                 patch("src.agents.trainer.register_env"),
             ):
-
                 trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=save_dir)
 
                 assert os.path.exists(save_dir)
@@ -353,11 +344,11 @@ class TestTrainerIntegration:
         env_path, model_path, trainer_path = config_files
 
         # This would be tested in main.py, but we can verify config loading
-        with open(env_path) as f:
+        with Path(env_path).open(env_path) as f:
             env_cfg = yaml.safe_load(f)
-        with open(model_path) as f:
+        with Path(model_path).open(model_path) as f:
             model_cfg = yaml.safe_load(f)
-        with open(trainer_path) as f:
+        with Path(trainer_path).open(trainer_path) as f:
             trainer_cfg = yaml.safe_load(f)
 
         with (
@@ -365,7 +356,6 @@ class TestTrainerIntegration:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             assert trainer.env_cfg == env_cfg
@@ -384,7 +374,6 @@ class TestTrainerIntegration:
             patch("ray.is_initialized", return_value=False),
             patch("src.agents.trainer.register_env"),
         ):
-
             trainer = Trainer(env_cfg, model_cfg, trainer_cfg, save_dir=temp_dir)
 
             # Should preserve custom config but add env_config

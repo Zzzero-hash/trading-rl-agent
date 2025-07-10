@@ -1,4 +1,3 @@
-import os
 import sys
 import types
 
@@ -33,23 +32,19 @@ if "structlog" not in sys.modules:
 import importlib.util
 from pathlib import Path
 
-base = (
-    Path(__file__).resolve().parents[2]
-    / "src"
-    / "trading_rl_agent"
-    / "data"
-    / "loaders"
-)
+base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "loaders"
 
 spec_yf = importlib.util.spec_from_file_location(
-    "load_yfinance", base / "yfinance_loader.py"
+    "load_yfinance",
+    base / "yfinance_loader.py",
 )
 yf_mod = importlib.util.module_from_spec(spec_yf)
 spec_yf.loader.exec_module(yf_mod)  # type: ignore
 load_yfinance = yf_mod.load_yfinance
 
 spec_av = importlib.util.spec_from_file_location(
-    "load_alphavantage", base / "alphavantage_loader.py"
+    "load_alphavantage",
+    base / "alphavantage_loader.py",
 )
 av_mod = importlib.util.module_from_spec(spec_av)
 spec_av.loader.exec_module(av_mod)  # type: ignore
@@ -64,7 +59,8 @@ pytestmark = [pytest.mark.integration, pytest.mark.network]
 
 
 @pytest.mark.skipif(
-    load_yfinance.__globals__.get("yf") is None, reason="yfinance not installed"
+    load_yfinance.__globals__.get("yf") is None,
+    reason="yfinance not installed",
 )
 def test_yfinance_loader_live():
     df = load_yfinance("AAPL", start="2023-01-01", end="2023-01-05", interval="day")
@@ -86,7 +82,8 @@ def test_alphavantage_loader_live(monkeypatch):
 
 
 @pytest.mark.skipif(
-    load_ccxt.__globals__.get("ccxt") is None, reason="ccxt not installed"
+    load_ccxt.__globals__.get("ccxt") is None,
+    reason="ccxt not installed",
 )
 def test_ccxt_loader_live():
     try:

@@ -3,9 +3,9 @@ Trading Metrics Utilities
 
 This module provides metrics for evaluating trading strategy performance.
 Includes risk-adjusted returns, drawdown analysis, and portfolio metrics.
-"""
 
-"""Convenience wrappers around the ``empyrical`` statistics library."""
+Convenience wrappers around the ``empyrical`` statistics library.
+"""
 
 import importlib
 
@@ -99,7 +99,7 @@ def calculate_expected_shortfall(returns, confidence: float = 0.95) -> float:
     """Expected shortfall (Conditional VaR)."""
     cutoff = 1 - confidence
     return float(
-        _empyrical.conditional_value_at_risk(np.asarray(returns), cutoff=cutoff)
+        _empyrical.conditional_value_at_risk(np.asarray(returns), cutoff=cutoff),
     )
 
 
@@ -158,11 +158,12 @@ def calculate_comprehensive_metrics(
         metrics.update(
             {
                 "information_ratio": calculate_information_ratio(
-                    returns, benchmark_returns
+                    returns,
+                    benchmark_returns,
                 ),
                 "tracking_error": calculate_tracking_error(returns, benchmark_returns),
                 "beta": calculate_beta(returns, benchmark_returns),
-            }
+            },
         )
 
     return metrics
@@ -180,10 +181,6 @@ def calculate_risk_metrics(returns, equity_curve=None):
         "win_rate": calculate_win_rate(returns),
         "calmar_ratio": calculate_calmar_ratio(returns),
         "total_return": float(equity_curve[-1] - 1) if len(equity_curve) > 0 else 0.0,
-        "volatility": (
-            float(np.std(returns) * np.sqrt(TRADING_DAYS_PER_YEAR))
-            if len(returns) > 0
-            else 0.0
-        ),
+        "volatility": (float(np.std(returns) * np.sqrt(TRADING_DAYS_PER_YEAR)) if len(returns) > 0 else 0.0),
         "num_trades": len(returns),
     }

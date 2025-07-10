@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+
 import pandas as pd
 
 try:
@@ -36,7 +38,7 @@ def load_yfinance(
     """
     if yf is None:
         raise ImportError(
-            "yfinance package is required for load_yfinance. Install with `pip install yfinance`."
+            "yfinance package is required for load_yfinance. Install with `pip install yfinance`.",
         )
 
     interval_map = {"day": "1d", "hour": "1h", "minute": "1m"}
@@ -45,15 +47,13 @@ def load_yfinance(
     df = yf.download(symbol, start=start, end=end, interval=yf_interval)
     if df.empty:
         return pd.DataFrame(
-            columns=["timestamp", "open", "high", "low", "close", "volume"]
+            columns=["timestamp", "open", "high", "low", "close", "volume"],
         )
 
     df = df[["Open", "High", "Low", "Close", "Volume"]].copy()
     df.columns = ["open", "high", "low", "close", "volume"]
     df.index.name = "timestamp"
-    try:
+    with contextlib.suppress(Exception):
         df.index = df.index.tz_localize(None)
-    except Exception:
-        pass
     df["timestamp"] = df.index
     return df.reset_index(drop=True)

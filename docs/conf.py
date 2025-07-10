@@ -3,9 +3,8 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # -- Path setup --------------------------------------------------------------
 
@@ -17,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 # -- Project information -----------------------------------------------------
 
 project = "Trading RL Agent"
-copyright = "2025, Trading RL Team"
+copyright_notice = "2025, Trading RL Team"
 author = "Trading RL Team"
 release = "1.0.0"
 version = "1.0.0"
@@ -134,9 +133,7 @@ def linkcode_resolve(domain, info):
         return None
 
     filename = info["module"].replace(".", "/")
-    return (
-        f"https://github.com/Zzzero-hash/trading-rl-agent/blob/main/src/{filename}.py"
-    )
+    return f"https://github.com/Zzzero-hash/trading-rl-agent/blob/main/src/{filename}.py"
 
 
 # -- MyST parser configuration -----------------------------------------------

@@ -18,9 +18,9 @@ configuration.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import logging
-from typing import Any, Dict, List, Tuple
+from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -67,7 +67,7 @@ def load_data(source_cfg: dict[str, Any]) -> pd.DataFrame:
         df = pd.read_csv(path, parse_dates=["timestamp"])
         logger.info("Loaded %d rows from %s", len(df), path)
         return df
-    elif src_type == "database":
+    if src_type == "database":
         import sqlite3  # lightweight default
 
         conn = sqlite3.connect(source_cfg["connection"])
@@ -115,10 +115,11 @@ def generate_features(df: pd.DataFrame, cfg: PipelineConfig) -> pd.DataFrame:
             for w in cfg.momentum_windows:
                 batch[f"mom_{w}"] = batch["close"].diff(w)
             batch[f"rsi_{cfg.rsi_window}"] = ta.rsi(
-                batch["close"].astype(float), length=cfg.rsi_window
+                batch["close"].astype(float),
+                length=cfg.rsi_window,
             )
             batch[f"vol_{cfg.vol_window}"] = batch["log_return"].rolling(
-                cfg.vol_window
+                cfg.vol_window,
             ).std(ddof=0) * np.sqrt(cfg.vol_window)
             return batch
 
@@ -132,17 +133,20 @@ def generate_features(df: pd.DataFrame, cfg: PipelineConfig) -> pd.DataFrame:
         for w in cfg.momentum_windows:
             df[f"mom_{w}"] = df["close"].diff(w)
         df[f"rsi_{cfg.rsi_window}"] = ta.rsi(
-            df["close"].astype(float), length=cfg.rsi_window
+            df["close"].astype(float),
+            length=cfg.rsi_window,
         )
         df[f"vol_{cfg.vol_window}"] = df["log_return"].rolling(cfg.vol_window).std(
-            ddof=0
+            ddof=0,
         ) * np.sqrt(cfg.vol_window)
 
     return df
 
 
 def split_by_date(
-    df: pd.DataFrame, train_end: str, val_end: str
+    df: pd.DataFrame,
+    train_end: str,
+    val_end: str,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Split dataframe into train/validation/test by date.
 
@@ -177,7 +181,7 @@ def split_by_date(
 
 __all__ = [
     "PipelineConfig",
-    "load_data",
     "generate_features",
+    "load_data",
     "split_by_date",
 ]

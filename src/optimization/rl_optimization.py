@@ -21,15 +21,13 @@ Example usage:
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import ray
 from ray import tune
 
 # TD3 has been removed from Ray RLlib 2.38.0+, use SAC instead
-from ray.rllib.algorithms.sac import SACConfig
 from ray.rllib.utils.framework import try_import_torch
 from ray.tune.registry import register_env
 from ray.tune.schedulers import ASHAScheduler
@@ -37,7 +35,7 @@ from ray.tune.search.optuna import OptunaSearch
 
 from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 from trading_rl_agent.models.concat_model import ConcatModel
-from trading_rl_agent.utils.cluster import get_available_devices, init_ray
+from trading_rl_agent.utils.cluster import init_ray
 
 torch, _ = try_import_torch()
 logger = logging.getLogger(__name__)

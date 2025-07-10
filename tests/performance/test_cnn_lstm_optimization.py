@@ -1,9 +1,6 @@
 import json
-from pathlib import Path
 
 import numpy as np
-import pytest
-import torch
 
 from trading_rl_agent.optimization import cnn_lstm_optimization as mod
 from trading_rl_agent.optimization.cnn_lstm_optimization import (
@@ -37,7 +34,7 @@ def test_get_default_search_space_ray_available(monkeypatch):
     assert isinstance(space, dict)
     val = space.get("learning_rate")
     # Ray Tune sampler classes have sample method
-    assert hasattr(val, "sample") or hasattr(val, "__call__")
+    assert hasattr(val, "sample") or callable(val)
 
 
 def test_create_simple_dataset_2d_and_padding():
@@ -70,7 +67,8 @@ def test_train_single_trial_basic():
     }
     metrics = train_single_trial(config, features, targets, max_epochs=3)
     assert isinstance(metrics, dict)
-    assert "val_loss" in metrics and metrics["val_loss"] >= 0
+    assert "val_loss" in metrics
+    assert metrics["val_loss"] >= 0
     assert "train_loss" in metrics
     assert "epochs_trained" in metrics
 
@@ -79,7 +77,10 @@ def test_simple_grid_search_structure():
     features = np.random.randn(30, 2)
     targets = np.arange(30)
     results = simple_grid_search(
-        features, targets, num_samples=2, max_epochs_per_trial=1
+        features,
+        targets,
+        num_samples=2,
+        max_epochs_per_trial=1,
     )
     assert isinstance(results, dict)
     assert results.get("method") == "simple_grid_search"

@@ -4,19 +4,13 @@ Tests all data processing functionality including feature generation, normalizat
 """
 
 import logging
-from pathlib import Path
-import shutil
 import sys
-import tempfile
 import types
-from unittest.mock import Mock, patch
-import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
-
-from tests.conftest_extra import large_dataset, memory_monitor
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -63,12 +57,12 @@ def sample_market_data():
     n_samples = 1000
 
     prices = [100.0]
-    for i in range(1, n_samples):
+    for _i in range(1, n_samples):
         change = np.random.normal(0, 0.02)
         new_price = prices[-1] * (1 + change)
         prices.append(max(new_price, 0.01))
 
-    data = pd.DataFrame(
+    return pd.DataFrame(
         {
             "timestamp": pd.date_range(start="2023-01-01", periods=n_samples, freq="H"),
             "open": prices,
@@ -76,10 +70,8 @@ def sample_market_data():
             "low": [p * (1 - abs(np.random.normal(0, 0.01))) for p in prices],
             "close": prices,
             "volume": np.random.randint(1000, 100000, n_samples),
-        }
+        },
     )
-
-    return data
 
 
 # Mark all tests as unit tests
@@ -98,25 +90,31 @@ class TestDataPreprocessingComprehensive:
         data = pd.DataFrame(
             {
                 "timestamp": pd.date_range(
-                    start="2023-01-01", periods=n_samples, freq="H"
+                    start="2023-01-01",
+                    periods=n_samples,
+                    freq="H",
                 ),
                 "open": np.random.uniform(90, 110, n_samples),
                 "high": np.random.uniform(100, 120, n_samples),
                 "low": np.random.uniform(80, 100, n_samples),
                 "close": np.random.uniform(95, 105, n_samples),
                 "volume": np.random.randint(1000, 50000, n_samples),
-            }
+            },
         )
 
         # Add missing values
         missing_indices = np.random.choice(
-            data.index, size=int(0.05 * len(data)), replace=False
+            data.index,
+            size=int(0.05 * len(data)),
+            replace=False,
         )
         data.loc[missing_indices, "close"] = np.nan
 
         # Add outliers
         outlier_indices = np.random.choice(
-            data.index, size=int(0.02 * len(data)), replace=False
+            data.index,
+            size=int(0.02 * len(data)),
+            replace=False,
         )
         data.loc[outlier_indices, "close"] *= 10
 
@@ -151,9 +149,7 @@ class TestDataPreprocessingComprehensive:
                 if feature in features_df.columns:
                     found_features.append(feature)
 
-            assert (
-                len(found_features) > 0
-            ), f"No expected features found. Available: {list(features_df.columns)}"
+            assert len(found_features) > 0, f"No expected features found. Available: {list(features_df.columns)}"
 
             # Validate feature values
             for feature in found_features:
@@ -163,7 +159,7 @@ class TestDataPreprocessingComprehensive:
                     # Allow NaN values as they might be expected in some features
 
             print(
-                f"✅ Feature generation test passed - {len(found_features)} features generated"
+                f"✅ Feature generation test passed - {len(found_features)} features generated",
             )
 
         except ImportError as e:
@@ -176,7 +172,7 @@ class TestDataPreprocessingComprehensive:
 
             # Test log returns
             returns = np.log(
-                sample_market_data["close"] / sample_market_data["close"].shift(1)
+                sample_market_data["close"] / sample_market_data["close"].shift(1),
             )
             assert isinstance(returns, pd.Series)
             assert len(returns) == len(sample_market_data)
@@ -348,12 +344,12 @@ class TestDataPreprocessingComprehensive:
                 scaler = MinMaxScaler()
 
                 normalized_data = scaler.fit_transform(
-                    features_df[numeric_columns].fillna(0)
+                    features_df[numeric_columns].fillna(0),
                 )
 
                 assert normalized_data.shape == (len(features_df), len(numeric_columns))
                 assert np.all(
-                    normalized_data >= 0
+                    normalized_data >= 0,
                 ), "Min-max normalized values should be >= 0"
                 assert np.allclose(normalized_data, np.clip(normalized_data, 0, 1))
 
@@ -363,7 +359,7 @@ class TestDataPreprocessingComprehensive:
                 std_scaler = StandardScaler()
 
                 standardized_data = std_scaler.fit_transform(
-                    features_df[numeric_columns].fillna(0)
+                    features_df[numeric_columns].fillna(0),
                 )
 
                 assert standardized_data.shape == (
@@ -455,12 +451,10 @@ class TestDataPreprocessingComprehensive:
 
                 # Basic validation
                 numeric_columns = features_df.select_dtypes(include=[np.number]).columns
-                assert (
-                    len(numeric_columns) > 0
-                ), f"No numeric features generated for config {i}"
+                assert len(numeric_columns) > 0, f"No numeric features generated for config {i}"
 
                 print(
-                    f"✅ Pipeline test {i+1} passed - {len(numeric_columns)} features"
+                    f"✅ Pipeline test {i + 1} passed - {len(numeric_columns)} features",
                 )
 
         except ImportError as e:
@@ -474,7 +468,7 @@ class TestDataPreprocessingComprehensive:
             # Ensure timestamp column is datetime
             if "timestamp" in sample_market_data.columns:
                 sample_market_data["timestamp"] = pd.to_datetime(
-                    sample_market_data["timestamp"]
+                    sample_market_data["timestamp"],
                 )
 
             features_df = generate_features(sample_market_data.copy())
@@ -483,10 +477,7 @@ class TestDataPreprocessingComprehensive:
             time_features = [
                 col
                 for col in features_df.columns
-                if any(
-                    time_word in col.lower()
-                    for time_word in ["hour", "day", "week", "month", "lag", "shift"]
-                )
+                if any(time_word in col.lower() for time_word in ["hour", "day", "week", "month", "lag", "shift"])
             ]
 
             if len(time_features) > 0:
@@ -496,7 +487,7 @@ class TestDataPreprocessingComprehensive:
                     values = features_df[feature].dropna()
                     if len(values) > 0:
                         assert not np.any(
-                            np.isinf(values)
+                            np.isinf(values),
                         ), f"Infinite values in {feature}"
 
             # Test lag features if available
@@ -513,9 +504,7 @@ class TestDataPreprocessingComprehensive:
                             # Basic sanity check - lag features shouldn't be identical
                             assert not np.array_equal(
                                 values.iloc[: min(len(values), len(original_values))],
-                                original_values.iloc[
-                                    : min(len(values), len(original_values))
-                                ],
+                                original_values.iloc[: min(len(values), len(original_values))],
                             )
 
             print("✅ Time series features test passed")
@@ -545,20 +534,16 @@ class TestDataPreprocessingComprehensive:
             assert len(features_df) > 0
 
             # Performance benchmarks
-            assert (
-                processing_time < 30
-            ), f"Preprocessing took too long: {processing_time:.2f}s"
+            assert processing_time < 30, f"Preprocessing took too long: {processing_time:.2f}s"
 
             # Memory usage
             current_memory = memory_monitor["current"]()
             memory_increase = current_memory - initial_memory
 
-            assert (
-                memory_increase < 500
-            ), f"Memory usage too high: {memory_increase:.2f} MB"
+            assert memory_increase < 500, f"Memory usage too high: {memory_increase:.2f} MB"
 
             print(
-                f"✅ Performance test passed: {processing_time:.2f}s, {memory_increase:.2f}MB"
+                f"✅ Performance test passed: {processing_time:.2f}s, {memory_increase:.2f}MB",
             )
 
         except ImportError as e:
@@ -628,9 +613,7 @@ class TestDataPipelineIntegration:
                     target = features_df["close"].shift(-1).fillna(method="ffill")
                 else:
                     # Use first numeric column as target
-                    target = (
-                        numeric_features.iloc[:, 0].shift(-1).fillna(method="ffill")
-                    )
+                    target = numeric_features.iloc[:, 0].shift(-1).fillna(method="ffill")
 
                 # Remove rows with NaN target
                 valid_indices = ~target.isna()
@@ -639,7 +622,10 @@ class TestDataPipelineIntegration:
 
                 if len(X) > 10:  # Need minimum samples
                     X_train, X_test, y_train, y_test = train_test_split(
-                        X, y, test_size=0.2, random_state=42
+                        X,
+                        y,
+                        test_size=0.2,
+                        random_state=42,
                     )
 
                     # Train model

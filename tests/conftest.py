@@ -2,10 +2,9 @@
 pytest configuration and fixtures for FinRL-based trading system tests.
 """
 
-from datetime import datetime, timedelta
 import logging
 import os
-import tempfile
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -18,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment():
     """Setup test environment with FinRL configuration."""
-    yield
+    return
     # Cleanup after all tests
 
 
@@ -62,7 +61,7 @@ def finrl_sample_data():
                     "rsi_30": np.random.uniform(20, 80),
                     "cci_30": np.random.normal(0, 100),
                     "dx_30": np.random.uniform(10, 40),
-                }
+                },
             )
 
     return pd.DataFrame(data)
@@ -97,7 +96,7 @@ def finrl_trading_env(finrl_sample_data):
                 "include_features": False,
                 "continuous_actions": False,
                 "reward_type": "profit",
-            }
+            },
         )
         env = TradingEnv(cfg)
 
@@ -113,7 +112,6 @@ def finrl_trading_env(finrl_sample_data):
 @pytest.fixture
 def sample_csv_file(tmp_path):
     """Provide a sample CSV file using ``TestDataManager`` utilities."""
-    import pandas as pd
 
     from tests.unit.test_data_utils import TestDataManager
 
@@ -136,13 +134,14 @@ def production_dataset_path():
     # Look for existing advanced datasets
     for filename in os.listdir(data_dir):
         if filename.startswith("advanced_trading_dataset") and filename.endswith(
-            ".csv"
+            ".csv",
         ):
             return os.path.join(data_dir, filename)
 
     # Fallback to sample data
     sample_path = os.path.join(
-        data_dir, "sample_training_data_simple_20250607_192034.csv"
+        data_dir,
+        "sample_training_data_simple_20250607_192034.csv",
     )
     if os.path.exists(sample_path):
         return sample_path

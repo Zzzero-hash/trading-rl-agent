@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import pytest
 
 from trading_rl_agent.training.cnn_lstm import CNNLSTMTrainer, TrainingConfig
 
@@ -20,7 +19,7 @@ def test_add_sentiment_features_with_forex(monkeypatch):
             "low": np.arange(5),
             "close": np.arange(5),
             "volume": np.arange(5),
-        }
+        },
     )
     symbols = ["AAPL"]
     forex_pairs = ["EURUSD"]

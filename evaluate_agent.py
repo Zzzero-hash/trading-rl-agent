@@ -22,6 +22,7 @@ from pathlib import Path
 import numpy as np
 
 from trading_rl_agent.agents.policy_utils import CallablePolicy, WeightedEnsembleAgent
+from trading_rl_agent.agents.ppo_agent import PPOAgent
 from trading_rl_agent.agents.sac_agent import SACAgent
 from trading_rl_agent.agents.td3_agent import TD3Agent
 from trading_rl_agent.envs.finrl_trading_env import TradingEnv
@@ -31,10 +32,16 @@ from trading_rl_agent.utils import metrics
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate a trained trading agent")
     parser.add_argument(
-        "--data", type=str, required=True, help="CSV dataset for evaluation"
+        "--data",
+        type=str,
+        required=True,
+        help="CSV dataset for evaluation",
     )
     parser.add_argument(
-        "--checkpoint", type=str, required=True, help="Agent checkpoint path"
+        "--checkpoint",
+        type=str,
+        required=True,
+        help="Agent checkpoint path",
     )
     parser.add_argument(
         "--agent",
@@ -50,7 +57,10 @@ def parse_args() -> argparse.Namespace:
         help="Path to save metrics JSON",
     )
     parser.add_argument(
-        "--window-size", type=int, default=50, help="Observation window size"
+        "--window-size",
+        type=int,
+        default=50,
+        help="Observation window size",
     )
     return parser.parse_args()
 
@@ -65,8 +75,6 @@ def load_agent(agent_type: str, state_dim: int, action_dim: int, checkpoint: str
         agent.load(checkpoint)
         return agent
     if agent_type == "ppo":
-        from trading_rl_agent.agents.ppo_agent import PPOAgent
-
         agent = PPOAgent(state_dim=state_dim, action_dim=action_dim)
         agent.load(checkpoint)
         return agent
@@ -115,18 +123,15 @@ def main() -> None:
     env = TradingEnv(env_cfg)
 
     if isinstance(env.observation_space, dict) or hasattr(
-        env.observation_space, "spaces"
+        env.observation_space,
+        "spaces",
     ):
         state_dim = int(np.prod(env.observation_space["market_features"].shape))
         if env.model_output_size:
             state_dim += env.model_output_size
     else:
         state_dim = int(np.prod(env.observation_space.shape))
-    action_dim = (
-        env.action_space.shape[0]
-        if hasattr(env.action_space, "shape")
-        else env.action_space.n
-    )
+    action_dim = env.action_space.shape[0] if hasattr(env.action_space, "shape") else env.action_space.n
 
     agent = load_agent(args.agent, state_dim, action_dim, args.checkpoint)
 

@@ -3,8 +3,8 @@ Tests for the CNN-LSTM Training Pipeline.
 Tests training functionality, data preparation, and model integration.
 """
 
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -18,7 +18,6 @@ from trading_rl_agent.training.cnn_lstm import (
     CNNLSTMTrainer,
     TimeSeriesDataModule,
     TrainingConfig,
-    create_example_config,
 )
 
 pytestmark = pytest.mark.integration
@@ -112,7 +111,9 @@ class TestCNNLSTMTrainer:
         """Test basic data preparation without sentiment."""
         # Create sample DataFrame with enough data for technical indicators
         dates = pd.date_range(
-            "2023-01-01", periods=100, freq="D"
+            "2023-01-01",
+            periods=100,
+            freq="D",
         )  # Increased from 20 to 100
         df = pd.DataFrame(
             {
@@ -122,7 +123,7 @@ class TestCNNLSTMTrainer:
                 "low": np.random.randn(100) + 98,
                 "close": np.random.randn(100) + 100,
                 "volume": np.random.randint(1000, 10000, 100),
-            }
+            },
         )
 
         features, targets = self.trainer.prepare_data(df)
@@ -135,7 +136,9 @@ class TestCNNLSTMTrainer:
     def test_prepare_data_normalization(self):
         """Test data normalization."""
         dates = pd.date_range(
-            "2023-01-01", periods=100, freq="D"
+            "2023-01-01",
+            periods=100,
+            freq="D",
         )  # Increased from 15 to 100
         df = pd.DataFrame(
             {
@@ -145,7 +148,7 @@ class TestCNNLSTMTrainer:
                 "low": np.random.randn(100) * 10 + 95,
                 "close": np.random.randn(100) * 10 + 100,
                 "volume": np.random.randint(1000, 100000, 100),
-            }
+            },
         )
 
         # Test with normalization
@@ -155,7 +158,8 @@ class TestCNNLSTMTrainer:
 
         # Test without normalization
         config_no_norm = TrainingConfig(
-            normalize_features=False, include_sentiment=False
+            normalize_features=False,
+            include_sentiment=False,
         )
         trainer_no_norm = CNNLSTMTrainer(config_no_norm)
         features_no_norm, _ = trainer_no_norm.prepare_data(df)
@@ -228,9 +232,11 @@ class TestTrainingIntegration:
                 "close": np.cumsum(np.random.randn(100) * 0.1) + 100,
                 "volume": np.random.randint(1000, 10000, 100),
                 "label": np.random.randint(
-                    0, 3, 100
+                    0,
+                    3,
+                    100,
                 ),  # Add classification labels: 0, 1, 2
-            }
+            },
         )
 
         # Quick training config
@@ -281,11 +287,11 @@ class TestConfigurationUtils:
                     "training": {"epochs": 10, "batch_size": 32},
                 }
 
-                with open(config_path, "w") as f:
+                with Path(config_path).open(config_path, "w") as f:
                     yaml.safe_dump(config, f)
 
                 # Test that config can be loaded
-                with open(config_path) as f:
+                with Path(config_path).open(config_path) as f:
                     loaded_config = yaml.safe_load(f)
 
                 assert "data" in loaded_config
@@ -306,7 +312,7 @@ class TestErrorHandling:
                 "low": np.random.randn(10),
                 "volume": np.random.randint(1000, 10000, 10),
                 # Missing 'close' column
-            }
+            },
         )
 
         config = TrainingConfig(include_sentiment=False)
@@ -326,11 +332,12 @@ class TestErrorHandling:
                 "low": [98, 99, 100, 101, 102],
                 "close": [101, 102, 103, 104, 105],
                 "volume": [1000, 1100, 1200, 1300, 1400],
-            }
+            },
         )
 
         config = TrainingConfig(
-            sequence_length=10, include_sentiment=False  # Longer than available data
+            sequence_length=10,
+            include_sentiment=False,  # Longer than available data
         )
         trainer = CNNLSTMTrainer(config)
 
@@ -372,15 +379,19 @@ class TestSentimentIntegration:
 
     @patch("src.training.cnn_lstm.SentimentAnalyzer")
     def test_sentiment_feature_integration(
-        self, mock_sentiment_analyzer, mock_sentiment_data
+        self,
+        mock_sentiment_analyzer,
+        mock_sentiment_data,
     ):
         """Test that sentiment features are properly integrated."""
         # Mock sentiment analyzer
         mock_analyzer = MagicMock()
-        mock_analyzer.get_symbol_sentiment.side_effect = (
-            lambda symbol, days_back: mock_sentiment_data.get(symbol, {}).get(
-                "score", 0.0
-            )
+        mock_analyzer.get_symbol_sentiment.side_effect = lambda symbol, days_back: mock_sentiment_data.get(
+            symbol,
+            {},
+        ).get(
+            "score",
+            0.0,
         )
         mock_sentiment_analyzer.return_value = mock_analyzer
 
@@ -396,7 +407,9 @@ class TestSentimentIntegration:
         # Create sample data with sufficient rows for feature engineering
         # Need enough data for technical indicators (at least 26 rows) plus sequence length
         dates = pd.date_range(
-            "2023-01-01", periods=100, freq="D"
+            "2023-01-01",
+            periods=100,
+            freq="D",
         )  # Increased from 30 to 100
         np.random.seed(42)  # For reproducible tests
         df = pd.DataFrame(
@@ -407,7 +420,7 @@ class TestSentimentIntegration:
                 "low": np.random.randn(100) + 98,
                 "close": np.random.randn(100) + 100,
                 "volume": np.random.randint(1000, 10000, 100),
-            }
+            },
         )
 
         # Prepare data with sentiment

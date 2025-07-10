@@ -1,7 +1,6 @@
 """Alternative data feature calculations."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 import pandas as pd
 
@@ -18,12 +17,14 @@ class AlternativeDataConfig:
 class AlternativeDataFeatures:
     """Attach alternative data such as sentiment scores."""
 
-    def __init__(self, config: Optional[AlternativeDataConfig] = None) -> None:
+    def __init__(self, config: AlternativeDataConfig | None = None) -> None:
         self.config = config or AlternativeDataConfig()
         self.logger = get_logger(self.__class__.__name__)
 
     def add_alternative_features(
-        self, df: pd.DataFrame, sentiment: Optional[pd.Series] = None
+        self,
+        df: pd.DataFrame,
+        sentiment: pd.Series | None = None,
     ) -> pd.DataFrame:
         result = df.copy()
         col = self.config.sentiment_column

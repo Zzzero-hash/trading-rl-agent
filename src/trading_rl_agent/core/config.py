@@ -9,21 +9,18 @@ Provides hierarchical configuration management with support for:
 """
 
 from dataclasses import dataclass, field
-import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import yaml
 
 try:
-    from hydra import compose, initialize_config_dir
-    from omegaconf import DictConfig, OmegaConf
-
+    # Future imports for hydra support
     HYDRA_AVAILABLE = True
 except ImportError:
     HYDRA_AVAILABLE = False
 
-from .exceptions import ConfigurationError, TradingSystemError
+from .exceptions import ConfigurationError
 
 # Import logger with fallback
 try:
@@ -47,7 +44,7 @@ class DataConfig:
             "alpaca": "alpaca",
             "yfinance": "yfinance",
             "ccxt": "ccxt",
-        }
+        },
     )
 
     # Data storage
@@ -198,31 +195,13 @@ class RLConfig:
 
 
 @dataclass
-class RiskConfig:
-    """Risk management configuration."""
-
-    # Portfolio limits
-    max_position_size: float = 0.1
-    max_leverage: float = 1.0
-    max_drawdown: float = 0.1
-
-    # VaR parameters
-    var_confidence_level: float = 0.05
-    var_time_horizon: int = 1
-
-    # Position sizing
-    kelly_fraction: float = 0.25
-    risk_per_trade: float = 0.02
-
-
-@dataclass
 class InfrastructureConfig:
     """Infrastructure and deployment configuration."""
 
     distributed: bool = False
     num_workers: int = 4
     gpu_enabled: bool = True
-    ray_address: Optional[str] = None
+    ray_address: str | None = None
 
     # Storage
     model_registry_path: str = "models"
@@ -261,7 +240,7 @@ class SystemConfig:
 class ConfigManager:
     """Centralized configuration management."""
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):
+    def __init__(self, config_path: str | Path | None = None):
         """
         Initialize configuration manager.
 
@@ -269,10 +248,11 @@ class ConfigManager:
             config_path: Path to configuration file
         """
         self.config_path = Path(config_path) if config_path else None
-        self._config: Optional[SystemConfig] = None
+        self._config: SystemConfig | None = None
 
     def load_config(
-        self, config_path: Optional[Union[str, Path]] = None
+        self,
+        config_path: str | Path | None = None,
     ) -> SystemConfig:
         """
         Load configuration from file or create default.
@@ -291,20 +271,22 @@ class ConfigManager:
 
         if self.config_path and self.config_path.exists():
             try:
-                with open(self.config_path) as f:
+                with self.config_path.open("r") as f:
                     config_dict = yaml.safe_load(f)
                 self._config = self._dict_to_config(config_dict)
             except Exception as e:
                 raise ConfigurationError(
-                    f"Failed to load config from {self.config_path}: {e}"
-                )
+                    f"Failed to load config from {self.config_path}: {e}",
+                ) from e
         else:
             self._config = SystemConfig()
 
         return self._config
 
     def save_config(
-        self, config: SystemConfig, path: Optional[Union[str, Path]] = None
+        self,
+        config: SystemConfig,
+        path: str | Path | None = None,
     ) -> None:
         """
         Save configuration to file.
@@ -320,7 +302,7 @@ class ConfigManager:
         save_path.parent.mkdir(parents=True, exist_ok=True)
 
         config_dict = self._config_to_dict(config)
-        with open(save_path, "w") as f:
+        with Path(save_path).open("w") as f:
             yaml.dump(config_dict, f, default_flow_style=False, indent=2)
 
     def get_config(self) -> SystemConfig:
@@ -359,7 +341,7 @@ class ConfigManager:
             execution=ExecutionConfig(**config_dict.get("execution", {})),
             monitoring=MonitoringConfig(**config_dict.get("monitoring", {})),
             infrastructure=InfrastructureConfig(
-                **config_dict.get("infrastructure", {})
+                **config_dict.get("infrastructure", {}),
             ),
             use_gpu=config_dict.get("use_gpu", False),
             max_workers=config_dict.get("max_workers", 4),
@@ -389,7 +371,8 @@ class ConfigManager:
         for key, value in updates.items():
             if hasattr(config, key):
                 if isinstance(value, dict) and hasattr(
-                    getattr(config, key), "__dict__"
+                    getattr(config, key),
+                    "__dict__",
                 ):
                     self._apply_updates(getattr(config, key), value)
                 else:

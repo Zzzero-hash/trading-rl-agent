@@ -93,8 +93,8 @@ class TestTD3Integration:
         next_obs, reward, done, *_ = trading_env.step(action)
         next_state = self._flatten_obs(next_obs)
         assert len(next_state) == state_dim
-        assert isinstance(reward, (int, float, np.floating))
-        assert isinstance(done, (bool, np.bool_))
+        assert isinstance(reward, int | float | np.floating)
+        assert isinstance(done, bool | np.bool_)
 
     def test_td3_training_episode(self, trading_env, td3_config):
         obs = trading_env.reset()
@@ -213,29 +213,25 @@ if __name__ == "__main__":
     env = TradingEnv(env_cfg)
     config = TD3Config(batch_size=16, buffer_capacity=100)
 
-    state_dim = (
-        env.observation_space.shape[0] * env.observation_space.shape[1]
-    )  # Flatten
+    state_dim = env.observation_space.shape[0] * env.observation_space.shape[1]  # Flatten
     action_dim = 1  # TD3 needs continuous actions, but trading env has discrete
 
     agent = TD3Agent(config=config, state_dim=state_dim, action_dim=action_dim)
 
     print(f"✅ Environment: {state_dim} states, {action_dim} actions")
     print(
-        f"✅ Agent initialized with {sum(p.numel() for p in agent.actor.parameters())} actor parameters"
+        f"✅ Agent initialized with {sum(p.numel() for p in agent.actor.parameters())} actor parameters",
     )
     # Test interaction (simplified)
     state, info = env.reset()
     if isinstance(state, dict):
-        state = list(state.values())[0]  # Get first value if dict
+        state = next(iter(state.values()))  # Get first value if dict
     if hasattr(state, "shape") and len(state.shape) > 1:
         state = state.flatten()  # Flatten for TD3
 
     action_continuous = agent.select_action(state)
     # Convert continuous action to discrete for environment
-    action_discrete = (
-        1 if action_continuous[0] > 0.33 else (2 if action_continuous[0] < -0.33 else 0)
-    )
+    action_discrete = 1 if action_continuous[0] > 0.33 else (2 if action_continuous[0] < -0.33 else 0)
 
     result = env.step(action_discrete)
     next_state, reward, terminated, truncated, info = result

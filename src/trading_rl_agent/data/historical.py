@@ -1,3 +1,5 @@
+import contextlib
+
 import pandas as pd
 
 try:
@@ -10,7 +12,10 @@ client = yf
 
 
 def fetch_historical_data(
-    symbol: str, start: str, end: str, timestep: str = "day"
+    symbol: str,
+    start: str,
+    end: str,
+    timestep: str = "day",
 ) -> pd.DataFrame:
     """
     Fetch historical data using yfinance.
@@ -22,8 +27,7 @@ def fetch_historical_data(
     """
     if client is None:
         raise ImportError(
-            "yfinance package is required for fetch_historical_data."
-            " Install with `pip install yfinance`."
+            "yfinance package is required for fetch_historical_data. Install with `pip install yfinance`.",
         )
 
     # map human-friendly timestep to yfinance interval
@@ -39,10 +43,8 @@ def fetch_historical_data(
     # ensure timestamp index
     df.index.name = "timestamp"
     # drop timezone so datetime is naive, then store timestamp as a column
-    try:
+    with contextlib.suppress(AttributeError):
         df.index = df.index.tz_localize(None)
-    except AttributeError:
-        pass
     df["timestamp"] = df.index  # preserve datetime for time-based features
     # reset to simple integer index (0,1,2...) for RL/SB3 steps
     df.reset_index(drop=True, inplace=True)

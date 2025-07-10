@@ -9,7 +9,7 @@ ready for future production use.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -90,7 +90,9 @@ else:  # pragma: no cover - serve not available
             pred = (
                 predict_features(self.model, features).cpu().numpy().tolist()
                 if self.model is not None
-                else float(features.mean()) if features.size > 0 else 0.0
+                else float(features.mean())
+                if features.size > 0
+                else 0.0
             )
             return {"prediction": pred}
 
@@ -115,4 +117,4 @@ else:  # pragma: no cover - serve not available
         return {"predictor": predictor, "policy": policy}
 
 
-__all__ = ["PredictorDeployment", "PolicyDeployment", "deployment_graph"]
+__all__ = ["PolicyDeployment", "PredictorDeployment", "deployment_graph"]

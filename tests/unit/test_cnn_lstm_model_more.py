@@ -1,6 +1,5 @@
 import pytest
 import torch
-import yaml
 
 from trading_rl_agent.models import CNNLSTMModel
 

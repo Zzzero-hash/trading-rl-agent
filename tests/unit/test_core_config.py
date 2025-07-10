@@ -1,7 +1,7 @@
 import logging
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -32,13 +32,13 @@ if "structlog" not in sys.modules:
 
 if "src.envs.finrl_trading_env" not in sys.modules:
     sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(
-        register_env=lambda: None
+        register_env=lambda: None,
     )
 
 if "trading_rl_agent" not in sys.modules:
     pkg = types.ModuleType("trading_rl_agent")
     pkg.__path__ = [
-        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"),
     ]
     sys.modules["trading_rl_agent"] = pkg
 
@@ -94,7 +94,7 @@ def test_load_update_save_config(tmp_path):
     """
     config_file = tmp_path / "config.yaml"
     data = {"environment": "production", "debug": True, "risk": {"max_drawdown": 0.2}}
-    with open(config_file, "w") as f:
+    with Path(config_file).open(config_file, "w") as f:
         yaml.dump(data, f)
 
     manager = ConfigManager(config_file)

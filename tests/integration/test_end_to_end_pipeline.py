@@ -1,7 +1,8 @@
 import importlib.util
-from pathlib import Path
 import sys
+import time
 import types
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
@@ -35,10 +36,9 @@ if "structlog" not in sys.modules:
     sys.modules["structlog"] = stub
 
 if "trading_rl_agent" not in sys.modules:
-
     pkg = types.ModuleType("trading_rl_agent")
     pkg.__path__ = [
-        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent")
+        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"),
     ]
     sys.modules["trading_rl_agent"] = pkg
 
@@ -57,28 +57,32 @@ import pytest
 base_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
 
 spec_syn = importlib.util.spec_from_file_location(
-    "trading_rl_agent.data.synthetic", base_path / "data" / "synthetic.py"
+    "trading_rl_agent.data.synthetic",
+    base_path / "data" / "synthetic.py",
 )
 synthetic_mod = importlib.util.module_from_spec(spec_syn)
 spec_syn.loader.exec_module(synthetic_mod)  # type: ignore
 fetch_synthetic_data = synthetic_mod.fetch_synthetic_data
 
 spec_feat = importlib.util.spec_from_file_location(
-    "trading_rl_agent.data.features", base_path / "data" / "features.py"
+    "trading_rl_agent.data.features",
+    base_path / "data" / "features.py",
 )
 features_mod = importlib.util.module_from_spec(spec_feat)
 spec_feat.loader.exec_module(features_mod)  # type: ignore
 generate_features = features_mod.generate_features
 
 spec_trainer = importlib.util.spec_from_file_location(
-    "trading_rl_agent.agents.trainer", base_path / "agents" / "trainer.py"
+    "trading_rl_agent.agents.trainer",
+    base_path / "agents" / "trainer.py",
 )
 trainer_mod = importlib.util.module_from_spec(spec_trainer)
 spec_trainer.loader.exec_module(trainer_mod)  # type: ignore
 Trainer = trainer_mod.Trainer
 
 spec_pm = importlib.util.spec_from_file_location(
-    "trading_rl_agent.portfolio.manager", base_path / "portfolio" / "manager.py"
+    "trading_rl_agent.portfolio.manager",
+    base_path / "portfolio" / "manager.py",
 )
 pm_mod = importlib.util.module_from_spec(spec_pm)
 spec_pm.loader.exec_module(pm_mod)  # type: ignore
