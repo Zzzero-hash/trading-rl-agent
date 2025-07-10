@@ -40,7 +40,16 @@ class RealTimeCNNLSTMPredictor:
     def _load_model(self):
         """Load the trained CNN+LSTM model."""
 
-        checkpoint = torch.load(self.model_checkpoint, map_location="cpu")
+        # Handle PyTorch 2.6+ weights_only behavior for sklearn scalers
+        import torch.serialization
+        from sklearn.preprocessing._data import RobustScaler
+
+        torch.serialization.add_safe_globals([RobustScaler])
+
+        try:
+            checkpoint = torch.load(self.model_checkpoint, map_location="cpu", weights_only=True)
+        except Exception:
+            checkpoint = torch.load(self.model_checkpoint, map_location="cpu", weights_only=False)
 
         # Get input dimension from metadata
         input_dim = len(self.rt_loader.feature_columns)

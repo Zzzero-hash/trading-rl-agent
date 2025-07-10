@@ -169,6 +169,9 @@ class RobustDatasetBuilder:
 
         combined_df = pd.concat(all_data, ignore_index=True)
 
+        # Normalize timestamps to remove timezone issues
+        combined_df["timestamp"] = pd.to_datetime(combined_df["timestamp"]).dt.tz_localize(None)
+
         # Sort by timestamp for time series consistency
         combined_df = combined_df.sort_values(["symbol", "timestamp"]).reset_index(
             drop=True,
@@ -227,6 +230,9 @@ class RobustDatasetBuilder:
             # Reset index to get timestamp as column
             df = df.reset_index()
             df = df.rename(columns={"Date": "timestamp", "Datetime": "timestamp"})
+
+            # Normalize timestamp to remove timezone
+            df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
 
             # Keep only OHLCV columns
             required_cols = ["timestamp", "open", "high", "low", "close", "volume"]
@@ -354,6 +360,19 @@ class RobustDatasetBuilder:
         numeric_cols = featured_df.select_dtypes(include=[np.number]).columns
         feature_cols = [col for col in numeric_cols if col not in ["timestamp"]]
 
+        # Final cleanup of NaN and infinite values in features
+        logger.info("🧹 Final cleanup of NaN and infinite values...")
+        for col in feature_cols:
+            # Replace NaN and infinite values
+            featured_df[col] = featured_df[col].replace([np.inf, -np.inf], np.nan)
+            featured_df[col] = featured_df[col].fillna(0.0)
+
+        # Verify no NaN values remain
+        nan_count = featured_df[feature_cols].isna().sum().sum()
+        if nan_count > 0:
+            logger.warning(f"Found {nan_count} NaN values after cleanup, filling with zeros")
+            featured_df[feature_cols] = featured_df[feature_cols].fillna(0.0)
+
         self.feature_columns = feature_cols
 
         self.metadata["feature_engineering"] = {
@@ -456,6 +475,9 @@ class RobustDatasetBuilder:
             feature_cols = [col for col in self.feature_columns if col in symbol_df.columns]
             features = symbol_df[feature_cols].values
 
+            # Ensure no NaN values in features matrix
+            features = np.nan_to_num(features, nan=0.0, posinf=0.0, neginf=0.0)
+
             # Create target variable (future return)
             if "close" in symbol_df.columns:
                 returns = (
@@ -512,8 +534,14 @@ class RobustDatasetBuilder:
         original_shape = sequences.shape
         reshaped = sequences.reshape(-1, sequences.shape[-1])
 
+        # Ensure no NaN or infinite values before scaling
+        reshaped = np.nan_to_num(reshaped, nan=0.0, posinf=0.0, neginf=0.0)
+
         # Fit and transform
         scaled = self.scaler.fit_transform(reshaped)
+
+        # Ensure no NaN values after scaling
+        scaled = np.nan_to_num(scaled, nan=0.0, posinf=0.0, neginf=0.0)
 
         # Reshape back to sequences
         scaled_sequences = scaled.reshape(original_shape)
@@ -615,6 +643,55 @@ class RobustDatasetBuilder:
         logger.info(f"  ✓ Sequences: {sequences.shape}, Targets: {targets.shape}")
 
         return summary
+
+    @classmethod
+    def load_or_build(cls, config: "DatasetConfig") -> tuple[np.ndarray, np.ndarray, dict]:
+        """Load the most recent dataset for the given ``output_dir`` if it exists, otherwise build a new one.
+
+        The method searches ``config.output_dir`` for versioned sub-directories containing
+        ``sequences.npy`` and ``targets.npy``.  If found, these artefacts are loaded and returned
+        together with a minimal ``dataset_info`` dictionary.  If no suitable dataset is found the
+        standard build pipeline is executed.
+        """
+
+        base_dir = Path(config.output_dir)
+        if base_dir.exists():
+            # Pick the most recently modified sub-folder that looks like a dataset version
+            version_dirs = [p for p in base_dir.iterdir() if p.is_dir()]
+            if version_dirs:
+                latest_dir = max(version_dirs, key=lambda p: p.stat().st_mtime)
+                seq_path = latest_dir / "sequences.npy"
+                tgt_path = latest_dir / "targets.npy"
+                if seq_path.exists() and tgt_path.exists():
+                    logger.info("📂 Found existing dataset - loading from %s", latest_dir)
+                    sequences = np.load(seq_path)
+                    targets = np.load(tgt_path)
+
+                    # Try to load optional metadata but do not fail if missing
+                    metadata = {}
+                    meta_path = latest_dir / "metadata.json"
+                    if meta_path.exists():
+                        try:
+                            with meta_path.open() as f:
+                                metadata = json.load(f)
+                        except Exception as exc:  # pragma: no cover
+                            warnings.warn(
+                                f"Failed to read metadata from {meta_path}: {exc}",
+                                stacklevel=2,
+                            )
+
+                    dataset_info = {
+                        "version": latest_dir.name,
+                        "loaded": True,
+                        "source_directory": str(latest_dir),
+                        **({"metadata": metadata} if metadata else {}),
+                    }
+                    return sequences, targets, dataset_info
+
+        # Fallback - build a new dataset from scratch
+        logger.info("🔨 No existing dataset found - building a new one …")
+        builder = cls(config)
+        return builder.build_dataset()
 
 
 class RealTimeDatasetLoader:

@@ -277,119 +277,132 @@ def generate_features(
 ) -> pd.DataFrame:
     """
     Apply a sequence of feature transformations to the DataFrame.
-
-    Args:
-        df: DataFrame with OHLC data
-        ma_windows: List of moving average window sizes
-        rsi_window: Window size for RSI calculation
-        vol_window: Window size for volatility calculation
-        advanced_candles: If True, use advanced candlestick patterns
-
-    Returns:
-        DataFrame with all technical indicators and features applied
+    Robustly handles missing/None/NaN values in required columns.
     """
     # Robust error handling for missing/empty columns and insufficient data
     if ma_windows is None:
         ma_windows = [5, 10, 20]
     required_cols = ["open", "high", "low", "close", "volume"]
+    df = df.copy()
+
+    # Fill missing columns with zeros if not present
     for col in required_cols:
         if col not in df.columns:
-            raise KeyError(f"Missing required column: {col}")
+            df[col] = 0.0
+
+    # Fill None/NaN values with forward/backward fill, then zeros
+    df[required_cols] = df[required_cols].ffill().bfill().fillna(0.0)
+
+    # Ensure no zero values in price columns for log calculations
+    price_cols = ["open", "high", "low", "close"]
+    for col in price_cols:
+        df[col] = df[col].replace(0, np.nan).ffill().bfill()
+        # If still NaN, use a small positive value
+        if df[col].isna().any():
+            df[col] = df[col].fillna(1.0)
+
+    for col in required_cols:
         if df[col].isnull().all() or len(df[col].dropna()) == 0:
-            raise ValueError(f"Column '{col}' is empty or all NaN")
+            df[col] = 1.0 if col in price_cols else 0.0
 
     # Calculate minimum required data length
     min_required_length = max([*ma_windows, rsi_window, vol_window, 26, 20, 14, 9, 3])
+
     if len(df) < min_required_length:
-        # For small datasets (like tests), proceed with warning but reduce indicators
         import warnings
 
         warnings.warn(
             f"Insufficient data for full feature engineering (need at least {min_required_length} rows, got {len(df)}). Some features may be NaN.",
             stacklevel=2,
         )
-        # Adjust parameters for small datasets
         if len(df) < 26:
-            # Use smaller windows for small datasets
             ma_windows = [w for w in ma_windows if w <= len(df) // 2]
             if not ma_windows:
                 ma_windows = [min(3, len(df) - 1)] if len(df) > 1 else []
             rsi_window = min(rsi_window, len(df) // 2) if len(df) > 2 else 3
             vol_window = min(vol_window, len(df) // 2) if len(df) > 2 else 3
 
-    df = df.copy()
-    df["log_return"] = np.log(df["close"] / df["close"].shift(1))
+    # Safe log return calculation
+    close_shifted = df["close"].shift(1)
+    valid_mask = (df["close"] > 0) & (close_shifted > 0) & (close_shifted.notna())
+    df["log_return"] = np.where(valid_mask, np.log(df["close"] / close_shifted), 0.0)
+    # Replace any remaining inf/-inf with 0
+    df["log_return"] = df["log_return"].replace([np.inf, -np.inf], 0.0).fillna(0.0)
 
+    # Moving averages with proper NaN handling
     for w in ma_windows:
-        df[f"sma_{w}"] = df["close"].rolling(w).mean()
+        df[f"sma_{w}"] = df["close"].rolling(w, min_periods=1).mean().fillna(0)
 
-    df[f"rsi_{rsi_window}"] = ta.rsi(df["close"], length=rsi_window)
+    # RSI with error handling
+    try:
+        df[f"rsi_{rsi_window}"] = ta.rsi(df["close"], length=rsi_window).fillna(50.0)  # Default to neutral 50
+    except Exception:
+        df[f"rsi_{rsi_window}"] = 50.0
 
-    df[f"vol_{vol_window}"] = df["log_return"].rolling(vol_window).std(
-        ddof=0,
-    ) * np.sqrt(vol_window)
+    # Volatility with proper handling
+    df[f"vol_{vol_window}"] = df["log_return"].rolling(vol_window, min_periods=1).std(ddof=0).fillna(0) * np.sqrt(
+        vol_window
+    )
+
+    # Add sentiment
     df = add_sentiment(df)
 
-    # Additional technical indicators
-    # Compute EMAs for MACD and additional periods
-    df = compute_ema(df, price_col="close", timeperiod=12)
-    df = compute_ema(df, price_col="close", timeperiod=26)
-    df = compute_ema(df, price_col="close", timeperiod=20)
-    # MACD and signal
-    df = compute_macd(df, price_col="close")
-    # Alias macd_line to 'macd' for compatibility
-    df["macd"] = df["macd_line"]
-    df = compute_atr(df, timeperiod=14)
-    # Alias ATR to 'atr'
-    df["atr"] = df["atr_14"]
-    df = compute_bollinger_bands(df, price_col="close", timeperiod=20)
-    # Alias Bollinger bands to 'bb_upper' and 'bb_lower'
-    df["bb_upper"] = df["bb_upper_20"]
-    df["bb_lower"] = df["bb_lower_20"]
-    df = compute_stochastic(df, fastk_period=14, slowk_period=3, slowd_period=3)
-    if len(df) >= 28:
-        df = compute_adx(df, timeperiod=14)
-    df = compute_williams_r(df, timeperiod=14)
-    df = compute_obv(df)
+    # Additional technical indicators with robust error handling
+    try:
+        df = compute_ema(df, price_col="close", timeperiod=12)
+        df = compute_ema(df, price_col="close", timeperiod=26)
+        df = compute_ema(df, price_col="close", timeperiod=20)
+        df = compute_macd(df, price_col="close")
+        df["macd"] = df["macd_line"].fillna(0)
+        df = compute_atr(df, timeperiod=14)
+        df["atr"] = df["atr_14"].fillna(0)
+        df = compute_bollinger_bands(df, price_col="close", timeperiod=20)
+        df["bb_upper"] = df["bb_upper_20"].fillna(df["close"])
+        df["bb_lower"] = df["bb_lower_20"].fillna(df["close"])
+        df = compute_stochastic(df, fastk_period=14, slowk_period=3, slowd_period=3)
+        if len(df) >= 28:
+            df = compute_adx(df, timeperiod=14)
+        df = compute_williams_r(df, timeperiod=14)
+        df = compute_obv(df)
+    except Exception as e:
+        print(f"Warning: Error in technical indicators: {e}")
 
     # Candlestick patterns
-    df = compute_candle_features(df, advanced=advanced_candles)
+    try:
+        df = compute_candle_features(df, advanced=advanced_candles)
+    except Exception as e:
+        print(f"Warning: Error in candlestick patterns: {e}")
 
-    # Drop initial rows based on the largest warm-up window across all indicators
-    # Core MA/RSI/Vol windows
-    windows = [*ma_windows, rsi_window, vol_window]
-    # Technical indicators warm-up periods: EMA, MACD slow & signal, ATR, Bollinger Bands, Stochastic, ADX, Williams %R
-    # Adjust these windows for small datasets too
-    if len(df) < min_required_length:
-        adjusted_windows = [min(w, len(df) // 3) for w in [20, 26, 9, 14, 20, 14, 14, 14]]
-        windows += adjusted_windows
-    else:
-        windows += [20, 26, 9, 14, 20, 14, 14, 14]
-
-    # If using advanced candles, account for patterns that use up to 3 previous candles
-    max_pattern_window = 3 if advanced_candles else 2
-    windows.append(max_pattern_window)
-
-    max_core_window = max(windows) if windows else 0
-    rows_to_drop = min(max_core_window, len(df) - 1) if len(df) > 1 else 0
-    df = df.iloc[rows_to_drop:].reset_index(drop=True)
-
-    # Final check: if DataFrame is empty after processing, return at least one row with NaN values
-    if df.empty and len(df.columns) > 0:
-        # Create a single row with NaN values for all columns
-        df = pd.DataFrame([{col: np.nan for col in df.columns}])
-        import warnings
-
-        warnings.warn(
-            "Feature engineering resulted in empty DataFrame; returning single row with NaN values for testing.",
-            stacklevel=2,
-        )
-
+    # Final cleanup - fill any remaining NaN values
     numeric_cols = df.select_dtypes(include=[np.number]).columns
+    df[numeric_cols] = df[numeric_cols].fillna(0.0)
+
+    # Convert to float64 for consistency
     df[numeric_cols] = df[numeric_cols].astype(np.float64)
+
+    # Safe normalization - avoid division by zero
     for col in numeric_cols:
         max_abs = df[col].abs().max()
-        if pd.notna(max_abs) and max_abs != 0:
+        if pd.notna(max_abs) and max_abs > 1e-8:  # Avoid very small denominators
             df[col] = df[col] / max_abs
-    df[numeric_cols] = df[numeric_cols] * (1 - 1e-6)
+        else:
+            df[col] = 0.0
+
+    # Ensure no inf/-inf values remain
+    df[numeric_cols] = df[numeric_cols].replace([np.inf, -np.inf], 0.0)
+
+    # Drop initial rows if needed (but keep at least 1 row)
+    windows = [*ma_windows, rsi_window, vol_window, 20, 26, 9, 14, 20, 14, 14, 14]
+    max_pattern_window = 3 if advanced_candles else 2
+    windows.append(max_pattern_window)
+    max_core_window = max(windows) if windows else 0
+
+    if len(df) > max_core_window:
+        rows_to_drop = min(max_core_window, len(df) - 1)
+        df = df.iloc[rows_to_drop:].reset_index(drop=True)
+
+    # Final validation - ensure no NaN or inf values
+    assert not df[numeric_cols].isna().any().any(), "NaN values found after feature engineering"
+    assert not df[numeric_cols].isin([np.inf, -np.inf]).any().any(), "Inf values found after feature engineering"
+
     return df

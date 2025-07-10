@@ -8,10 +8,10 @@ from pathlib import Path
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.models import ModelCatalog
 
-from trading_rl_agent.core.config import ConfigManager
-from trading_rl_agent.envs.finrl_trading_env import TradingEnv, register_env
-from trading_rl_agent.models.concat_model import ConcatModel
-from trading_rl_agent.utils.cluster import get_available_devices, init_ray
+from src.core.config import ConfigManager
+from src.trading_rl_agent.envs.finrl_trading_env import TradingEnv, register_env
+from src.trading_rl_agent.models.concat_model import ConcatModel
+from src.trading_rl_agent.utils.cluster import get_available_devices, init_ray
 
 
 def create_env(cfg):

@@ -114,6 +114,10 @@ class TradingEnv(_FinRLTradingEnv):
         return obs, float(reward), done, truncated, info
 
 
+# Create alias for compatibility with notebook and other parts of codebase
+TraderEnv = TradingEnv
+
+
 def env_creator(
     env_cfg: dict[str, Any] | None = None,
 ) -> TradingEnv:  # pragma: no cover
