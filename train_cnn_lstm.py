@@ -9,6 +9,7 @@ import argparse
 import json
 import logging
 import sys
+import time
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -18,6 +19,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
+from tqdm import tqdm
 
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
@@ -80,8 +82,24 @@ class CNNLSTMTrainer:
 
         # Initialize model
         input_dim = sequences.shape[-1]  # Number of features
+        logger.info("\n🧠 Initializing CNN+LSTM model...")
+        logger.info(f"  📊 Input dimensions: {input_dim} features")
+
         self.model = CNNLSTMModel(input_dim=input_dim, config=self.model_config)
         self.model.to(self.device)
+
+        # Count parameters
+        total_params = sum(p.numel() for p in self.model.parameters())
+        trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+
+        logger.info(f"  🔢 Total parameters: {total_params:,}")
+        logger.info(f"  🎯 Trainable parameters: {trainable_params:,}")
+        logger.info(f"  📊 Model size: ~{total_params * 4 / 1024 / 1024:.1f} MB")
+
+        # Model architecture summary
+        logger.info(
+            f"  🏗️ Architecture: CNN({self.model_config['cnn_filters']}) + LSTM({self.model_config['lstm_units']})"
+        )
 
         # Setup optimizer and loss
         optimizer = optim.Adam(
@@ -91,13 +109,23 @@ class CNNLSTMTrainer:
         )
 
         criterion = nn.MSELoss()
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer,
-            mode="min",
-            patience=5,
-            factor=0.5,
-            verbose=True,
-        )
+        # Some older PyTorch versions (<1.2) do not accept the ``verbose`` kwarg. Build defensively.
+        try:
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode="min",
+                patience=5,
+                factor=0.5,
+                verbose=True,
+            )
+        except TypeError:
+            # Fallback for torch versions that lack the argument
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode="min",
+                patience=5,
+                factor=0.5,
+            )
 
         # Training loop
         best_val_loss = float("inf")
@@ -105,41 +133,71 @@ class CNNLSTMTrainer:
         patience_counter = 0
 
         epochs = self.training_config.get("epochs", 100)
+        start_time = time.time()
+
+        logger.info(f"🎯 Starting training for {epochs} epochs...")
+        logger.info(f"📊 Training set: {len(train_loader.dataset):,} samples")
+        logger.info(f"📊 Validation set: {len(val_loader.dataset):,} samples")
+        logger.info(f"📦 Batch size: {self.training_config.get('batch_size', 32)}")
 
         for epoch in range(epochs):
-            # Training phase
-            train_loss = self._train_epoch(train_loader, optimizer, criterion)
+            epoch_start_time = time.time()
 
-            # Validation phase
+            # Training phase with monitoring
+            logger.info(f"\n📈 Epoch {epoch + 1}/{epochs} - Training...")
+            train_loss = self._train_epoch(train_loader, optimizer, criterion, epoch)
+
+            # Validation phase with monitoring
+            logger.info(f"📊 Epoch {epoch + 1}/{epochs} - Validation...")
             val_loss, val_metrics = self._validate_epoch(val_loader, criterion)
 
             # Learning rate scheduling
+            old_lr = optimizer.param_groups[0]["lr"]
             scheduler.step(val_loss)
+            new_lr = optimizer.param_groups[0]["lr"]
+
+            if old_lr != new_lr:
+                logger.info(f"📉 Learning rate reduced: {old_lr:.2e} → {new_lr:.2e}")
 
             # Update history
             self.history["train_loss"].append(train_loss)
             self.history["val_loss"].append(val_loss)
             self.history["metrics"].append(val_metrics)
 
-            # Early stopping
+            # Calculate epoch time
+            epoch_time = time.time() - epoch_start_time
+            total_time = time.time() - start_time
+            eta = (total_time / (epoch + 1)) * (epochs - epoch - 1)
+
+            # Early stopping check
+            improvement = ""
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 patience_counter = 0
+                improvement = "✅ BEST"
                 if save_path:
                     self._save_checkpoint(save_path, epoch, val_loss)
+                    logger.info("💾 Model checkpoint saved")
             else:
                 patience_counter += 1
+                improvement = f"❌ No improvement ({patience_counter}/{patience})"
 
-            # Logging
-            if epoch % 10 == 0:
-                logger.info(
-                    f"Epoch {epoch:3d}: Train Loss: {train_loss:.6f}, "
-                    f"Val Loss: {val_loss:.6f}, Val MAE: {val_metrics['mae']:.6f}",
-                )
+            # Comprehensive epoch summary
+            logger.info(f"\n📋 Epoch {epoch + 1}/{epochs} Summary:")
+            logger.info(f"  🔥 Train Loss: {train_loss:.6f}")
+            logger.info(f"  📊 Val Loss: {val_loss:.6f} {improvement}")
+            logger.info(f"  📏 Val MAE: {val_metrics['mae']:.6f}")
+            logger.info(f"  📈 Val RMSE: {val_metrics['rmse']:.6f}")
+            logger.info(f"  🔗 Val Correlation: {val_metrics['correlation']:.4f}")
+            logger.info(f"  ⏱️ Epoch Time: {epoch_time:.1f}s")
+            logger.info(f"  🕐 Total Time: {total_time/60:.1f}m")
+            logger.info(f"  ⏳ ETA: {eta/60:.1f}m")
+            logger.info(f"  🎯 Learning Rate: {new_lr:.2e}")
 
             # Early stopping check
             if patience_counter >= patience:
-                logger.info(f"Early stopping triggered at epoch {epoch}")
+                logger.info(f"\n🛑 Early stopping triggered at epoch {epoch + 1}")
+                logger.info(f"⏱️ Total training time: {total_time/60:.1f} minutes")
                 break
 
         # Final evaluation
@@ -177,13 +235,18 @@ class CNNLSTMTrainer:
         dataloader: DataLoader,
         optimizer: optim.Optimizer,
         criterion: nn.Module,
+        epoch: int = 0,
     ) -> float:
-        """Train for one epoch."""
+        """Train for one epoch with detailed monitoring."""
 
         self.model.train()
         total_loss = 0.0
+        batch_losses = []
 
-        for _batch_idx, (data, target) in enumerate(dataloader):
+        # Progress bar for batches
+        pbar = tqdm(dataloader, desc="Training", leave=False)
+
+        for batch_idx, (data, target) in enumerate(pbar):
             data, target = data.to(self.device), target.to(self.device)
 
             optimizer.zero_grad()
@@ -192,36 +255,67 @@ class CNNLSTMTrainer:
 
             loss.backward()
 
-            # Gradient clipping
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+            # Gradient clipping with monitoring
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
 
             optimizer.step()
-            total_loss += loss.item()
 
-        return total_loss / len(dataloader)
+            batch_loss = loss.item()
+            total_loss += batch_loss
+            batch_losses.append(batch_loss)
+
+            # Update progress bar
+            pbar.set_postfix(
+                {
+                    "loss": f"{batch_loss:.6f}",
+                    "avg_loss": f"{total_loss/(batch_idx+1):.6f}",
+                    "grad_norm": f"{grad_norm:.4f}",
+                }
+            )
+
+            # Log detailed stats every 50 batches for debugging
+            if batch_idx % 50 == 0 and batch_idx > 0:
+                avg_loss = total_loss / (batch_idx + 1)
+                logger.debug(
+                    f"  Batch {batch_idx:3d}: Loss={batch_loss:.6f}, Avg={avg_loss:.6f}, GradNorm={grad_norm:.4f}"
+                )
+
+        avg_loss = total_loss / len(dataloader)
+        loss_std = np.std(batch_losses)
+
+        logger.info(f"  🔥 Training completed: avg_loss={avg_loss:.6f}, std={loss_std:.6f}")
+        return avg_loss
 
     def _validate_epoch(
         self,
         dataloader: DataLoader,
         criterion: nn.Module,
     ) -> tuple[float, dict]:
-        """Validate for one epoch."""
+        """Validate for one epoch with monitoring."""
 
         self.model.eval()
         total_loss = 0.0
         predictions = []
         targets = []
+        batch_losses = []
 
         with torch.no_grad():
-            for data, target in dataloader:
+            pbar = tqdm(dataloader, desc="Validation", leave=False)
+            for batch_idx, (data, target) in enumerate(pbar):
                 data, target = data.to(self.device), target.to(self.device)
 
                 output = self.model(data)
                 loss = criterion(output, target)
-                total_loss += loss.item()
+
+                batch_loss = loss.item()
+                total_loss += batch_loss
+                batch_losses.append(batch_loss)
 
                 predictions.extend(output.cpu().numpy().flatten())
                 targets.extend(target.cpu().numpy().flatten())
+
+                # Update progress bar
+                pbar.set_postfix({"val_loss": f"{batch_loss:.6f}", "avg_val_loss": f"{total_loss/(batch_idx+1):.6f}"})
 
         avg_loss = total_loss / len(dataloader)
 
@@ -234,6 +328,8 @@ class CNNLSTMTrainer:
             "rmse": np.sqrt(mean_squared_error(targets, predictions)),
             "correlation": (np.corrcoef(targets, predictions)[0, 1] if len(targets) > 1 else 0.0),
         }
+
+        logger.info(f"  📊 Validation completed: avg_loss={avg_loss:.6f}, samples={len(predictions)}")
 
         return avg_loss, metrics
 
@@ -275,8 +371,18 @@ class CNNLSTMTrainer:
 
     def load_checkpoint(self, checkpoint_path: str, input_dim: int):
         """Load model from checkpoint."""
+        # Handle PyTorch 2.6+ weights_only behavior for sklearn scalers
+        import torch.serialization
+        from sklearn.preprocessing._data import RobustScaler
 
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        torch.serialization.add_safe_globals([RobustScaler])
+
+        try:
+            # First try with weights_only=True (PyTorch 2.6+ default)
+            checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
+        except Exception:
+            # Fallback to weights_only=False for older checkpoints
+            checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
 
         self.model = CNNLSTMModel(
             input_dim=input_dim,
@@ -389,6 +495,12 @@ def main():
     )
     parser.add_argument("--load-dataset", help="Path to existing dataset directory")
     parser.add_argument("--gpu", action="store_true", help="Use GPU if available")
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=100,
+        help="Number of training epochs",
+    )
 
     args = parser.parse_args()
 
@@ -397,7 +509,12 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("🚀 Starting CNN+LSTM training pipeline...")
-    logger.info(f"Output directory: {output_dir}")
+    logger.info(f"📁 Output directory: {output_dir}")
+    logger.info(f"🎯 Symbols: {args.symbols}")
+    logger.info(f"📅 Date range: {args.start_date} to {args.end_date}")
+    logger.info(f"📏 Sequence length: {args.sequence_length}")
+    logger.info(f"🔄 Epochs: {args.epochs}")
+    logger.info(f"🖥️ GPU enabled: {args.gpu}")
 
     try:
         # Step 1: Build or load dataset
@@ -407,12 +524,13 @@ def main():
             sequences = np.load(dataset_dir / "sequences.npy")
             targets = np.load(dataset_dir / "targets.npy")
 
-            with Path(dataset_dir / "metadata.json").open(dataset_dir / "metadata.json") as f:
-                _ = json.load(f)  # Load for validation but don't use
+            # Optional: validate metadata exists
+            meta_path = dataset_dir / "metadata.json"
+            if meta_path.exists():
+                with meta_path.open() as f:
+                    _ = json.load(f)
         else:
-            logger.info("Building new dataset...")
-
-            # Create dataset configuration
+            # Prepare configuration for potential build
             dataset_config = DatasetConfig(
                 symbols=args.symbols,
                 start_date=args.start_date,
@@ -429,26 +547,44 @@ def main():
                 output_dir=str(output_dir / "dataset"),
             )
 
-            # Build dataset
-            builder = RobustDatasetBuilder(dataset_config)
-            sequences, targets, dataset_info = builder.build_dataset()
+            # Attempt to load existing dataset or build a new one
+            sequences, targets, dataset_info = RobustDatasetBuilder.load_or_build(dataset_config)
 
-            logger.info(f"Dataset built: {dataset_info}")
+            load_msg = "loaded" if dataset_info.get("loaded") else "built"
+            logger.info(f"Dataset {load_msg}: {dataset_info}")
 
         # Step 2: Setup model and training configurations
         model_config = create_model_config()
         training_config = create_training_config()
+        training_config["epochs"] = args.epochs  # Override with command line argument
 
         # Save configurations
-        with Path(output_dir / "model_config.json").open(output_dir / "model_config.json", "w") as f:
+        with (output_dir / "model_config.json").open("w") as f:
             json.dump(model_config, f, indent=2)
 
-        with Path(output_dir / "training_config.json").open(output_dir / "training_config.json", "w") as f:
+        with (output_dir / "training_config.json").open("w") as f:
             json.dump(training_config, f, indent=2)
 
         # Step 3: Train the model
         device = "cuda" if args.gpu and torch.cuda.is_available() else "cpu"
-        logger.info(f"Using device: {device}")
+        logger.info("\n🖥️ Device Configuration:")
+        logger.info(f"  Device: {device}")
+        if torch.cuda.is_available():
+            logger.info("  CUDA available: Yes")
+            logger.info(f"  GPU count: {torch.cuda.device_count()}")
+            if device == "cuda":
+                logger.info(f"  GPU name: {torch.cuda.get_device_name()}")
+                logger.info(f"  GPU memory: {torch.cuda.get_device_properties(0).total_memory // 1e9:.1f}GB")
+        else:
+            logger.info("  CUDA available: No")
+
+        logger.info("\n🧠 Model Configuration:")
+        for key, value in model_config.items():
+            logger.info(f"  {key}: {value}")
+
+        logger.info("\n⚙️ Training Configuration:")
+        for key, value in training_config.items():
+            logger.info(f"  {key}: {value}")
 
         trainer = CNNLSTMTrainer(
             model_config=model_config,
@@ -465,7 +601,7 @@ def main():
         )
 
         # Step 4: Save training summary and plots
-        with Path(output_dir / "training_summary.json").open(output_dir / "training_summary.json", "w") as f:
+        with (output_dir / "training_summary.json").open("w") as f:
             json.dump(training_summary, f, indent=2, default=str)
 
         trainer.plot_training_history(
@@ -474,30 +610,44 @@ def main():
 
         # Step 5: Create real-time inference example
         if not args.load_dataset:
+            # Determine path to the dataset version we just used/built
+            dataset_version_dir = dataset_info.get("source_directory", dataset_info.get("output_directory", ""))
+
             # Save dataset path for real-time inference
             rt_config = {
-                "dataset_version_dir": str(builder.output_dir),
+                "dataset_version_dir": dataset_version_dir,
                 "model_checkpoint": str(model_save_path),
                 "model_config": model_config,
                 "usage_example": {
                     "load_model": f"trainer.load_checkpoint('{model_save_path}', input_dim={sequences.shape[-1]})",
-                    "load_realtime_processor": f"rt_loader = RealTimeDatasetLoader('{builder.output_dir}')",
+                    "load_realtime_processor": f"rt_loader = RealTimeDatasetLoader('{dataset_version_dir}')",
                     "process_new_data": "processed_seq = rt_loader.process_realtime_data(new_market_data)",
                 },
             }
 
-            with Path(output_dir / "realtime_inference_config.json").open(
-                output_dir / "realtime_inference_config.json", "w"
-            ) as f:
+            with (output_dir / "realtime_inference_config.json").open("w") as f:
                 json.dump(rt_config, f, indent=2)
 
-        logger.info("✅ Training pipeline completed successfully!")
-        logger.info(f"📊 Best validation loss: {training_summary['best_val_loss']:.6f}")
-        logger.info(
-            f"📈 Final correlation: {training_summary['final_metrics']['correlation']:.4f}",
-        )
-        logger.info(f"💾 Model saved to: {model_save_path}")
-        logger.info(f"📋 Summary saved to: {output_dir}")
+        # Final summary
+        final_metrics = training_summary["final_metrics"]
+        total_epochs = training_summary["total_epochs"]
+
+        logger.info("\n🎉 TRAINING COMPLETED SUCCESSFULLY!")
+        logger.info("=" * 60)
+        logger.info("📊 Training Summary:")
+        logger.info(f"  🔄 Total epochs: {total_epochs}")
+        logger.info(f"  🎯 Best validation loss: {training_summary['best_val_loss']:.6f}")
+        logger.info(f"  📏 Final MAE: {final_metrics['mae']:.6f}")
+        logger.info(f"  📈 Final RMSE: {final_metrics['rmse']:.6f}")
+        logger.info(f"  🔗 Final correlation: {final_metrics['correlation']:.4f}")
+        logger.info(f"  📊 Prediction std: {final_metrics['std_predictions']:.6f}")
+        logger.info(f"  📊 Target std: {final_metrics['std_targets']:.6f}")
+        logger.info("\n💾 Output Files:")
+        logger.info(f"  🤖 Model: {model_save_path}")
+        logger.info(f"  📋 Summary: {output_dir / 'training_summary.json'}")
+        logger.info(f"  📊 Config: {output_dir / 'model_config.json'}")
+        logger.info(f"  📈 Plot: {output_dir / 'training_history.png'}")
+        logger.info("=" * 60)
 
         return training_summary
 

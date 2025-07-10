@@ -5,8 +5,10 @@ Provides functions for data standardization, sequence creation, and normalizatio
 
 import numpy as np
 import pandas as pd
+import torch
 from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from torch.utils.data import DataLoader, TensorDataset
 
 
 def create_sequences(
@@ -85,3 +87,52 @@ def preprocess_trading_data(
     sequences, targets = create_sequences(normalized, sequence_length, target_column)
 
     return sequences, targets, scaler
+
+
+def prepare_data_for_trial(params: dict) -> tuple[DataLoader, DataLoader, int]:
+    """
+    Prepare data for Optuna trial optimization.
+
+    Args:
+        params: Dictionary containing trial parameters
+
+    Returns:
+        Tuple of (train_loader, val_loader, n_features)
+    """
+    # Import here to avoid circular imports
+
+    # Create a simple dataset for optimization trials
+    # In a real scenario, this would use the actual dataset
+    sequence_length = params.get("sequence_length", 30)
+    batch_size = params.get("batch_size", 32)
+
+    # Generate synthetic data for optimization trials
+    np.random.seed(42)
+    n_samples = 1000
+    n_features = 20  # Number of features
+
+    # Create synthetic sequences and targets
+    sequences = np.random.randn(n_samples, sequence_length, n_features)
+    targets = np.random.randn(n_samples, 1)
+
+    # Split data
+    split_idx = int(0.8 * n_samples)
+    train_sequences = sequences[:split_idx]
+    train_targets = targets[:split_idx]
+    val_sequences = sequences[split_idx:]
+    val_targets = targets[split_idx:]
+
+    # Convert to tensors
+    train_sequences_tensor = torch.FloatTensor(train_sequences)
+    train_targets_tensor = torch.FloatTensor(train_targets)
+    val_sequences_tensor = torch.FloatTensor(val_sequences)
+    val_targets_tensor = torch.FloatTensor(val_targets)
+
+    # Create data loaders
+    train_dataset = TensorDataset(train_sequences_tensor, train_targets_tensor)
+    val_dataset = TensorDataset(val_sequences_tensor, val_targets_tensor)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+    return train_loader, val_loader, n_features
