@@ -243,7 +243,7 @@ def main():
         print(f"{test_name:20} {result}")
 
     print("=" * 60)
-    print(f"Overall: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
+    print(f"Overall: {passed}/{total} tests passed ({passed / total * 100:.1f}%)")
 
     if passed == total:
         print("🎉 All tests passed! main.ipynb should work correctly.")
