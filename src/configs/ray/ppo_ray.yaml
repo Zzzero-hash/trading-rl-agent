@@ -1,7 +1,0 @@
-# PPO configuration for Ray RLlib
-num_workers: 2 # Number of parallel workers
-lr: 0.0003 # Learning rate
-train_batch_size: 4000 # Batch size of experiences for each training step
-sgd_minibatch_size: 128 # SGD minibatch size
-num_sgd_iter: 30 # Number of SGD iterations per batch
-framework: torch # Use the PyTorch backend
