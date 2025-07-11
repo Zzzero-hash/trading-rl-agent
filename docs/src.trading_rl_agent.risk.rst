@@ -1,17 +1,37 @@
 src.trading\_rl\_agent.risk package
 ===================================
 
-.. automodule:: src.trading_rl_agent.risk
+Submodules
+----------
+
+src.trading\_rl\_agent.risk.manager module
+------------------------------------------
+
+.. automodule:: src.trading_rl_agent.risk.manager
    :members:
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+src.trading\_rl\_agent.risk.position\_sizer module
+--------------------------------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: src.trading_rl_agent.risk.position_sizer
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
-   src.trading_rl_agent.risk.manager
-   src.trading_rl_agent.risk.position_sizer
-   src.trading_rl_agent.risk.riskfolio
+src.trading\_rl\_agent.risk.riskfolio module
+--------------------------------------------
+
+.. automodule:: src.trading_rl_agent.risk.riskfolio
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: src.trading_rl_agent.risk
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-from typing import Any
 
 import pandas as pd
 
@@ -48,11 +47,11 @@ def load_alphavantage(
     try:
         # Fetch raw data (tuple assumed: DataFrame, metadata)
         if interval == "day":
-            raw: Any = ts.get_daily(symbol, outputsize="full")  # type: ignore
+            raw = ts.get_daily(symbol, outputsize="full")
         else:
             intr_map = {"hour": "60min", "minute": "1min"}
             iv = intr_map.get(interval, interval)
-            raw: Any = ts.get_intraday(symbol, interval=iv, outputsize="full")  # type: ignore
+            raw = ts.get_intraday(symbol, interval=iv, outputsize="full")
         # Assume first element is DataFrame
         data = raw[0]
     except Exception as e:

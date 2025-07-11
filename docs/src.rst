@@ -1,11 +1,6 @@
 src package
 ===========
 
-.. automodule:: src
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Subpackages
 -----------
 
@@ -13,7 +8,7 @@ Subpackages
    :maxdepth: 4
 
    src.backtesting
-   src.core
+   src.configs
    src.messaging
    src.nlp
    src.optimization
@@ -24,10 +19,34 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+src.data\_pipeline module
+-------------------------
 
-   src.data_pipeline
-   src.main
-   src.serve_deployment
-   src.supervised_model
+.. automodule:: src.data_pipeline
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+src.main module
+---------------
+
+.. automodule:: src.main
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+src.serve\_deployment module
+----------------------------
+
+.. automodule:: src.serve_deployment
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: src
+   :members:
+   :show-inheritance:
+   :undoc-members:

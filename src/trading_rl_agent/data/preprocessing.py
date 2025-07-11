@@ -11,6 +11,81 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
 
+def validate_data(df: pd.DataFrame) -> None:
+    """Validate trading data schema and integrity.
+
+    Raises:
+        ValueError: If validation fails
+    """
+    # Expected columns
+    expected_columns = {"timestamp", "open", "high", "low", "close", "volume"}
+    missing = expected_columns - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing columns: {missing}")
+
+    # Type checks
+    if not pd.api.types.is_datetime64_any_dtype(df["timestamp"]):
+        raise ValueError("timestamp must be datetime type")
+
+    numeric_cols = ["open", "high", "low", "close", "volume"]
+    for col in numeric_cols:
+        if not pd.api.types.is_numeric_dtype(df[col]):
+            raise ValueError(f"{col} must be numeric")
+
+    # Range validation
+    if (df["high"] < df["low"]).any():
+        raise ValueError("high < low in some rows")
+    if ((df["close"] < df["low"]) | (df["close"] > df["high"])).any():
+        raise ValueError("close out of low-high range in some rows")
+    if (df["open"] < 0).any() or (df["close"] < 0).any():
+        raise ValueError("Negative prices")
+    if (df["volume"] < 0).any():
+        raise ValueError("Negative volume")
+
+    # Duplicates
+    if df["timestamp"].duplicated().any():
+        raise ValueError("Duplicate timestamps")
+
+    # Sorted
+    if not df["timestamp"].is_monotonic_increasing:
+        raise ValueError("Timestamps not sorted")
+
+
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean trading data: handle duplicates, NaNs, outliers.
+
+    Args:
+        df: Input DataFrame
+
+    Returns:
+        Cleaned DataFrame
+    """
+    # Sort by timestamp
+    df = df.sort_values("timestamp").reset_index(drop=True)
+
+    # Remove duplicates
+    df = df.drop_duplicates(subset=["timestamp"])
+
+    # Handle NaNs: forward fill, then interpolate remaining
+    df = df.ffill()
+    df = df.interpolate(method="linear")
+
+    # Handle outliers: clip to 3 std deviations for prices
+    price_cols = ["open", "high", "low", "close"]
+    for col in price_cols:
+        mean = df[col].mean()
+        std = df[col].std()
+        lower = max(0, mean - 3 * std)  # prices can't be negative
+        upper = mean + 3 * std
+        df[col] = df[col].clip(lower, upper)
+
+    # Ensure no remaining NaNs
+    if df.isnull().any().any():
+        raise ValueError("Remaining NaNs after cleaning")
+
+    return df
+
+
 def create_sequences(
     data: np.ndarray | pd.DataFrame,
     sequence_length: int,
@@ -64,7 +139,9 @@ def preprocess_trading_data(
 ) -> tuple[np.ndarray, np.ndarray, StandardScaler | MinMaxScaler]:
     """Complete preprocessing pipeline for trading data."""
 
-    df = data.copy()
+    # Validate and clean
+    validate_data(data)
+    df = clean_data(data)
 
     # Convert datetime columns to numeric for scaling
     datetime_cols = df.select_dtypes(include=["datetime", "datetimetz"]).columns

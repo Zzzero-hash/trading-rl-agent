@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import ray
 from ray import tune
@@ -37,11 +37,14 @@ from trading_rl_agent.envs.finrl_trading_env import TradingEnv
 from trading_rl_agent.models.concat_model import ConcatModel
 from trading_rl_agent.utils.cluster import init_ray
 
+if TYPE_CHECKING:
+    import gymnasium as gym
+
 torch, _ = try_import_torch()
 logger = logging.getLogger(__name__)
 
 
-def create_env(config):
+def create_env(config: dict[str, Any]) -> gym.Env:
     """Create trading environment factory function."""
     return TradingEnv(config)
 
@@ -79,7 +82,7 @@ def _get_default_sac_search_space() -> dict[str, Any]:
     }
 
 
-def register_models_and_envs():
+def register_models_and_envs() -> None:
     """Register custom models and environments with Ray."""
     from ray.rllib.models import ModelCatalog
 

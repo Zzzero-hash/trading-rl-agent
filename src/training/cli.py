@@ -5,7 +5,7 @@ from trading_rl_agent.agents.tune import run_tune
 from . import cnn_lstm, rl
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Unified training entry point")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -30,20 +30,21 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     if args.command == "rl":
-        rl.main(
-            [
-                "--data",
-                args.data,
-                "--model-path",
-                args.model_path,
-                "--num-workers",
-                str(args.num_workers),
-                "--num-gpus",
-                str(args.num_gpus),
-            ]
-            + (["--cluster-config", args.cluster_config] if args.cluster_config else [])
-            + (["--local-mode"] if args.local_mode else []),
-        )
+        rl_args = [
+            "--data",
+            args.data,
+            "--model-path",
+            args.model_path,
+            "--num-workers",
+            str(args.num_workers),
+            "--num-gpus",
+            str(args.num_gpus),
+        ]
+        if args.cluster_config:
+            rl_args += ["--cluster-config", args.cluster_config]
+        if args.local_mode:
+            rl_args.append("--local-mode")
+        rl.main(rl_args)  # type: ignore[call-arg]
     elif args.command == "cnn-lstm":
         trainer = cnn_lstm.CNNLSTMTrainer()
         trainer.train_from_config(args.config)

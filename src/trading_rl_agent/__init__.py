@@ -22,6 +22,8 @@ __version__ = "2.0.0"
 __author__ = "Trading RL Team"
 
 # Core imports for easy access
+from typing import Any, List
+
 from .core.config import ConfigManager, SystemConfig
 from .core.exceptions import DataValidationError, ModelError, TradingSystemError
 from .core.logging import get_logger, setup_logging
@@ -55,7 +57,7 @@ _OPTIONAL_IMPORTS = {
 }
 
 
-def __dir__():
+def __dir__() -> list[str]:
     """Return a list of attributes for tab completion."""
     return sorted(__all__ + list(_OPTIONAL_IMPORTS))
 
@@ -64,7 +66,7 @@ def __dir__():
 lazy_map = _OPTIONAL_IMPORTS
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """Lazily import heavy optional components when accessed."""
     import importlib
 

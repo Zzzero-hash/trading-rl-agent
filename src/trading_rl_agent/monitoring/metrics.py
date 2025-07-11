@@ -3,7 +3,7 @@ from __future__ import annotations
 """Simple metrics collection utilities."""
 
 from dataclasses import asdict, is_dataclass
-from typing import Any
+from typing import Any, cast
 
 from ..core.logging import get_logger
 
@@ -17,12 +17,7 @@ class MetricsCollector:
 
     def log_metrics(self, metrics: Any) -> None:
         """Log metrics and store them in memory."""
-        if is_dataclass(metrics):
-            metrics_dict = asdict(metrics)
-        elif isinstance(metrics, dict):
-            metrics_dict = metrics
-        else:
-            raise TypeError("metrics must be a dataclass or dict")
+        metrics_dict = asdict(cast(Any, metrics)) if is_dataclass(metrics) else dict(metrics)
 
         self.history.append(metrics_dict)
         self.logger.info("Metrics logged", extra={"metrics": metrics_dict})

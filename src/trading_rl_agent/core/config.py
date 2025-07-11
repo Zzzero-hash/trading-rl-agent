@@ -14,13 +14,14 @@ from typing import Any
 
 import yaml
 
+from ..agents.configs import PPOConfig, SACConfig, TD3Config
+from .exceptions import ConfigurationError
+
 try:
     # Future imports for hydra support
     HYDRA_AVAILABLE = True
 except ImportError:
     HYDRA_AVAILABLE = False
-
-from .exceptions import ConfigurationError
 
 # Import logger with fallback
 try:
@@ -92,22 +93,15 @@ class AgentConfig:
     # Agent type
     agent_type: str = "sac"  # sac, td3, ppo
 
-    # SAC specific
-    sac_learning_rate: float = 3e-4
-    sac_buffer_size: int = 1000000
-    sac_tau: float = 0.005
-    sac_gamma: float = 0.99
-    sac_alpha: float = 0.2
-
-    # TD3 specific
-    td3_policy_noise: float = 0.2
-    td3_noise_clip: float = 0.5
-    td3_policy_freq: int = 2
+    # Agent-specific configurations
+    ppo: PPOConfig = field(default_factory=PPOConfig)
+    sac: SACConfig = field(default_factory=SACConfig)
+    td3: TD3Config = field(default_factory=TD3Config)
 
     # Training
-    total_timesteps: int = 1000000
-    eval_frequency: int = 10000
-    save_frequency: int = 50000
+    total_timesteps: int = 1_000_000
+    eval_frequency: int = 10_000
+    save_frequency: int = 50_000
 
 
 @dataclass
@@ -170,31 +164,6 @@ class MonitoringConfig:
 
 
 @dataclass
-class RLConfig:
-    """RL agent configuration."""
-
-    # Agent type
-    agent_type: str = "sac"  # sac, td3, ppo
-
-    # SAC specific
-    sac_learning_rate: float = 3e-4
-    sac_buffer_size: int = 1000000
-    sac_tau: float = 0.005
-    sac_gamma: float = 0.99
-    sac_alpha: float = 0.2
-
-    # TD3 specific
-    td3_policy_noise: float = 0.2
-    td3_noise_clip: float = 0.5
-    td3_policy_freq: int = 2
-
-    # Training
-    total_timesteps: int = 1000000
-    eval_frequency: int = 10000
-    save_frequency: int = 50000
-
-
-@dataclass
 class InfrastructureConfig:
     """Infrastructure and deployment configuration."""
 
@@ -225,7 +194,6 @@ class SystemConfig:
     data: DataConfig = field(default_factory=DataConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
     agent: AgentConfig = field(default_factory=AgentConfig)
-    rl: RLConfig = field(default_factory=RLConfig)
     risk: RiskConfig = field(default_factory=RiskConfig)
     execution: ExecutionConfig = field(default_factory=ExecutionConfig)
     monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
@@ -335,8 +303,24 @@ class ConfigManager:
             debug=config_dict.get("debug", False),
             data=DataConfig(**config_dict.get("data", {})),
             model=ModelConfig(**config_dict.get("model", {})),
-            agent=AgentConfig(**config_dict.get("agent", {})),
-            rl=RLConfig(**config_dict.get("rl", {})),
+            agent=AgentConfig(
+                agent_type=config_dict.get("agent", {}).get("agent_type", "sac"),
+                ppo=PPOConfig(**config_dict.get("agent", {}).get("ppo", {})),
+                sac=SACConfig(**config_dict.get("agent", {}).get("sac", {})),
+                td3=TD3Config(**config_dict.get("agent", {}).get("td3", {})),
+                total_timesteps=config_dict.get("agent", {}).get(
+                    "total_timesteps",
+                    1_000_000,
+                ),
+                eval_frequency=config_dict.get("agent", {}).get(
+                    "eval_frequency",
+                    10_000,
+                ),
+                save_frequency=config_dict.get("agent", {}).get(
+                    "save_frequency",
+                    50_000,
+                ),
+            ),
             risk=RiskConfig(**config_dict.get("risk", {})),
             execution=ExecutionConfig(**config_dict.get("execution", {})),
             monitoring=MonitoringConfig(**config_dict.get("monitoring", {})),
@@ -355,8 +339,15 @@ class ConfigManager:
             "debug": config.debug,
             "data": config.data.__dict__,
             "model": config.model.__dict__,
-            "agent": config.agent.__dict__,
-            "rl": config.rl.__dict__,
+            "agent": {
+                "agent_type": config.agent.agent_type,
+                "ppo": config.agent.ppo.__dict__,
+                "sac": config.agent.sac.__dict__,
+                "td3": config.agent.td3.__dict__,
+                "total_timesteps": config.agent.total_timesteps,
+                "eval_frequency": config.agent.eval_frequency,
+                "save_frequency": config.agent.save_frequency,
+            },
             "risk": config.risk.__dict__,
             "execution": config.execution.__dict__,
             "monitoring": config.monitoring.__dict__,

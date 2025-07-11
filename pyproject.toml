@@ -148,11 +148,9 @@ ignore = [
     # Allow commented code (might be needed for documentation/examples)
     "ERA001",
     # Allow pathlib and os.path mixing (transitional period)
-    "PTH103", "PTH110", "PTH118", "PTH120", "PTH123", "PTH208",
+    "PTH103", "PTH110", "PTH118", "PTH120", "PTH123",
     # Allow certain test patterns
     "PT011", "PT012", "PT017",
-    # Allow root logger usage (in scripts and examples)
-    "LOG015",
     # Allow certain style choices
     "N802", "N803", "N806", "N811", "N814", "N999",
     "S108", "S301", "S311",

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any, Callable
 
 import pandas as pd
 import ray
@@ -12,8 +13,8 @@ from .loaders import load_alphavantage, load_ccxt, load_yfinance
 from .synthetic import fetch_synthetic_data
 
 
-@ray.remote
-def _fetch_data_remote(fetch_fn, **kwargs):  # pragma: no cover
+@ray.remote  # type: ignore[misc]
+def _fetch_data_remote(fetch_fn: Callable[..., pd.DataFrame], **kwargs: Any) -> pd.DataFrame:
     """Execute a data fetch function as a Ray remote task."""
     return fetch_fn(**kwargs)
 
@@ -52,7 +53,7 @@ def load_cached_csvs(directory: str) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)
 
 
-def run_pipeline(config_path: str):  # pragma: no cover
+def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
     """Run the data ingestion pipeline using Ray for parallelism.
 
     Parameters
@@ -190,7 +191,7 @@ def run_pipeline(config_path: str):  # pragma: no cover
     return results
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(

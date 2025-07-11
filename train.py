@@ -8,6 +8,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
@@ -20,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main():
+def main() -> dict[str, Any]:
     """Main training function."""
     parser = argparse.ArgumentParser(description="Train Trading RL Agent")
     parser.add_argument(
@@ -155,7 +156,7 @@ def main():
         import json
 
         summary_file = output_dir / "production_training_summary.json"
-        with Path(summary_file).open(summary_file, "w") as f:
+        with open(summary_file, "w") as f:
             json.dump(summary, f, indent=2)
 
         logger.info("✅ Production training completed successfully!")

@@ -9,6 +9,7 @@ import json
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -27,7 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main():
+def main() -> dict[str, Any]:
     """Main evaluation function."""
     parser = argparse.ArgumentParser(description="Evaluate Trading RL Agent")
     parser.add_argument(

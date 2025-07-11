@@ -4,21 +4,27 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.models import ModelCatalog
 
-from src.core.config import ConfigManager
-from src.trading_rl_agent.envs.finrl_trading_env import TradingEnv, register_env
+from src.trading_rl_agent.core.config import ConfigManager
+from src.trading_rl_agent.envs.finrl_trading_env import TradingEnv
 from src.trading_rl_agent.models.concat_model import ConcatModel
 from src.trading_rl_agent.utils.cluster import get_available_devices, init_ray
 
+if TYPE_CHECKING:
+    import gymnasium as gym
 
-def create_env(cfg):
+from ray.tune.registry import register_env as ray_register_env
+
+
+def create_env(cfg: dict[str, Any]) -> gym.Env:
     return TradingEnv(cfg)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--config",
@@ -82,7 +88,7 @@ def main():
         "model_path": model_path,
     }
 
-    register_env("TradingEnvRL", lambda cfg: create_env(cfg))
+    ray_register_env("TradingEnvRL", create_env)
     ModelCatalog.register_custom_model("concat_model", ConcatModel)
 
     config = (

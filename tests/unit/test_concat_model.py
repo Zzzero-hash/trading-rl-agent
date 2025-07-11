@@ -1,29 +1,17 @@
 import torch
-from gymnasium import spaces
 
 from trading_rl_agent.models.concat_model import ConcatModel
 
 
 def test_concat_model_output_shape():
-    obs_space = spaces.Dict(
-        {
-            "market_features": spaces.Box(-1.0, 1.0, shape=(5, 3)),
-            "model_pred": spaces.Box(-1.0, 1.0, shape=(1,)),
-        },
-    )
-    action_space = spaces.Discrete(2)
+    """Test the output shape of the concatenation model."""
     model = ConcatModel(
-        obs_space,
-        action_space,
-        num_outputs=action_space.n,
-        model_config={},
-        name="concat",
+        dim1=10,
+        dim2=5,
+        hidden_dim=32,
+        output_dim=1,
     )
-    sample = {
-        "market_features": torch.zeros(1, 5, 3),
-        "model_pred": torch.zeros(1, 1),
-    }
-    logits, _ = model(sample, [], None)
-    assert logits.shape == (1, 2)
-    value = model.value_function()
-    assert value.shape == (1,)
+    input1 = torch.randn(32, 10)
+    input2 = torch.randn(32, 5)
+    output = model(input1, input2)
+    assert output.shape == (32, 1)

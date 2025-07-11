@@ -59,6 +59,14 @@ autodoc_typehints = "description"
 autodoc_typehints_description_target = "documented"
 autodoc_typehints_format = "short"
 
+# Mock imports for unimplemented modules
+autodoc_mock_imports = [
+    "nats",
+    "src.trading_rl_agent.execution",
+    "src.portfolio",
+    "src.messaging",
+]
+
 # Generate autosummary automatically
 autosummary_generate = True
 autosummary_generate_overwrite = True
@@ -86,7 +94,6 @@ html_static_path = ["_static"]
 # html_logo = "_static/logo.png"  # Add your logo here
 html_theme_options = {
     "logo_only": False,
-    "display_version": True,
     "prev_next_buttons_location": "bottom",
     "style_external_links": False,
     "style_nav_header_background": "#2980B9",

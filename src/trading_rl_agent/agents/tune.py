@@ -1,5 +1,8 @@
 """Utilities for hyperparameter tuning with Ray Tune."""
 
+from pathlib import Path
+from typing import Any, cast
+
 import ray
 import yaml
 from ray import tune
@@ -7,7 +10,7 @@ from ray import tune
 from trading_rl_agent.envs.finrl_trading_env import register_env
 
 
-def _convert_value(value):
+def _convert_value(value: Any) -> Any:
     """Convert YAML search spec into Ray Tune objects."""
     if isinstance(value, dict):
         if "grid_search" in value:
@@ -23,21 +26,21 @@ def _convert_value(value):
     return value
 
 
-def _load_search_space(path):
-    with Path(path).open(path) as f:
+def _load_search_space(path: str) -> dict[str, Any]:
+    with Path(path).open() as f:
         cfg = yaml.safe_load(f) or {}
 
-    def _recurse_convert(obj):
+    def _recurse_convert(obj: Any) -> Any:
         if isinstance(obj, dict):
             return {k: _recurse_convert(_convert_value(v)) for k, v in obj.items()}
         if isinstance(obj, list):
             return [_recurse_convert(v) for v in obj]
         return obj
 
-    return _recurse_convert(cfg)
+    return cast(dict[str, Any], _recurse_convert(cfg))
 
 
-def run_tune(config_paths):
+def run_tune(config_paths: str | list[str]) -> None:
     """Run Ray Tune with a search space defined in YAML files.
 
     Parameters

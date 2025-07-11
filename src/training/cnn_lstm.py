@@ -24,7 +24,8 @@ import torch
 import yaml
 from dotenv import load_dotenv
 from pytorch_forecasting import TimeSeriesDataSet
-from torch import nn
+from sklearn.preprocessing import StandardScaler
+from torch import nn, optim
 
 from trading_rl_agent.core.config import ConfigManager
 from trading_rl_agent.data.features import generate_features
@@ -106,7 +107,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.targets = targets
         self.config = config
 
-    def setup(self, stage: str | None = None):
+    def setup(self, stage: str | None = None) -> None:
         df = pd.DataFrame(
             self.features,
             columns=[f"f{i}" for i in range(self.features.shape[1])],
@@ -146,27 +147,6 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             stop_randomization=True,
         )
 
-    def train_dataloader(self):
-        return self.train_dataset.to_dataloader(
-            train=True,
-            batch_size=self.config.batch_size,
-            shuffle=True,
-        )
-
-    def val_dataloader(self):
-        return self.val_dataset.to_dataloader(
-            train=False,
-            batch_size=self.config.batch_size,
-            shuffle=False,
-        )
-
-    def test_dataloader(self):
-        return self.test_dataset.to_dataloader(
-            train=False,
-            batch_size=self.config.batch_size,
-            shuffle=False,
-        )
-
 
 class CNNLSTMLightning(pl.LightningModule):
     """Lightning module wrapping :class:`CNNLSTMModel`."""
@@ -200,7 +180,7 @@ class CNNLSTMLightning(pl.LightningModule):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         x, y = batch
         y = y.long()
         out = self(x)
@@ -210,7 +190,7 @@ class CNNLSTMLightning(pl.LightningModule):
         self.log("train_acc", acc, on_epoch=True)
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> None:
         x, y = batch
         y = y.long()
         out = self(x)
@@ -219,12 +199,16 @@ class CNNLSTMLightning(pl.LightningModule):
         self.log("val_loss", loss, prog_bar=True)
         self.log("val_acc", acc, prog_bar=True)
 
-    def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.config.learning_rate)
+    def configure_optimizers(self) -> optim.Optimizer:
+        return optim.Adam(self.parameters(), lr=self.config.learning_rate)
 
 
 class CNNLSTMTrainer:
     """Main trainer class for CNN-LSTM models."""
+
+    model: CNNLSTMLightning | None
+    scaler: StandardScaler | None
+    sentiment_analyzer: SentimentAnalyzer | None
 
     def __init__(self, config: TrainingConfig | None = None):
         load_dotenv()
@@ -367,8 +351,6 @@ class CNNLSTMTrainer:
 
         # Normalize features if requested
         if self.config.normalize_features:
-            from sklearn.preprocessing import StandardScaler
-
             self.scaler = StandardScaler()
             features = self.scaler.fit_transform(features)
         logger.info(
@@ -388,9 +370,10 @@ class CNNLSTMTrainer:
         sentiment_df = pd.DataFrame(index=df.index)
         # Stock/crypto symbols (existing logic)
         for symbol in symbols:
+            assert self.sentiment_analyzer is not None
             try:
                 sentiment_scores = []
-                for _, _row in df.iterrows():
+                for idx, _row in df.iterrows():
                     score = self.sentiment_analyzer.get_symbol_sentiment(
                         symbol,
                         days_back=1,
@@ -490,11 +473,13 @@ class CNNLSTMTrainer:
         )
         trainer.fit(self.model, datamodule=datamodule)
 
-    def _save_model(self):
+    def _save_model(self) -> None:
         """Save the model and scaler."""
         # Create directory if it doesn't exist
         model_dir = Path(self.config.model_save_path).parent
         model_dir.mkdir(parents=True, exist_ok=True)
+
+        assert self.model is not None, "Model must be initialized before saving"
 
         # Save model
         torch.save(
@@ -507,18 +492,18 @@ class CNNLSTMTrainer:
         )
 
         # Save scaler if available
-        if self.scaler and self.config.save_scaler:
+        if self.scaler is not None and self.config.save_scaler:
             scaler_dir = Path(self.config.scaler_save_path).parent
             scaler_dir.mkdir(parents=True, exist_ok=True)
 
-            with Path(self.config.scaler_save_path).open(self.config.scaler_save_path, "wb") as f:
+            with Path(self.config.scaler_save_path).open("wb") as f:
                 pickle.dump(self.scaler, f)
 
         logger.info(f"Model saved to {self.config.model_save_path}")
 
-    def train_from_config(self, config_path: str) -> CNNLSTMModel:
+    def train_from_config(self, config_path: str) -> CNNLSTMModel | None:
         """Train model from YAML configuration file."""
-        with Path(config_path).open(config_path) as f:
+        with Path(config_path).open() as f:
             config_dict = yaml.safe_load(f)
 
         # Update training config
@@ -544,7 +529,7 @@ class CNNLSTMTrainer:
         # Train
         self.fit(datamodule)
 
-        return self.model
+        return self.model.model if self.model else None
 
 
 # Example training configuration

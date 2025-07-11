@@ -1,68 +1,40 @@
-# Trading RL Agent - Core Dependencies
-# Fixed NumPy compatibility and removed unnecessary packages
+# Core Libraries
+numpy==1.26.4
+pandas==2.1.4
+pyarrow==16.1.0
+scipy==1.13.1
 
-# Core numerical computing
-# NOTE: torch>=2.3.0 requires Python 3.11+ and CUDA 12.x. For Python 3.10 and CUDA 11.8, use torch<2.3.0.
-numpy>=1.22.2  # Fix compatibility with wandb and ray
-torch>=1.12.0,<2.3.0  # PyTorch for neural networks, maintain Python 3.10 compatibility
-scipy>=1.7.0,<1.12.0  # Scientific computing
-
-# Data handling
-pandas>=1.5.0,<2.2.0  # Data manipulation
-pyyaml>=6.0,<7.0      # Configuration files
-
-# Machine Learning & RL
-ray[rllib]>=2.31.0,<2.47.0  # Distributed RL (minimal extras)
-gymnasium>=0.29.1,<1.2.0  # RL environments
-stable-baselines3>=1.7.0
-sb3-contrib>=1.7.0
-pytorch-lightning>=2.5.0
-pytorch-forecasting>=1.4.0
-
-# Market data & Technical Analysis
-yfinance>=0.2.0,<0.3.0     # Financial data
-ta>=0.10.0,<0.11.0         # Technical indicators
-pandas-ta>=0.3.14b0
-
-# Testing
-pytest>=7.4.0              # Unit testing (updated for compatibility)
-pytest-cov>=4.1.0          # Coverage reporting
-pytest-mock>=3.11.0        # Mock objects for testing
-pytest-xdist>=3.3.0        # Parallel test execution
-pytest-asyncio>=0.21.0     # Async test support
-pytest-timeout>=2.1.0      # Test timeout management
-pytest-benchmark>=4.0.0    # Performance benchmarking
-faker>=13.0.0,<25.0.0      # Test data generation
+# Machine Learning
+torch==2.2.2
+# Pinned Ray to a version compatible with gymnasium>=0.29.1
+ray[rllib]==2.9.3
+gymnasium==0.28.1 # Pinned to the version required by ray[rllib]==2.9.3
+pandas-ta==0.3.14b0
 
 # Utilities
-python-dotenv>=0.20.0,<1.1.0  # Environment variables
-scikit-learn>=1.0
-matplotlib>=3.5.0,<3.9.0      # Plotting and visualization
-pynvml>=11.0.0,<12.0.0        # NVIDIA GPU monitoring
-optuna>=3.0.0,<4.0.0         # Hyperparameter optimization
-feedparser>=6.0.0,<7.0.0    # RSS feed parsing for news sentiment
-empyrical>=0.5.3
-vaderSentiment>=3.3.2
-nltk>=3.8,<4.0.0
-typer[all]>=0.9.0
-
-# Add missing dependencies for web requests, HTML parsing, and system monitoring
-requests>=2.32.4  # HTTP requests for sentiment and data fetching
-beautifulsoup4>=4.11.0,<5.0.0  # HTML parsing for sentiment scraping
-psutil>=5.9.0,<6.0
-backtrader>=1.9.78
-riskfolio-lib>=7.0.1
-wrds
-exchange_calendars
-
-# Performance analytics
-quantstats>=0.0.64
-ipython>=8.10.0  # avoid CVE-2023-**; latest upstream is 9.4.0
-
-# FinRL & related dependencies
-finrl>=0.3.7
-alpaca-py>=0.4.0
-alpaca-trade-api>=2.3.0,<3.1.1
-alpha_vantage>=2.3.1
-ccxt>=1.66.32
-stockstats>=0.4.0
+pyyaml==6.0 # Pinned to a version compatible with alpaca-trade-api
+tqdm==4.67.1
+structlog==25.4.0
+yfinance==0.2.58
+requests==2.32.3
+beautifulsoup4==4.12.3
+psutil==5.9.8
+aiohttp==3.8.2 # Pinned to a version compatible with alpaca-trade-api
+empyrical==0.5.5
+riskfolio-lib==7.0.1
+quantstats==0.0.64
+alpaca-trade-api==3.1.0
+ccxt==4.4.82
+stockstats==0.6.5
+pytorch-lightning==2.5.2
+pytorch-forecasting==1.4.0
+optuna==3.6.2
+feedparser==6.0.11
+vaderSentiment==3.3.2
+nltk==3.9.1
+typer==0.16.0
+backtrader==1.9.78.123
+exchange_calendars==4.10.1
+alpaca-py==0.42.0
+alpha_vantage==3.0.0
+nats-py==2.6.0

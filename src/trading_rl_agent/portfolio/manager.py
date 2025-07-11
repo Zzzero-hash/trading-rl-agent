@@ -6,7 +6,7 @@ Handles multi-asset portfolios with sophisticated optimization and risk controls
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -321,7 +321,7 @@ class PortfolioManager:
         trade_value = abs(quantity * price)
         max_position_value = self.total_value * self.config.max_position_size
 
-        current_position_value = 0
+        current_position_value: float = 0.0
         if symbol in self.positions:
             current_position_value = abs(self.positions[symbol].market_value)
 
@@ -398,7 +398,7 @@ class PortfolioManager:
             cleaned_weights = ef.clean_weights()
 
             self.logger.info(f"Portfolio optimization completed using {method}")
-            return cleaned_weights
+            return cast(dict[str, float], cleaned_weights)
 
         except Exception as e:
             self.logger.exception(f"Portfolio optimization failed: {e}")
@@ -435,7 +435,7 @@ class PortfolioManager:
         """Calculate maximum drawdown."""
         peak = equity_curve.expanding().max()
         drawdown = (equity_curve - peak) / peak
-        return drawdown.min()
+        return float(drawdown.min())
 
     def _calculate_win_rate(self) -> float:
         """Calculate win rate from transaction history."""
@@ -446,7 +446,7 @@ class PortfolioManager:
         total_trades = 0
 
         # Group trades by symbol to calculate P&L
-        symbol_trades = {}
+        symbol_trades: dict[str, list[dict[str, Any]]] = {}
         for trade in self.transaction_history:
             symbol = trade["symbol"]
             if symbol not in symbol_trades:
@@ -469,7 +469,7 @@ class PortfolioManager:
                         winning_trades += 1
                     total_trades += 1
 
-        return winning_trades / total_trades if total_trades > 0 else 0.0
+        return float(winning_trades / total_trades) if total_trades > 0 else 0.0
 
     def _calculate_profit_factor(self) -> float:
         """Calculate profit factor (gross profit / gross loss)."""
@@ -482,4 +482,4 @@ class PortfolioManager:
         gross_profit = returns[returns > 0].sum()
         gross_loss = abs(returns[returns < 0].sum())
 
-        return gross_profit / gross_loss if gross_loss > 0 else float("inf")
+        return float(gross_profit / gross_loss) if gross_loss > 0 else float("inf")

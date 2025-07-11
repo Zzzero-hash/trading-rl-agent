@@ -253,11 +253,6 @@ def compute_candle_features(df: pd.DataFrame, advanced: bool = True) -> pd.DataF
     Returns:
         DataFrame with candlestick pattern columns
     """
-    if advanced:
-        # Use advanced patterns from candle_patterns.py
-        from trading_rl_agent.data.candle_patterns import compute_all_candle_patterns
-
-        return compute_all_candle_patterns(df)
     # Use basic patterns: assign Doji, then apply other patterns
     df = df.copy()
     df = detect_doji(df)

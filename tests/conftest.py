@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_test_environment():
+def _setup_test_environment():
     """Setup test environment with FinRL configuration."""
     return
     # Cleanup after all tests

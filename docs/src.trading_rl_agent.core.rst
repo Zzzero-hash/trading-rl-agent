@@ -1,17 +1,37 @@
 src.trading\_rl\_agent.core package
 ===================================
 
-.. automodule:: src.trading_rl_agent.core
+Submodules
+----------
+
+src.trading\_rl\_agent.core.config module
+-----------------------------------------
+
+.. automodule:: src.trading_rl_agent.core.config
    :members:
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+src.trading\_rl\_agent.core.exceptions module
+---------------------------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: src.trading_rl_agent.core.exceptions
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
-   src.trading_rl_agent.core.config
-   src.trading_rl_agent.core.exceptions
-   src.trading_rl_agent.core.logging
+src.trading\_rl\_agent.core.logging module
+------------------------------------------
+
+.. automodule:: src.trading_rl_agent.core.logging
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: src.trading_rl_agent.core
+   :members:
+   :show-inheritance:
+   :undoc-members:

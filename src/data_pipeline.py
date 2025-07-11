@@ -29,7 +29,7 @@ import pandas_ta as ta
 try:
     import ray.data as rdata
 except Exception:  # pragma: no cover - Ray is optional
-    rdata = None  # type: ignore
+    rdata = None
 
 logger = logging.getLogger(__name__)
 

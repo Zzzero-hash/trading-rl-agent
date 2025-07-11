@@ -1,17 +1,37 @@
 src.trading\_rl\_agent.monitoring package
 =========================================
 
-.. automodule:: src.trading_rl_agent.monitoring
+Submodules
+----------
+
+src.trading\_rl\_agent.monitoring.alerts module
+-----------------------------------------------
+
+.. automodule:: src.trading_rl_agent.monitoring.alerts
    :members:
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+src.trading\_rl\_agent.monitoring.dashboard module
+--------------------------------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: src.trading_rl_agent.monitoring.dashboard
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
-   src.trading_rl_agent.monitoring.alerts
-   src.trading_rl_agent.monitoring.dashboard
-   src.trading_rl_agent.monitoring.metrics
+src.trading\_rl\_agent.monitoring.metrics module
+------------------------------------------------
+
+.. automodule:: src.trading_rl_agent.monitoring.metrics
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: src.trading_rl_agent.monitoring
+   :members:
+   :show-inheritance:
+   :undoc-members:

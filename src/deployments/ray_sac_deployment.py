@@ -6,7 +6,7 @@ SAC agent used in this repository.
 """
 
 import asyncio
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -21,7 +21,6 @@ except ImportError:  # pragma: no cover - Ray optional
     serve = None
 
 from agents.sac_agent import SACAgent
-
 from configs.hyperparameters import get_agent_config
 
 if RAY_AVAILABLE and serve:
@@ -33,7 +32,7 @@ if RAY_AVAILABLE and serve:
         def __init__(
             self,
             model_path: str | None = None,
-            config: dict | None = None,
+            config: dict[str, Any] | None = None,
         ):
             self.config = config or get_agent_config("enhanced_sac")
             self.state_dim = self.config.get("state_dim", 10)
@@ -83,34 +82,37 @@ if RAY_AVAILABLE and serve:
 
     def create_sac_deployment_graph(
         model_path: str | None = None,
-        config: dict | None = None,
-    ):
+        config: dict[str, Any] | None = None,
+    ) -> Any:
         """Create SAC deployment graph for Ray Serve."""
-        return SACServeDeployment.bind(model_path, config)
+        return cast(Any, SACServeDeployment).bind(model_path=model_path, config=config)
 
     def deploy_sac_model(
         model_path: str | None = None,
-        config: dict | None = None,
+        config: dict[str, Any] | None = None,
         deployment_name: str = "sac-model",
-    ):
-        deployment = SACServeDeployment.options(
-            name=deployment_name,
-            num_replicas=1,
-            ray_actor_options={"num_cpus": 1},
-        ).bind(model_path, config)
-        serve.run(deployment, name=deployment_name)
+    ) -> Any:
+        deployment = (
+            cast(Any, SACServeDeployment)
+            .options(
+                name=deployment_name,
+                num_replicas=2,
+            )
+            .bind(model_path=model_path, config=config)
+        )
+        serve.run(deployment)
         print(f"✅ SAC model deployed as '{deployment_name}'")
         return deployment
 
 else:
 
-    class SACServeDeployment:
+    class SACServeDeployment:  # type: ignore[no-redef]
         """Fallback SAC deployment when Ray is unavailable."""
 
         def __init__(
             self,
             model_path: str | None = None,
-            config: dict | None = None,
+            config: dict[str, Any] | None = None,
         ):
             print("⚠️ Ray not available - using fallback SAC deployment")
             self.agent = SACAgent(state_dim=10, action_dim=3, config=None)
@@ -122,24 +124,24 @@ else:
 
     def create_sac_deployment_graph(
         model_path: str | None = None,
-        config: dict | None = None,
-    ):
+        config: dict[str, Any] | None = None,
+    ) -> Any:
         return SACServeDeployment(model_path, config)
 
     def deploy_sac_model(
         model_path: str | None = None,
-        config: dict | None = None,
+        config: dict[str, Any] | None = None,
         deployment_name: str = "sac-model",
-    ):
+    ) -> Any:
         print("⚠️ Ray not available - skipping SAC model deployment")
         return SACServeDeployment(model_path, config)
 
 
 def start_sac_serve_cluster(
-    model_path: str | None = None,
-    config: dict | None = None,
-    cluster_config: dict | None = None,
-):
+    model_path: str,
+    config: dict[str, Any] | None = None,
+    cluster_config: dict[str, Any] | None = None,
+) -> serve.Deployment | None:
     """Start Ray cluster and deploy SAC model."""
     if not RAY_AVAILABLE:
         print("⚠️ Ray not available - cannot start serve cluster")
@@ -159,7 +161,7 @@ def start_sac_serve_cluster(
     return deployment
 
 
-def get_sac_serve_handle(deployment_name: str = "sac-model"):
+def get_sac_serve_handle(deployment_name: str = "sac-model") -> serve.Deployment | None:
     """Get handle to deployed SAC model."""
     if not RAY_AVAILABLE:
         return None
@@ -194,13 +196,13 @@ if __name__ == "__main__":
     print("=== SAC Ray Deployment Test ===")
     if RAY_AVAILABLE:
         print("✅ Ray available - testing SAC deployment")
-        deployment = create_sac_deployment_graph()
+        deployment = create_sac_deployment_graph(model_path="test_model.pth")
         print("✅ Created SAC deployment graph")
         sac_deploy = SACServeDeployment()
         test_obs = np.random.randn(10)
         test_request = {"observation": test_obs.tolist()}
 
-        async def test_prediction():
+        async def test_prediction() -> dict[str, Any]:
             result = await sac_deploy(test_request)
             print(f"✅ Test prediction: {result}")
             return result
@@ -208,13 +210,13 @@ if __name__ == "__main__":
         result = asyncio.run(test_prediction())
     else:
         print("⚠️ Ray not available - testing fallback implementations")
-        deployment = create_sac_deployment_graph()
+        deployment = create_sac_deployment_graph(model_path="test_model.pth")
         print("✅ Created fallback SAC deployment")
         test_obs = np.random.randn(10)
         test_request = {"observation": test_obs.tolist()}
 
-        async def test_fallback():
-            result = await deployment(test_request)
+        async def test_fallback() -> dict[str, Any]:
+            result: dict[str, Any] = await deployment(test_request)
             print(f"✅ Fallback prediction: {result}")
             return result
 

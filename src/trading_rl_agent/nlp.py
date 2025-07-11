@@ -14,8 +14,8 @@ def score_news_sentiment(symbol: str) -> float:
     data = provider.fetch_sentiment(symbol)
     if not data:
         return 0.0
-    # Simple average of scores
-    return sum(item.score for item in data) / len(data)
+    scores = [item.score for item in data]
+    return float(sum(scores) / len(scores)) if scores else 0.0
 
 
 def score_social_sentiment(symbol: str) -> float:
@@ -24,7 +24,8 @@ def score_social_sentiment(symbol: str) -> float:
     data = provider.fetch_sentiment(symbol)
     if not data:
         return 0.0
-    return sum(item.score for item in data) / len(data)
+    scores = [item.score for item in data]
+    return float(sum(scores) / len(scores)) if scores else 0.0
 
 
 def get_sentiment_scores(symbol: str) -> dict[str, float]:

@@ -24,8 +24,10 @@ import logging
 import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
+import numpy as np
+import pandas as pd
 import ray
 import torch
 from sklearn.metrics import accuracy_score, precision_score, recall_score
@@ -34,6 +36,9 @@ from torch.utils.data import DataLoader, TensorDataset
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    import numpy as np
+    import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -133,10 +138,10 @@ def _split_data(
     return (x[:split], y[:split]), (x[split:], y[split:])
 
 
-@ray.remote(num_gpus=1, num_cpus=4)
+# @ray.remote(num_gpus=1, num_cpus=4)  # Temporarily commented
 def train_supervised(
-    features: Any,
-    targets: Any,
+    features: np.ndarray | pd.DataFrame,
+    targets: np.ndarray | pd.Series,
     model_cfg: ModelConfig | None = None,
     train_cfg: TrainingConfig | None = None,
 ) -> tuple[TrendPredictor, dict[str, list[float]]]:
@@ -199,7 +204,7 @@ def train_supervised(
     criterion = nn.BCELoss() if m_cfg.task == "classification" else nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=t_cfg.learning_rate)
 
-    history = {"train_loss": [], "val_loss": [], "val_acc": []}
+    history: dict[str, list[float]] = {"train_loss": [], "val_loss": [], "val_acc": []}
     for epoch in range(t_cfg.epochs):
         model.train()
         total_loss = 0.0
@@ -268,7 +273,7 @@ def train_supervised_local(
     )
 
 
-def tune_example():
+def tune_example() -> None:
     """Illustrative example of wrapping training for Ray Tune."""
 
     # from ray import tune    # from ray import train
@@ -305,7 +310,7 @@ def load_model(path: str, device: str | torch.device | None = None) -> TrendPred
         cfg = ModelConfig(**checkpoint["config"])
         model = TrendPredictor(checkpoint["input_dim"], cfg).to(device)
         model.load_state_dict(checkpoint["state_dict"])
-        return model
+        return cast(TrendPredictor, model)
     except Exception as e:
         raise RuntimeError(f"Failed to load model: {e}") from e
 
@@ -353,7 +358,7 @@ def predict_features(
             "recent_data must be an array or tensor, not a function or method",
         )
     if isinstance(model_or_path, (str, bytes)):
-        model = load_model(model_or_path, device)
+        model = load_model(model_or_path)
     else:
         model = model_or_path
         if device is not None:

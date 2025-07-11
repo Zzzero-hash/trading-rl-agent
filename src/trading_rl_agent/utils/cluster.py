@@ -9,7 +9,7 @@ def init_ray(
     address: str | None = None,
     config_path: str | None = None,
     local_mode: bool = False,
-):
+) -> None:
     """Initialize Ray with the given address or configuration.
 
     Parameters

@@ -4,7 +4,13 @@ from trading_rl_agent.models import CNNLSTMModel
 
 
 def test_model_instantiation_from_yaml():
-    model = CNNLSTMModel(input_dim=5, config="src/configs/model/cnn_lstm.yaml")
+    config = {
+        "cnn_filters": [16, 32],
+        "cnn_kernel_sizes": [3, 3],
+        "lstm_units": 64,
+        "dropout": 0.1,
+    }
+    model = CNNLSTMModel(input_dim=5, config=config)
     assert isinstance(model, CNNLSTMModel)
 
 

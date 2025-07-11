@@ -1,17 +1,37 @@
 src.training package
 ====================
 
-.. automodule:: src.training
+Submodules
+----------
+
+src.training.cli module
+-----------------------
+
+.. automodule:: src.training.cli
    :members:
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+src.training.cnn\_lstm module
+-----------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: src.training.cnn_lstm
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
-   src.training.cli
-   src.training.cnn_lstm
-   src.training.rl
+src.training.rl module
+----------------------
+
+.. automodule:: src.training.rl
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: src.training
+   :members:
+   :show-inheritance:
+   :undoc-members:
