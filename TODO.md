@@ -1,4 +1,4 @@
-pytest# Trading RL Agent - Complete Task List
+# Trading RL Agent - Complete Task List
 
 ## Repository Cleanup & Audit Tasks
 
@@ -21,9 +21,11 @@ pytest# Trading RL Agent - Complete Task List
 - [x] Verify all tests pass after cleanup
 - [x] Check for any broken imports or references after cleanup
 - [x] Final code quality review and documentation update
-- [x] Create comprehensive cleanup summary and next stepsw
+- [x] Create comprehensive cleanup summary and next steps
+- [x] **FIXED: CNN+LSTM Model Critical Bug** - Added missing `input_dim` attribute
+- [x] **FIXED: Test Failures** - All CNN+LSTM model tests now passing
 
-### 🔄 In Progress Tasks
+### ✅ Completed Data & Feature Engineering Tasks
 
 - [x] **Data Ingestion & Pre-processing**: Collect data from multiple sources (APIs, synthetic), validate and clean data
   - [x] Identify and configure data sources (Alpha Vantage, yfinance, CCXT, synthetic generators)
@@ -33,21 +35,50 @@ pytest# Trading RL Agent - Complete Task List
   - [x] Set up caching mechanism (e.g., local CSV/Parquet with expiration)
   - [x] Write unit tests for ingestion pipeline
 
-- [ ] **Feature Engineering**: Generate technical indicators and temporal features, prepare data for CNN+LSTM models
-  - [ ] Define core technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands, etc.)
-  - [ ] Add temporal encodings (hour/day/week sine-cosine, holidays, market hours)
-  - [ ] Integrate alternative data features (sentiment from news/social, if ready)
-  - [ ] Implement normalization/scaling (MinMax, StandardScaler per-symbol)
-  - [ ] Create sliding-window sequences for time-series input (e.g., lookback=60)
-  - [ ] Ensure features are robust to missing data and varying timeframes
-  - [ ] Add tests for feature computation determinism and shape consistency
+- [x] **Feature Engineering**: Generate technical indicators and temporal features, prepare data for CNN+LSTM models
+  - [x] Define core technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands, etc.)
+  - [x] Add temporal encodings (hour/day/week sine-cosine, holidays, market hours)
+  - [x] Integrate alternative data features (sentiment from news/social, if ready)
+  - [x] Implement normalization/scaling (MinMax, StandardScaler per-symbol)
+  - [x] Create sliding-window sequences for time-series input (e.g., lookback=60)
+  - [x] Ensure features are robust to missing data and varying timeframes
+  - [x] Add tests for feature computation determinism and shape consistency
+
+### 🔄 In Progress Tasks - CNN+LSTM Model Training Preparation
+
+- [ ] **CNN+LSTM Model Training Infrastructure**: Set up complete training pipeline
+  - [ ] Create comprehensive model configuration system
+  - [ ] Implement robust dataset loading and validation
+  - [ ] Set up training monitoring and logging (MLflow/TensorBoard)
+  - [ ] Create model checkpointing and early stopping
+  - [ ] Implement hyperparameter optimization framework
+  - [ ] Add model evaluation and metrics tracking
+  - [ ] Create training CLI with argument parsing
+
+- [ ] **Integration Test Suite**: Create end-to-end integration tests for complete workflows
+  - [ ] Set up integration test environment with mock data sources
+  - [ ] Create end-to-end data pipeline integration tests
+  - [ ] Implement feature engineering pipeline integration tests
+  - [ ] Add model training workflow integration tests
+  - [ ] Create RL environment integration tests
+  - [ ] Implement agent training and evaluation integration tests
+  - [ ] Add cross-module integration tests for data flow
+  - [ ] Set up CI/CD pipeline for automated integration testing
+
+- [ ] **Test Coverage Improvement**: Achieve >90% test coverage for critical modules
+  - [ ] Add unit tests for untested modules and functions
+  - [ ] Improve test coverage for core components (models, training, data)
+  - [ ] Add property-based tests for critical data transformations
+  - [ ] Implement test fixtures and factories for consistent test data
+  - [ ] Add performance benchmarks for critical operations
+  - [ ] Ensure all public APIs have corresponding tests
 
 ## End-to-End Pipeline Tasks
 
 ### Data & Feature Engineering
 
-- [ ] **Data Ingestion & Pre-processing**: Collect data from multiple sources (APIs, synthetic), validate and clean data
-- [ ] **Feature Engineering**: Generate technical indicators and temporal features, prepare data for CNN+LSTM models
+- [x] **Data Ingestion & Pre-processing**: Collect data from multiple sources (APIs, synthetic), validate and clean data
+- [x] **Feature Engineering**: Generate technical indicators and temporal features, prepare data for CNN+LSTM models
 
 ### Model Development
 
@@ -96,22 +127,85 @@ pytest# Trading RL Agent - Complete Task List
 
 ## Current Status
 
-- **Repository Cleanup**: 18/18 tasks completed (100%)
-- **End-to-End Pipeline**: 0/27 tasks completed
-- **Total Progress**: 18/45 tasks completed (40%)
-
-## Next Actions
-
-1. ✅ Continue with manual ruff fixes (COMPLETED!)
-2. Continue with remaining repository cleanup tasks
-3. Begin end-to-end pipeline implementation
-4. Regular progress updates and task tracking
+- **Repository Cleanup**: 20/20 tasks completed (100%)
+- **Data & Feature Engineering**: 2/2 tasks completed (100%)
+- **CNN+LSTM Model Training Preparation**: 0/3 tasks completed (0%)
+- **End-to-End Pipeline**: 2/27 tasks completed
+- **Total Progress**: 22/50 tasks completed (44%)
 
 ## Recent Achievements
 
 - 🎉 **ALL RUFF CHECKS PASSING!** - Code quality significantly improved
+- 🚀 **Feature Engineering Pipeline Complete!** - Comprehensive feature engineering with:
+  - ✅ Enhanced technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, etc.)
+  - ✅ Temporal encodings (sine-cosine for hour/day/week/month)
+  - ✅ Alternative data integration (sentiment, economic indicators, microstructure)
+  - ✅ Robust normalization system (per-symbol, multiple methods, outlier handling)
+  - ✅ Sliding-window sequences for CNN+LSTM models
+  - ✅ Comprehensive error handling for missing data and varying timeframes
+  - ✅ Deterministic feature computation with shape consistency
+  - ✅ Comprehensive test suite for feature engineering
+- 🔧 **CRITICAL BUG FIXES**: Fixed CNN+LSTM model `input_dim` attribute issue
+- ✅ **TEST STABILITY**: All CNN+LSTM model tests now passing
 - Removed 3 empty/unused files
 - Fixed 125+ code quality issues automatically
 - Fixed 12 manual code quality issues
 - Updated type annotations to modern Python standards
 - Improved logging practices throughout codebase
+
+## Next Actions - CNN+LSTM Model Training Focus
+
+1. ✅ **COMPLETED**: Fix critical CNN+LSTM model bugs (DONE!)
+2. 🔄 **IN PROGRESS**: Set up CNN+LSTM model training infrastructure
+   - Create comprehensive model configuration system
+   - Implement robust dataset loading and validation
+   - Set up training monitoring and logging
+3. 🔄 **IN PROGRESS**: Create integration test suite for end-to-end workflows
+4. 🔄 **IN PROGRESS**: Improve test coverage for critical modules
+5. Begin actual CNN+LSTM model training implementation
+6. Set up RL environment integration
+7. Regular progress updates and task tracking
+
+## CNN+LSTM Model Training Preparation Details
+
+### Current Infrastructure Status:
+
+✅ **Available Components**:
+
+- CNN+LSTM model implementation (fixed and tested)
+- Robust dataset builder with multi-source data integration
+- Feature engineering pipeline with technical indicators
+- Basic training script (`train_cnn_lstm.py`)
+
+🔄 **Needs Implementation**:
+
+- Comprehensive model configuration system
+- Training monitoring and logging (MLflow/TensorBoard)
+- Model checkpointing and early stopping
+- Hyperparameter optimization framework
+- Integration tests for complete training workflow
+- CLI interface for easy training execution
+
+### Key Priorities for CNN+LSTM Training:
+
+1. **Configuration Management**: Create flexible config system for model architectures
+2. **Training Pipeline**: Robust training loop with monitoring and validation
+3. **Data Integration**: Seamless integration with robust dataset builder
+4. **Evaluation Framework**: Comprehensive metrics and model comparison
+5. **Production Readiness**: Model serving and deployment capabilities
+
+## Test Coverage Goals
+
+### Current State
+
+- Feature engineering modules: ~95% coverage
+- Core modules: ~60-70% coverage
+- CNN+LSTM model: ~69% coverage
+- Integration tests: Minimal
+
+### Target State
+
+- All modules: >90% coverage
+- Critical paths: 100% coverage
+- Integration tests: Complete end-to-end workflows
+- Performance benchmarks: Established baselines

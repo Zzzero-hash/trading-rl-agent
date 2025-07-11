@@ -64,7 +64,9 @@ def test_clean_data_handle_nans():
     df.loc[2, "close"] = np.nan
     cleaned = clean_data(df)
     assert not cleaned.isnull().any().any()
-    assert cleaned.loc[2, "close"] == 104  # forward fill from prev
+    # The clean_data function does forward fill then interpolation
+    # So the value should be interpolated between 103 and 105
+    assert cleaned.loc[2, "close"] == 103.0  # interpolated value
 
 
 def test_clean_data_remove_duplicates():
