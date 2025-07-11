@@ -13,12 +13,15 @@ import empyrical as _empyrical
 import numpy as np
 import pandas as pd
 
-# QuantStats requires IPython even when only using the stats module. To avoid
-# import errors when IPython is not installed, we lazily import the module using
-# ``importlib`` which still triggers the package ``__init__`` but ensures the
-# dependency is available when this file is imported through the project's
-# requirements.
-qs_stats = importlib.import_module("quantstats.stats")
+# QuantStats has compatibility issues with newer IPython versions.
+# We'll try to import it, but provide fallback implementations if it fails.
+try:
+    qs_stats = importlib.import_module("quantstats.stats")
+    QUANTSTATS_AVAILABLE = True
+except (ImportError, AttributeError):
+    # Fallback when quantstats is not available or has compatibility issues
+    QUANTSTATS_AVAILABLE = False
+    qs_stats = None
 
 TRADING_DAYS_PER_YEAR = 252
 
@@ -29,6 +32,46 @@ def _to_series(returns) -> pd.Series:
     if not isinstance(series.index, pd.DatetimeIndex):
         series.index = pd.date_range("1970-01-01", periods=len(series))
     return series
+
+
+def _calculate_profit_factor_fallback(returns) -> float:
+    """Fallback implementation of profit factor when quantstats is not available."""
+    returns = np.asarray(returns)
+    positive_returns = returns[returns > 0]
+    negative_returns = returns[returns < 0]
+
+    if len(negative_returns) == 0:
+        return float("inf") if len(positive_returns) > 0 else 0.0
+
+    gross_profit = np.sum(positive_returns)
+    gross_loss = abs(np.sum(negative_returns))
+
+    return float(gross_profit / gross_loss) if gross_loss > 0 else 0.0
+
+
+def _calculate_win_rate_fallback(returns) -> float:
+    """Fallback implementation of win rate when quantstats is not available."""
+    returns = np.asarray(returns)
+    if len(returns) == 0:
+        return 0.0
+
+    winning_trades = np.sum(returns > 0)
+    return float(winning_trades / len(returns))
+
+
+def _calculate_win_loss_ratio_fallback(returns) -> float:
+    """Fallback implementation of win/loss ratio when quantstats is not available."""
+    returns = np.asarray(returns)
+    positive_returns = returns[returns > 0]
+    negative_returns = returns[returns < 0]
+
+    if len(positive_returns) == 0 or len(negative_returns) == 0:
+        return 0.0
+
+    avg_win = np.mean(positive_returns)
+    avg_loss = abs(np.mean(negative_returns))
+
+    return float(avg_win / avg_loss) if avg_loss > 0 else 0.0
 
 
 def calculate_sharpe_ratio(returns, risk_free_rate: float = 0.0) -> float:
@@ -65,15 +108,19 @@ def calculate_sortino_ratio(returns, target_return: float = 0.0) -> float:
 
 
 def calculate_profit_factor(returns) -> float:
-    """Calculate profit factor using QuantStats."""
-    series = _to_series(returns)
-    return float(qs_stats.profit_factor(series))
+    """Calculate profit factor using QuantStats or fallback implementation."""
+    if QUANTSTATS_AVAILABLE and qs_stats is not None:
+        series = _to_series(returns)
+        return float(qs_stats.profit_factor(series))
+    return _calculate_profit_factor_fallback(returns)
 
 
 def calculate_win_rate(returns) -> float:
-    """Calculate win rate using QuantStats."""
-    series = _to_series(returns)
-    return float(qs_stats.win_rate(series))
+    """Calculate win rate using QuantStats or fallback implementation."""
+    if QUANTSTATS_AVAILABLE and qs_stats is not None:
+        series = _to_series(returns)
+        return float(qs_stats.win_rate(series))
+    return _calculate_win_rate_fallback(returns)
 
 
 def calculate_calmar_ratio(returns) -> float:
@@ -128,10 +175,12 @@ def calculate_beta(returns, benchmark_returns) -> float:
 
 
 def calculate_average_win_loss_ratio(returns) -> float:
-    """Average win/loss ratio using QuantStats."""
-    series = _to_series(returns)
-    # QuantStats exposes this metric as ``win_loss_ratio`` / ``payoff_ratio``
-    return float(qs_stats.win_loss_ratio(series))
+    """Average win/loss ratio using QuantStats or fallback implementation."""
+    if QUANTSTATS_AVAILABLE and qs_stats is not None:
+        series = _to_series(returns)
+        # QuantStats exposes this metric as ``win_loss_ratio`` / ``payoff_ratio``
+        return float(qs_stats.win_loss_ratio(series))
+    return _calculate_win_loss_ratio_fallback(returns)
 
 
 def calculate_comprehensive_metrics(
@@ -149,9 +198,9 @@ def calculate_comprehensive_metrics(
         "max_drawdown": calculate_max_drawdown(series),
         "var_95": calculate_var(series, confidence),
         "expected_shortfall": calculate_expected_shortfall(series, confidence),
-        "profit_factor": float(qs_stats.profit_factor(series)),
-        "win_rate": float(qs_stats.win_rate(series)),
-        "average_win_loss_ratio": float(qs_stats.win_loss_ratio(series)),
+        "profit_factor": calculate_profit_factor(series),
+        "win_rate": calculate_win_rate(series),
+        "average_win_loss_ratio": calculate_average_win_loss_ratio(series),
     }
 
     if benchmark_returns is not None:

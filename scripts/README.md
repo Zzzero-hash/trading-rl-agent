@@ -19,38 +19,6 @@ git commit -m "Your commit message"
 
 This script permanently fixes the `LC_ALL: cannot change locale` warnings by setting the locale to the stable `C.utf8` that's available in the dev container.
 
-### `cleanup_experiments.py`
-
-Automated cleanup tool for managing experiment outputs and disk space.
-
-**Usage:**
-
-```bash
-# Check current storage usage
-python scripts/cleanup_experiments.py --status-only
-
-# See what would be cleaned (dry run)
-python scripts/cleanup_experiments.py --dry-run --all
-
-# Clean up old experiments (keeps last 7 days)
-python scripts/cleanup_experiments.py --all
-
-# Archive important results before cleanup
-python scripts/cleanup_experiments.py --archive
-
-# Clean up specific components
-python scripts/cleanup_experiments.py --clear-notebooks --dry-run
-```
-
-**Features:**
-
-- Removes old Ray Tune experiment directories
-- Cleans up optimization result directories
-- Clears Python cache files
-- Archives best experiment results
-- Clears Jupyter notebook outputs
-- Shows storage usage statistics
-
 ### `pre-commit-hook.sh`
 
 Pre-commit hook for automatic cleanup before git commits.
@@ -77,8 +45,8 @@ chmod +x .git/hooks/pre-commit
 
 ### Weekly
 
-- Run full cleanup: `python scripts/cleanup_experiments.py --archive --all`
-- Review archived results and remove old archives
+- Review and clean up experiment outputs manually
+- Remove old archives and temporary files
 
 ### Before Major Commits
 

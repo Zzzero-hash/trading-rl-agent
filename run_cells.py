@@ -137,7 +137,7 @@ def run_cell_3():
     print(f"  🎲 Synthetic symbols: {len(CONFIG['synthetic_symbols'])}")
     print(f"  🔢 Total symbols: {len(ALL_SYMBOLS)}")
     print(f"  📅 Date range: {CONFIG['start_date']} to {CONFIG['end_date']}")
-    print(f"  ⚖️ Real/Synthetic ratio: {CONFIG['real_data_ratio']:.0%}/{1-CONFIG['real_data_ratio']:.0%}")
+    print(f"  ⚖️ Real/Synthetic ratio: {CONFIG['real_data_ratio']:.0%}/{1 - CONFIG['real_data_ratio']:.0%}")
 
     # Store in global variables
     global_vars["CONFIG"] = CONFIG

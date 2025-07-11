@@ -190,14 +190,14 @@ class CNNLSTMTrainer:
             logger.info(f"  📈 Val RMSE: {val_metrics['rmse']:.6f}")
             logger.info(f"  🔗 Val Correlation: {val_metrics['correlation']:.4f}")
             logger.info(f"  ⏱️ Epoch Time: {epoch_time:.1f}s")
-            logger.info(f"  🕐 Total Time: {total_time/60:.1f}m")
-            logger.info(f"  ⏳ ETA: {eta/60:.1f}m")
+            logger.info(f"  🕐 Total Time: {total_time / 60:.1f}m")
+            logger.info(f"  ⏳ ETA: {eta / 60:.1f}m")
             logger.info(f"  🎯 Learning Rate: {new_lr:.2e}")
 
             # Early stopping check
             if patience_counter >= patience:
                 logger.info(f"\n🛑 Early stopping triggered at epoch {epoch + 1}")
-                logger.info(f"⏱️ Total training time: {total_time/60:.1f} minutes")
+                logger.info(f"⏱️ Total training time: {total_time / 60:.1f} minutes")
                 break
 
         # Final evaluation
@@ -268,7 +268,7 @@ class CNNLSTMTrainer:
             pbar.set_postfix(
                 {
                     "loss": f"{batch_loss:.6f}",
-                    "avg_loss": f"{total_loss/(batch_idx+1):.6f}",
+                    "avg_loss": f"{total_loss / (batch_idx + 1):.6f}",
                     "grad_norm": f"{grad_norm:.4f}",
                 }
             )
@@ -315,7 +315,9 @@ class CNNLSTMTrainer:
                 targets.extend(target.cpu().numpy().flatten())
 
                 # Update progress bar
-                pbar.set_postfix({"val_loss": f"{batch_loss:.6f}", "avg_val_loss": f"{total_loss/(batch_idx+1):.6f}"})
+                pbar.set_postfix(
+                    {"val_loss": f"{batch_loss:.6f}", "avg_val_loss": f"{total_loss / (batch_idx + 1):.6f}"}
+                )
 
         avg_loss = total_loss / len(dataloader)
 
@@ -371,17 +373,21 @@ class CNNLSTMTrainer:
 
     def load_checkpoint(self, checkpoint_path: str, input_dim: int):
         """Load model from checkpoint."""
-        # Handle PyTorch 2.6+ weights_only behavior for sklearn scalers
-        import torch.serialization
-        from sklearn.preprocessing._data import RobustScaler
+        # Handle PyTorch version compatibility for safe loading
+        try:
+            import torch.serialization
+            from sklearn.preprocessing._data import RobustScaler
 
-        torch.serialization.add_safe_globals([RobustScaler])
+            torch.serialization.add_safe_globals([RobustScaler])
+        except (AttributeError, ImportError):
+            # For older PyTorch versions that don't have add_safe_globals
+            pass
 
         try:
-            # First try with weights_only=True (PyTorch 2.6+ default)
+            # First try with weights_only=True (recommended for security)
             checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
         except Exception:
-            # Fallback to weights_only=False for older checkpoints
+            # Fallback to weights_only=False for older checkpoints or other issues
             checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
 
         self.model = CNNLSTMModel(
