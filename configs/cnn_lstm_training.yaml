@@ -1,0 +1,162 @@
+# CNN+LSTM Model Training Configuration
+# This configuration file defines all parameters for training CNN+LSTM models
+
+# Model Architecture Configuration
+model:
+  # CNN Configuration
+  cnn_filters: [64, 128, 256] # Number of filters in each CNN layer
+  cnn_kernel_sizes: [3, 3, 3] # Kernel sizes for each CNN layer
+  cnn_dropout: 0.2 # Dropout rate for CNN layers
+
+  # LSTM Configuration
+  lstm_units: 128 # Number of LSTM units
+  lstm_num_layers: 2 # Number of LSTM layers
+  lstm_dropout: 0.2 # Dropout rate for LSTM layers
+
+  # Dense Layers Configuration
+  dense_units: [64, 32] # Number of units in dense layers
+  output_dim: 1 # Output dimension (1 for price prediction)
+
+  # General Model Settings
+  activation: "relu" # Activation function
+  use_attention: false # Whether to use attention mechanism
+
+# Training Configuration
+training:
+  # Data Configuration
+  batch_size: 32
+  val_split: 0.2 # Validation split ratio
+  sequence_length: 60 # Lookback window length
+  prediction_horizon: 1 # Steps ahead to predict
+
+  # Optimization Configuration
+  learning_rate: 0.001
+  weight_decay: 1e-5
+  optimizer: "adam" # adam, sgd, rmsprop
+
+  # Training Loop Configuration
+  epochs: 100
+  early_stopping_patience: 10
+  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+
+  # Loss Configuration
+  loss_function: "mse" # mse, mae, huber
+
+  # Device Configuration
+  device: "auto" # auto, cpu, cuda
+  num_workers: 4 # Number of data loader workers
+
+# Dataset Configuration
+dataset:
+  # Data Sources
+  symbols: ["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"]
+  start_date: "2023-01-01"
+  end_date: "2024-01-01"
+  timeframe: "1d" # 1d, 1h, 5m, etc.
+
+  # Dataset Composition
+  real_data_ratio: 0.8 # 80% real, 20% synthetic
+  min_samples_per_symbol: 1000
+  overlap_ratio: 0.8 # Overlap between sequences
+
+  # Feature Engineering
+  technical_indicators: true
+  sentiment_features: false # Disable for faster processing
+  market_regime_features: true
+
+  # Data Quality
+  outlier_threshold: 3.0 # Standard deviations
+  missing_value_threshold: 0.05 # Max 5% missing
+
+  # Output
+  output_dir: "data/cnn_lstm_datasets"
+  save_metadata: true
+
+# Monitoring and Logging
+monitoring:
+  # Logging Configuration
+  log_level: "INFO"
+  log_file: "logs/cnn_lstm_training.log"
+
+  # Experiment Tracking
+  experiment_name: "cnn_lstm_trading"
+  tracking_uri: "sqlite:///mlruns.db" # MLflow tracking URI
+
+  # TensorBoard Configuration
+  tensorboard_log_dir: "logs/tensorboard"
+  tensorboard_enabled: true
+
+  # Model Checkpointing
+  checkpoint_dir: "models/checkpoints"
+  save_best_only: true
+  save_frequency: 5 # Save every N epochs
+
+  # Metrics Configuration
+  metrics:
+    - "train_loss"
+    - "val_loss"
+    - "mae"
+    - "rmse"
+    - "correlation"
+    - "r2_score"
+
+# Hyperparameter Optimization
+hyperopt:
+  enabled: false # Enable for hyperparameter optimization
+  n_trials: 50 # Number of optimization trials
+  timeout: 3600 # Timeout in seconds
+
+  # Search Space
+  search_space:
+    learning_rate:
+      type: "log_uniform"
+      low: 1e-5
+      high: 1e-2
+    batch_size:
+      type: "categorical"
+      choices: [16, 32, 64, 128]
+    lstm_units:
+      type: "categorical"
+      choices: [64, 128, 256]
+    cnn_filters:
+      type: "categorical"
+      choices: [[32, 64], [64, 128], [64, 128, 256]]
+
+# Evaluation Configuration
+evaluation:
+  # Test Configuration
+  test_split: 0.2 # Test split ratio
+  backtest_period: "2024-01-01" # Start date for backtesting
+
+  # Metrics Configuration
+  metrics:
+    - "mae"
+    - "rmse"
+    - "mape"
+    - "r2_score"
+    - "correlation"
+    - "sharpe_ratio"
+    - "max_drawdown"
+    - "win_rate"
+
+  # Visualization Configuration
+  plot_predictions: true
+  plot_training_history: true
+  save_plots: true
+  plot_dir: "plots"
+
+# Production Configuration
+production:
+  # Model Serving
+  model_format: "torchscript" # torchscript, onnx
+  model_version: "v1.0.0"
+
+  # API Configuration
+  api_host: "0.0.0.0"
+  api_port: 8000
+  api_workers: 4
+
+  # Monitoring
+  health_check_interval: 30 # seconds
+  metrics_export_interval: 60 # seconds
