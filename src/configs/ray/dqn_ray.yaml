@@ -1,9 +1,0 @@
-# DQN configuration for Ray RLlib
-num_workers: 2 # Number of parallel workers
-lr: 0.0001 # Learning rate
-train_batch_size: 32 # Batch size of experiences for each training step
-gamma: 0.99 # Discount factor
-buffer_size: 50000 # Replay buffer size
-learning_starts: 1000 # Timesteps before learning starts
-target_network_update_freq: 500 # How often to update the target network
-framework: torch # Use the PyTorch backend
