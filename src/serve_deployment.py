@@ -16,7 +16,7 @@ import numpy as np
 try:
     from ray import serve
 except Exception:  # pragma: no cover - ray might not be installed
-    serve = None  # type: ignore
+    serve = None
 
 from trading_rl_agent.supervised_model import load_model, predict_features
 
@@ -70,10 +70,10 @@ if serve:
             action = 1 if (obs.mean() + pred) > 0 else 0
             return {"action": int(action)}
 
-    def deployment_graph(model_path: str | None = None):
+    def deployment_graph(model_path: str | None = None) -> dict[str, Any]:
         """Return a Serve deployment graph for the predictor and policy."""
-        predictor = PredictorDeployment.bind(model_path)
-        policy = PolicyDeployment.bind(predictor)
+        predictor = PredictorDeployment.bind(model_path)  # type: ignore[attr-defined]
+        policy = PolicyDeployment.bind(predictor)  # type: ignore[attr-defined]
         return {"predictor": predictor, "policy": policy}
 
 else:  # pragma: no cover - serve not available
@@ -111,7 +111,7 @@ else:  # pragma: no cover - serve not available
             action = 1 if (obs.mean() + pred) > 0 else 0
             return {"action": int(action)}
 
-    def deployment_graph(model_path: str | None = None):
+    def deployment_graph(model_path: str | None = None) -> dict[str, Any]:
         predictor = PredictorDeployment(model_path)
         policy = PolicyDeployment(predictor)
         return {"predictor": predictor, "policy": policy}

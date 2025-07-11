@@ -1,16 +1,29 @@
 src.trading\_rl\_agent.models package
 =====================================
 
-.. automodule:: src.trading_rl_agent.models
+Submodules
+----------
+
+src.trading\_rl\_agent.models.cnn\_lstm module
+----------------------------------------------
+
+.. automodule:: src.trading_rl_agent.models.cnn_lstm
    :members:
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+src.trading\_rl\_agent.models.concat\_model module
+--------------------------------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: src.trading_rl_agent.models.concat_model
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
-   src.trading_rl_agent.models.cnn_lstm
-   src.trading_rl_agent.models.concat_model
+Module contents
+---------------
+
+.. automodule:: src.trading_rl_agent.models
+   :members:
+   :show-inheritance:
+   :undoc-members:

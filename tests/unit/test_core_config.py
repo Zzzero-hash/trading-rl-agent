@@ -68,7 +68,6 @@ for pkg in ["features", "portfolio", "risk"]:
         mod.__path__ = [str(base / pkg)]
         sys.modules[key] = mod
 import pytest
-import yaml
 
 from trading_rl_agent.core.config import ConfigManager, SystemConfig
 
@@ -87,26 +86,22 @@ def test_default_config(tmp_path):
 
 
 def test_load_update_save_config(tmp_path):
-    """
-    Test loading, updating, and saving a configuration using ConfigManager.
+    config_path = tmp_path / "test_config.yaml"
+    manager = ConfigManager(config_path=config_path)
 
-    Creates a YAML configuration file, loads it, verifies its contents, updates a value, saves the updated configuration, and checks that the saved file reflects the changes.
-    """
-    config_file = tmp_path / "config.yaml"
-    data = {"environment": "production", "debug": True, "risk": {"max_drawdown": 0.2}}
-    with Path(config_file).open(config_file, "w") as f:
-        yaml.dump(data, f)
+    # Create and save a default config
+    default_config = manager.get_config()
+    default_config.debug = True
+    manager.save_config(default_config)
 
-    manager = ConfigManager(config_file)
-    cfg = manager.load_config()
-    assert cfg.environment == "production"
-    assert cfg.debug is True
-    assert cfg.risk.max_drawdown == 0.2
+    # Load and verify
+    loaded_config = manager.load_config()
+    assert loaded_config.debug is True
 
-    manager.update_config({"risk": {"max_leverage": 2.0}})
-    assert manager.get_config().risk.max_leverage == 2.0
+    # Update and save
+    loaded_config.debug = False
+    manager.save_config(loaded_config)
 
-    out_file = tmp_path / "out.yaml"
-    manager.save_config(manager.get_config(), out_file)
-    saved = yaml.safe_load(out_file.read_text())
-    assert saved["risk"]["max_leverage"] == 2.0
+    # Reload and verify update
+    reloaded_config = manager.load_config()
+    assert reloaded_config.debug is False

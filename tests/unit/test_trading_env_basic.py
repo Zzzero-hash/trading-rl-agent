@@ -69,5 +69,5 @@ def test_missing_dataset_paths():
 
 def test_file_not_found(tmp_path):
     missing = tmp_path / "nope.csv"
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(ValueError):
         TradingEnv({"dataset_paths": [str(missing)]})

@@ -21,12 +21,11 @@ try:
 except (ImportError, AttributeError):
     # Fallback when quantstats is not available or has compatibility issues
     QUANTSTATS_AVAILABLE = False
-    qs_stats = None
 
 TRADING_DAYS_PER_YEAR = 252
 
 
-def _to_series(returns) -> pd.Series:
+def _to_series(returns: np.ndarray | pd.Series | list) -> pd.Series:
     """Convert input to a pandas Series with a DatetimeIndex."""
     series = pd.Series(returns)
     if not isinstance(series.index, pd.DatetimeIndex):
@@ -34,7 +33,7 @@ def _to_series(returns) -> pd.Series:
     return series
 
 
-def _calculate_profit_factor_fallback(returns) -> float:
+def _calculate_profit_factor_fallback(returns: np.ndarray | pd.Series) -> float:
     """Fallback implementation of profit factor when quantstats is not available."""
     returns = np.asarray(returns)
     positive_returns = returns[returns > 0]
@@ -49,7 +48,7 @@ def _calculate_profit_factor_fallback(returns) -> float:
     return float(gross_profit / gross_loss) if gross_loss > 0 else 0.0
 
 
-def _calculate_win_rate_fallback(returns) -> float:
+def _calculate_win_rate_fallback(returns: np.ndarray | pd.Series) -> float:
     """Fallback implementation of win rate when quantstats is not available."""
     returns = np.asarray(returns)
     if len(returns) == 0:
@@ -59,7 +58,7 @@ def _calculate_win_rate_fallback(returns) -> float:
     return float(winning_trades / len(returns))
 
 
-def _calculate_win_loss_ratio_fallback(returns) -> float:
+def _calculate_win_loss_ratio_fallback(returns: np.ndarray | pd.Series) -> float:
     """Fallback implementation of win/loss ratio when quantstats is not available."""
     returns = np.asarray(returns)
     positive_returns = returns[returns > 0]
@@ -74,7 +73,7 @@ def _calculate_win_loss_ratio_fallback(returns) -> float:
     return float(avg_win / avg_loss) if avg_loss > 0 else 0.0
 
 
-def calculate_sharpe_ratio(returns, risk_free_rate: float = 0.0) -> float:
+def calculate_sharpe_ratio(returns: np.ndarray | pd.Series, risk_free_rate: float = 0.0) -> float:
     """
     Calculate the Sharpe ratio for a series of returns.
 
@@ -88,12 +87,12 @@ def calculate_sharpe_ratio(returns, risk_free_rate: float = 0.0) -> float:
     return float(_empyrical.sharpe_ratio(returns, risk_free=risk_free_rate))
 
 
-def calculate_max_drawdown(returns) -> float:
+def calculate_max_drawdown(returns: np.ndarray | pd.Series) -> float:
     """Calculate maximum drawdown from a series of returns."""
     return float(_empyrical.max_drawdown(np.asarray(returns)))
 
 
-def calculate_sortino_ratio(returns, target_return: float = 0.0) -> float:
+def calculate_sortino_ratio(returns: np.ndarray | pd.Series, target_return: float = 0.0) -> float:
     """
     Calculate Sortino ratio (downside deviation).
 
@@ -107,7 +106,7 @@ def calculate_sortino_ratio(returns, target_return: float = 0.0) -> float:
     return float(_empyrical.sortino_ratio(returns, required_return=target_return))
 
 
-def calculate_profit_factor(returns) -> float:
+def calculate_profit_factor(returns: np.ndarray | pd.Series) -> float:
     """Calculate profit factor using QuantStats or fallback implementation."""
     if QUANTSTATS_AVAILABLE and qs_stats is not None:
         series = _to_series(returns)
@@ -115,7 +114,7 @@ def calculate_profit_factor(returns) -> float:
     return _calculate_profit_factor_fallback(returns)
 
 
-def calculate_win_rate(returns) -> float:
+def calculate_win_rate(returns: np.ndarray | pd.Series) -> float:
     """Calculate win rate using QuantStats or fallback implementation."""
     if QUANTSTATS_AVAILABLE and qs_stats is not None:
         series = _to_series(returns)
@@ -123,7 +122,7 @@ def calculate_win_rate(returns) -> float:
     return _calculate_win_rate_fallback(returns)
 
 
-def calculate_calmar_ratio(returns) -> float:
+def calculate_calmar_ratio(returns: np.ndarray | pd.Series) -> float:
     """
     Calculate Calmar ratio (annual return / max drawdown).
 
@@ -136,13 +135,13 @@ def calculate_calmar_ratio(returns) -> float:
     return float(_empyrical.calmar_ratio(returns))
 
 
-def calculate_var(returns, confidence: float = 0.95) -> float:
+def calculate_var(returns: np.ndarray | pd.Series, confidence: float = 0.95) -> float:
     """Value at Risk (VaR) at the given confidence level."""
     cutoff = 1 - confidence
     return float(_empyrical.value_at_risk(np.asarray(returns), cutoff=cutoff))
 
 
-def calculate_expected_shortfall(returns, confidence: float = 0.95) -> float:
+def calculate_expected_shortfall(returns: np.ndarray | pd.Series, confidence: float = 0.95) -> float:
     """Expected shortfall (Conditional VaR)."""
     cutoff = 1 - confidence
     return float(
@@ -150,7 +149,7 @@ def calculate_expected_shortfall(returns, confidence: float = 0.95) -> float:
     )
 
 
-def calculate_information_ratio(returns, benchmark_returns) -> float:
+def calculate_information_ratio(returns: np.ndarray | pd.Series, benchmark_returns: np.ndarray | pd.Series) -> float:
     """Information ratio versus a benchmark."""
     returns = np.asarray(returns)
     benchmark_returns = np.asarray(benchmark_returns)
@@ -161,7 +160,7 @@ def calculate_information_ratio(returns, benchmark_returns) -> float:
     return float(np.mean(excess) / te * np.sqrt(TRADING_DAYS_PER_YEAR))
 
 
-def calculate_tracking_error(returns, benchmark_returns) -> float:
+def calculate_tracking_error(returns: np.ndarray | pd.Series, benchmark_returns: np.ndarray | pd.Series) -> float:
     """Annualized tracking error."""
     returns = np.asarray(returns)
     benchmark_returns = np.asarray(benchmark_returns)
@@ -169,12 +168,12 @@ def calculate_tracking_error(returns, benchmark_returns) -> float:
     return float(np.std(excess) * np.sqrt(TRADING_DAYS_PER_YEAR))
 
 
-def calculate_beta(returns, benchmark_returns) -> float:
+def calculate_beta(returns: np.ndarray | pd.Series, benchmark_returns: np.ndarray | pd.Series) -> float:
     """Beta of returns relative to benchmark."""
     return float(_empyrical.beta(np.asarray(returns), np.asarray(benchmark_returns)))
 
 
-def calculate_average_win_loss_ratio(returns) -> float:
+def calculate_average_win_loss_ratio(returns: np.ndarray | pd.Series) -> float:
     """Average win/loss ratio using QuantStats or fallback implementation."""
     if QUANTSTATS_AVAILABLE and qs_stats is not None:
         series = _to_series(returns)
@@ -184,11 +183,11 @@ def calculate_average_win_loss_ratio(returns) -> float:
 
 
 def calculate_comprehensive_metrics(
-    returns,
-    benchmark_returns=None,
+    returns: np.ndarray | pd.Series,
+    benchmark_returns: np.ndarray | pd.Series | None = None,
     risk_free_rate: float = 0.0,
     confidence: float = 0.95,
-):
+) -> dict[str, float]:
     """Return a dictionary with common trading performance metrics."""
     series = _to_series(returns)
     metrics = {
@@ -218,7 +217,10 @@ def calculate_comprehensive_metrics(
     return metrics
 
 
-def calculate_risk_metrics(returns, equity_curve=None):
+def calculate_risk_metrics(
+    returns: np.ndarray | pd.Series,
+    equity_curve: np.ndarray | pd.Series | None = None,
+) -> dict[str, float]:
     """Comprehensive risk metrics using empyrical"""
     if equity_curve is None:
         equity_curve = np.cumprod(1 + np.asarray(returns))

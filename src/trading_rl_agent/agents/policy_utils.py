@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 import numpy as np
 from ray.rllib.policy.policy import Policy
@@ -27,7 +27,7 @@ class CallablePolicy(Policy):
             raise ValueError("func must be a callable")
         self.func = func
 
-    def compute_actions(self, obs_batch, **kwargs):
+    def compute_actions(self, obs_batch: list[np.ndarray], **kwargs: Any) -> tuple[np.ndarray, list, dict[str, Any]]:
         actions = [self.func(obs) for obs in obs_batch]
         # Ensure consistent 2D array shape: (batch_size, action_dim)
         actions_array = np.array(actions)
@@ -39,7 +39,7 @@ class CallablePolicy(Policy):
         return actions_array, [], {}
 
 
-def weighted_policy_mapping(weights: dict[str, float]):
+def weighted_policy_mapping(weights: dict[str, float]) -> Callable[[str, Any | None, Any | None, dict[str, Any]], str]:
     """Create a policy mapping function using normalized weights."""
     total = sum(weights.values()) or 1.0
     norm_weights = {k: v / total for k, v in weights.items()}
@@ -50,10 +50,10 @@ def weighted_policy_mapping(weights: dict[str, float]):
     # Pre-compute the choices and weights for efficiency
     choices, wts = zip(*norm_weights.items())
 
-    def mapping_fn(agent_id: str, episode=None, worker=None, **kwargs) -> str:
-        return random.choices(choices, weights=wts, k=1)[0]
+    def mapping_fn(agent_id: str, episode: Any | None = None, worker: Any | None = None, **kwargs: Any) -> str:
+        return str(random.choices(choices, weights=wts, k=1)[0])
 
-    return mapping_fn
+    return mapping_fn  # type: ignore[return-value]
 
 
 class WeightedEnsembleAgent:
@@ -74,7 +74,7 @@ class WeightedEnsembleAgent:
         self.mapping_fn = weighted_policy_mapping(normalized_weights)
 
     def select_action(self, obs: np.ndarray) -> np.ndarray:
-        policy_id = self.mapping_fn("agent0")
+        policy_id = self.mapping_fn("agent0", None, None, {})
         action, _, _ = self.policy_map[policy_id].compute_single_action(obs)
         return action
 

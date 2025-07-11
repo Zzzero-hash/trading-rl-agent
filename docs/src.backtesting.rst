@@ -1,15 +1,21 @@
 src.backtesting package
 =======================
 
-.. automodule:: src.backtesting
+Submodules
+----------
+
+src.backtesting.backtester module
+---------------------------------
+
+.. automodule:: src.backtesting.backtester
    :members:
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+Module contents
+---------------
 
-.. toctree::
-   :maxdepth: 4
-
-   src.backtesting.backtester
+.. automodule:: src.backtesting
+   :members:
+   :show-inheritance:
+   :undoc-members:

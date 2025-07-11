@@ -7,7 +7,7 @@ for the trading system.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -165,7 +165,7 @@ class RiskManager:
 
             if len(portfolio_returns) < 30:  # Need sufficient data
                 self.logger.warning("Insufficient data for reliable VaR calculation")
-                return portfolio_returns.std() * 2.33  # Approximate using normal distribution
+                return float(portfolio_returns.std() * 2.33)  # Approximate using normal distribution
 
             # Calculate VaR using historical simulation
             var_value = np.percentile(portfolio_returns, confidence_level * 100)
@@ -173,7 +173,7 @@ class RiskManager:
             # Scale for time horizon
             var_scaled = var_value * np.sqrt(time_horizon)
 
-            return abs(var_scaled)
+            return float(abs(var_scaled))
 
         except Exception as e:
             self.logger.exception(f"VaR calculation failed: {e}")
@@ -229,7 +229,7 @@ class RiskManager:
             else:
                 cvar_value = var_value * 1.3  # Conservative estimate
 
-            return cvar_value
+            return float(cvar_value)
 
         except Exception as e:
             self.logger.exception(f"CVaR calculation failed: {e}")
@@ -267,7 +267,7 @@ class RiskManager:
             cumulative_returns = (1 + portfolio_returns).cumprod()
             rolling_max = cumulative_returns.expanding().max()
             drawdowns = (cumulative_returns - rolling_max) / rolling_max
-            return abs(drawdowns.min())
+            return float(abs(drawdowns.min()))
         except Exception as e:
             self.logger.exception(f"Drawdown calculation failed: {e}")
             return 0.0
@@ -288,7 +288,7 @@ class RiskManager:
             if volatility == 0:
                 return 0.0
 
-            return (excess_returns / volatility) * np.sqrt(252)  # Annualized
+            return float((excess_returns / volatility) * np.sqrt(252))  # Annualized
 
         except Exception as e:
             self.logger.exception(f"Sharpe ratio calculation failed: {e}")
@@ -315,7 +315,7 @@ class RiskManager:
             if downside_deviation == 0:
                 return float("inf")
 
-            return (excess_returns / downside_deviation) * np.sqrt(252)
+            return float((excess_returns / downside_deviation) * np.sqrt(252))
 
         except Exception as e:
             self.logger.exception(f"Sortino ratio calculation failed: {e}")
@@ -342,7 +342,7 @@ class RiskManager:
             if benchmark_variance == 0:
                 return 1.0
 
-            return covariance / benchmark_variance
+            return float(covariance / benchmark_variance)
 
         except Exception as e:
             self.logger.exception(f"Beta calculation failed: {e}")
@@ -608,6 +608,6 @@ class RiskManager:
             cumulative_returns = (1 + returns).cumprod()
             rolling_max = cumulative_returns.expanding().max()
             drawdowns = (cumulative_returns - rolling_max) / rolling_max
-            return abs(drawdowns.min())
+            return abs(cast(float, drawdowns.min()))
         except Exception:
             return 0.0

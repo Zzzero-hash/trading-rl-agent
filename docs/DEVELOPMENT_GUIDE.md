@@ -1,133 +1,77 @@
 # Development Guide
 
+This guide outlines best practices for ML workflows, output management, and development tools to ensure consistency and efficiency.
+
 ## 📚 ML Workflow Best Practices
 
 ### Notebook Organization
 
-```markdown
-# Notebook Title and Objectives
+A clear and organized notebook is crucial for reproducibility. Structure your notebooks as follows:
 
-## 1. Environment Setup
-
-## 2. Data Loading
-
-## 3. Model Training
-
-## 4. Evaluation & Results
-
-## 5. Cleanup & Export
-```
+- **Environment Setup**: Import libraries, set up logging, and define constants.
+- **Data Loading**: Load and preprocess data, including any feature engineering.
+- **Model Training**: Define and train your models, and log experiments.
+- **Evaluation & Results**: Visualize and analyze results, and save key metrics.
+- **Cleanup & Export**: Clear memory and export artifacts.
 
 ### Memory Management
 
-```python
-# Clear GPU memory between experiments
-torch.cuda.empty_cache() if torch.cuda.is_available() else None
+Efficient memory usage is critical, especially when working with large datasets and models.
 
-# Monitor resource usage
-def check_gpu_usage():
-    if torch.cuda.is_available():
-        print(f"GPU Memory: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
-```
+- **Clear GPU Memory**: Use `torch.cuda.empty_cache()` between experiments to free up unused GPU memory.
+- **Monitor Resources**: Keep an eye on GPU and CPU usage to prevent bottlenecks.
 
 ### Experiment Tracking
 
-```python
-# Save experiment results
-experiment_config = {
-    "name": "cnn_lstm_v2",
-    "notes": "Testing LSTM size impact"
-}
+Track all experiments to ensure you can reproduce and compare results.
 
-# Track with timestamps
-results = {
-    "timestamp": datetime.now().isoformat(),
-    "config": experiment_config,
-    "metrics": metrics
-}
-```
+- **Save Configurations**: Store the exact configuration used for each experiment.
+- **Timestamp Results**: Log results with timestamps for easy tracking.
 
 ## 🧹 Output Management
 
 ### Directory Structure
 
-```bash
-optimization_results/     # Keep best configs only
-ray_results/             # Clean up old trials
-data/                   # Archive old datasets
-*.ipynb                 # Always clear outputs before commit
-```
+Maintain a clean directory structure to avoid clutter and confusion.
+
+- `optimization_results/`: Store only the best-performing configurations.
+- `ray_results/`: Regularly clean up old and failed trials.
+- `data/`: Archive outdated datasets to keep the working directory clean.
+- `*.ipynb`: Always clear outputs from notebooks before committing to Git.
 
 ### Cleanup Commands
 
-```bash
-# Clear notebook outputs
-find . -name "*.ipynb" -exec jupyter nbconvert --clear-output --inplace {} +
+Use these commands to keep your workspace tidy:
 
-# Clean experiment outputs
-find optimization_results/ -name "hparam_opt_*" -type d -mtime +7 -exec rm -rf {} +
-find ray_results/ -name "*_hparam_*" -type d -mtime +7 -exec rm -rf {} +
-
-# Archive important results
-mkdir -p archive/$(date +%Y%m%d)
-cp optimization_results/best_*.json archive/$(date +%Y%m%d)/
-```
+- **Clear Notebook Outputs**: `find . -name "*.ipynb" -exec jupyter nbconvert --clear-output --inplace {} +`
+- **Clean Experiment Outputs**: `find ray_results/ -type d -mtime +7 -exec rm -rf {} +`
 
 ### Git Pre-commit Setup
 
-```bash
-# Install pre-commit hooks
-pre-commit install
+Automate code quality checks with pre-commit hooks.
 
-# Manual cleanup before commit
-jupyter nbconvert --clear-output --inplace *.ipynb
-```
+- **Install Hooks**: Run `pre-commit install` to set up the hooks.
+- **Manual Cleanup**: Before committing, manually clear notebook outputs to avoid storing large files in Git.
 
 ## 🔧 Development Tools
 
 ### Required Extensions (VS Code)
 
-- Python
-- Pylance
-- Black Formatter
-- GitLens
+- **Python**: Core Python support.
+- **Pylance**: Advanced language server for Python.
+- **Ruff**: Code formatting and linting.
+- **GitLens**: Enhanced Git capabilities.
 
-### Configuration
+### VS Code Configuration
 
 ```json
 {
-  "python.formatting.provider": "black",
+  "python.formatting.provider": "charliermarsh.ruff",
+  "editor.formatOnSave": true,
   "python.linting.enabled": true
 }
 ```
 
-## 📊 Performance Guidelines
-
-- Clear outputs between notebook runs
-- Archive results weekly
-- Keep optimization_results/ < 500MB
-- Monitor GPU memory usage
-- Use progress bars for long operations
-
-## 🚀 Optimization Workflow
-
-```python
-# CNN-LSTM optimization
-from trading_rl_agent.optimization.cnn_lstm_optimization import optimize_cnn_lstm
-results = optimize_cnn_lstm(features, targets, num_samples=20)
-
-# RL optimization
-from trading_rl_agent.optimization.rl_optimization import optimize_sac_hyperparams
-results = optimize_sac_hyperparams(env_config, num_samples=10)
-```
-
-## ✅ Progress Checklist
-
-The following tasks are tracked from the codebase TODOs:
-
-- [x] Migrate training scripts into `src/training` and integrate Ray Tune sweeps.
-- [ ] Provide sentiment and risk scoring APIs in `src/nlp`.
-
---
+---
 
 For legal and safety notes see the [project disclaimer](disclaimer.md).

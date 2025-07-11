@@ -1,17 +1,37 @@
 src.optimization package
 ========================
 
-.. automodule:: src.optimization
+Submodules
+----------
+
+src.optimization.cnn\_lstm\_optimization module
+-----------------------------------------------
+
+.. automodule:: src.optimization.cnn_lstm_optimization
    :members:
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+src.optimization.model\_utils module
+------------------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: src.optimization.model_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
-   src.optimization.cnn_lstm_optimization
-   src.optimization.model_utils
-   src.optimization.rl_optimization
+src.optimization.rl\_optimization module
+----------------------------------------
+
+.. automodule:: src.optimization.rl_optimization
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: src.optimization
+   :members:
+   :show-inheritance:
+   :undoc-members:

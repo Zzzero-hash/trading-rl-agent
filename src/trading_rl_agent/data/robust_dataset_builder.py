@@ -20,6 +20,7 @@ import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -69,15 +70,15 @@ class DatasetConfig:
 class RobustDatasetBuilder:
     """Main class for building robust, reproducible datasets."""
 
-    def __init__(self, config: DatasetConfig):
+    def __init__(self, config: DatasetConfig) -> None:
         self.config = config
         self.version = config.version_tag or datetime.now().strftime("%Y%m%d_%H%M%S")
         self.output_dir = Path(config.output_dir) / self.version
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         self.scaler = RobustScaler()
-        self.feature_columns = []
-        self.metadata = {}
+        self.feature_columns: list[str] = []
+        self.metadata: dict[str, Any] = {}
 
         # Setup logging
         logging.basicConfig(
@@ -555,7 +556,7 @@ class RobustDatasetBuilder:
 
         return scaled_sequences.astype(np.float32)
 
-    def _validate_final_dataset(self, sequences: np.ndarray, targets: np.ndarray):
+    def _validate_final_dataset(self, sequences: np.ndarray, targets: np.ndarray) -> None:
         """Validate the final dataset quality."""
 
         logger.info("✅ Validating final dataset...")

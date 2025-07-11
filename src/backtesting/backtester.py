@@ -51,11 +51,11 @@ class Backtester:
         class PolicyStrategy(bt.Strategy):
             params = {"policy": None, "latency": 0}
 
-            def __init__(self):
+            def __init__(self) -> None:
                 self.policy = self.p.policy
                 self.latency = self.p.latency
 
-            def next(self):
+            def next(self) -> None:
                 if len(self.data) <= self.latency:
                     return
                 price_obs = self.data.close[-self.latency - 1] if self.latency else self.data.close[-1]

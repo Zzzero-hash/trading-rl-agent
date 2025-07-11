@@ -1,203 +1,84 @@
 # Getting Started with Trading RL Agent
 
-Welcome to the Trading RL Agent - a production-ready hybrid CNN+LSTM + Reinforcement Learning system for algorithmic trading.
+Welcome to the Trading RL Agent, a production-ready system for algorithmic trading that combines deep learning and reinforcement learning.
 
 ## 🏗️ System Overview
 
-This is a **two-tier hybrid system** that combines:
+This project provides a robust framework for developing and testing trading strategies. It features:
 
-- **Tier 1**: Deep Learning (CNN+LSTM) for market pattern recognition and feature extraction
-- **Tier 2**: Reinforcement Learning (SAC with **FinRL** integration; custom TD3 available for experimentation) for trading decision optimization
-
-**Current Status**: Core modules validated with ~733 tests. Sample data is provided and large datasets are optional. Automated quality checks help maintain the codebase.
+- **A flexible system configuration**: Easily configure all aspects of the system, from data processing to agent hyperparameters.
+- **A powerful `Trainer` class**: The main entry point for training and evaluating agents.
+- **Support for multiple RL agents**: Includes support for SAC, PPO, and TD3.
+- **Comprehensive feature engineering**: Generate a wide range of technical indicators and other features.
 
 ## 🚀 Quick Setup
 
 ### Prerequisites
 
-- Python 3.10
-- CUDA 11.8+ (optional, for GPU training)
+- Python 3.10+
+- An environment manager like `conda` or `venv`
 
 ### Installation
 
-```bash
-# Clone and setup
-git clone https://github.com/your-org/trading-rl-agent.git
-cd trading-rl-agent
+1.  **Clone the repository**:
 
-# Setup environment
-./setup-env.sh full
+    ```bash
+    git clone https://github.com/your-repo/trading-rl-agent.git
+    cd trading-rl-agent
+    ```
 
-# Run tests to verify
-pytest
-```
+2.  **Create and activate a virtual environment**:
 
-## Quick Start Tutorial
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    ```
 
-### 1. Generate Data
+3.  **Install the required dependencies**:
 
-```bash
-# Run the built-in Ray data pipeline
-python -m trading_rl_agent.data.pipeline \
-    --config src/configs/data/pipeline.yaml
-```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### 2. Initialize the Hybrid System
+4.  **Run the tests to verify the installation**:
+    ```bash
+    pytest
+    ```
+
+## ⚙️ Basic Usage
+
+The primary way to use this project is through the `Trainer` class. Here's a basic example:
 
 ```python
-from trading_rl_agent import ConfigManager, PortfolioManager
-from trading_rl_agent.agents import SACAgent
-from trading_rl_agent.data.pipeline import load_cached_csvs
+from trading_rl_agent.agents.trainer import Trainer
+from trading_rl_agent.core.config import SystemConfig
 
-# Load configuration
-cfg = ConfigManager("configs/production.yaml").load_config()
+# 1. Create a SystemConfig object
+system_config = SystemConfig()
 
-# Load cached training data created by the pipeline
-train_df = load_cached_csvs("data/raw")
+# 2. Initialize the Trainer
+trainer = Trainer(system_cfg=system_config, save_dir="outputs/basic_example")
 
-# Create agent from config
-agent = SACAgent(cfg.agent)
+# 3. Run the training process
+trainer.train()
 
-# Train on historical data
-agent.train(train_df)
-
-# Start live trading (paper trading by default)
-portfolio = PortfolioManager(initial_capital=100000)
-portfolio.start_live_trading(agent)
-```
-
-## ⚙️ Configuration
-
-The hybrid system uses environment-specific configurations:
-
-### Production Environment Configuration
-
-```yaml
-# config/production_env_config.yaml
-environment:
-  initial_balance: 100000
-  window_size: 50
-  transaction_cost: 0.001
-  max_position: 1.0
-  normalize_observations: true
-  use_cnn_lstm_features: true
-  feature_engineering_level: "advanced"
-
-hybrid_model:
-  cnn_filters: [32, 64, 128]
-  lstm_units: 256
-  dropout_rate: 0.2
-  batch_normalization: true
-```
-
-### Hybrid Agent Configuration
-
-```yaml
-# config/hybrid_sac_config.yaml
-agent:
-  algorithm: "SAC"
-  hidden_dim: 512
-  learning_rate: 0.0003
-  batch_size: 256
-  memory_size: 1000000
-  tau: 0.005
-  gamma: 0.99
-  alpha: 0.2
-
-training:
-  episodes: 2000
-  max_steps: 1000
-  save_frequency: 100
-  use_ray_tune: true
-  hyperparameter_optimization: true
+print("Training complete! Check the 'outputs/basic_example' directory for results.")
 ```
 
 ## 🧪 Testing & Validation
 
-```bash
-# Run comprehensive test suite
-pytest tests/ -v
-
-# Run specific test categories
-pytest tests/test_agents/ -v  # RL agent tests
-pytest tests/test_models/ -v  # CNN+LSTM model tests
-pytest tests/test_envs/ -v    # Environment tests
-pytest tests/test_integration/ -v  # Hybrid system integration
-
-# Generate test coverage report
-pytest --cov=src tests/
-```
-
-## 📊 Performance Monitoring
+To ensure the system is working correctly, run the comprehensive test suite:
 
 ```bash
-# Monitor training progress
-tensorboard --logdir=logs/
-
-# Evaluate model performance
-python evaluate_agent.py --config config/production_config.yaml
-
-# Generate performance reports
-python scripts/generate_performance_report.py
+pytest -vv
 ```
 
-## 🎬 End-to-End Example
+## Next Steps
 
-Try the quick demo script to see the pieces working together:
+- **Explore the code**: The main logic is in the `src/trading_rl_agent` directory.
+- **Customize the configuration**: Modify the `SystemConfig` object to experiment with different settings.
+- **Review the documentation**: Check out the other guides in this `docs` directory for more information.
 
-```bash
-python scripts/train_sample.py
-```
-
-This command loads the bundled dataset from `samples/sample_data.csv`, builds a
-`FeaturePipeline`, trains a lightweight `PPOAgent` for a few steps and writes two
-files under `./outputs/`:
-
-- `sample_data.csv` – the processed dataset used for training
-- `ppo_agent_checkpoint.zip` – the saved agent checkpoint
-
-You can evaluate the trained agent using:
-
-```bash
-python evaluate_agent.py \
-    --data outputs/sample_data.csv \
-    --checkpoint outputs/ppo_agent_checkpoint.zip \
-    --agent ppo \
-    --output outputs/eval.json
-```
-
-The evaluation metrics will be saved in `outputs/eval.json`.
-
-## 🔄 Next Steps
-
-### Production Deployment
-
-1. Review [Architecture Overview](ARCHITECTURE_OVERVIEW.md) for system design details
-2. Read [Advanced Dataset Documentation](ADVANCED_DATASET_DOCUMENTATION.md) for data pipeline management
-3. Study [Experiment Outputs Management](EXPERIMENT_OUTPUTS_MANAGEMENT.md) for production workflows
-
-### Development & Research
-
-1. Explore [Notebook Best Practices](NOTEBOOK_BEST_PRACTICES.md) for ML development workflows
-2. Check [API Reference](api_reference.md) for detailed class and method documentation
-3. Review [Examples](examples.md) for advanced use cases and patterns
-
-### Phase 3 Development (Multi-Asset Portfolio)
-
-1. Multi-asset environment development
-2. Portfolio optimization algorithms
-3. Cross-asset correlation modeling
-4. Risk management enhancements
-
-## 🆘 Getting Help
-
-- **Documentation**: Comprehensive guides in [`docs/`](.)
-- **Examples**: Working code samples in [`examples/`](../examples/)
-- **Tests**: Reference implementations in [`tests/`](../tests/)
-- **Issues**: GitHub issue tracker for bug reports and feature requests
-
-**Current Achievement**: ~733 tests defined with sample data. Larger datasets are optional. Automated quality checks ensure consistency. Metrics are illustrative ✨
-
---
+---
 
 For legal and safety notes see the [project disclaimer](disclaimer.md).

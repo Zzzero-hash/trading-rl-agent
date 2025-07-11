@@ -1,17 +1,37 @@
 src.trading\_rl\_agent.data.loaders package
 ===========================================
 
-.. automodule:: src.trading_rl_agent.data.loaders
+Submodules
+----------
+
+src.trading\_rl\_agent.data.loaders.alphavantage\_loader module
+---------------------------------------------------------------
+
+.. automodule:: src.trading_rl_agent.data.loaders.alphavantage_loader
    :members:
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+src.trading\_rl\_agent.data.loaders.ccxt\_loader module
+-------------------------------------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: src.trading_rl_agent.data.loaders.ccxt_loader
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
-   src.trading_rl_agent.data.loaders.alphavantage_loader
-   src.trading_rl_agent.data.loaders.ccxt_loader
-   src.trading_rl_agent.data.loaders.yfinance_loader
+src.trading\_rl\_agent.data.loaders.yfinance\_loader module
+-----------------------------------------------------------
+
+.. automodule:: src.trading_rl_agent.data.loaders.yfinance_loader
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: src.trading_rl_agent.data.loaders
+   :members:
+   :show-inheritance:
+   :undoc-members:

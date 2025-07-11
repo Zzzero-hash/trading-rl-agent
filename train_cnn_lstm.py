@@ -11,6 +11,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,6 +37,8 @@ logger = logging.getLogger(__name__)
 class CNNLSTMTrainer:
     """Comprehensive trainer for CNN+LSTM models with robust dataset integration."""
 
+    model: CNNLSTMModel | None
+
     def __init__(
         self,
         model_config: dict,
@@ -47,7 +50,11 @@ class CNNLSTMTrainer:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         self.model = None
-        self.history = {"train_loss": [], "val_loss": [], "metrics": []}
+        self.history: dict[str, list[Any]] = {
+            "train_loss": [],
+            "val_loss": [],
+            "metrics": [],
+        }
 
         # Setup logging
         logging.basicConfig(
@@ -85,10 +92,7 @@ class CNNLSTMTrainer:
         logger.info("\n🧠 Initializing CNN+LSTM model...")
         logger.info(f"  📊 Input dimensions: {input_dim} features")
 
-        self.model = CNNLSTMModel(input_dim=input_dim, config=self.model_config)
-        self.model.to(self.device)
-
-        # Count parameters
+        self.model = CNNLSTMModel(input_dim=input_dim, config=self.model_config).to(self.device)
         total_params = sum(p.numel() for p in self.model.parameters())
         trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
@@ -239,6 +243,8 @@ class CNNLSTMTrainer:
     ) -> float:
         """Train for one epoch with detailed monitoring."""
 
+        assert self.model is not None, "Model must be initialized before training"
+
         self.model.train()
         total_loss = 0.0
         batch_losses = []
@@ -293,6 +299,8 @@ class CNNLSTMTrainer:
     ) -> tuple[float, dict]:
         """Validate for one epoch with monitoring."""
 
+        assert self.model is not None, "Model must be initialized before validation"
+
         self.model.eval()
         total_loss = 0.0
         predictions = []
@@ -338,6 +346,8 @@ class CNNLSTMTrainer:
     def _final_evaluation(self, X_val: np.ndarray, y_val: np.ndarray) -> dict:
         """Perform final comprehensive evaluation."""
 
+        assert self.model is not None, "Model must be initialized before evaluation"
+
         self.model.eval()
         with torch.no_grad():
             X_tensor = torch.FloatTensor(X_val).to(self.device)
@@ -357,8 +367,10 @@ class CNNLSTMTrainer:
             "mean_targets": np.mean(targets),
         }
 
-    def _save_checkpoint(self, save_path: str, epoch: int, val_loss: float):
+    def _save_checkpoint(self, save_path: str, epoch: int, val_loss: float) -> None:
         """Save model checkpoint."""
+
+        assert self.model is not None, "Model must be initialized before saving"
 
         checkpoint = {
             "epoch": epoch,
@@ -371,7 +383,7 @@ class CNNLSTMTrainer:
 
         torch.save(checkpoint, save_path)
 
-    def load_checkpoint(self, checkpoint_path: str, input_dim: int):
+    def load_checkpoint(self, checkpoint_path: str, input_dim: int) -> None:
         """Load model from checkpoint."""
         # Handle PyTorch version compatibility for safe loading
         try:
@@ -403,7 +415,7 @@ class CNNLSTMTrainer:
 
         logger.info(f"Model loaded from {checkpoint_path}")
 
-    def plot_training_history(self, save_path: str | None = None):
+    def plot_training_history(self, save_path: str | None = None) -> None:
         """Plot training history."""
 
         fig, axes = plt.subplots(2, 2, figsize=(15, 10))
@@ -472,7 +484,7 @@ def create_training_config() -> dict:
     }
 
 
-def main():
+def main() -> dict[str, Any]:
     """Main training pipeline."""
 
     parser = argparse.ArgumentParser(description="Train CNN+LSTM with Robust Dataset")

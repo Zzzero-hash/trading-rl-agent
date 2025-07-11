@@ -1,9 +1,9 @@
-import types
-
 import pytest
 
-from trading_rl_agent.agents import trainer as trainer_module
 from trading_rl_agent.agents.configs import EnsembleConfig
+from trading_rl_agent.agents.trainer import Trainer
+from trading_rl_agent.core.config import AgentConfig, SystemConfig
+from trading_rl_agent.core.exceptions import ConfigurationError
 
 
 def test_ensemble_config_alias_and_validation():
@@ -16,57 +16,16 @@ def test_ensemble_config_empty_agents():
         EnsembleConfig(agents={})
 
 
-def test_trainer_algorithm_case_insensitive(monkeypatch, tmp_path):
-    calls = {}
-    monkeypatch.setattr(trainer_module.ray, "is_initialized", lambda: False)
-    monkeypatch.setattr(
-        trainer_module.ray,
-        "init",
-        lambda **kw: calls.setdefault("init", kw),
-    )
-    monkeypatch.setattr(
-        trainer_module,
-        "register_env",
-        lambda: calls.setdefault("reg", True),
-    )
-    monkeypatch.setattr(
-        trainer_module.ray,
-        "shutdown",
-        lambda: calls.setdefault("shutdown", True),
-    )
+def test_trainer_config_loading_and_validation():
+    """Test trainer config loading and validation."""
+    # Test that an invalid algorithm raises a ConfigurationError
+    invalid_agent_config = AgentConfig(agent_type="invalid_algo")
+    invalid_system_config = SystemConfig(agent=invalid_agent_config)
+    with pytest.raises(ConfigurationError):
+        Trainer(system_cfg=invalid_system_config)
 
-    monkeypatch.setattr(
-        trainer_module,
-        "PPOTrainer",
-        types.SimpleNamespace(__name__="PPOTrainer"),
-    )
-    monkeypatch.setattr(
-        trainer_module,
-        "DQNTrainer",
-        types.SimpleNamespace(__name__="DQNTrainer"),
-    )
-
-    class FakeTuner:
-        def __init__(self, algo_cls, param_space=None, run_config=None):
-            calls["algo"] = algo_cls
-
-        def fit(self):
-            calls["fit"] = True
-
-    monkeypatch.setattr(trainer_module.tune, "Tuner", FakeTuner)
-
-    env_cfg = {}
-    model_cfg = {}
-    trainer_cfg = {"algorithm": "DQN", "num_iterations": 1, "ray_config": {}}
-
-    trainer = trainer_module.Trainer(
-        env_cfg,
-        model_cfg,
-        trainer_cfg,
-        save_dir=str(tmp_path),
-    )
-    assert trainer.algorithm == "dqn"
-    trainer.train()
-    assert calls["algo"].__name__ == "DQNTrainer"
-    assert calls.get("fit")
-    assert calls.get("shutdown")
+    # Test that the default algorithm is 'sac'
+    default_system_config = SystemConfig()
+    trainer = Trainer(system_cfg=default_system_config)
+    assert trainer.algorithm == "sac"
+    assert isinstance(trainer.cfg.agent, AgentConfig)

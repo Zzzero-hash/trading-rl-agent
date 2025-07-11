@@ -11,6 +11,14 @@ import pandas as pd
 import pandas_ta as ta
 
 from ..core.logging import get_logger
+from ..data.features import (
+    detect_doji,
+    detect_engulfing,
+    detect_evening_star,
+    detect_hammer,
+    detect_morning_star,
+    detect_shooting_star,
+)
 
 logger = get_logger(__name__)
 
@@ -38,7 +46,7 @@ class IndicatorConfig:
     obv_enabled: bool = True
     vwap_enabled: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.sma_periods is None:
             self.sma_periods = [5, 10, 20, 50, 200]
         if self.ema_periods is None:
@@ -102,11 +110,13 @@ class TechnicalIndicators:
 
     def _add_moving_averages(self, df: pd.DataFrame) -> pd.DataFrame:
         """Add Simple and Exponential Moving Averages."""
-        for period in self.config.sma_periods:
-            df[f"sma_{period}"] = ta.sma(df["close"], length=period)
+        if self.config.sma_periods is not None:
+            for period in self.config.sma_periods:
+                df[f"sma_{period}"] = ta.sma(df["close"], length=period)
 
-        for period in self.config.ema_periods:
-            df[f"ema_{period}"] = ta.ema(df["close"], length=period)
+        if self.config.ema_periods is not None:
+            for period in self.config.ema_periods:
+                df[f"ema_{period}"] = ta.ema(df["close"], length=period)
 
         return df
 
@@ -170,42 +180,24 @@ class TechnicalIndicators:
         return df
 
     def _add_pattern_recognition(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add candlestick pattern recognition using pandas-ta."""
-
-        pattern_names = [
-            "doji",
-            "hammer",
-            "engulfing",
-            "harami",
-            "morning_star",
-            "evening_star",
-        ]
-
-        for name in pattern_names:
-            try:
-                res = ta.cdl_pattern(
-                    df["open"],
-                    df["high"],
-                    df["low"],
-                    df["close"],
-                    name=name,
-                )
-                if res is not None:
-                    df[f"pattern_{name}"] = res.iloc[:, 0]
-            except Exception as e:  # pragma: no cover - non-critical
-                self.logger.warning(f"Failed to calculate pattern {name}: {e}")
-
-        return df
+        """Add candlestick pattern recognition using pure pandas functions."""
+        df = detect_doji(df)
+        df = detect_hammer(df)
+        df = detect_engulfing(df)
+        df = detect_shooting_star(df)
+        df = detect_morning_star(df)
+        return detect_evening_star(df)
 
     def get_feature_names(self) -> list[str]:
         """Get list of all feature names that would be generated."""
         features = []
 
-        # Moving averages
-        for period in self.config.sma_periods:
-            features.append(f"sma_{period}")
-        for period in self.config.ema_periods:
-            features.append(f"ema_{period}")
+        if self.config.sma_periods is not None:
+            for period in self.config.sma_periods:
+                features.append(f"sma_{period}")
+        if self.config.ema_periods is not None:
+            for period in self.config.ema_periods:
+                features.append(f"ema_{period}")
 
         # Momentum
         features.extend(["rsi", "macd", "macd_signal", "macd_histogram"])
@@ -223,11 +215,12 @@ class TechnicalIndicators:
         pattern_names = [
             "doji",
             "hammer",
-            "engulfing",
-            "harami",
+            "bullish_engulfing",
+            "bearish_engulfing",
+            "shooting_star",
             "morning_star",
             "evening_star",
         ]
-        features.extend([f"pattern_{name}" for name in pattern_names])
+        features.extend(pattern_names)
 
         return features

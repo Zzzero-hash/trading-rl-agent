@@ -1,7 +1,4 @@
 import argparse
-from pathlib import Path
-
-import yaml
 
 from trading_rl_agent.agents.trainer import Trainer
 from trading_rl_agent.agents.tune import run_tune
@@ -17,7 +14,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--config",
         type=str,
-        help="Path to unified system config YAML",
+        default="src/configs/config.yaml",
+        help="Path to unified system config YAML. Defaults to src/configs/config.yaml",
     )
     parser.add_argument(
         "--env-config",
@@ -62,35 +60,14 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     if args.tune:
-        if args.config:
-            run_tune([args.config])
-        else:
-            run_tune([args.env_config, args.model_config, args.trainer_config])
+        run_tune([args.config])
         return
 
-    if args.config:
-        cfg_mgr = ConfigManager(args.config)
-        system_cfg = cfg_mgr.load_config()
-        env_cfg = system_cfg.data.__dict__
-        model_cfg = system_cfg.model.__dict__
-        trainer_cfg = system_cfg.rl.__dict__
-    else:
-        # Legacy separate configs
-        env_cfg_path = Path(args.env_config)
-        model_cfg_path = Path(args.model_config)
-        trainer_cfg_path = Path(args.trainer_config)
-
-        with env_cfg_path.open() as f:
-            env_cfg = yaml.safe_load(f)
-        with model_cfg_path.open() as f:
-            model_cfg = yaml.safe_load(f)
-        with trainer_cfg_path.open() as f:
-            trainer_cfg = yaml.safe_load(f)
+    cfg_mgr = ConfigManager(args.config)
+    system_cfg = cfg_mgr.load_config()
 
     trainer = Trainer(
-        env_cfg,
-        model_cfg,
-        trainer_cfg,
+        system_cfg,
         seed=args.seed,
         save_dir=args.save_dir,
     )

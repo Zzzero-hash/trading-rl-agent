@@ -1,15 +1,21 @@
 src.trading\_rl\_agent.portfolio package
 ========================================
 
-.. automodule:: src.trading_rl_agent.portfolio
+Submodules
+----------
+
+src.trading\_rl\_agent.portfolio.manager module
+-----------------------------------------------
+
+.. automodule:: src.trading_rl_agent.portfolio.manager
    :members:
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+Module contents
+---------------
 
-.. toctree::
-   :maxdepth: 4
-
-   src.trading_rl_agent.portfolio.manager
+.. automodule:: src.trading_rl_agent.portfolio
+   :members:
+   :show-inheritance:
+   :undoc-members:

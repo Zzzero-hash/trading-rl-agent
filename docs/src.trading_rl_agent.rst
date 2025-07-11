@@ -1,11 +1,6 @@
 src.trading\_rl\_agent package
 ==============================
 
-.. automodule:: src.trading_rl_agent
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Subpackages
 -----------
 
@@ -25,8 +20,26 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+src.trading\_rl\_agent.nlp module
+---------------------------------
 
-   src.trading_rl_agent.main
-   src.trading_rl_agent.nlp
+.. automodule:: src.trading_rl_agent.nlp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+src.trading\_rl\_agent.supervised\_model module
+-----------------------------------------------
+
+.. automodule:: src.trading_rl_agent.supervised_model
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: src.trading_rl_agent
+   :members:
+   :show-inheritance:
+   :undoc-members:

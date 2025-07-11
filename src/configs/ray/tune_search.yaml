@@ -1,7 +1,0 @@
-# Hyperparameter search space for Ray Tune
-lr:
-  grid_search: [0.0003, 0.0001]
-train_batch_size:
-  grid_search: [2000, 4000]
-gamma:
-  grid_search: [0.99, 0.995]

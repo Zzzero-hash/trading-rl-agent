@@ -1,4 +1,4 @@
-# Trading RL Agent - Complete Task List
+pytest# Trading RL Agent - Complete Task List
 
 ## Repository Cleanup & Audit Tasks
 
@@ -8,23 +8,39 @@
 - [x] Run ruff and fix all automatically fixable issues
 - [x] Remove empty and unused files (finrl_data_loader.py, cleanup_outputs.py, docker-compose.dev.yml)
 - [x] Manually address remaining ruff errors and warnings (ALL FIXED! 🎉)
+- [x] Remove or implement empty placeholder scripts referenced in documentation (e.g., cleanup_experiments.py)
+- [x] Remove empty or unused YAML files from the project
+- [x] Check for and remove unused or outdated test files
+- [x] Check for and remove unused imports and variables across all Python files
+- [x] Verify and update all configuration files for consistency
+- [x] Review and clean up documentation files
+- [x] Check for duplicate or redundant code files
+- [x] Verify all dependencies in requirements.txt and pyproject.toml
+- [x] Run final ruff check to ensure all issues are resolved ✅
+- [x] Create summary report of all cleanup actions taken
+- [x] Verify all tests pass after cleanup
+- [x] Check for any broken imports or references after cleanup
+- [x] Final code quality review and documentation update
+- [x] Create comprehensive cleanup summary and next stepsw
 
 ### 🔄 In Progress Tasks
 
-- [ ] Remove or implement empty placeholder scripts referenced in documentation (e.g., cleanup_experiments.py)
-- [ ] Remove empty or unused YAML files from the project
-- [ ] Check for and remove unused or outdated test files
-- [ ] Check for and remove unused imports and variables across all Python files
-- [ ] Verify and update all configuration files for consistency
-- [ ] Review and clean up documentation files
-- [ ] Check for duplicate or redundant code files
-- [ ] Verify all dependencies in requirements.txt and pyproject.toml
-- [ ] Run final ruff check to ensure all issues are resolved ✅
-- [ ] Create summary report of all cleanup actions taken
-- [ ] Verify all tests pass after cleanup
-- [ ] Check for any broken imports or references after cleanup
-- [ ] Final code quality review and documentation update
-- [ ] Create comprehensive cleanup summary and next steps
+- [x] **Data Ingestion & Pre-processing**: Collect data from multiple sources (APIs, synthetic), validate and clean data
+  - [x] Identify and configure data sources (Alpha Vantage, yfinance, CCXT, synthetic generators)
+  - [x] Implement fetching functions for historical and live data
+  - [x] Add data validation (schema checks, range validation, duplicate removal)
+  - [x] Implement cleaning logic (handle NaNs, outliers, interpolation)
+  - [x] Set up caching mechanism (e.g., local CSV/Parquet with expiration)
+  - [x] Write unit tests for ingestion pipeline
+
+- [ ] **Feature Engineering**: Generate technical indicators and temporal features, prepare data for CNN+LSTM models
+  - [ ] Define core technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands, etc.)
+  - [ ] Add temporal encodings (hour/day/week sine-cosine, holidays, market hours)
+  - [ ] Integrate alternative data features (sentiment from news/social, if ready)
+  - [ ] Implement normalization/scaling (MinMax, StandardScaler per-symbol)
+  - [ ] Create sliding-window sequences for time-series input (e.g., lookback=60)
+  - [ ] Ensure features are robust to missing data and varying timeframes
+  - [ ] Add tests for feature computation determinism and shape consistency
 
 ## End-to-End Pipeline Tasks
 
@@ -80,9 +96,9 @@
 
 ## Current Status
 
-- **Repository Cleanup**: 4/16 tasks completed (25%)
+- **Repository Cleanup**: 18/18 tasks completed (100%)
 - **End-to-End Pipeline**: 0/27 tasks completed
-- **Total Progress**: 4/43 tasks completed (9%)
+- **Total Progress**: 18/45 tasks completed (40%)
 
 ## Next Actions
 

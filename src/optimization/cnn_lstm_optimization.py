@@ -241,7 +241,10 @@ def simple_grid_search(
     import random
 
     for trial in range(num_samples):
-        config = {param: random.choice(values) for param, values in param_grid.items()}
+        config = {
+            param: random.choice(values if isinstance(values, list) else [values])
+            for param, values in param_grid.items()
+        }
 
         logger.info(f"Trial {trial + 1}/{num_samples}: {config}")
 
@@ -319,7 +322,7 @@ def optimize_cnn_lstm_streamlined(
     results_path = Path(output_dir) / "optimization_results.json"
     with results_path.open("w") as f:
         # Convert numpy types to JSON serializable
-        def make_serializable(obj):
+        def make_serializable(obj: Any) -> Any:
             if isinstance(obj, np.ndarray):
                 return obj.tolist()
             if isinstance(obj, np.integer | np.floating):

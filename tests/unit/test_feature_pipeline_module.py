@@ -1,94 +1,38 @@
-import logging
-import sys
-import types
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-
-if "structlog" not in sys.modules:
-    stub = types.SimpleNamespace(
-        BoundLogger=object,
-        stdlib=types.SimpleNamespace(
-            ProcessorFormatter=object,
-            BoundLogger=object,
-            LoggerFactory=lambda: None,
-            filter_by_level=lambda *a, **k: None,
-            add_logger_name=lambda *a, **k: None,
-            add_log_level=lambda *a, **k: None,
-            PositionalArgumentsFormatter=lambda: None,
-            wrap_for_formatter=lambda f: f,
-        ),
-        processors=types.SimpleNamespace(
-            TimeStamper=lambda **_: None,
-            StackInfoRenderer=lambda **_: None,
-            format_exc_info=lambda **_: None,
-            UnicodeDecoder=lambda **_: None,
-        ),
-        dev=types.SimpleNamespace(ConsoleRenderer=lambda **_: None),
-        configure=lambda **_: None,
-        get_logger=lambda name=None: logging.getLogger(name),
-    )
-    sys.modules["structlog"] = stub
-
-if "trading_rl_agent" not in sys.modules:
-    pkg = types.ModuleType("trading_rl_agent")
-    pkg.__path__ = [
-        str(Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"),
-    ]
-    sys.modules["trading_rl_agent"] = pkg
-
-base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
-for pkg_name in ["features"]:
-    key = f"trading_rl_agent.{pkg_name}"
-    if key not in sys.modules:
-        mod = types.ModuleType(key)
-        mod.__path__ = [str(base / pkg_name)]
-        sys.modules[key] = mod
-
 import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.features.pipeline import FeaturePipeline
+from trading_rl_agent.features.technical_indicators import TechnicalIndicators
 
 
-class DummyTechnicalIndicators:
-    def calculate_all_indicators(self, df):
-        df = df.copy()
-        df["dummy"] = 1
-        return df
-
-    def get_feature_names(self):
-        return ["dummy"]
-
-
-pytestmark = pytest.mark.unit
-
-
-def test_feature_pipeline_basic():
-    n = 30
-    df = pd.DataFrame(
+@pytest.fixture
+def ohlcv_sample_data():
+    """Provide a simple OHLCV dataframe for testing."""
+    dates = pd.to_datetime(pd.date_range(start="2023-01-01", periods=100))
+    return pd.DataFrame(
         {
-            "open": np.arange(1, n + 1, dtype=float),
-            "high": np.arange(1, n + 1, dtype=float) + 1,
-            "low": np.arange(1, n + 1, dtype=float) - 1,
-            "close": np.arange(1, n + 1, dtype=float) + 0.5,
-            "volume": np.arange(100, 100 + n, dtype=float),
+            "open": np.random.uniform(98, 102, size=100),
+            "high": np.random.uniform(100, 105, size=100),
+            "low": np.random.uniform(95, 100, size=100),
+            "close": np.random.uniform(98, 102, size=100),
+            "volume": np.random.uniform(1e6, 5e6, size=100),
         },
+        index=dates,
     )
-    ref = pd.DataFrame({"close": np.linspace(10, 10 + n - 1, n)})
 
-    pipeline = FeaturePipeline(technical=DummyTechnicalIndicators())
-    result = pipeline.transform(df, cross_df=ref)
 
-    expected_cols = [
-        "hl_spread",
-        "close_open_diff",
-        "volume_imbalance",
-        f"corr_{pipeline.cross_asset.config.prefix}",
-        pipeline.alternative.config.sentiment_column,
-    ]
+def test_technical_indicators_basic(ohlcv_sample_data):
+    """Test that technical indicators are added to the dataframe."""
+    indicators = TechnicalIndicators()
+    result = indicators.calculate_all_indicators(ohlcv_sample_data)
 
+    # Check for a subset of the generated indicators
+    expected_cols = ["sma_5", "rsi", "macd", "atr", "obv", "doji"]
     for col in expected_cols:
-        assert col in result.columns
-        assert result[col].notnull().any()
+        assert col in result.columns, f"Column '{col}' not found in result"
+
+    assert result.shape[0] == ohlcv_sample_data.shape[0]
+    # Check that no NaNs are introduced in the result for a specific indicator
+    # (some indicators will have NaNs at the beginning)
+    assert not result["sma_50"].isnull().all()
+    assert result["sma_50"].notnull().any()

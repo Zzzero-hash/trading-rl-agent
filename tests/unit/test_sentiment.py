@@ -382,7 +382,10 @@ class TestRealAPISentiment:
             assert 0.0 <= d.magnitude <= 1.0
             assert d.source in ["news", "news_scrape", "news_mock"]
 
-    @patch("src.data.sentiment.requests.get", side_effect=Exception("API fail"))
+    @patch(
+        "trading_rl_agent.data.sentiment.requests.get",
+        side_effect=Exception("API fail"),
+    )
     def test_news_provider_scrape_fallback(self, mock_get):
         """Test scraping fallback when API fails."""
         provider = NewsSentimentProvider(api_key="fake_key")
@@ -391,8 +394,14 @@ class TestRealAPISentiment:
         for d in data:
             assert d.source in {"news_scrape", "news_mock"}
 
-    @patch("src.data.sentiment.requests.get", side_effect=Exception("API fail"))
-    @patch("src.data.sentiment.BeautifulSoup", side_effect=Exception("Scrape fail"))
+    @patch(
+        "trading_rl_agent.data.sentiment.requests.get",
+        side_effect=Exception("API fail"),
+    )
+    @patch(
+        "trading_rl_agent.data.sentiment.BeautifulSoup",
+        side_effect=Exception("Scrape fail"),
+    )
     def test_news_provider_mock_fallback(self, mock_bs, mock_get):
         """Test mock fallback when both API and scraping fail."""
         provider = NewsSentimentProvider(api_key="fake_key")

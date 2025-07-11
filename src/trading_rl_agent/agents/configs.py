@@ -65,3 +65,40 @@ class TD3Config:
     target_noise: float = 0.2
     noise_clip: float = 0.5
     exploration_noise: float = 0.1
+
+
+@dataclass
+class PPOConfig:
+    """Configuration for PPO agent with GAE and clipped surrogate."""
+
+    # Learning parameters
+    learning_rate: float = 3e-4
+    gamma: float = 0.99
+    gae_lambda: float = 0.95
+    clip_ratio: float = 0.2
+    clip_vf_ratio: float | None = None  # None means no clipping
+
+    # Training parameters
+    batch_size: int = 256
+    minibatch_size: int = 64
+    n_epochs: int = 10
+    max_grad_norm: float = 0.5
+
+    # Network architecture
+    hidden_dims: list[int] = field(default_factory=lambda: [256, 256])
+    activation: str = "tanh"
+
+    # Value function parameters
+    vf_coef: float = 0.5
+    ent_coef: float = 0.01
+    target_kl: float = 0.01
+
+    # Buffer parameters
+    buffer_size: int = 2048
+
+    # Normalization
+    normalize_advantages: bool = True
+    normalize_returns: bool = True
+
+    # Exploration
+    exploration_noise: float = 0.1
