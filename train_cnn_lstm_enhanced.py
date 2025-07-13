@@ -529,8 +529,8 @@ class EnhancedCNNLSTMTrainer:
             plt.savefig(save_path, dpi=300, bbox_inches="tight")
             logger.info(f"Training history plot saved to {save_path}")
         
-        if interactive:
-            plt.show()
+        # Remove plt.show() to prevent blocking in non-interactive environments
+        # Users can call plt.show() manually if needed
 
 
 class HyperparameterOptimizer:
