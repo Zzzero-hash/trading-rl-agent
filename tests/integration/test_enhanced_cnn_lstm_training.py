@@ -389,7 +389,15 @@ class TestHyperparameterOptimization:
         # Mock optuna trial
         class MockTrial:
             def suggest_categorical(self, name, choices):
-                return choices[0]
+                if name == "cnn_architecture":
+                    # Return a valid coordinated architecture
+                    return ([16, 32], [3, 3])
+                elif name == "lstm_units":
+                    return 64
+                elif name == "batch_size":
+                    return 16
+                else:
+                    return choices[0]
             
             def suggest_int(self, name, low, high):
                 return low
@@ -418,6 +426,48 @@ class TestHyperparameterOptimization:
         # Verify optimization completed
         assert result["best_score"] < float("inf")
         assert result["best_params"] is not None
+    
+    def test_coordinated_cnn_architecture_selection(self, sample_data):
+        """Test that CNN architecture selection ensures matching filter and kernel lengths."""
+        sequences, targets = sample_data
+        optimizer = HyperparameterOptimizer(sequences, targets, n_trials=1)
+        
+        # Mock optuna trial that selects different architectures
+        class MockTrial:
+            def __init__(self):
+                self.architecture_index = 0
+                self.architectures = [
+                    ([16, 32], [3, 3]),
+                    ([32, 64, 128], [3, 3, 3]),
+                    ([16, 32, 64, 128], [5, 5, 5, 5]),
+                ]
+            
+            def suggest_categorical(self, name, choices):
+                if name == "cnn_architecture":
+                    arch = self.architectures[self.architecture_index % len(self.architectures)]
+                    self.architecture_index += 1
+                    return arch
+                elif name == "lstm_units":
+                    return 64
+                elif name == "batch_size":
+                    return 16
+                else:
+                    return choices[0]
+            
+            def suggest_int(self, name, low, high):
+                return low
+            
+            def suggest_float(self, name, low, high, log=False):
+                return low
+        
+        trial = MockTrial()
+        
+        # Test multiple architecture selections
+        for _ in range(3):
+            result = optimizer.objective(trial)
+            # Should not raise ValueError about mismatched lengths
+            assert isinstance(result, float)
+            assert result > 0 or result == float("inf")
 
 
 if __name__ == "__main__":

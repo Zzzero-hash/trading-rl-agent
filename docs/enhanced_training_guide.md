@@ -99,10 +99,17 @@ python train_cnn_lstm_enhanced.py --optimize-hyperparams --epochs 100
 ```
 
 **Optimized Parameters:**
-- CNN architecture (filters, kernel sizes)
+- CNN architecture (coordinated filters and kernel sizes)
 - LSTM configuration (units, layers)
 - Training hyperparameters (learning rate, batch size)
 - Regularization (dropout, weight decay)
+
+**CNN Architecture Optimization:**
+The optimizer selects from pre-defined coordinated architectures to ensure matching filter and kernel sizes:
+- 2-layer architectures: `([16, 32], [3, 3])`, `([32, 64], [3, 3])`, `([64, 128], [3, 3])`
+- 3-layer architectures: `([32, 64, 128], [3, 3, 3])`, `([16, 32, 64], [3, 3, 3])`
+- 4-layer architectures: `([32, 64, 128, 256], [3, 3, 3, 3])`, `([16, 32, 64, 128], [5, 5, 5, 5])`
+- Mixed kernel sizes: `([16, 32, 64], [3, 5, 3])`, `([32, 64, 128], [5, 3, 5])`
 
 ### 4. Comprehensive Metrics
 
