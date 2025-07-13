@@ -566,6 +566,12 @@ class HyperparameterOptimizer:
         selected_architecture = trial.suggest_categorical("cnn_architecture", cnn_architectures)
         cnn_filters, cnn_kernel_sizes = selected_architecture
         
+        # Validate that the selected architecture has matching lengths
+        if len(cnn_filters) != len(cnn_kernel_sizes):
+            raise ValueError(f"CNN architecture mismatch: {len(cnn_filters)} filters vs {len(cnn_kernel_sizes)} kernels")
+        
+        logger.debug(f"Selected CNN architecture: filters={cnn_filters}, kernels={cnn_kernel_sizes}")
+        
         # Define hyperparameter search space
         model_config = {
             "cnn_filters": cnn_filters,
@@ -573,6 +579,7 @@ class HyperparameterOptimizer:
             "lstm_units": trial.suggest_categorical("lstm_units", [64, 128, 256]),
             "lstm_layers": trial.suggest_int("lstm_layers", 1, 3),
             "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.5),
+            "output_size": 1,  # Essential parameter for CNNLSTMModel initialization
         }
         
         training_config = {
@@ -612,9 +619,12 @@ class HyperparameterOptimizer:
             return val_loss
             
         except Exception as e:
-            logger.error(f"Trial failed with {type(e).__name__}: {e}")
+            logger.warning(f"Trial failed with {type(e).__name__}: {e}")
+            logger.debug(f"Failed model_config: {model_config}")
+            logger.debug(f"Failed training_config: {training_config}")
             # Re-raise critical errors that indicate configuration issues
             if isinstance(e, (ValueError, TypeError, AttributeError)):
+                logger.error(f"Critical configuration error: {e}")
                 raise
             return float("inf")
     def optimize(self) -> Dict[str, Any]:

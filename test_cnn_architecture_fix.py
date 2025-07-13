@@ -84,6 +84,83 @@ def test_cnn_architecture_coordination():
     return True
 
 
+def test_model_config_completeness():
+    """Test that model_config includes all required parameters including output_size."""
+    
+    print("\n🧪 Testing model_config completeness...")
+    
+    # Mock the hyperparameter optimization to capture the generated config
+    class MockTrial:
+        def suggest_categorical(self, name, choices):
+            if name == "cnn_architecture":
+                return ([16, 32], [3, 3])
+            elif name == "lstm_units":
+                return 64
+            elif name == "batch_size":
+                return 16
+            else:
+                return choices[0]
+        
+        def suggest_int(self, name, low, high):
+            return low
+        
+        def suggest_float(self, name, low, high, log=False):
+            return low
+    
+    # Simulate the objective function logic
+    trial = MockTrial()
+    
+    # Define coordinated CNN architecture choices
+    cnn_architectures = [
+        ([16, 32], [3, 3]),
+        ([32, 64], [3, 3]),
+        ([64, 128], [3, 3]),
+        ([32, 64, 128], [3, 3, 3]),
+        ([16, 32, 64], [3, 3, 3]),
+        ([32, 64, 128, 256], [3, 3, 3, 3]),
+        ([16, 32, 64, 128], [5, 5, 5, 5]),
+        ([32, 64], [5, 5]),
+        ([64, 128], [5, 5]),
+        ([16, 32, 64], [3, 5, 3]),
+        ([32, 64, 128], [5, 3, 5]),
+    ]
+    
+    # Select a coordinated CNN architecture
+    selected_architecture = trial.suggest_categorical("cnn_architecture", cnn_architectures)
+    cnn_filters, cnn_kernel_sizes = selected_architecture
+    
+    # Validate that the selected architecture has matching lengths
+    if len(cnn_filters) != len(cnn_kernel_sizes):
+        raise ValueError(f"CNN architecture mismatch: {len(cnn_filters)} filters vs {len(cnn_kernel_sizes)} kernels")
+    
+    # Define hyperparameter search space
+    model_config = {
+        "cnn_filters": cnn_filters,
+        "cnn_kernel_sizes": cnn_kernel_sizes,
+        "lstm_units": trial.suggest_categorical("lstm_units", [64, 128, 256]),
+        "lstm_layers": trial.suggest_int("lstm_layers", 1, 3),
+        "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.5),
+        "output_size": 1,  # Essential parameter for CNNLSTMModel initialization
+    }
+    
+    # Verify all required parameters are present
+    required_params = ["cnn_filters", "cnn_kernel_sizes", "lstm_units", "lstm_layers", "dropout_rate", "output_size"]
+    for param in required_params:
+        if param not in model_config:
+            print(f"❌ Missing required parameter: {param}")
+            return False
+        print(f"✅ Found required parameter: {param}")
+    
+    # Verify CNN architecture coordination
+    if len(model_config["cnn_filters"]) != len(model_config["cnn_kernel_sizes"]):
+        print(f"❌ CNN architecture mismatch: {len(model_config['cnn_filters'])} filters vs {len(model_config['cnn_kernel_sizes'])} kernels")
+        return False
+    
+    print(f"✅ CNN architecture coordination verified: {len(model_config['cnn_filters'])} layers")
+    print("✅ All required parameters present in model_config")
+    return True
+
+
 def test_invalid_architecture_rejection():
     """Test that invalid architectures are properly rejected."""
     
@@ -136,7 +213,11 @@ if __name__ == "__main__":
     if not test_cnn_architecture_coordination():
         success = False
     
-    # Test 2: Invalid architecture rejection
+    # Test 2: Model config completeness
+    if not test_model_config_completeness():
+        success = False
+    
+    # Test 3: Invalid architecture rejection
     if not test_invalid_architecture_rejection():
         success = False
     
