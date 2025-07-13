@@ -10,10 +10,8 @@ This module tests the complete training workflow including:
 - Metrics calculation
 """
 
-import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import numpy as np
 import pytest
