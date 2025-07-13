@@ -5,11 +5,13 @@ Welcome to the Trading RL Agent documentation! This project is a hybrid reinforc
 ## 📚 **Documentation Overview**
 
 ### **Getting Started**
+
 - [Getting Started Guide](getting_started.md) - Quick start guide for new users
 - [Development Guide](DEVELOPMENT_GUIDE.md) - Setup development environment
 - [Evaluation Guide](EVALUATION_GUIDE.md) - Model evaluation and testing
 
 ### **Core Components**
+
 - [Data Pipeline](../src/trading_rl_agent/data/) - Data ingestion and preprocessing
 - [Feature Engineering](../src/trading_rl_agent/features/) - Technical indicators and feature engineering
 - [CNN+LSTM Models](../src/trading_rl_agent/models/) - Neural network architectures
@@ -17,12 +19,14 @@ Welcome to the Trading RL Agent documentation! This project is a hybrid reinforc
 - [Configuration](../src/trading_rl_agent/core/) - Configuration management
 
 ### **API Reference**
+
 - [Data Module](../src/trading_rl_agent/data/) - Data processing and dataset building
 - [Models Module](../src/trading_rl_agent/models/) - Neural network models
 - [Agents Module](../src/trading_rl_agent/agents/) - RL agents and training
 - [Core Module](../src/trading_rl_agent/core/) - Core utilities and configuration
 
 ### **Development**
+
 - [Contributing Guide](../CONTRIBUTING.md) - How to contribute to the project
 - [Code Quality](../docs/PRE_COMMIT_SETUP.md) - Code formatting and linting
 - [Testing](../tests/) - Test suite and examples
@@ -30,6 +34,7 @@ Welcome to the Trading RL Agent documentation! This project is a hybrid reinforc
 ## 🏗️ **Current Status**
 
 ### **✅ Implemented Features**
+
 - **Data Pipeline**: Multi-source data ingestion (yfinance, Alpha Vantage, synthetic)
 - **Feature Engineering**: 150+ technical indicators with robust preprocessing
 - **CNN+LSTM Models**: Hybrid neural network architecture
@@ -38,11 +43,13 @@ Welcome to the Trading RL Agent documentation! This project is a hybrid reinforc
 - **Code Quality**: Comprehensive linting, formatting, and testing setup
 
 ### **🔄 In Progress**
+
 - **CNN+LSTM Training**: Complete training pipeline with monitoring
 - **Integration Tests**: End-to-end workflow testing
 - **Model Evaluation**: Comprehensive metrics and validation
 
 ### **📋 Planned Features**
+
 - **RL Agent Training**: SAC, TD3, PPO agent implementation
 - **Risk Management**: VaR, CVaR, Kelly criterion position sizing
 - **Portfolio Management**: Multi-asset portfolio optimization

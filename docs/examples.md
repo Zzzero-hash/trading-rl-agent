@@ -198,16 +198,16 @@ def test_feature_engineering():
         'close': [100, 101, 99, 102, 98, 103],
         'volume': [1000, 1100, 900, 1200, 800, 1300]
     })
-    
+
     # Initialize feature engineer
     engineer = FeatureEngineer()
-    
+
     # Add features
     features = engineer.add_technical_indicators(
         data=data,
         indicators=["sma", "rsi"]
     )
-    
+
     # Assertions
     assert "sma" in features.columns
     assert "rsi" in features.columns
@@ -228,14 +228,14 @@ def test_data_pipeline_integration():
     # Initialize components
     config = ConfigManager("configs/development.yaml")
     builder = RobustDatasetBuilder()
-    
+
     # Build dataset
     dataset = builder.build_dataset(
         symbols=["AAPL"],
         start_date="2023-01-01",
         end_date="2023-01-31"
     )
-    
+
     # Assertions
     assert not dataset.empty
     assert "close" in dataset.columns
@@ -306,25 +306,25 @@ class CustomFeaturePipeline:
     def __init__(self):
         self.feature_engineer = FeatureEngineer()
         self.preprocessor = DataPreprocessor()
-    
+
     def process(self, data):
         # Preprocess data
         clean_data = self.preprocessor.clean_data(data)
-        
+
         # Add technical indicators
         features = self.feature_engineer.add_technical_indicators(
             clean_data,
             indicators=["sma", "ema", "rsi", "macd", "bollinger_bands"]
         )
-        
+
         # Add custom features
         features = self.add_custom_features(features)
-        
+
         # Normalize features
         normalized = self.preprocessor.normalize_features(features)
-        
+
         return normalized
-    
+
     def add_custom_features(self, data):
         # Add your custom features here
         data['price_momentum'] = data['close'].pct_change(5)
@@ -353,7 +353,7 @@ class ModelEnsemble(nn.Module):
                 "dropout_rate": 0.1
             }) for _ in range(num_models)
         ])
-    
+
     def forward(self, x):
         outputs = [model(x) for model in self.models]
         return torch.mean(torch.stack(outputs), dim=0)
