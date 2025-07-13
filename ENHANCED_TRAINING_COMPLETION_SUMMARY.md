@@ -29,6 +29,7 @@ We have successfully completed the CNN+LSTM training pipeline with all TODO item
 - **Implementation**: `HyperparameterOptimizer` class using Optuna
 - **Features**:
   - Automated hyperparameter search
+  - Coordinated CNN architecture selection (ensures matching filter/kernel lengths)
   - Configurable search spaces for CNN and LSTM parameters
   - Training hyperparameter optimization
   - Best parameter selection and reuse

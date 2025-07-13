@@ -546,10 +546,30 @@ class HyperparameterOptimizer:
     def objective(self, trial: optuna.Trial) -> float:
         """Objective function for hyperparameter optimization."""
         
+        # Define coordinated CNN architecture choices to ensure matching lengths
+        cnn_architectures = [
+            # (filters, kernel_sizes) - each pair has matching length
+            ([16, 32], [3, 3]),
+            ([32, 64], [3, 3]),
+            ([64, 128], [3, 3]),
+            ([32, 64, 128], [3, 3, 3]),
+            ([16, 32, 64], [3, 3, 3]),
+            ([32, 64, 128, 256], [3, 3, 3, 3]),
+            ([16, 32, 64, 128], [5, 5, 5, 5]),
+            ([32, 64], [5, 5]),
+            ([64, 128], [5, 5]),
+            ([16, 32, 64], [3, 5, 3]),  # Mixed kernel sizes
+            ([32, 64, 128], [5, 3, 5]),  # Mixed kernel sizes
+        ]
+        
+        # Select a coordinated CNN architecture
+        selected_architecture = trial.suggest_categorical("cnn_architecture", cnn_architectures)
+        cnn_filters, cnn_kernel_sizes = selected_architecture
+        
         # Define hyperparameter search space
         model_config = {
-            "cnn_filters": trial.suggest_categorical("cnn_filters", [[16, 32], [32, 64], [64, 128], [32, 64, 128]]),
-            "cnn_kernel_sizes": trial.suggest_categorical("cnn_kernel_sizes", [[3, 3], [3, 5], [5, 5], [3, 3, 3]]),
+            "cnn_filters": cnn_filters,
+            "cnn_kernel_sizes": cnn_kernel_sizes,
             "lstm_units": trial.suggest_categorical("lstm_units", [64, 128, 256]),
             "lstm_layers": trial.suggest_int("lstm_layers", 1, 3),
             "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.5),
