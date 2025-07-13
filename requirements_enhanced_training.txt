@@ -13,7 +13,6 @@ wandb>=0.15.0  # Optional: Weights & Biases integration
 
 # Hyperparameter optimization
 optuna>=3.0.0
-ray[tune]>=2.0.0  # For distributed hyperparameter optimization
 
 # Visualization
 matplotlib>=3.5.0
