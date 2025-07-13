@@ -155,16 +155,19 @@ mypy src/
 ## 📚 **Next Steps**
 
 ### **For Data Scientists**
+
 - Explore the [Feature Engineering](../src/trading_rl_agent/features/) module
 - Study the [CNN+LSTM Models](../src/trading_rl_agent/models/) architecture
 - Review the [Data Pipeline](../src/trading_rl_agent/data/) implementation
 
 ### **For Developers**
+
 - Check out the [Development Guide](DEVELOPMENT_GUIDE.md)
 - Review the [Contributing Guide](../CONTRIBUTING.md)
 - Explore the [Test Suite](../tests/)
 
 ### **For Researchers**
+
 - Examine the [Model Architectures](../src/trading_rl_agent/models/)
 - Review the [Training Pipeline](../src/training/)
 - Study the [Evaluation Framework](../src/evaluation/)
@@ -174,17 +177,20 @@ mypy src/
 ### **Common Issues**
 
 **Import Errors**: Make sure you're in the virtual environment and have installed all dependencies:
+
 ```bash
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
 **Configuration Errors**: Check that your config files are valid YAML:
+
 ```bash
 python -c "import yaml; yaml.safe_load(open('configs/development.yaml'))"
 ```
 
 **Data Loading Issues**: Verify your data sources are accessible:
+
 ```python
 import yfinance as yf
 data = yf.download("AAPL", start="2023-01-01", end="2024-01-01")

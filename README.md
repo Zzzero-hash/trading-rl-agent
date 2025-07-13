@@ -207,7 +207,7 @@ training:
     batch_size: 32
     learning_rate: 0.001
     early_stopping_patience: 10
-  
+
   rl:
     agent_type: sac
     total_timesteps: 1000000
