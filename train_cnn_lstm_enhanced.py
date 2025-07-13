@@ -612,9 +612,11 @@ class HyperparameterOptimizer:
             return val_loss
             
         except Exception as e:
-            logger.warning(f"Trial failed: {e}")
+            logger.error(f"Trial failed with {type(e).__name__}: {e}")
+            # Re-raise critical errors that indicate configuration issues
+            if isinstance(e, (ValueError, TypeError, AttributeError)):
+                raise
             return float("inf")
-    
     def optimize(self) -> Dict[str, Any]:
         """Run hyperparameter optimization."""
         
