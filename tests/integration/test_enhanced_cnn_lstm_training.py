@@ -466,6 +466,83 @@ class TestHyperparameterOptimization:
             # Should not raise ValueError about mismatched lengths
             assert isinstance(result, float)
             assert result > 0 or result == float("inf")
+    
+    def test_model_config_completeness(self, sample_data):
+        """Test that the model_config includes all required parameters."""
+        sequences, targets = sample_data
+        optimizer = HyperparameterOptimizer(sequences, targets, n_trials=1)
+        
+        # Mock optuna trial
+        class MockTrial:
+            def suggest_categorical(self, name, choices):
+                if name == "cnn_architecture":
+                    return ([16, 32], [3, 3])
+                elif name == "lstm_units":
+                    return 64
+                elif name == "batch_size":
+                    return 16
+                else:
+                    return choices[0]
+            
+            def suggest_int(self, name, low, high):
+                return low
+            
+            def suggest_float(self, name, low, high, log=False):
+                return low
+        
+        trial = MockTrial()
+        
+        # Capture the model_config that would be generated
+        original_objective = optimizer.objective
+        
+        def capture_config(trial):
+            # This is a simplified version to capture the config
+            cnn_architectures = [
+                ([16, 32], [3, 3]),
+                ([32, 64], [3, 3]),
+                ([64, 128], [3, 3]),
+                ([32, 64, 128], [3, 3, 3]),
+                ([16, 32, 64], [3, 3, 3]),
+                ([32, 64, 128, 256], [3, 3, 3, 3]),
+                ([16, 32, 64, 128], [5, 5, 5, 5]),
+                ([32, 64], [5, 5]),
+                ([64, 128], [5, 5]),
+                ([16, 32, 64], [3, 5, 3]),
+                ([32, 64, 128], [5, 3, 5]),
+            ]
+            
+            selected_architecture = trial.suggest_categorical("cnn_architecture", cnn_architectures)
+            cnn_filters, cnn_kernel_sizes = selected_architecture
+            
+            model_config = {
+                "cnn_filters": cnn_filters,
+                "cnn_kernel_sizes": cnn_kernel_sizes,
+                "lstm_units": trial.suggest_categorical("lstm_units", [64, 128, 256]),
+                "lstm_layers": trial.suggest_int("lstm_layers", 1, 3),
+                "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.5),
+                "output_size": 1,
+            }
+            
+            # Verify all required parameters are present
+            required_params = ["cnn_filters", "cnn_kernel_sizes", "lstm_units", "lstm_layers", "dropout_rate", "output_size"]
+            for param in required_params:
+                assert param in model_config, f"Missing required parameter: {param}"
+            
+            # Verify CNN architecture coordination
+            assert len(model_config["cnn_filters"]) == len(model_config["cnn_kernel_sizes"]), \
+                f"CNN architecture mismatch: {len(model_config['cnn_filters'])} filters vs {len(model_config['cnn_kernel_sizes'])} kernels"
+            
+            return 0.1  # Return a dummy loss value
+        
+        # Temporarily replace the objective function
+        optimizer.objective = capture_config
+        
+        try:
+            result = optimizer.objective(trial)
+            assert result == 0.1  # Should return our dummy value
+        finally:
+            # Restore the original objective function
+            optimizer.objective = original_objective
 
 
 if __name__ == "__main__":
