@@ -623,7 +623,7 @@ class HyperparameterOptimizer:
         study = optuna.create_study(direction="minimize")
         study.optimize(self.objective, n_trials=self.n_trials)
         
-        logger.info(f"✅ Optimization completed!")
+        logger.info("✅ Optimization completed!")
         logger.info(f"🎯 Best validation loss: {study.best_value:.6f}")
         logger.info(f"🔧 Best parameters: {study.best_params}")
         
