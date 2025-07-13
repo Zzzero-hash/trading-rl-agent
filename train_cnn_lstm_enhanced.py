@@ -53,8 +53,8 @@ class EnhancedCNNLSTMTrainer:
 
     def __init__(
         self,
-        model_config: Dict[str, Any],
-        training_config: Dict[str, Any],
+        model_config: dict[str, Any],
+        training_config: dict[str, Any],
         device: str | None = None,
         experiment_name: str = "cnn_lstm_training",
         enable_mlflow: bool = True,
