@@ -265,7 +265,7 @@ class EnhancedCNNLSTMTrainer:
         optimizer: optim.Optimizer,
         criterion: nn.Module,
         epoch: int,
-    ) -> tuple[float, Dict[str, float]]:
+    ) -> Tuple[float, Dict[str, float]]:
         """Train for one epoch with enhanced monitoring."""
         
         self.model.train()
