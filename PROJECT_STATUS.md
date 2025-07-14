@@ -165,7 +165,7 @@ The Trading RL Agent is a hybrid reinforcement learning trading system that comb
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Data Sources  │    │  Feature Eng.   │    │  CNN+LSTM Model │
 │                 │    │                 │    │                 │
-│ • yfinance      │───▶│ • Technical     │───▶│ • Pattern       │
+│ • yfinance      │───▶│ • Technical     │───▶│ • Pattern      │
 │ • Alpha Vantage │    │   Indicators    │    │   Recognition   │
 │ • Synthetic     │    │ • Alternative   │    │ • Uncertainty   │
 │                 │    │   Data          │    │   Estimation    │

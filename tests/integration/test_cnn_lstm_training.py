@@ -17,7 +17,7 @@ import pytest
 import torch
 import yaml
 
-from trading_rl_agent.training.cnn_lstm_trainer import CNNLSTMTrainingManager
+from trading_rl_agent.training.optimized_trainer import OptimizedTrainingManager
 
 
 @pytest.fixture
@@ -129,7 +129,7 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_config_loading(self, config_file):
         """Test that configuration can be loaded correctly."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         assert trainer.config is not None
         assert "model" in trainer.config
@@ -144,13 +144,13 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_device_setup(self, config_file):
         """Test device setup (should use CPU for testing)."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         assert trainer.device.type == "cpu"
 
     def test_dataset_preparation(self, config_file):
         """Test dataset preparation with synthetic data."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         sequences, targets, dataset_info = trainer.prepare_dataset(force_rebuild=True)
 
@@ -167,7 +167,7 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_model_creation(self, config_file):
         """Test model creation with correct architecture."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         # Prepare dataset to get input dimension
         sequences, _, _ = trainer.prepare_dataset(force_rebuild=True)
@@ -192,7 +192,7 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_data_loader_creation(self, config_file):
         """Test data loader creation with proper splits."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         # Prepare dataset
         sequences, targets, _ = trainer.prepare_dataset(force_rebuild=True)
@@ -219,7 +219,7 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_training_workflow(self, config_file, temp_output_dir):
         """Test complete training workflow."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         # Prepare dataset
         sequences, targets, _ = trainer.prepare_dataset(force_rebuild=True)
@@ -254,7 +254,7 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_model_evaluation(self, config_file, temp_output_dir):
         """Test model evaluation on test set."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         # Prepare dataset
         sequences, targets, _ = trainer.prepare_dataset(force_rebuild=True)
@@ -285,7 +285,7 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_model_saving_and_loading(self, config_file, temp_output_dir):
         """Test model saving and loading functionality."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         # Prepare dataset and train model
         sequences, targets, _ = trainer.prepare_dataset(force_rebuild=True)
@@ -303,7 +303,7 @@ class TestCNNLSTMTrainingIntegration:
         assert model_path.exists()
 
         # Create new trainer and load model
-        new_trainer = CNNLSTMTrainingManager(str(config_file))
+        new_trainer = OptimizedTrainingManager(str(config_file))
         new_trainer.load_model(str(model_path), input_dim)
 
         # Check that model was loaded correctly
@@ -319,7 +319,7 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_prediction_functionality(self, config_file, temp_output_dir):
         """Test prediction functionality."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         # Prepare dataset and train model
         sequences, targets, _ = trainer.prepare_dataset(force_rebuild=True)
@@ -340,7 +340,7 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_training_history_tracking(self, config_file):
         """Test that training history is properly tracked."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         # Prepare dataset and train
         sequences, targets, _ = trainer.prepare_dataset(force_rebuild=True)
@@ -367,7 +367,7 @@ class TestCNNLSTMTrainingIntegration:
 
     def test_error_handling(self, config_file):
         """Test error handling for invalid inputs."""
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
 
         # Test with invalid model path
         with pytest.raises(FileNotFoundError):
@@ -390,7 +390,7 @@ class TestCNNLSTMTrainingIntegration:
             yaml.dump(invalid_config, f)
 
         with pytest.raises(ValueError, match="Missing required config section"):
-            CNNLSTMTrainingManager(str(config_path))
+            OptimizedTrainingManager(str(config_path))
 
 
 class TestCNNLSTMTrainingCLI:
@@ -446,7 +446,7 @@ class TestCNNLSTMTrainingCLI:
         from trading_rl_agent.training.cli import main
 
         # First train a model
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
         sequences, targets, _ = trainer.prepare_dataset(force_rebuild=True)
         input_dim = sequences.shape[-1]
         trainer.model = trainer.create_model(input_dim)
@@ -488,7 +488,7 @@ class TestCNNLSTMTrainingCLI:
         from trading_rl_agent.training.cli import main
 
         # First train a model
-        trainer = CNNLSTMTrainingManager(str(config_file))
+        trainer = OptimizedTrainingManager(str(config_file))
         sequences, targets, _ = trainer.prepare_dataset(force_rebuild=True)
         input_dim = sequences.shape[-1]
         trainer.model = trainer.create_model(input_dim)
