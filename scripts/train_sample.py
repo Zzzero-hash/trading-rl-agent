@@ -67,19 +67,22 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
+logger = logging.getLogger(__name__)
 
-def load_data() -> pd.DataFrame:
-    """Load bundled sample dataset or generate synthetic data."""
+
+def load_or_generate_data() -> pd.DataFrame:
+    """Load sample data if available, otherwise generate synthetic data."""
+    # Check for a packaged dataset first
     packaged = Path(__file__).resolve().parents[1] / "samples" / "sample_data.csv"
     if packaged.exists():
-        logging.info(f"Loading bundled dataset from {packaged}")
+        logger.info(f"Loading bundled dataset from {packaged}")
         return pd.read_csv(packaged)
-    logging.info("Bundled sample dataset not found, generating synthetic data.")
+    logger.info("Bundled sample dataset not found, generating synthetic data.")
     return fetch_synthetic_data(n_samples=120)
 
 
 def main() -> None:
-    df = load_data()
+    df = load_or_generate_data()
     pipeline = FeaturePipeline()
     df = pipeline.transform(df)
     df = df.select_dtypes(include=["number"]).dropna()

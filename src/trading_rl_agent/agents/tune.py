@@ -37,7 +37,7 @@ def _load_search_space(path: str) -> dict[str, Any]:
             return [_recurse_convert(v) for v in obj]
         return obj
 
-    return cast(dict[str, Any], _recurse_convert(cfg))
+    return cast("dict[str, Any]", _recurse_convert(cfg))
 
 
 def run_tune(config_paths: str | list[str]) -> None:

@@ -17,7 +17,7 @@ class Dashboard:
 
     def update(self, metrics: Any) -> None:
         """Update the dashboard with new metrics."""
-        metrics_dict = asdict(cast(Any, metrics)) if is_dataclass(metrics) else dict(metrics)
+        metrics_dict = asdict(cast("Any", metrics)) if is_dataclass(metrics) else dict(metrics)
 
         self.data.append(metrics_dict)
         self.logger.info("Dashboard update", extra={"metrics": metrics_dict})

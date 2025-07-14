@@ -85,7 +85,7 @@ if RAY_AVAILABLE and serve:
         config: dict[str, Any] | None = None,
     ) -> Any:
         """Create SAC deployment graph for Ray Serve."""
-        return cast(Any, SACServeDeployment).bind(model_path=model_path, config=config)
+        return cast("Any", SACServeDeployment).bind(model_path=model_path, config=config)
 
     def deploy_sac_model(
         model_path: str | None = None,
@@ -93,7 +93,7 @@ if RAY_AVAILABLE and serve:
         deployment_name: str = "sac-model",
     ) -> Any:
         deployment = (
-            cast(Any, SACServeDeployment)
+            cast("Any", SACServeDeployment)
             .options(
                 name=deployment_name,
                 num_replicas=2,

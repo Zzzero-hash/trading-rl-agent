@@ -132,11 +132,9 @@ def production_dataset_path():
     data_dir = "/workspaces/trading-rl-agent/data"
 
     # Look for existing advanced datasets
-    for filename in os.listdir(data_dir):
-        if filename.startswith("advanced_trading_dataset") and filename.endswith(
-            ".csv",
-        ):
-            return os.path.join(data_dir, filename)
+    for p in data_dir.iterdir():
+        if p.name.startswith("advanced_trading_dataset") and p.name.endswith(".csv"):
+            return str(p)
 
     # Fallback to sample data
     sample_path = os.path.join(

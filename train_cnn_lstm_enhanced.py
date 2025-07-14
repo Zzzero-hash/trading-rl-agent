@@ -273,7 +273,7 @@ class EnhancedCNNLSTMTrainer:
         targets = []
         gradient_norms = []
 
-        pbar = tqdm(dataloader, desc=f"Epoch {epoch+1} - Training", leave=False)
+        pbar = tqdm(dataloader, desc=f"Epoch {epoch + 1} - Training", leave=False)
 
         for batch_idx, (data, target) in enumerate(pbar):
             data, target = data.to(self.device), target.to(self.device)

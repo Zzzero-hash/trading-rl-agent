@@ -398,7 +398,7 @@ class PortfolioManager:
             cleaned_weights = ef.clean_weights()
 
             self.logger.info(f"Portfolio optimization completed using {method}")
-            return cast(dict[str, float], cleaned_weights)
+            return cast("dict[str, float]", cleaned_weights)
 
         except Exception as e:
             self.logger.exception(f"Portfolio optimization failed: {e}")

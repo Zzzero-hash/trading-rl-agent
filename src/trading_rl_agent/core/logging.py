@@ -102,7 +102,7 @@ def setup_logging(
 
     if "handlers" in config:
         # Update file paths with log_dir
-        for handler_config in cast(dict[str, Any], config["handlers"]).values():
+        for handler_config in cast("dict[str, Any]", config["handlers"]).values():
             if "filename" in handler_config:
                 filename = handler_config["filename"]
                 handler_config["filename"] = str(log_dir / Path(filename).name)
