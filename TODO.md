@@ -53,6 +53,15 @@
   - [ ] Add walk-forward analysis capabilities
   - [ ] Implement backtesting framework integration
 
+### **4. Synthetic Data Generation & Testing**
+
+- **Status**: 0% Complete
+- **Priority**: 🔥 HIGH
+- **Tasks**:
+  - [ ] Extend synthetic data generator to create specific market patterns (e.g., trends, reversals, volatility clusters).
+  - [ ] Develop agent evaluation scenarios using synthetic data to validate trading logic.
+  - [ ] Integrate synthetic data into the main testing pipeline for automated scenario testing.
+
 ---
 
 ## 🔄 **Short-term Goals (1-3 Months)**
@@ -122,13 +131,6 @@
 - [ ] **Compliance**: Regulatory compliance features
 - [ ] **Performance Optimization**: Code optimization, memory management
 
-### **Community & Ecosystem**
-
-- [ ] **Plugin System**: Extensible architecture for custom components
-- [ ] **Marketplace**: Community-contributed strategies and models
-- [ ] **Educational Resources**: Tutorials, courses, workshops
-- [ ] **Research Collaboration**: Academic partnerships and publications
-
 ---
 
 ## ✅ **Completed Tasks**
@@ -155,6 +157,7 @@
 
 ### **Data & Feature Engineering**
 
+- [ ] Integrate/refactor existing sentiment scraper (forex/news/social) into main pipeline for alternative data features
 - [x] **Data Ingestion & Pre-processing**: Collect data from multiple sources
 - [x] **Feature Engineering**: Generate technical indicators and temporal features
 - [x] **Robust Dataset Builder**: Comprehensive dataset construction

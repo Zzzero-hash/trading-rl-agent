@@ -4,9 +4,68 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 from ..core.logging import get_logger
-from ..data.sentiment import SentimentAnalyzer, SentimentConfig
+
+
+@dataclass
+class SentimentConfig:
+    """Configuration for sentiment analysis."""
+
+    enable_news: bool = True
+    enable_social: bool = True
+    provider: str = "yahoo"
+
+
+class SentimentAnalyzer:
+    """Analyzes sentiment from news and social media sources."""
+
+    def __init__(self, config: SentimentConfig | None = None) -> None:
+        self.config = config or SentimentConfig()
+        self.analyzer = SentimentIntensityAnalyzer()
+        self.logger = get_logger(self.__class__.__name__)
+
+    def get_symbol_sentiment(self, symbol: str, days_back: int = 7) -> float:
+        """Get aggregated sentiment score for a symbol."""
+        scores = []
+        if self.config.enable_news:
+            try:
+                news_headlines = self._scrape_yahoo_finance(symbol, max_headlines=20)
+                for headline in news_headlines:
+                    scores.append(self._analyze_text(headline))
+            except Exception as e:
+                self.logger.warning(f"Could not fetch news sentiment for {symbol}: {e}")
+
+        # Placeholder for social sentiment
+        if self.config.enable_social:
+            self.logger.debug(f"Social sentiment for {symbol} is not yet implemented.")
+
+        return float(np.mean(scores)) if scores else 0.0
+
+    def _scrape_yahoo_finance(self, symbol: str, max_headlines: int = 20) -> list[str]:
+        """Scrape news headlines from Yahoo Finance."""
+        url = f"https://finance.yahoo.com/quote/{symbol}/news"
+        try:
+            resp = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.text, "html.parser")
+            headlines = {
+                item.get_text(strip=True)
+                for item in soup.find_all("h3")
+                if item.get_text(strip=True) and len(item.get_text(strip=True)) > 10
+            }
+            return list(headlines)[:max_headlines]
+        except requests.RequestException:
+            self.logger.exception(f"Failed to fetch news from Yahoo Finance for {symbol}")
+            return []
+
+    def _analyze_text(self, text: str) -> float:
+        """Analyze sentiment of a single text string."""
+        scores = self.analyzer.polarity_scores(text)
+        return float(scores.get("compound", 0.0))
 
 
 @dataclass

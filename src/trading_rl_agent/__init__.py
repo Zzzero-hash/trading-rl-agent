@@ -1,20 +1,21 @@
 """
-Trading RL Agent - Production-grade hybrid reinforcement learning trading system.
+Trading RL Agent - Production-grade live trading system.
 
-This package provides a comprehensive framework for algorithmic trading that combines:
-- CNN+LSTM supervised learning for market pattern recognition
-- Deep reinforcement learning for trading decision optimization
-- Risk management and portfolio optimization
-- Real-time data processing and execution
+CORE PRIORITIES:
+1. Live Trading Framework - Real-time trading execution
+2. Dataset Pipeline - Data ingestion and processing
+3. CNN+LSTM Training - Supervised learning for pattern recognition
+4. CNN+LSTM Integration - Hybrid RL agents with supervised components
+5. Testing - Comprehensive test suite
+6. Live Inference - Production model serving
 
-Architecture:
-    agents/         - RL agents and ensemble methods
-    data/           - Data ingestion, processing, and feature engineering
-    features/       - Feature engineering and technical indicators
-    portfolio/      - Portfolio management and optimization
-    risk/           - Risk management and compliance
-    execution/      - Order execution and broker integration
-    monitoring/     - Performance monitoring and alerting
+ARCHITECTURE:
+    agents/         - RL agents with CNN+LSTM integration
+    data/           - Live data pipeline and feature engineering
+    models/         - CNN+LSTM models and architectures
+    training/       - Training pipeline for both supervised and RL
+    envs/           - Trading environments for RL training
+    core/           - Core trading framework and utilities
     utils/          - Shared utilities and helpers
 """
 
@@ -43,17 +44,27 @@ __all__ = [
     "setup_logging",
 ]
 
-# Optional heavy components mapped to their import paths.  These are imported
+# Optional heavy components mapped to their import paths. These are imported
 # lazily to keep ``import trading_rl_agent`` lightweight.
 _OPTIONAL_IMPORTS = {
-    "Trainer": (".agents.trainer", "Trainer"),
-    "WeightedEnsembleAgent": (".agents.policy_utils", "WeightedEnsembleAgent"),
-    "EnsembleAgent": (".agents.policy_utils", "EnsembleAgent"),
-    "CallablePolicy": (".agents.policy_utils", "CallablePolicy"),
-    "weighted_policy_mapping": (".agents.policy_utils", "weighted_policy_mapping"),
-    "PortfolioManager": (".portfolio.manager", "PortfolioManager"),
-    "ExecutionEngine": (".execution", "ExecutionEngine"),
+    # Live Trading Framework
+    "LiveTradingEngine": (".core.live_trading", "LiveTradingEngine"),
+    "TradingSession": (".core.live_trading", "TradingSession"),
+    # Dataset Pipeline
+    "DataPipeline": (".data.pipeline", "DataPipeline"),
+    "LiveDataFeed": (".data.live_feed", "LiveDataFeed"),
+    # CNN+LSTM Models
+    "CNNLSTMModel": (".models.cnn_lstm", "CNNLSTMModel"),
+    "HybridAgent": (".agents.hybrid", "HybridAgent"),
+    # Training
+    "Trainer": (".training.trainer", "Trainer"),
+    "OptimizedTrainingManager": (".training.optimized_trainer", "OptimizedTrainingManager"),
+    # RL Agents
     "PPOAgent": (".agents.ppo_agent", "PPOAgent"),
+    "SACAgent": (".agents.sac_agent", "SACAgent"),
+    # Risk Management
+    "RiskManager": (".risk.manager", "RiskManager"),
+    "PortfolioManager": (".portfolio.manager", "PortfolioManager"),
 }
 
 
