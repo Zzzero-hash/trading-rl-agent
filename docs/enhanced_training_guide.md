@@ -58,6 +58,7 @@ mlflow ui  # Start MLflow UI
 ```
 
 **Tracked Information:**
+
 - Model hyperparameters
 - Training hyperparameters
 - Training metrics (loss, MAE, RMSE, R²)
@@ -80,6 +81,7 @@ tensorboard --logdir runs/
 ```
 
 **Visualizations:**
+
 - Loss curves (train/validation)
 - Learning rate scheduling
 - Gradient norms
@@ -99,6 +101,7 @@ python train_cnn_lstm_enhanced.py --optimize-hyperparams --epochs 100
 ```
 
 **Optimized Parameters:**
+
 - CNN architecture (coordinated filters and kernel sizes)
 - LSTM configuration (units, layers)
 - Training hyperparameters (learning rate, batch size)
@@ -106,6 +109,7 @@ python train_cnn_lstm_enhanced.py --optimize-hyperparams --epochs 100
 
 **CNN Architecture Optimization:**
 The optimizer selects from pre-defined coordinated architectures to ensure matching filter and kernel sizes:
+
 - 2-layer architectures: `([16, 32], [3, 3])`, `([32, 64], [3, 3])`, `([64, 128], [3, 3])`
 - 3-layer architectures: `([32, 64, 128], [3, 3, 3])`, `([16, 32, 64], [3, 3, 3])`
 - 4-layer architectures: `([32, 64, 128, 256], [3, 3, 3, 3])`, `([16, 32, 64, 128], [5, 5, 5, 5])`
@@ -141,6 +145,7 @@ trainer.plot_training_history(save_path="training_history.png")
 ```
 
 **Generated Plots:**
+
 - Loss curves (train/validation)
 - MAE and RMSE progression
 - Learning rate scheduling
@@ -402,32 +407,36 @@ pytest tests/integration/test_enhanced_cnn_lstm_training.py --cov=train_cnn_lstm
 ### Common Issues
 
 1. **Import Errors**
+
    ```bash
    # Install missing dependencies
    pip install -r requirements_enhanced_training.txt
    ```
 
 2. **GPU Memory Issues**
+
    ```python
    # Reduce batch size
    training_config["batch_size"] = 16
-   
+
    # Use gradient accumulation
    training_config["gradient_accumulation_steps"] = 4
    ```
 
 3. **MLflow Connection Issues**
+
    ```bash
    # Disable MLflow for local testing
    python train_cnn_lstm_enhanced.py --no-mlflow
    ```
 
 4. **Slow Training**
+
    ```python
    # Use smaller model
    model_config["lstm_units"] = 64
    model_config["cnn_filters"] = [16, 32]
-   
+
    # Reduce sequence length
    --sequence-length 30
    ```
@@ -435,12 +444,14 @@ pytest tests/integration/test_enhanced_cnn_lstm_training.py --cov=train_cnn_lstm
 ### Performance Optimization
 
 1. **GPU Utilization**
+
    ```python
    # Ensure GPU is being used
    trainer = EnhancedCNNLSTMTrainer(device="cuda")
    ```
 
 2. **Memory Efficiency**
+
    ```python
    # Use mixed precision training
    training_config["use_amp"] = True
