@@ -10,7 +10,7 @@ import logging
 import sys
 from pathlib import Path
 
-from trading_rl_agent.training.cnn_lstm_trainer import CNNLSTMTrainingManager
+from trading_rl_agent.training.optimized_trainer import OptimizedTrainingManager
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -95,7 +95,7 @@ def train_model(args: argparse.Namespace) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Initialize training manager
-    trainer = CNNLSTMTrainingManager(str(config_path))
+    trainer = OptimizedTrainingManager(str(config_path))
 
     # Prepare dataset
     sequences, targets, dataset_info = trainer.prepare_dataset(force_rebuild=args.force_rebuild)
@@ -163,7 +163,7 @@ def evaluate_model(args: argparse.Namespace) -> None:
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
     # Initialize training manager
-    trainer = CNNLSTMTrainingManager(str(config_path))
+    trainer = OptimizedTrainingManager(str(config_path))
 
     # Prepare dataset
     sequences, targets, dataset_info = trainer.prepare_dataset()
@@ -232,7 +232,7 @@ def predict_model(args: argparse.Namespace) -> None:
     logger.info(f"📊 Loaded data shape: {data.shape}")
 
     # Initialize training manager
-    trainer = CNNLSTMTrainingManager(str(config_path))
+    trainer = OptimizedTrainingManager(str(config_path))
 
     # Load model
     input_dim = data.shape[-1]
