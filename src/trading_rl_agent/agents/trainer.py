@@ -34,7 +34,7 @@ class RiskAwareEnv(gym.Wrapper):
 
     def reset(self, **kwargs: Any) -> tuple[Any, dict[str, Any]]:
         self._returns = np.array([])
-        return cast(tuple[Any, dict[str, Any]], super().reset(**kwargs))
+        return cast("tuple[Any, dict[str, Any]]", super().reset(**kwargs))
 
     def step(self, action: np.ndarray, **kwargs: Any) -> tuple[Any, float, bool, bool, dict[str, Any]]:
         # Handle array-like actions
@@ -90,8 +90,7 @@ class Trainer:
         self.algorithm = self.cfg.agent.agent_type.lower()
         if self.algorithm not in {"ppo", "sac", "td3"}:
             raise ConfigurationError(
-                f"Invalid algorithm specified: {self.cfg.agent.agent_type}. "
-                "Supported algorithms are: ppo, sac, td3.",
+                f"Invalid algorithm specified: {self.cfg.agent.agent_type}. Supported algorithms are: ppo, sac, td3.",
             )
         self.num_iterations = self.cfg.agent.total_timesteps  # Simplified for now
 

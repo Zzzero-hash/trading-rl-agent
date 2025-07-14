@@ -20,7 +20,7 @@ try:
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
-    logging.warning(
+    logging.getLogger(__name__).warning(
         "Alpaca Trade API not available. Install with: pip install alpaca-trade-api",
     )
 
@@ -30,19 +30,20 @@ try:
     FINRL_ALPACA_AVAILABLE = True
 except ImportError:
     FINRL_ALPACA_AVAILABLE = False
-    logging.warning("FinRL Alpaca processor not available")
+    logging.getLogger(__name__).warning("FinRL Alpaca processor not available")
 
 import yfinance as yf
 
 from trading_rl_agent.data.features import generate_features
 
+# Check for optional dependency: alpha_vantage
 try:
     from alpha_vantage.timeseries import TimeSeries
 
     ALPHA_VANTAGE_AVAILABLE = True
 except ImportError:
     ALPHA_VANTAGE_AVAILABLE = False
-    logging.warning(
+    logging.getLogger(__name__).warning(
         "Alpha Vantage not available. Install with: pip install alpha-vantage",
     )
 
@@ -52,7 +53,7 @@ try:
     CCXT_AVAILABLE = True
 except ImportError:
     CCXT_AVAILABLE = False
-    logging.warning(
+    logging.getLogger(__name__).warning(
         "CCXT not available. Install with: pip install ccxt",
     )
 

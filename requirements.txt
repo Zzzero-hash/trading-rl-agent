@@ -4,8 +4,6 @@ pandas==2.1.4
 pyarrow==15.0.0
 scipy==1.13.1
 
-# Machine Learning
-torch==2.2.2
 # Pinned Ray to a version compatible with gymnasium>=0.29.1
 ray[rllib]==2.9.3
 gymnasium==0.28.1 # Pinned to the version required by ray[rllib]==2.9.3

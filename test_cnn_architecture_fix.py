@@ -63,7 +63,7 @@ def test_cnn_architecture_coordination() -> bool:
 
     # Test multiple architecture selections
     for i in range(5):
-        print(f"\nTest {i+1}:")
+        print(f"\nTest {i + 1}:")
         trial = MockTrial()
         trial.architecture_index = i
 

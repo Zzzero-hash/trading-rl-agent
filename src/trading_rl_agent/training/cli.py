@@ -263,15 +263,14 @@ def predict_model(args: argparse.Namespace) -> None:
 
 def main() -> None:
     """Main CLI entry point."""
+    logger = logging.getLogger(__name__)
+
+    # Set up logging
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+    # Argument parser
     parser = create_parser()
     args = parser.parse_args()
-
-    if not args.command:
-        parser.print_help()
-        return
-
-    # Setup logging
-    setup_logging(args.log_level, args.verbose)
 
     try:
         if args.command == "train":
@@ -284,7 +283,7 @@ def main() -> None:
             parser.print_help()
 
     except Exception as e:
-        logging.exception(f"❌ Error: {e}")
+        logger.exception(f"❌ Error: {e}")
         if args.verbose:
             import traceback
 

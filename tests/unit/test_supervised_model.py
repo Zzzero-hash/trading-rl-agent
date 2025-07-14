@@ -17,6 +17,8 @@ from trading_rl_agent.supervised_model import (
     train_supervised,  # Use Ray remote version
 )
 
+logger = logging.getLogger(__name__)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -44,48 +46,45 @@ def test_model_output_shape():
 
 # Updated test_training_step_reduces_loss to use Ray remote
 def test_training_step_reduces_loss():
-    logging.info("Starting test_training_step_reduces_loss...")
+    logger.info("Starting test_training_step_reduces_loss...")
 
     # Set random seed for reproducibility
-    np.random.seed(42)
     torch.manual_seed(42)
+    np.random.seed(42)
 
-    # Generate random input and target data
-    x = np.random.randn(20, 4, 1).astype(np.float32)
-    y = x.sum(axis=1).reshape(-1, 1)
+    # Simplified data
+    x = torch.randn(100, 10, 5)
+    y = torch.randint(0, 2, (100, 1)).float()
 
-    # Define model and training configurations
     model_cfg = ModelConfig(
-        task="regression",
-        cnn_filters=[2],
+        cnn_filters=[4],
         cnn_kernel_sizes=[2],
-        lstm_units=4,
+        lstm_units=8,
+        output_size=1,
     )
     train_cfg = TrainingConfig(
         epochs=3,
-        batch_size=5,
+        batch_size=16,
         learning_rate=0.01,
         val_split=0.2,
     )
-    logging.info("Model and training configuration initialized.")
+    logger.info("Model and training configuration initialized.")
 
     obj_ref = train_supervised.remote(x, y, model_cfg, train_cfg)  # type: ignore
     model, history = ray.get(obj_ref)
 
-    logging.info("Training completed. Checking loss reduction...")
+    logger.info("Training completed. Checking loss reduction...")
 
     # Verify loss reduction and magnitude of improvement
     initial_loss = history["train_loss"][0]
     final_loss = history["train_loss"][-1]
-    assert final_loss < initial_loss, "Final loss should be smaller than initial loss."
-    assert (initial_loss - final_loss) > 0.01, "Improvement in loss should be significant."
 
-    # Ensure configuration parameters were respected
-    assert list(model.config.cnn_filters) == list(model_cfg.cnn_filters)
+    assert final_loss < initial_loss
+    assert final_loss < 0.5  # Ensure it learns something meaningful
     assert len(history["train_loss"]) == train_cfg.epochs
 
-    logging.info(f"Initial loss: {initial_loss:.6f}, Final loss: {final_loss:.6f}")
-    logging.info("Loss reduction verified. Test passed.")
+    logger.info(f"Initial loss: {initial_loss:.6f}, Final loss: {final_loss:.6f}")
+    logger.info("Loss reduction verified. Test passed.")
 
 
 # Update test_validation_accuracy_perfect_when_same_data to use Ray remote

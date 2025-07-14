@@ -87,7 +87,7 @@ class CNNLSTMTrainingManager:
             if section not in config:
                 raise ValueError(f"Missing required config section: {section}")
 
-        return cast(dict[str, Any], config)
+        return cast("dict[str, Any]", config)
 
     def _setup_device(self) -> torch.device:
         """Setup training device (CPU/GPU)."""

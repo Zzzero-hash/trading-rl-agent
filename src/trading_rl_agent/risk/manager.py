@@ -608,6 +608,6 @@ class RiskManager:
             cumulative_returns = (1 + returns).cumprod()
             rolling_max = cumulative_returns.expanding().max()
             drawdowns = (cumulative_returns - rolling_max) / rolling_max
-            return abs(cast(float, drawdowns.min()))
+            return abs(cast("float", drawdowns.min()))
         except Exception:
             return 0.0

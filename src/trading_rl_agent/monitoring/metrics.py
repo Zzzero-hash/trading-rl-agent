@@ -17,7 +17,7 @@ class MetricsCollector:
 
     def log_metrics(self, metrics: Any) -> None:
         """Log metrics and store them in memory."""
-        metrics_dict = asdict(cast(Any, metrics)) if is_dataclass(metrics) else dict(metrics)
+        metrics_dict = asdict(cast("Any", metrics)) if is_dataclass(metrics) else dict(metrics)
 
         self.history.append(metrics_dict)
         self.logger.info("Metrics logged", extra={"metrics": metrics_dict})

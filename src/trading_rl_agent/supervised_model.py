@@ -310,7 +310,7 @@ def load_model(path: str, device: str | torch.device | None = None) -> TrendPred
         cfg = ModelConfig(**checkpoint["config"])
         model = TrendPredictor(checkpoint["input_dim"], cfg).to(device)
         model.load_state_dict(checkpoint["state_dict"])
-        return cast(TrendPredictor, model)
+        return cast("TrendPredictor", model)
     except Exception as e:
         raise RuntimeError(f"Failed to load model: {e}") from e
 
