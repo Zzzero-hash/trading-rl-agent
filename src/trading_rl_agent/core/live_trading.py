@@ -122,7 +122,8 @@ class TradingSession:
         """Load trained models."""
         try:
             if self.config.cnn_lstm_path and Path(self.config.cnn_lstm_path).exists():
-                self.cnn_lstm_model = CNNLSTMModel()
+                # Create model with default input dimension (will be overridden by state dict)
+                self.cnn_lstm_model = CNNLSTMModel(input_dim=50)  # Default input dimension
                 self.cnn_lstm_model.load_state_dict(torch.load(self.config.cnn_lstm_path))
                 self.logger.info(f"Loaded CNN+LSTM model from {self.config.cnn_lstm_path}")
 

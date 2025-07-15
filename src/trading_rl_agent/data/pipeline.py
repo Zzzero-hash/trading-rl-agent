@@ -6,6 +6,7 @@ import pandas as pd
 import ray
 import yaml
 
+from .csv_utils import save_csv_chunked
 from .features import generate_features
 from .historical import fetch_historical_data
 from .live import fetch_live_data
@@ -183,7 +184,8 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
         results[key] = df
         if to_csv:
             csv_path = Path(output_dir) / f"{key}.csv"
-            df.to_csv(csv_path)
+            # Use chunked CSV saving for better efficiency
+            save_csv_chunked(df, csv_path, chunk_size=10000, show_progress=True)
 
     if started_ray:
         ray.shutdown()

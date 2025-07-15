@@ -27,7 +27,7 @@ from typing import Any
 import numpy as np
 import torch
 from torch import nn, optim
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -50,11 +50,14 @@ class MixedPrecisionTrainer:
         self.device = self._get_device(device)
         self.model.to(self.device)
 
+        # Ensure model is in float32 for training
+        self.model.float()
+
         # Mixed precision training
         self.enable_amp = enable_amp and torch.cuda.is_available()
-        self.scaler: torch.cuda.amp.GradScaler | None = None
+        self.scaler: torch.amp.GradScaler | None = None
         if self.enable_amp and self.device.type == "cuda":
-            self.scaler = torch.cuda.amp.GradScaler()
+            self.scaler = torch.amp.GradScaler("cuda")
 
         # Memory optimizations
         self.enable_checkpointing = enable_checkpointing
@@ -102,9 +105,9 @@ class MixedPrecisionTrainer:
 
         # Forward pass with mixed precision
         if self.enable_amp:
-            with autocast():
+            with autocast("cuda"):
                 if self.enable_checkpointing and self.memory_efficient:
-                    output = checkpoint(self.model, data)
+                    output = checkpoint(self.model, data, use_reentrant=False)
                 else:
                     output = self.model(data)
                 loss = criterion(output, target)
@@ -125,13 +128,17 @@ class MixedPrecisionTrainer:
                 grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 optimizer.step()
 
-            # Scheduler step (if applicable)
-            if scheduler is not None and hasattr(scheduler, "step"):
+            # Scheduler step (if applicable) - exclude ReduceLROnPlateau which needs validation metrics
+            if (
+                scheduler is not None
+                and hasattr(scheduler, "step")
+                and not isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau)
+            ):
                 scheduler.step()
         else:
             # Standard precision training
             if self.enable_checkpointing and self.memory_efficient:
-                output = checkpoint(self.model, data)
+                output = checkpoint(self.model, data, use_reentrant=False)
             else:
                 output = self.model(data)
             loss = criterion(output, target)
@@ -143,8 +150,12 @@ class MixedPrecisionTrainer:
 
             optimizer.step()
 
-            # Scheduler step
-            if scheduler is not None and hasattr(scheduler, "step"):
+            # Scheduler step - exclude ReduceLROnPlateau which needs validation metrics
+            if (
+                scheduler is not None
+                and hasattr(scheduler, "step")
+                and not isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau)
+            ):
                 scheduler.step()
 
         return {"loss": loss.item(), "grad_norm": grad_norm.item(), "lr": optimizer.param_groups[0]["lr"]}
@@ -155,7 +166,7 @@ class MixedPrecisionTrainer:
         self.model.eval()
         with torch.no_grad():
             if self.enable_amp:
-                with autocast():
+                with autocast("cuda"):
                     output = self.model(data)
                     loss = criterion(output, target)
             else:
@@ -169,12 +180,16 @@ class AdvancedDataAugmentation:
     """Advanced data augmentation for trading data."""
 
     def __init__(
-        self, mixup_alpha: float = 0.2, cutmix_prob: float = 0.3, noise_factor: float = 0.01, time_warping: bool = True
+        self,
+        mixup_alpha: float = 0.2,
+        cutmix_prob: float = 0.3,
+        noise_factor: float = 0.01,
+        sequence_shift: bool = False,
     ):
         self.mixup_alpha = mixup_alpha
         self.cutmix_prob = cutmix_prob
         self.noise_factor = noise_factor
-        self.time_warping = time_warping
+        self.sequence_shift = sequence_shift
 
     def augment_batch(self, data: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Apply multiple augmentation techniques."""
@@ -193,17 +208,17 @@ class AdvancedDataAugmentation:
         if self.noise_factor > 0:
             data = self._add_noise(data)
 
-        # Time warping
-        if self.time_warping and np.random.random() < 0.3:
-            data = self._apply_time_warping(data)
+        # Simple sequence shifting (replaces time warping)
+        if self.sequence_shift and np.random.random() < 0.1:  # Reduced probability
+            data = self._apply_sequence_shift(data)
 
         return data, target
 
     def _apply_mixup(self, data: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Apply MixUp augmentation."""
-        lam = np.random.beta(self.mixup_alpha, self.mixup_alpha)
+        lam = torch.tensor(np.random.beta(self.mixup_alpha, self.mixup_alpha), device=data.device, dtype=data.dtype)
         batch_size = data.size(0)
-        index = torch.randperm(batch_size)
+        index = torch.randperm(batch_size, device=data.device)
 
         mixed_data = lam * data + (1 - lam) * data[index, :]
         mixed_target = lam * target + (1 - lam) * target[index, :]
@@ -214,11 +229,11 @@ class AdvancedDataAugmentation:
         """Apply CutMix augmentation."""
         batch_size = data.size(0)
         seq_len = data.size(1)
-        index = torch.randperm(batch_size)
+        index = torch.randperm(batch_size, device=data.device)
 
         # Random cut region
-        cut_ratio = np.random.beta(1, 1)
-        cut_len = int(seq_len * cut_ratio)
+        cut_ratio = torch.tensor(np.random.beta(1, 1), device=data.device, dtype=data.dtype)
+        cut_len = int(seq_len * cut_ratio.item())
         cut_start = np.random.randint(0, seq_len - cut_len)
 
         # Apply cutmix
@@ -236,27 +251,28 @@ class AdvancedDataAugmentation:
         noise = torch.randn_like(data) * self.noise_factor
         return data + noise
 
-    def _apply_time_warping(self, data: torch.Tensor) -> torch.Tensor:
-        """Apply time warping for robustness."""
+    def _apply_sequence_shift(self, data: torch.Tensor) -> torch.Tensor:
+        """Apply simple sequence shifting for robustness (replaces time warping)."""
         batch_size, seq_len, features = data.shape
+        device = data.device
+        dtype = data.dtype
 
-        # Create warping function
-        warp_factor = 0.9 + 0.2 * torch.rand(batch_size, 1, 1)
-        time_indices = torch.arange(seq_len, dtype=torch.float32).unsqueeze(0).unsqueeze(-1)
-        warped_indices = time_indices * warp_factor
+        # Simple sequence shifting: randomly shift the sequence by a small amount
+        max_shift = max(1, seq_len // 20)  # Maximum 5% shift
+        shift = torch.randint(-max_shift, max_shift + 1, (batch_size,), device=device)
+        shifted_data = torch.zeros_like(data)
 
-        # Interpolate
-        warped_indices = torch.clamp(warped_indices, 0, seq_len - 1)
-        return (
-            torch.nn.functional.grid_sample(
-                data.transpose(1, 2).unsqueeze(2),  # Add height dimension
-                warped_indices.transpose(1, 2).unsqueeze(2) * 2 - 1,  # Normalize to [-1, 1]
-                mode="bilinear",
-                align_corners=True,
-            )
-            .squeeze(2)
-            .transpose(1, 2)
-        )
+        for i in range(batch_size):
+            if shift[i] >= 0:
+                # Shift right: pad with last value
+                shifted_data[i, : seq_len - shift[i]] = data[i, shift[i] :]
+                shifted_data[i, seq_len - shift[i] :] = data[i, -1:].expand(-1, shift[i], -1)
+            else:
+                # Shift left: pad with first value
+                shifted_data[i, -shift[i] :] = data[i, : seq_len + shift[i]]
+                shifted_data[i, : -shift[i]] = data[i, 0:1].expand(-1, -shift[i], -1)
+
+        return shifted_data
 
 
 class DynamicBatchSizer:
@@ -339,13 +355,17 @@ class OptimizedTrainingManager:
         enable_amp: bool = True,
         enable_checkpointing: bool = True,
         memory_efficient: bool = True,
+        augmentation_params: dict[str, Any] | None = None,
     ):
         self.trainer = MixedPrecisionTrainer(model, device, enable_amp, enable_checkpointing, memory_efficient)
         self.model = model
         self.device = self.trainer.device
 
         # Initialize components
-        self.augmentation = AdvancedDataAugmentation()
+        if augmentation_params:
+            self.augmentation = AdvancedDataAugmentation(**augmentation_params)
+        else:
+            self.augmentation = AdvancedDataAugmentation()
         self.batch_sizer = DynamicBatchSizer()
 
         logger.info("OptimizedTrainingManager initialized")
@@ -369,7 +389,9 @@ class OptimizedTrainingManager:
         pbar = tqdm(train_loader, desc=f"Epoch {epoch + 1} - Training", leave=False)
 
         for batch_idx, (data, target) in enumerate(pbar):
-            data, target = data.to(self.device), target.to(self.device)
+            # Ensure data and target are on correct device and dtype
+            data = data.to(self.device, dtype=torch.float32, non_blocking=True)
+            target = target.to(self.device, dtype=torch.float32, non_blocking=True)
 
             # Apply data augmentation
             data, target = self.augmentation.augment_batch(data, target)
@@ -380,15 +402,16 @@ class OptimizedTrainingManager:
             total_loss += step_metrics["loss"]
             total_grad_norm += step_metrics["grad_norm"]
 
-            # Collect predictions for metrics
-            with torch.no_grad():
-                if self.trainer.enable_amp:
-                    with autocast():
-                        output = self.model(data)
-                else:
+            # Collect predictions for metrics (no torch.no_grad() during training)
+            if self.trainer.enable_amp:
+                with autocast("cuda"):
                     output = self.model(data)
-                predictions.extend(output.cpu().numpy().flatten())
-                targets.extend(target.cpu().numpy().flatten())
+            else:
+                output = self.model(data)
+
+            # Detach for metrics collection to avoid memory leaks
+            predictions.extend(output.detach().cpu().numpy().flatten())
+            targets.extend(target.detach().cpu().numpy().flatten())
 
             # Update progress bar
             pbar.set_postfix(
@@ -423,7 +446,9 @@ class OptimizedTrainingManager:
         with torch.no_grad():
             pbar = tqdm(val_loader, desc="Validation", leave=False)
             for batch_idx, (data, target) in enumerate(pbar):
-                data, target = data.to(self.device), target.to(self.device)
+                # Ensure data and target are on correct device and dtype
+                data = data.to(self.device, dtype=torch.float32, non_blocking=True)
+                target = target.to(self.device, dtype=torch.float32, non_blocking=True)
 
                 # Validation step
                 step_metrics = self.trainer.validate_step(data, target, criterion)
@@ -431,7 +456,7 @@ class OptimizedTrainingManager:
 
                 # Get predictions
                 if self.trainer.enable_amp:
-                    with autocast():
+                    with autocast("cuda"):
                         output = self.model(data)
                 else:
                     output = self.model(data)
@@ -493,13 +518,15 @@ class OptimizedTrainingManager:
             self.trainer.training_history["learning_rate"].append(train_metrics["lr"])
             self.trainer.training_history["gradient_norm"].append(train_metrics["grad_norm"])
 
-            # Scheduler step (for schedulers that need validation loss)
-            if (
-                scheduler is not None
-                and hasattr(scheduler, "step")
-                and isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau)
-            ):
-                scheduler.step(val_metrics["loss"])
+            # Scheduler step (for schedulers that need validation loss or epoch-level updates)
+            if scheduler is not None and hasattr(scheduler, "step"):
+                if isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau):
+                    # ReduceLROnPlateau needs validation loss
+                    scheduler.step(val_metrics["loss"])
+                elif isinstance(scheduler, optim.lr_scheduler.CosineAnnealingWarmRestarts):
+                    # CosineAnnealingWarmRestarts can be called at epoch level
+                    scheduler.step()
+                # OneCycleLR is handled in train_step, so we don't call it here
 
             # Early stopping check
             if val_metrics["loss"] < self.trainer.best_val_loss:
@@ -592,9 +619,19 @@ def create_advanced_scheduler(
     """Create an advanced learning rate scheduler."""
 
     if scheduler_type == "cosine_annealing_warm_restarts":
-        return AdvancedLRScheduler.create_cosine_annealing_warm_restarts(optimizer, **kwargs)
+        # Extract cosine annealing specific parameters
+        cosine_params = {k: v for k, v in kwargs.items() if k in ["T_0", "T_mult", "eta_min"]}
+        return AdvancedLRScheduler.create_cosine_annealing_warm_restarts(optimizer, **cosine_params)
     if scheduler_type == "one_cycle":
-        return AdvancedLRScheduler.create_one_cycle_lr(optimizer, **kwargs)
+        # Extract one cycle specific parameters
+        one_cycle_params = {
+            k: v
+            for k, v in kwargs.items()
+            if k in ["max_lr", "epochs", "steps_per_epoch", "pct_start", "div_factor", "final_div_factor"]
+        }
+        return AdvancedLRScheduler.create_one_cycle_lr(optimizer, **one_cycle_params)
     if scheduler_type == "reduce_on_plateau":
-        return AdvancedLRScheduler.create_reduce_lr_on_plateau(optimizer, **kwargs)
+        # Extract reduce on plateau specific parameters
+        plateau_params = {k: v for k, v in kwargs.items() if k in ["mode", "patience", "factor", "min_lr"]}
+        return AdvancedLRScheduler.create_reduce_lr_on_plateau(optimizer, **plateau_params)
     raise ValueError(f"Unknown scheduler type: {scheduler_type}")

@@ -8,14 +8,26 @@ sentiment analysis, and synthetic data generation.
 
 # Import main classes that are actually implemented
 from .forex_sentiment import ForexSentimentData
-from .sentiment import SentimentAnalyzer, SentimentConfig, SentimentData
+from .sentiment import (
+    NewsSentimentProvider,
+    SentimentAnalyzer,
+    SentimentConfig,
+    SentimentData,
+    SocialSentimentProvider,
+    get_sentiment_score,
+    update_sentiment,
+)
 
 # Note: Some modules are stubs or have different class names
 # Update imports as modules are implemented
 
 __all__ = [
     "ForexSentimentData",
+    "NewsSentimentProvider",
     "SentimentAnalyzer",
     "SentimentConfig",
     "SentimentData",
+    "SocialSentimentProvider",
+    "get_sentiment_score",
+    "update_sentiment",
 ]
