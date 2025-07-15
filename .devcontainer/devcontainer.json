@@ -24,5 +24,5 @@
   "hostRequirements": {
     "gpu": "optional"
   },
-  "postCreateCommand": "chmod -R 755 . && find . -name '*.sh' -exec chmod +x {} \\; && pip install -e . && python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")'"
+  "postCreateCommand": "chmod -R 755 . && find . -name '*.sh' -exec chmod +x {} \\; && python -m pip install --upgrade pip setuptools wheel && pip install --verbose numpy pandas scikit-learn matplotlib seaborn && pip install --verbose 'gymnasium>=0.29.0,<0.30.0' && pip install --verbose 'ray[rllib,tune]>=2.6.0' && pip install --verbose yfinance alpha-vantage requests beautifulsoup4 && pip install --verbose ta scipy && pip install --verbose pyyaml typer click && pip install --verbose mlflow tensorboard wandb loguru && pip install --verbose pytest pytest-cov pytest-mock && pip install --verbose black isort ruff mypy pre-commit && pip install --verbose jupyter ipykernel notebook && pip install --verbose gunicorn fastapi uvicorn pydantic && pip install --verbose tqdm python-dotenv pathlib2 && pip install -e . --verbose && python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")'"
 }

@@ -30,9 +30,13 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import psutil
 from sklearn.preprocessing import RobustScaler
 from tqdm import tqdm
 
+from ..features.alternative_data import AlternativeDataConfig, AlternativeDataFeatures
+from .csv_utils import save_csv_chunked
+from .data_standardizer import DataStandardizer
 from .features import generate_features
 from .parallel_data_fetcher import ParallelDataManager
 from .synthetic import fetch_synthetic_data
@@ -65,8 +69,8 @@ class OptimizedDatasetConfig:
     market_regime_features: bool = True
 
     # Data quality
-    outlier_threshold: float = 3.0
-    missing_value_threshold: float = 0.05
+    outlier_threshold: float = 5.0  # More conservative for financial data
+    missing_value_threshold: float = 0.25  # Allow more data removal for quality
 
     # Performance settings
     cache_dir: str = "data/cache"
@@ -100,6 +104,12 @@ class OptimizedDatasetBuilder:
         self.feature_columns: list[str] = []
         self.metadata: dict[str, Any] = {}
 
+        # Initialize alternative data features (including sentiment)
+        self.alt_data_features: AlternativeDataFeatures | None = None
+        if self.config.sentiment_features:
+            alt_config = AlternativeDataConfig()
+            self.alt_data_features = AlternativeDataFeatures(alt_config)
+
         # Setup logging
         logging.basicConfig(
             level=logging.INFO,
@@ -108,26 +118,43 @@ class OptimizedDatasetBuilder:
 
         logger.info(f"🚀 OptimizedDatasetBuilder initialized (version: {self.version})")
 
+    def _log_memory_usage(self, stage: str) -> None:
+        """Log current memory usage."""
+        process = psutil.Process()
+        memory_info = process.memory_info()
+        memory_mb = memory_info.rss / 1024 / 1024
+        logger.info(f"💾 Memory usage at {stage}: {memory_mb:.1f} MB")
+
     def build_dataset(self) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
         """Build the complete dataset with parallel processing."""
 
         logger.info("🚀 Starting optimized dataset generation...")
         start_time = time.time()
+        self._log_memory_usage("start")
 
         # Step 1: Collect raw data in parallel
         raw_data = self._collect_raw_data_parallel()
+        self._log_memory_usage("after raw data collection")
 
         # Step 2: Validate and clean data
         clean_data = self._validate_and_clean_optimized(raw_data)
+        self._log_memory_usage("after data cleaning")
 
         # Step 3: Engineer features in parallel
         featured_data = self._engineer_features_parallel(clean_data)
+        self._log_memory_usage("after feature engineering")
 
-        # Step 4: Create sequences for CNN+LSTM
-        sequences, targets = self._create_sequences_optimized(featured_data)
+        # Step 4: Standardize features (before sequence creation)
+        standardized_data = self._standardize_features(featured_data)
+        self._log_memory_usage("after standardization")
+
+        # Step 5: Create sequences for CNN+LSTM
+        sequences, targets = self._create_sequences_optimized(standardized_data)
+        self._log_memory_usage("after sequence creation")
 
         # Step 5: Scale features (fitted only on training data later)
         scaled_sequences = self._prepare_features_for_training(sequences)
+        self._log_memory_usage("after feature preparation")
 
         # Step 6: Validate final dataset
         self._validate_final_dataset(scaled_sequences, targets)
@@ -243,14 +270,23 @@ class OptimizedDatasetBuilder:
         df = df[valid_ohlc]
         logger.info(f"  📊 After OHLC validation: {len(df)} samples")
 
-        # Remove extreme outliers (vectorized)
+        # Remove extreme outliers (vectorized) - use more conservative approach
         for col in ["open", "high", "low", "close"]:
             if len(df) > 0:
-                col_std = df[col].std()
-                if col_std > 1e-6:
-                    z_scores = np.abs((df[col] - df[col].mean()) / col_std)
-                    df = df[z_scores <= self.config.outlier_threshold]
-                    logger.info(f"  📊 After {col} outlier removal: {len(df)} samples")
+                # Use IQR method instead of z-score for financial data
+                Q1 = df[col].quantile(0.25)
+                Q3 = df[col].quantile(0.75)
+                IQR = Q3 - Q1
+                lower_bound = Q1 - 1.5 * IQR
+                upper_bound = Q3 + 1.5 * IQR
+
+                # Only remove very extreme outliers (beyond 5*IQR) to be more conservative
+                extreme_lower = Q1 - 5 * IQR
+                extreme_upper = Q3 + 5 * IQR
+
+                outlier_mask = (df[col] >= extreme_lower) & (df[col] <= extreme_upper)
+                df = df[outlier_mask]
+                logger.info(f"  📊 After {col} outlier removal: {len(df)} samples")
 
         # Ensure positive prices (vectorized)
         price_cols = ["open", "high", "low", "close"]
@@ -267,7 +303,12 @@ class OptimizedDatasetBuilder:
         removal_rate = (initial_count - cleaned_count) / initial_count
 
         if removal_rate > self.config.missing_value_threshold:
-            warnings.warn(f"High data removal rate: {removal_rate:.2%}", stacklevel=2)
+            warnings.warn(
+                f"High data removal rate: {removal_rate:.2%} (threshold: {self.config.missing_value_threshold:.2%})",
+                stacklevel=2,
+            )
+        elif removal_rate > 0.05:  # Still warn if more than 5% removed
+            logger.warning(f"Moderate data removal rate: {removal_rate:.2%}")
 
         self.metadata["data_cleaning"] = {
             "initial_samples": initial_count,
@@ -297,15 +338,20 @@ class OptimizedDatasetBuilder:
                         logger.warning(f"  ⚠️ No data for symbol {symbol}, skipping")
                         continue
 
-                    # Generate technical features
+                    # Generate technical features with timeout protection
                     if self.config.technical_indicators:
-                        symbol_df = generate_features(
-                            symbol_df,
-                            ma_windows=[5, 10, 20, 50],
-                            rsi_window=14,
-                            vol_window=20,
-                            advanced_candles=True,
-                        )
+                        try:
+                            symbol_df = generate_features(
+                                symbol_df,
+                                ma_windows=[5, 10, 20, 50],
+                                rsi_window=14,
+                                vol_window=20,
+                                advanced_candles=True,
+                            )
+                        except Exception as e:
+                            logger.warning(f"  ⚠️ Failed to generate features for {symbol}: {e}")
+                            # Continue with basic features only
+                            symbol_df = symbol_df.copy()
 
                     # Add temporal features
                     symbol_df = self._add_temporal_features(symbol_df)
@@ -316,6 +362,10 @@ class OptimizedDatasetBuilder:
 
                     # Add volatility features
                     symbol_df = self._add_volatility_features(symbol_df)
+
+                    # Add sentiment and alternative data features
+                    if self.config.sentiment_features and self.alt_data_features is not None:
+                        symbol_df = self.alt_data_features.add_alternative_features(symbol_df, symbol=symbol)
 
                     featured_dfs.append(symbol_df)
                     pbar.update(1)
@@ -336,6 +386,32 @@ class OptimizedDatasetBuilder:
         logger.info(f"  ✓ Engineered {len(self.feature_columns)} features")
 
         return combined_df
+
+    def _standardize_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Standardize features using the DataStandardizer for consistent preprocessing."""
+
+        logger.info("📏 Standardizing features for consistent preprocessing...")
+
+        # Initialize standardizer if not already done
+        if not hasattr(self, "standardizer"):
+            self.standardizer = DataStandardizer()
+            logger.info("  ✓ Initialized new DataStandardizer")
+
+        # Standardize the data (fit on first call, transform on subsequent)
+        try:
+            standardized_df = self.standardizer.transform(df, is_training=True)
+            logger.info(f"  ✓ Standardized {len(standardized_df.columns)} features")
+
+            # Save the standardizer for live inference
+            standardizer_path = self.output_dir / "standardizer.pkl"
+            self.standardizer.save(str(standardizer_path))
+            logger.info(f"  ✓ Saved standardizer to {standardizer_path}")
+
+            return standardized_df
+
+        except Exception as e:
+            logger.warning(f"  ⚠️ Standardization failed: {e}. Using original data.")
+            return df
 
     def _add_temporal_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Add temporal features for better sequence modeling."""
@@ -401,15 +477,19 @@ class OptimizedDatasetBuilder:
 
         logger.info("📊 Creating sequences for CNN+LSTM...")
 
+        # Use dynamic allocation to avoid index issues
         sequences = []
         targets = []
+        feature_cols = [col for col in self.feature_columns if col in df.columns]
 
         # Process each symbol
         for symbol in df["symbol"].unique():
             symbol_df = df[df["symbol"] == symbol].copy()
 
-            # Remove non-numeric columns for feature matrix
-            feature_cols = [col for col in self.feature_columns if col in symbol_df.columns]
+            if len(symbol_df) < self.config.sequence_length + self.config.prediction_horizon:
+                continue
+
+            # Get feature matrix
             features = symbol_df[feature_cols].values
 
             # Ensure no NaN values
@@ -430,13 +510,17 @@ class OptimizedDatasetBuilder:
             for i in range(
                 0, len(features) - self.config.sequence_length - self.config.prediction_horizon + 1, step_size
             ):
-                seq = features[i : i + self.config.sequence_length]
                 target = target_values[i + self.config.sequence_length - 1]
 
                 if not np.isnan(target):
+                    seq = features[i : i + self.config.sequence_length]
                     sequences.append(seq)
                     targets.append(target)
 
+        if not sequences:
+            raise ValueError("No valid sequences could be created from the data")
+
+        # Convert to numpy arrays
         sequences_array = np.array(sequences, dtype=np.float32)
         targets_array = np.array(targets, dtype=np.float32)
 
@@ -514,6 +598,20 @@ class OptimizedDatasetBuilder:
         np.save(sequences_path, sequences)
         np.save(targets_path, targets)
 
+        # Also save as CSV using chunked approach for better accessibility
+        sequences_csv_path = self.output_dir / "sequences.csv"
+        targets_csv_path = self.output_dir / "targets.csv"
+
+        # Convert sequences to DataFrame for CSV saving
+        sequences_df = pd.DataFrame(
+            sequences.reshape(-1, sequences.shape[-1]), columns=[f"feature_{i}" for i in range(sequences.shape[-1])]
+        )
+        targets_df = pd.DataFrame(targets, columns=["target"])
+
+        # Save using chunked approach
+        save_csv_chunked(sequences_df, sequences_csv_path, chunk_size=10000, show_progress=True)
+        save_csv_chunked(targets_df, targets_csv_path, chunk_size=10000, show_progress=True)
+
         # Save feature columns
         features_path = self.output_dir / "feature_columns.json"
         with features_path.open("w") as f:
@@ -535,8 +633,11 @@ class OptimizedDatasetBuilder:
             "files": {
                 "sequences": str(sequences_path),
                 "targets": str(targets_path),
+                "sequences_csv": str(sequences_csv_path),
+                "targets_csv": str(targets_csv_path),
                 "features": str(features_path),
                 "metadata": str(self.output_dir / "metadata.json"),
+                "standardizer": str(self.output_dir / "standardizer.pkl") if hasattr(self, "standardizer") else None,
             },
         }
 
@@ -587,10 +688,21 @@ class OptimizedDatasetBuilder:
                         except Exception as e:
                             logger.warning(f"Failed to read metadata: {e}")
 
+                    # Load standardizer if it exists
+                    standardizer = None
+                    standardizer_path = latest_dir / "standardizer.pkl"
+                    if standardizer_path.exists():
+                        try:
+                            standardizer = DataStandardizer.load(str(standardizer_path))
+                            logger.info(f"  ✓ Loaded standardizer from {standardizer_path}")
+                        except Exception as e:
+                            logger.warning(f"Failed to load standardizer: {e}")
+
                     dataset_info = {
                         "version": latest_dir.name,
                         "loaded": True,
                         "source_directory": str(latest_dir),
+                        "standardizer": standardizer,
                         **({"metadata": metadata} if metadata else {}),
                     }
                     return sequences, targets, dataset_info
