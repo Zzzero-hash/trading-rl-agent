@@ -1,0 +1,76 @@
+# Good configuration file for testing
+environment: production
+debug: false
+
+data:
+  primary_source: alpaca
+  backup_source: yfinance
+  symbols:
+    - AAPL
+    - GOOGL
+    - MSFT
+  feature_window: 60
+  technical_indicators: true
+  sentiment_features: true
+  data_path: "data/production/"
+  cache_dir: "data/cache/production"
+  cache_ttl_hours: 48
+
+model:
+  type: cnn_lstm
+  algorithm: sac
+  cnn_filters: [32, 64, 128]
+  cnn_kernel_sizes: [3, 3, 3]
+  cnn_dropout: 0.3
+  lstm_units: 256
+  lstm_layers: 3
+  lstm_dropout: 0.3
+  dense_units: [128, 64, 32]
+  batch_size: 64
+  learning_rate: 0.0005
+  epochs: 200
+  total_timesteps: 2000000
+  model_save_path: "models/production/"
+  checkpoint_dir: "models/checkpoints/production"
+  device: "cuda"
+
+agent:
+  agent_type: sac
+  ensemble_size: 3
+  eval_frequency: 5000
+  save_frequency: 25000
+
+risk:
+  max_position_size: 0.05
+  max_leverage: 0.5
+  max_drawdown: 0.1
+  var_confidence_level: 0.01
+  stop_loss_pct: 0.015
+  take_profit_pct: 0.03
+
+execution:
+  broker: alpaca
+  paper_trading: false
+  order_timeout: 30
+  max_slippage: 0.0005
+  commission_rate: 0.0005
+  execution_frequency: 1
+  market_hours_only: true
+
+monitoring:
+  log_level: "WARNING"
+  log_file: "logs/production/trading_system.log"
+  structured_logging: true
+  mlflow_enabled: true
+  tensorboard_enabled: true
+  metrics_frequency: 60
+  alerts_enabled: true
+
+infrastructure:
+  distributed: true
+  num_workers: 8
+  gpu_enabled: true
+  ray_address: "ray://localhost:10001"
+  use_gpu: true
+  max_workers: 8
+  memory_limit: "16GB"

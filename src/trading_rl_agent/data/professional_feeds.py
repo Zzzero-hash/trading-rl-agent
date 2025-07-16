@@ -8,7 +8,6 @@ Supports Alpaca, Yahoo Finance, and extensible to Bloomberg/Refinitiv.
 import logging
 import os
 import time
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -556,65 +555,4 @@ class ProfessionalDataProvider:
             return False
 
 
-def main() -> None:
-    """Command-line interface for data download."""
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Download professional market data")
-    parser.add_argument(
-        "--symbols",
-        required=True,
-        help="Comma-separated symbols (e.g., AAPL,GOOGL)",
-    )
-    parser.add_argument("--start", required=True, help="Start date (YYYY-MM-DD)")
-    parser.add_argument(
-        "--end",
-        help="End date (YYYY-MM-DD)",
-        default=datetime.now().strftime("%Y-%m-%d"),
-    )
-    parser.add_argument(
-        "--provider",
-        choices=["alpaca", "yahoo", "alpha_vantage", "ccxt"],
-        default="yahoo",
-        help="Data provider",
-    )
-    parser.add_argument("--output", help="Output CSV file", default="market_data.csv")
-    parser.add_argument(
-        "--features",
-        action="store_true",
-        help="Include technical features",
-    )
-
-    args = parser.parse_args()
-
-    # Initialize provider
-    provider = ProfessionalDataProvider(args.provider)
-
-    # Validate connection
-    if not provider.validate_connection():
-        logger.error("Failed to connect to data provider")
-        return
-
-    # Download data
-    symbols = [s.strip().upper() for s in args.symbols.split(",")]
-    logger.info(f"Downloading data for {symbols} from {args.start} to {args.end}")
-
-    data = provider.get_market_data(
-        symbols=symbols,
-        start_date=args.start,
-        end_date=args.end,
-        include_features=args.features,
-    )
-
-    if not data.empty:
-        data.to_csv(args.output, index=False)
-        logger.info(f"Data saved to {args.output}")
-        logger.info(f"Shape: {data.shape}")
-        logger.info(f"Columns: {list(data.columns)}")
-    else:
-        logger.error("No data retrieved")
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    main()
+# CLI functionality moved to unified CLI in trading_rl_agent.cli

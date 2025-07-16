@@ -7,6 +7,7 @@ repos:
       - id: end-of-file-fixer
         exclude: ^(docs/_build/|\.doctrees/|\.buildinfo$|searchindex\.js$)
       - id: check-yaml
+        exclude: ^(k8s/|docs/_build/|\.doctrees/|\.buildinfo$|searchindex\.js$)
       - id: check-added-large-files
         args: ["--maxkb=50000"] # 50MB max
       - id: check-ast

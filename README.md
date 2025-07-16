@@ -73,53 +73,45 @@ A production-grade hybrid reinforcement learning trading system that combines CN
 
 ## 🎯 Quick Start
 
-### 1. Train a CNN+LSTM Model
+### 1. Use the Unified CLI
 
 ```bash
-# Optimized training with all performance improvements (RECOMMENDED)
-python train.py --epochs 100 --gpu
+# Show version and system info
+python main.py version
+python main.py info
 
-# With hyperparameter optimization for best results
-python train.py --optimize-hyperparams --n-trials 50 --epochs 30 --gpu
+# Download market data
+python main.py data download --symbols "AAPL,GOOGL,MSFT" --start 2023-01-01
 
-# Forex-focused training (recommended for forex strategies)
-python train.py --forex-focused --epochs 150 --gpu
+# Process and build datasets
+python main.py data process --symbols "EURUSD=X,GBPUSD=X" --force
 
-# Force rebuild dataset
-python train.py --force-rebuild --epochs 100 --gpu
+# Train CNN+LSTM model
+python main.py train cnn-lstm --epochs 100 --gpu --output models/
+
+# Train RL agent
+python main.py train rl --epochs 50 --output models/
+
+# Evaluate models
+python main.py evaluate models/best_model.pth --data data/test_data.csv
+
+# Run backtesting
+python main.py backtest data/historical_data.csv --model models/agent.zip
+
+# Start live trading
+python main.py live start --paper --symbols "AAPL,GOOGL"
 ```
 
-### 2. Run Reinforcement Learning Training
+### 2. Alternative Entry Points
 
 ```bash
-# Train RL agents
-python -m trading_rl_agent.agents.trainer
+# Using the installed command
+trading-rl-agent version
+trading-rl-agent data download --symbols "AAPL,GOOGL"
 
-# Run hyperparameter tuning
-python -m trading_rl_agent.agents.tune
-```
-
-### 3. Evaluate Models
-
-```bash
-# Evaluate trained models
-python evaluate.py
-
-# Generate performance reports
-python -m trading_rl_agent.evaluation
-```
-
-### 4. Use the CLI
-
-```bash
-# View available commands
-python cli.py --help
-
-# Run data pipeline
-python cli.py data process
-
-# Train models
-python cli.py train cnn-lstm
+# Using Python module
+python -m trading_rl_agent.cli version
+python -m trading_rl_agent.cli train cnn-lstm
 ```
 
 ## 📚 Documentation

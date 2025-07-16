@@ -14,7 +14,57 @@ from .loaders import load_alphavantage, load_ccxt, load_yfinance
 from .synthetic import fetch_synthetic_data
 
 
-@ray.remote  # type: ignore[misc]
+class DataPipeline:
+    """Unified data pipeline for CLI operations."""
+
+    def __init__(self) -> None:
+        """Initialize the data pipeline."""
+
+    def download_data(
+        self,
+        symbols: list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        output_dir: Path = Path("data"),
+    ) -> list[str]:
+        """Download market data for specified symbols."""
+        from .professional_feeds import ProfessionalDataProvider
+
+        provider = ProfessionalDataProvider("yahoo")  # Default to Yahoo Finance
+
+        if not symbols:
+            symbols = ["AAPL", "GOOGL", "MSFT"]  # Default symbols
+
+        if not start_date:
+            start_date = "2023-01-01"
+
+        if not end_date:
+            from datetime import datetime
+
+            end_date = datetime.now().strftime("%Y-%m-%d")
+
+        # Download data
+        data = provider.get_market_data(
+            symbols=symbols,
+            start_date=start_date,
+            end_date=end_date,
+            include_features=True,
+        )
+
+        # Save to output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        downloaded_files = []
+        for symbol in symbols:
+            symbol_data = data[data["symbol"] == symbol] if "symbol" in data.columns else data
+            file_path = output_dir / f"{symbol}.csv"
+            symbol_data.to_csv(file_path, index=False)
+            downloaded_files.append(str(file_path))
+
+        return downloaded_files
+
+
+@ray.remote
 def _fetch_data_remote(fetch_fn: Callable[..., pd.DataFrame], **kwargs: Any) -> pd.DataFrame:
     """Execute a data fetch function as a Ray remote task."""
     return fetch_fn(**kwargs)
@@ -193,20 +243,4 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
     return results
 
 
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="Fetch OHLCV data pipeline for Coinbase and OANDA",
-    )
-    parser.add_argument(
-        "--config",
-        "-c",
-        type=str,
-        default="src/configs/data/pipeline.yaml",
-        help="Path to pipeline configuration YAML",
-    )
-    args = parser.parse_args()
-    print(f"Loading config from {args.config}")
-    run_pipeline(args.config)
-    print("Data pipeline completed.")
+# CLI functionality moved to unified CLI in trading_rl_agent.cli

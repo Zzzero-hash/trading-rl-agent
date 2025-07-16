@@ -1,0 +1,96 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scheduled-backtest-cronjob
+  labels:
+    app: trading-rl-agent
+    job-type: scheduled-backtest
+spec:
+  schedule: "0 2 * * *" # Run daily at 2 AM UTC
+  concurrencyPolicy: Forbid # Don't run if previous job is still running
+  successfulJobsHistoryLimit: 7 # Keep 7 successful job histories
+  failedJobsHistoryLimit: 3 # Keep 3 failed job histories
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: trading-rl-agent
+            job-type: scheduled-backtest
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: trading-agent
+              image: trading-rl-agent:latest
+              command: ["trading-rl-agent"]
+              args:
+                - "backtest"
+                - "strategy"
+                - "--config"
+                - "/app/config/config.yaml"
+                - "--data-path"
+                - "/app/data/historical_data.csv"
+                - "--model"
+                - "/app/models/best_model.pth"
+                - "--initial-capital"
+                - "100000"
+                - "--commission"
+                - "0.001"
+                - "--output"
+                - "/app/results/backtest_results/$(date +%Y-%m-%d)/"
+                - "--verbose"
+              env:
+                - name: TRADING_RL_AGENT_ALPACA_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: trading-rl-agent-secrets
+                      key: alpaca-api-key
+                - name: TRADING_RL_AGENT_ALPACA_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: trading-rl-agent-secrets
+                      key: alpaca-secret-key
+                - name: TRADING_RL_AGENT_ALPACA_BASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: trading-rl-agent-secrets
+                      key: alpaca-base-url
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /app/config
+                  readOnly: true
+                - name: data-volume
+                  mountPath: /app/data
+                  readOnly: true
+                - name: models-volume
+                  mountPath: /app/models
+                  readOnly: true
+                - name: results-volume
+                  mountPath: /app/results
+                - name: logs-volume
+                  mountPath: /app/logs
+              resources:
+                requests:
+                  memory: "4Gi"
+                  cpu: "1000m"
+                limits:
+                  memory: "8Gi"
+                  cpu: "2000m"
+          volumes:
+            - name: config-volume
+              configMap:
+                name: trading-rl-agent-config
+            - name: data-volume
+              persistentVolumeClaim:
+                claimName: trading-rl-agent-data
+            - name: models-volume
+              persistentVolumeClaim:
+                claimName: trading-rl-agent-models
+            - name: results-volume
+              persistentVolumeClaim:
+                claimName: trading-rl-agent-results
+            - name: logs-volume
+              persistentVolumeClaim:
+                claimName: trading-rl-agent-logs
+      backoffLimit: 2
+      activeDeadlineSeconds: 7200 # 2 hours timeout
