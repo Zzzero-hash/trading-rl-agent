@@ -11,7 +11,7 @@ setup(
     install_requires=Path("requirements.txt").read_text().splitlines(),
     entry_points={
         "console_scripts": [
-            "trade-agent=src.main:main",
+            "trading-rl-agent=main:app",
         ],
     },
     classifiers=[

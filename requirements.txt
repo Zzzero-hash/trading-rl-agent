@@ -25,11 +25,13 @@ beautifulsoup4>=4.12.0
 ta>=0.10.0
 scipy>=1.11.0
 pandas-ta
+empyrical>=0.5.5
 
 # Configuration and CLI
 pyyaml>=6.0
-typer>=0.9.0
+typer[all]>=0.9.0
 click>=8.1.0
+rich>=13.0.0
 
 # Monitoring and Logging
 mlflow>=2.6.0
@@ -59,6 +61,7 @@ gunicorn>=21.2.0
 fastapi>=0.100.0
 uvicorn>=0.23.0
 pydantic>=2.0.0
+pydantic-settings>=2.0.0
 
 # Utilities
 tqdm>=4.65.0

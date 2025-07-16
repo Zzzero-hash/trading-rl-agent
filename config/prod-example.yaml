@@ -1,0 +1,167 @@
+# Trading RL Agent - Production Configuration
+# This configuration is designed for Docker deployment with live trading
+
+# ============================================================================
+# ENVIRONMENT SETTINGS (REQUIRED)
+# ============================================================================
+environment: production # REQUIRED: development, staging, production
+debug: false # REQUIRED: Disable debug mode for production
+
+# ============================================================================
+# DATA CONFIGURATION
+# ============================================================================
+data:
+  # Data sources (REQUIRED)
+  primary_source: alpaca # REQUIRED: Primary data source (alpaca for live trading)
+  backup_source: yfinance # REQUIRED: Backup data source for redundancy
+  real_time_enabled: true # Enable real-time data feeds for live trading
+  update_frequency: 5 # Data update frequency in seconds (faster for live)
+
+  # Data collection (REQUIRED)
+  symbols: # REQUIRED: List of trading symbols to collect
+    - AAPL
+    - GOOGL
+    - MSFT
+    - TSLA
+    - AMZN
+    - NVDA
+    - META
+    - NFLX
+  start_date: "2022-01-01" # REQUIRED: Start date for historical data
+  end_date: "2024-12-31" # REQUIRED: End date for historical data
+  timeframe: "1h" # REQUIRED: Data timeframe (1h for intraday trading)
+
+  # Feature engineering
+  feature_window: 100 # Window size for feature calculation (larger for production)
+  technical_indicators: true # Enable technical indicators
+  sentiment_features: true # Enable sentiment analysis features
+
+  # Storage paths
+  data_path: "/app/data/" # REQUIRED: Data storage directory (Docker volume)
+  cache_dir: "/app/data/cache" # REQUIRED: Cache directory (Docker volume)
+  cache_ttl_hours: 12 # Cache time-to-live in hours (shorter for live data)
+
+# ============================================================================
+# MODEL CONFIGURATION
+# ============================================================================
+model:
+  # Model type (REQUIRED)
+  type: cnn_lstm # REQUIRED: Model type (cnn_lstm, rl, hybrid)
+  algorithm: sac # REQUIRED: RL algorithm (ppo, sac, td3)
+
+  # CNN+LSTM architecture (optimized for production)
+  cnn_filters: [128, 256, 512] # CNN filter sizes (larger for production)
+  cnn_kernel_sizes: [3, 3, 3] # CNN kernel sizes
+  cnn_dropout: 0.3 # CNN dropout rate (0.0-1.0) - higher for production
+  lstm_units: 256 # Number of LSTM units (larger for production)
+  lstm_layers: 3 # Number of LSTM layers (more layers for production)
+  lstm_dropout: 0.3 # LSTM dropout rate (0.0-1.0) - higher for production
+  dense_units: [128, 64, 32] # Dense layer units (larger for production)
+
+  # Training parameters (REQUIRED)
+  batch_size: 64 # REQUIRED: Training batch size (larger for production)
+  learning_rate: 0.0005 # REQUIRED: Learning rate (lower for production stability)
+  epochs: 200 # REQUIRED: Number of training epochs (more for production)
+  total_timesteps: 2000000 # REQUIRED: Total RL training timesteps (more for production)
+
+  # Model persistence (REQUIRED)
+  model_save_path: "/app/models/" # REQUIRED: Model save directory (Docker volume)
+  checkpoint_dir: "/app/models/checkpoints" # REQUIRED: Checkpoint directory (Docker volume)
+
+  # Device configuration
+  device: "cuda" # Device selection (cuda for production GPU)
+
+# ============================================================================
+# AGENT CONFIGURATION
+# ============================================================================
+agent:
+  agent_type: sac # REQUIRED: Agent type (sac, ppo, td3)
+  ensemble_size: 3 # Number of agents in ensemble (larger for production)
+  eval_frequency: 5000 # Evaluation frequency in timesteps (more frequent)
+  save_frequency: 25000 # Model save frequency in timesteps (more frequent)
+
+# ============================================================================
+# RISK MANAGEMENT CONFIGURATION
+# ============================================================================
+risk:
+  max_position_size: 0.05 # REQUIRED: Maximum position size (0.0-1.0) - conservative for production
+  max_leverage: 0.5 # REQUIRED: Maximum leverage (lower for production safety)
+  max_drawdown: 0.1 # REQUIRED: Maximum drawdown (0.0-1.0) - stricter for production
+  var_confidence_level: 0.01 # REQUIRED: VaR confidence level (0.0-1.0) - stricter for production
+  stop_loss_pct: 0.015 # REQUIRED: Stop loss percentage (0.0-1.0) - tighter for production
+  take_profit_pct: 0.03 # REQUIRED: Take profit percentage (0.0-1.0) - realistic for production
+
+# ============================================================================
+# EXECUTION CONFIGURATION
+# ============================================================================
+execution:
+  broker: alpaca # REQUIRED: Trading broker (alpaca for live trading)
+  paper_trading: false # REQUIRED: Disable paper trading for live trading
+  order_timeout: 30 # REQUIRED: Order timeout in seconds (shorter for live)
+  max_slippage: 0.0005 # REQUIRED: Maximum slippage (0.0-1.0) - tighter for production
+  commission_rate: 0.0005 # REQUIRED: Commission rate (0.0-1.0) - realistic for production
+  execution_frequency: 1 # REQUIRED: Execution frequency in seconds (faster for live)
+  market_hours_only: true # REQUIRED: Trade only during market hours
+
+# ============================================================================
+# MONITORING CONFIGURATION
+# ============================================================================
+monitoring:
+  log_level: "WARNING" # REQUIRED: Log level (DEBUG, INFO, WARNING, ERROR) - less verbose for production
+  log_file: "/app/logs/trading_system.log" # REQUIRED: Log file path (Docker volume)
+  structured_logging: true # Enable structured logging
+  mlflow_enabled: true # Enable MLflow tracking
+  tensorboard_enabled: true # Enable TensorBoard logging
+  metrics_frequency: 60 # REQUIRED: Metrics collection frequency in seconds (more frequent for production)
+  alerts_enabled: true # Enable system alerts
+
+# ============================================================================
+# INFRASTRUCTURE CONFIGURATION
+# ============================================================================
+infrastructure:
+  distributed: true # Enable distributed computing for production
+  num_workers: 8 # REQUIRED: Number of worker processes (more for production)
+  gpu_enabled: true # Enable GPU support
+  ray_address: "ray://ray-cluster:10001" # Ray cluster address for distributed computing
+  use_gpu: true # Use GPU for training (true for production)
+  max_workers: 8 # REQUIRED: Maximum number of workers (more for production)
+  memory_limit: "16GB" # REQUIRED: Memory limit per worker (more for production)
+
+# ============================================================================
+# API KEYS AND SECRETS
+# ============================================================================
+# NOTE: These MUST be loaded from environment variables in production
+# DO NOT hardcode API keys in configuration files
+#
+# Required environment variables for production:
+# - TRADING_RL_AGENT_ALPACA_API_KEY: Alpaca API key (REQUIRED for live trading)
+# - TRADING_RL_AGENT_ALPACA_SECRET_KEY: Alpaca secret key (REQUIRED for live trading)
+# - TRADING_RL_AGENT_ALPACA_BASE_URL: Alpaca base URL (REQUIRED for live trading)
+# - TRADING_RL_AGENT_ALPHAVANTAGE_API_KEY: Alpha Vantage API key (optional)
+# - TRADING_RL_AGENT_NEWSAPI_KEY: News API key (optional)
+# - TRADING_RL_AGENT_SOCIAL_API_KEY: Social media API key (optional)
+
+# Docker environment variables example:
+# docker run -e TRADING_RL_AGENT_ALPACA_API_KEY=your_key \
+#            -e TRADING_RL_AGENT_ALPACA_SECRET_KEY=your_secret \
+#            -e TRADING_RL_AGENT_ALPACA_BASE_URL=https://api.alpaca.markets \
+#            trading-rl-agent
+
+# Docker Compose environment variables example:
+# environment:
+#   - TRADING_RL_AGENT_ALPACA_API_KEY=${ALPACA_API_KEY}
+#   - TRADING_RL_AGENT_ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+#   - TRADING_RL_AGENT_ALPACA_BASE_URL=${ALPACA_BASE_URL}
+#   - TRADING_RL_AGENT_ALPHAVANTAGE_API_KEY=${ALPHAVANTAGE_API_KEY}
+#   - TRADING_RL_AGENT_NEWSAPI_KEY=${NEWSAPI_KEY}
+
+# Kubernetes secret example:
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: trading-rl-agent-secrets
+# type: Opaque
+# data:
+#   alpaca-api-key: <base64-encoded-key>
+#   alpaca-secret-key: <base64-encoded-secret>
+#   alpaca-base-url: <base64-encoded-url>
