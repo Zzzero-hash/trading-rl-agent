@@ -18,7 +18,7 @@ ray[rllib,tune]>=2.6.0
 # Data and APIs
 yfinance>=0.2.0
 alpha-vantage>=2.3.0
-requests>=2.31.0
+requests>=2.32.4
 beautifulsoup4>=4.12.0
 
 # Feature Engineering
@@ -70,3 +70,6 @@ pathlib2>=2.3.0
 
 # Sentiment Analysis
 vaderSentiment>=3.3.2
+aiohttp>=3.12.14 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
