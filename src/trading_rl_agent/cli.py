@@ -735,6 +735,50 @@ def evaluate(
 
 
 @backtest_app.command()
+def walk_forward(
+    data_path: Path | None = DEFAULT_DATA_PATH,
+    model_type: str = "cnn_lstm",
+    train_window_size: int = 252,
+    validation_window_size: int = 63,
+    test_window_size: int = 63,
+    step_size: int = 21,
+    output_dir: Path = DEFAULT_EVALUATION_OUTPUT,
+    confidence_level: float = 0.95,
+    generate_plots: bool = True,
+    save_results: bool = True,
+) -> None:
+    """
+    Perform walk-forward analysis for robust model evaluation.
+
+    Uses the WalkForwardAnalyzer class from src/trading_rl_agent/eval/walk_forward_analyzer.py
+    to evaluate model performance across multiple time windows.
+    """
+    console.print(f"[blue]PLACEHOLDER: Would perform walk-forward analysis on {data_path}[/blue]")
+    console.print(
+        "[blue]Target module: src/trading_rl_agent/eval/walk_forward_analyzer.py - WalkForwardAnalyzer[/blue]"
+    )
+
+    # TODO: Implement actual walk-forward analysis
+    # from trading_rl_agent.eval import WalkForwardAnalyzer, WalkForwardConfig
+    #
+    # config = WalkForwardConfig(
+    #     train_window_size=train_window_size,
+    #     validation_window_size=validation_window_size,
+    #     test_window_size=test_window_size,
+    #     step_size=step_size,
+    #     model_type=model_type,
+    #     confidence_level=confidence_level,
+    #     output_dir=str(output_dir),
+    #     generate_plots=generate_plots,
+    #     save_results=save_results,
+    # )
+    #
+    # analyzer = WalkForwardAnalyzer(config)
+    # results = analyzer.analyze(data)
+    # analyzer.print_summary()
+
+
+@backtest_app.command()
 def compare(
     models: str | None = DEFAULT_MODELS,
     data_path: Path | None = DEFAULT_DATA_PATH,

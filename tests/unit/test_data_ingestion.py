@@ -80,8 +80,10 @@ def test_clean_data_clip_outliers():
     df = create_sample_df()
     df.loc[0, "close"] = 1000  # outlier
     cleaned = clean_data(df)
-    mean = df["close"].mean()  # original mean ~104, but after clip
-    assert cleaned.loc[0, "close"] < 1000
+    # The outlier should be clipped to mean + 3*std
+    # Original mean ~104td ~1.58, so upper bound ~108.74
+    assert cleaned.loc[0, "close"] < 110  # Should be clipped to reasonable value
+    assert cleaned.loc[0, "close"] > 10  # Should still be in reasonable range
 
 
 def test_fetching_yahoo():
