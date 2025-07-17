@@ -28,11 +28,11 @@ except ImportError:
 
 from ..core.logging import get_logger
 from .transaction_costs import (
-    TransactionCostModel,
+    BrokerType,
+    MarketCondition,
     MarketData,
     OrderType,
-    MarketCondition,
-    BrokerType,
+    TransactionCostModel,
 )
 
 logger = get_logger(__name__)
@@ -139,9 +139,7 @@ class PortfolioManager:
         if transaction_cost_model is not None:
             self.transaction_cost_model = transaction_cost_model
         else:
-            self.transaction_cost_model = TransactionCostModel.create_broker_model(
-                self.config.broker_type
-            )
+            self.transaction_cost_model = TransactionCostModel.create_broker_model(self.config.broker_type)
 
         # Portfolio state
         self.cash = initial_capital
@@ -244,14 +242,14 @@ class PortfolioManager:
             # Use defaults if not provided
             order_type = order_type or self.config.default_order_type
             market_condition = market_condition or self.config.default_market_condition
-            
+
             # Create market data if not provided
             if market_data is None:
                 # Estimate bid-ask spread and other market data
                 estimated_spread = self.config.bid_ask_spread
                 bid = price * (1 - estimated_spread / 2)
                 ask = price * (1 + estimated_spread / 2)
-                
+
                 market_data = MarketData(
                     timestamp=datetime.now(),
                     bid=bid,
@@ -280,7 +278,9 @@ class PortfolioManager:
             total_cost = execution_result.total_cost
 
             # Pre-trade risk checks
-            if not self._validate_trade(symbol, execution_result.executed_quantity, execution_result.executed_price, side, total_cost):
+            if not self._validate_trade(
+                symbol, execution_result.executed_quantity, execution_result.executed_price, side, total_cost
+            ):
                 return False
 
             # Execute the trade
@@ -300,7 +300,9 @@ class PortfolioManager:
                     new_quantity = pos.quantity + execution_result.executed_quantity
                     if new_quantity != 0:
                         # Weighted average price
-                        total_cost_basis = (pos.quantity * pos.entry_price) + (execution_result.executed_quantity * execution_result.executed_price)
+                        total_cost_basis = (pos.quantity * pos.entry_price) + (
+                            execution_result.executed_quantity * execution_result.executed_price
+                        )
                         pos.entry_price = total_cost_basis / new_quantity
                         pos.quantity = new_quantity
                         pos.current_price = execution_result.executed_price
@@ -557,9 +559,9 @@ class PortfolioManager:
     def get_transaction_cost_analysis(self) -> dict[str, Any]:
         """Get detailed transaction cost analysis."""
         from .transaction_costs import TransactionCostAnalyzer
-        
+
         analyzer = TransactionCostAnalyzer(self.transaction_cost_model)
-        
+
         return {
             "cost_summary": self.transaction_cost_model.get_cost_summary(),
             "cost_trends": analyzer.analyze_cost_trends(),
@@ -567,21 +569,25 @@ class PortfolioManager:
             "optimization_recommendations": self.transaction_cost_model.generate_optimization_recommendations(),
             "cost_report": analyzer.generate_cost_report(),
         }
-    
+
     def optimize_transaction_costs(self) -> dict[str, Any]:
         """Generate transaction cost optimization recommendations."""
         recommendations = self.transaction_cost_model.generate_optimization_recommendations()
-        
+
         # Calculate potential savings
         total_potential_savings = sum(rec.expected_savings for rec in recommendations)
         current_total_costs = self.transaction_cost_model.get_cost_summary()["total_transaction_costs"]
-        
+
         return {
             "recommendations": recommendations,
             "total_potential_savings": total_potential_savings,
             "current_total_costs": current_total_costs,
-            "savings_percentage": (total_potential_savings / current_total_costs * 100) if current_total_costs > 0 else 0,
-            "implementation_priority": sorted(recommendations, key=lambda x: {
-                "critical": 4, "high": 3, "medium": 2, "low": 1
-            }.get(x.priority, 0), reverse=True),
+            "savings_percentage": (total_potential_savings / current_total_costs * 100)
+            if current_total_costs > 0
+            else 0,
+            "implementation_priority": sorted(
+                recommendations,
+                key=lambda x: {"critical": 4, "high": 3, "medium": 2, "low": 1}.get(x.priority, 0),
+                reverse=True,
+            ),
         }

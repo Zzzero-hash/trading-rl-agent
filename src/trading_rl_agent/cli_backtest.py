@@ -13,7 +13,8 @@ from config import get_settings, load_settings
 
 from .console import console, print_metrics_table
 from .core.unified_config import BacktestConfig
-from .eval.backtest_evaluator import BacktestEvaluator, TransactionCostModel
+from .eval.backtest_evaluator import BacktestEvaluator
+from .portfolio.transaction_costs import TransactionCostModel
 
 app = typer.Typer(help="Backtesting CLI for Trading RL Agent")
 
@@ -169,10 +170,7 @@ def run(
         )
 
         # Create transaction cost model
-        cost_model = TransactionCostModel(
-            commission_rate=commission,
-            slippage_rate=slippage,
-        )
+        cost_model = TransactionCostModel.create_broker_model(BrokerType.RETAIL)
 
         # Initialize backtest evaluator
         evaluator = BacktestEvaluator(backtest_config, cost_model)
@@ -284,10 +282,7 @@ def batch(
                     )
 
                     # Create transaction cost model
-                    cost_model = TransactionCostModel(
-                        commission_rate=settings.backtest.commission_rate,
-                        slippage_rate=settings.backtest.slippage_rate,
-                    )
+                    cost_model = TransactionCostModel.create_broker_model(BrokerType.RETAIL)
 
                     # Initialize backtest evaluator
                     evaluator = BacktestEvaluator(backtest_config, cost_model)
@@ -399,10 +394,7 @@ def compare(
         )
 
         # Create transaction cost model
-        cost_model = TransactionCostModel(
-            commission_rate=settings.backtest.commission_rate,
-            slippage_rate=settings.backtest.slippage_rate,
-        )
+                    cost_model = TransactionCostModel.create_broker_model(BrokerType.RETAIL)
 
         # Initialize backtest evaluator
         evaluator = BacktestEvaluator(backtest_config, cost_model)

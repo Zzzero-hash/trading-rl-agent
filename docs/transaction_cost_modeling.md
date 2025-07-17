@@ -7,37 +7,44 @@ The Transaction Cost Modeling System provides realistic transaction cost simulat
 ## Features
 
 ### 1. Realistic Bid-Ask Spread Modeling
+
 - Dynamic spread calculation based on market data
 - Spread adjustment for different market conditions
 - Basis point conversion utilities
 
 ### 2. Configurable Commission Structures
+
 - **Flat Rate Commission**: Simple percentage-based commission
 - **Tiered Commission**: Volume-based tiered pricing
 - **Per-Share Commission**: Fixed cost per share traded
 - **Broker-Specific Models**: Pre-configured models for different broker types
 
 ### 3. Market Impact Modeling
+
 - **Linear Impact Model**: Simple linear relationship with order size
 - **Square Root Impact Model**: Almgren et al. square root model
 - **Adaptive Impact Model**: Market condition-aware impact modeling
 
 ### 4. Slippage Modeling
+
 - **Constant Slippage**: Fixed slippage rate
 - **Volume-Based Slippage**: Slippage based on order size relative to volume
 - **Spread-Based Slippage**: Slippage proportional to bid-ask spread
 
 ### 5. Execution Delay Simulation
+
 - **Constant Delay**: Fixed execution time
 - **Size-Based Delay**: Delay proportional to order size
 - **Market Condition Delay**: Delay adjusted for market conditions
 
 ### 6. Partial Fill Simulation
+
 - Realistic partial fill modeling
 - Multiple fill scenarios with different prices and times
 - Fill probability and ratio controls
 
 ### 7. Cost Optimization Recommendations
+
 - Automated analysis of trading patterns
 - Specific recommendations for cost reduction
 - Expected savings calculations
@@ -48,6 +55,7 @@ The Transaction Cost Modeling System provides realistic transaction cost simulat
 ### Core Classes
 
 #### TransactionCostModel
+
 The main class that orchestrates all transaction cost calculations and simulations.
 
 ```python
@@ -58,6 +66,7 @@ cost_model = TransactionCostModel.create_broker_model(BrokerType.INSTITUTIONAL)
 ```
 
 #### MarketData
+
 Represents market conditions at a specific point in time.
 
 ```python
@@ -77,6 +86,7 @@ market_data = MarketData(
 ```
 
 #### Commission Structures
+
 Abstract base class and implementations for different commission models.
 
 ```python
@@ -95,6 +105,7 @@ per_share_commission = PerShareCommission(rate_per_share=0.005)
 ```
 
 #### Market Impact Models
+
 Models for calculating market impact of orders.
 
 ```python
@@ -113,6 +124,7 @@ adaptive_impact = AdaptiveImpactModel()
 ```
 
 #### Slippage Models
+
 Models for calculating slippage costs.
 
 ```python
@@ -131,6 +143,7 @@ spread_slippage = SpreadBasedSlippageModel(spread_multiplier=0.5)
 ```
 
 #### Execution Delay Models
+
 Models for simulating execution delays.
 
 ```python
@@ -303,6 +316,7 @@ print(f"Cost drag on returns: {results.cost_drag:.4f}")
 ## Configuration Options
 
 ### Market Conditions
+
 - `NORMAL`: Standard market conditions
 - `VOLATILE`: High volatility periods
 - `LIQUID`: High liquidity markets
@@ -310,6 +324,7 @@ print(f"Cost drag on returns: {results.cost_drag:.4f}")
 - `CRISIS`: Crisis market conditions
 
 ### Order Types
+
 - `MARKET`: Market orders (fastest execution)
 - `LIMIT`: Limit orders (price protection)
 - `STOP`: Stop orders (risk management)
@@ -319,6 +334,7 @@ print(f"Cost drag on returns: {results.cost_drag:.4f}")
 - `VWAP`: Volume-weighted average price
 
 ### Broker Types
+
 - `RETAIL`: Individual investor accounts
 - `INSTITUTIONAL`: Institutional trading desks
 - `DISCOUNT`: Low-cost discount brokers
@@ -328,7 +344,9 @@ print(f"Cost drag on returns: {results.cost_drag:.4f}")
 ## Performance Considerations
 
 ### Cost Tracking
+
 The system automatically tracks:
+
 - Total commission costs
 - Total slippage costs
 - Total market impact costs
@@ -338,6 +356,7 @@ The system automatically tracks:
 - Cost efficiency metrics
 
 ### Optimization Features
+
 - Automated cost analysis
 - Specific optimization recommendations
 - Expected savings calculations
@@ -347,7 +366,9 @@ The system automatically tracks:
 ## Best Practices
 
 ### 1. Choose Appropriate Broker Model
+
 Select a broker type that matches your trading profile:
+
 - Use `RETAIL` for individual investors
 - Use `INSTITUTIONAL` for large-scale trading
 - Use `DISCOUNT` for cost-sensitive strategies
@@ -355,26 +376,34 @@ Select a broker type that matches your trading profile:
 - Use `CRYPTO` for cryptocurrency trading
 
 ### 2. Consider Market Conditions
+
 Adjust market conditions based on the historical period:
+
 - Use `NORMAL` for stable periods
 - Use `VOLATILE` for high-volatility periods
 - Use `CRISIS` for market stress periods
 
 ### 3. Select Appropriate Order Types
+
 Choose order types based on your strategy:
+
 - Use `MARKET` for immediate execution
 - Use `LIMIT` for price-sensitive orders
 - Use `TWAP/VWAP` for large orders
 
 ### 4. Monitor Cost Efficiency
+
 Regularly analyze transaction costs:
+
 - Track cost trends over time
 - Monitor cost efficiency ratios
 - Review optimization recommendations
 - Implement cost-saving measures
 
 ### 5. Validate Results
+
 Compare backtest results with and without transaction costs:
+
 - Assess the impact of costs on performance
 - Identify cost-sensitive strategies
 - Optimize trading frequency and size
@@ -402,12 +431,14 @@ Compare backtest results with and without transaction costs:
 ### Debugging Tips
 
 1. **Enable Detailed Logging**
+
    ```python
    import logging
    logging.getLogger('trading_rl_agent.portfolio.transaction_costs').setLevel(logging.DEBUG)
    ```
 
 2. **Validate Market Data**
+
    ```python
    # Check market data completeness
    assert market_data.bid > 0
@@ -416,10 +447,11 @@ Compare backtest results with and without transaction costs:
    ```
 
 3. **Test Individual Components**
+
    ```python
    # Test commission calculation separately
    commission = cost_model.commission_structure.calculate_commission(trade_value, quantity)
-   
+
    # Test market impact separately
    impact = cost_model.market_impact_model.calculate_impact(trade_value, market_data)
    ```
@@ -427,6 +459,7 @@ Compare backtest results with and without transaction costs:
 ## Future Enhancements
 
 ### Planned Features
+
 - **Machine Learning Models**: ML-based cost prediction
 - **Real-Time Data Integration**: Live market data feeds
 - **Advanced Order Types**: More sophisticated order types
@@ -434,7 +467,9 @@ Compare backtest results with and without transaction costs:
 - **Multi-Asset Support**: Cross-asset cost modeling
 
 ### Extension Points
+
 The system is designed to be easily extensible:
+
 - Custom commission structures
 - Proprietary market impact models
 - Specialized slippage models
@@ -445,6 +480,7 @@ The system is designed to be easily extensible:
 The Transaction Cost Modeling System provides a comprehensive framework for realistic transaction cost simulation in backtesting. By accurately modeling the various costs associated with trading, it enables more reliable strategy evaluation and optimization.
 
 Key benefits:
+
 - **Realistic Backtesting**: More accurate performance estimates
 - **Cost Optimization**: Identify and reduce transaction costs
 - **Strategy Comparison**: Fair comparison of different strategies
