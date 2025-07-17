@@ -4,8 +4,6 @@ import sys
 import io
 from unittest.mock import patch
 
-# Add the src directory to the path
-sys.path.insert(0, 'src')
 
 # Import the console module directly
 sys.path.insert(0, 'src/trading_rl_agent')
