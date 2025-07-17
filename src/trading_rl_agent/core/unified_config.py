@@ -8,8 +8,8 @@ all settings for data, model, backtest, and live trading operations.
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, BaseSettings, Field, field_validator
-from pydantic_settings import SettingsConfigDict
+from pydantic import BaseModel, Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class DataSourcesConfig(BaseModel):

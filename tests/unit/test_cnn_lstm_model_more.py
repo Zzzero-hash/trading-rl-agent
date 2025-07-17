@@ -17,7 +17,7 @@ def test_attention_forward_pass():
 def test_invalid_config(tmp_path):
     bad_cfg = tmp_path / "bad.yaml"
     bad_cfg.write_text("[1, 2, 3]")
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError):
         CNNLSTMModel(input_dim=2, config=str(bad_cfg))
 
 
