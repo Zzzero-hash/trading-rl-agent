@@ -25,7 +25,7 @@ beautifulsoup4>=4.12.0
 ta>=0.10.0
 scipy>=1.11.0
 pandas-ta
-empyrical>=0.5.5
+# empyrical>=0.5.5
 
 # Configuration and CLI
 pyyaml>=6.0
