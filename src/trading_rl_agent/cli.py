@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
+import pandas as pd
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -135,6 +136,12 @@ backtest_app = typer.Typer(
     rich_markup_mode="rich",
 )
 
+scenario_app = typer.Typer(
+    name="scenario",
+    help="Agent scenario evaluation with synthetic data",
+    rich_markup_mode="rich",
+)
+
 trade_app = typer.Typer(
     name="trade",
     help="Live trading operations: start, stop, monitor trading sessions",
@@ -145,6 +152,7 @@ trade_app = typer.Typer(
 app.add_typer(data_app, help="Data pipeline operations")
 app.add_typer(train_app, help="Model training operations")
 app.add_typer(backtest_app, help="Backtesting operations")
+app.add_typer(scenario_app, help="Agent scenario evaluation")
 app.add_typer(trade_app, help="Live trading operations")
 
 
@@ -735,6 +743,50 @@ def evaluate(
 
 
 @backtest_app.command()
+def walk_forward(
+    data_path: Path | None = DEFAULT_DATA_PATH,
+    model_type: str = "cnn_lstm",
+    train_window_size: int = 252,
+    validation_window_size: int = 63,
+    test_window_size: int = 63,
+    step_size: int = 21,
+    output_dir: Path = DEFAULT_EVALUATION_OUTPUT,
+    confidence_level: float = 0.95,
+    generate_plots: bool = True,
+    save_results: bool = True,
+) -> None:
+    """
+    Perform walk-forward analysis for robust model evaluation.
+
+    Uses the WalkForwardAnalyzer class from src/trading_rl_agent/eval/walk_forward_analyzer.py
+    to evaluate model performance across multiple time windows.
+    """
+    console.print(f"[blue]PLACEHOLDER: Would perform walk-forward analysis on {data_path}[/blue]")
+    console.print(
+        "[blue]Target module: src/trading_rl_agent/eval/walk_forward_analyzer.py - WalkForwardAnalyzer[/blue]"
+    )
+
+    # TODO: Implement actual walk-forward analysis
+    # from trading_rl_agent.eval import WalkForwardAnalyzer, WalkForwardConfig
+    #
+    # config = WalkForwardConfig(
+    #     train_window_size=train_window_size,
+    #     validation_window_size=validation_window_size,
+    #     test_window_size=test_window_size,
+    #     step_size=step_size,
+    #     model_type=model_type,
+    #     confidence_level=confidence_level,
+    #     output_dir=str(output_dir),
+    #     generate_plots=generate_plots,
+    #     save_results=save_results,
+    # )
+    #
+    # analyzer = WalkForwardAnalyzer(config)
+    # results = analyzer.analyze(data)
+    # analyzer.print_summary()
+
+
+@backtest_app.command()
 def compare(
     models: str | None = DEFAULT_MODELS,
     data_path: Path | None = DEFAULT_DATA_PATH,
@@ -850,6 +902,297 @@ def paper(
     """
     console.print(f"[blue]PLACEHOLDER: Would start paper trading for {symbols} for {duration}[/blue]")
     console.print("[blue]Target module: Paper trading utilities[/blue]")
+
+
+# ============================================================================
+# SCENARIO SUB-APP COMMANDS
+# ============================================================================
+
+
+@scenario_app.command()
+def scenario_evaluate(
+    config_file: Path | None = DEFAULT_CONFIG_FILE,
+    agent_type: str = "moving_average",
+    output_dir: Path = Path("outputs/scenario_evaluation"),
+    seed: int = 42,
+    save_reports: bool = True,
+    save_visualizations: bool = True,
+) -> None:
+    """
+    Evaluate agent performance across synthetic market scenarios.
+
+    Tests agent robustness and adaptation to different market regimes
+    including trend following, mean reversion, volatility breakouts,
+    market crises, and regime changes.
+    """
+    console.print("[bold blue]Evaluating agent across market scenarios...[/bold blue]")
+
+    try:
+        from examples.scenario_evaluation_example import (
+            create_mean_reversion_agent,
+            create_momentum_agent,
+            create_simple_moving_average_agent,
+            create_volatility_breakout_agent,
+        )
+        from trading_rl_agent.eval import AgentScenarioEvaluator
+
+        # Create output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Initialize scenario evaluator
+        evaluator = AgentScenarioEvaluator(seed=seed)
+
+        # Create agents based on type
+        agents = {
+            "moving_average": create_simple_moving_average_agent(window=20),
+            "momentum": create_momentum_agent(lookback=10),
+            "mean_reversion": create_mean_reversion_agent(lookback=20),
+            "volatility_breakout": create_volatility_breakout_agent(vol_window=20),
+        }
+
+        if agent_type not in agents:
+            console.print(f"[red]Unknown agent type: {agent_type}[/red]")
+            console.print(f"Available types: {list(agents.keys())}")
+            raise typer.Exit(1)
+
+        agent = agents[agent_type]
+
+        # Run evaluation
+        results = evaluator.evaluate_agent(
+            agent=agent,
+            agent_name=agent_type.replace("_", " ").title(),
+        )
+
+        # Print summary
+        evaluator.print_evaluation_summary(results)
+
+        # Save reports and visualizations
+        if save_reports:
+            report_path = output_dir / f"{agent_type}_evaluation_report.md"
+            evaluator.generate_evaluation_report(results, report_path)
+            console.print(f"📄 Report saved: {report_path}")
+
+        if save_visualizations:
+            viz_path = output_dir / f"{agent_type}_evaluation.png"
+            evaluator.create_visualization(results, viz_path)
+            console.print(f"📊 Visualization saved: {viz_path}")
+
+        console.print("[bold green]✅ Scenario evaluation complete![/bold green]")
+        console.print(f"📁 Results saved to: {output_dir}")
+
+    except Exception as e:
+        console.print(f"[red]Error during scenario evaluation: {e}[/red]")
+        if verbose_count > 0:
+            raise
+        raise typer.Exit(1) from None
+
+
+@scenario_app.command()
+def scenario_compare(
+    config_file: Path | None = DEFAULT_CONFIG_FILE,
+    output_dir: Path = Path("outputs/scenario_evaluation"),
+    seed: int = 42,
+    save_reports: bool = True,
+    save_visualizations: bool = True,
+) -> None:
+    """
+    Compare multiple agents across synthetic market scenarios.
+
+    Evaluates and compares different agent strategies to identify
+    the most robust and adaptive trading approaches.
+    """
+    console.print("[bold blue]Comparing agents across market scenarios...[/bold blue]")
+
+    try:
+        from examples.scenario_evaluation_example import (
+            create_mean_reversion_agent,
+            create_momentum_agent,
+            create_simple_moving_average_agent,
+            create_volatility_breakout_agent,
+        )
+        from trading_rl_agent.eval import AgentScenarioEvaluator
+
+        # Create output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Initialize scenario evaluator
+        evaluator = AgentScenarioEvaluator(seed=seed)
+
+        # Create multiple agents
+        agents = {
+            "Moving Average": create_simple_moving_average_agent(window=20),
+            "Momentum": create_momentum_agent(lookback=10),
+            "Mean Reversion": create_mean_reversion_agent(lookback=20),
+            "Volatility Breakout": create_volatility_breakout_agent(vol_window=20),
+        }
+
+        # Evaluate all agents
+        all_results = {}
+        for agent_name, agent in agents.items():
+            console.print(f"📊 Evaluating {agent_name}...")
+
+            results = evaluator.evaluate_agent(
+                agent=agent,
+                agent_name=agent_name,
+            )
+            all_results[agent_name] = results
+
+        # Create comparison report
+        comparison_report = f"""
+# Agent Scenario Comparison Report
+
+## Summary
+- **Evaluation Date**: {pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")}
+- **Total Agents Tested**: {len(agents)}
+- **Scenarios Per Agent**: {len(evaluator.scenarios)}
+
+## Agent Rankings
+
+| Agent | Overall Score | Robustness | Adaptation | Pass Rate |
+|-------|---------------|------------|------------|-----------|
+"""
+
+        for agent_name, results in all_results.items():
+            comparison_report += f"| {agent_name} | {results['overall_score']:.3f} | {results['robustness_score']:.3f} | {results['adaptation_score']:.3f} | {results['aggregate_metrics']['pass_rate']:.1%} |\n"
+
+        comparison_report += f"""
+
+## Detailed Results
+
+Each agent has been evaluated across multiple market scenarios including:
+- Trend Following Markets
+- Mean Reversion Markets
+- Volatility Breakout Markets
+- Market Crisis Scenarios
+- Regime Change Scenarios
+
+Detailed reports and visualizations have been saved to: {output_dir}
+
+## Key Insights
+
+1. **Best Overall Performance**: {max(all_results.keys(), key=lambda k: all_results[k]["overall_score"])} achieved the highest overall score
+2. **Most Robust**: {max(all_results.keys(), key=lambda k: all_results[k]["robustness_score"])} showed the most consistent performance
+3. **Best Adaptation**: {max(all_results.keys(), key=lambda k: all_results[k]["adaptation_score"])} adapted best to challenging scenarios
+
+## Recommendations
+
+- Use {max(all_results.keys(), key=lambda k: all_results[k]["overall_score"])} for general market conditions
+- Consider scenario-specific agent selection for specialized strategies
+- Monitor performance during regime changes and market crises
+- Regular re-evaluation recommended as market conditions evolve
+"""
+
+        # Save comparison report
+        if save_reports:
+            report_path = output_dir / "agent_comparison_report.md"
+            with open(report_path, "w") as f:
+                f.write(comparison_report)
+            console.print(f"📄 Comparison report saved: {report_path}")
+
+        # Save individual agent reports
+        if save_reports:
+            for agent_name, results in all_results.items():
+                agent_report_path = output_dir / f"{agent_name.lower().replace(' ', '_')}_report.md"
+                evaluator.generate_evaluation_report(results, agent_report_path)
+
+        # Save visualizations
+        if save_visualizations:
+            for agent_name, results in all_results.items():
+                viz_path = output_dir / f"{agent_name.lower().replace(' ', '_')}_evaluation.png"
+                evaluator.create_visualization(results, viz_path)
+
+        console.print("[bold green]✅ Agent comparison complete![/bold green]")
+        console.print(f"📁 Results saved to: {output_dir}")
+
+    except Exception as e:
+        console.print(f"[red]Error during agent comparison: {e}[/red]")
+        if verbose_count > 0:
+            raise
+        raise typer.Exit(1) from None
+
+
+@scenario_app.command()
+def custom(
+    config_file: Path | None = DEFAULT_CONFIG_FILE,
+    agent_type: str = "moving_average",
+    scenario_name: str = "strong_uptrend",
+    output_dir: Path = Path("outputs/scenario_evaluation"),
+    seed: int = 42,
+    save_reports: bool = True,
+) -> None:
+    """
+    Evaluate agent on custom market scenarios.
+
+    Tests agent performance on specific market conditions like
+    strong trends, high volatility crises, or sideways markets.
+    """
+    console.print(f"[bold blue]Evaluating {agent_type} on {scenario_name} scenario...[/bold blue]")
+
+    try:
+        from examples.scenario_evaluation_example import (
+            create_custom_scenarios,
+            create_mean_reversion_agent,
+            create_momentum_agent,
+            create_simple_moving_average_agent,
+            create_volatility_breakout_agent,
+        )
+        from trading_rl_agent.eval import AgentScenarioEvaluator
+
+        # Create output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Initialize scenario evaluator
+        evaluator = AgentScenarioEvaluator(seed=seed)
+
+        # Create agents
+        agents = {
+            "moving_average": create_simple_moving_average_agent(window=20),
+            "momentum": create_momentum_agent(lookback=10),
+            "mean_reversion": create_mean_reversion_agent(lookback=20),
+            "volatility_breakout": create_volatility_breakout_agent(vol_window=20),
+        }
+
+        if agent_type not in agents:
+            console.print(f"[red]Unknown agent type: {agent_type}[/red]")
+            console.print(f"Available types: {list(agents.keys())}")
+            raise typer.Exit(1)
+
+        agent = agents[agent_type]
+
+        # Get custom scenarios
+        custom_scenarios = create_custom_scenarios()
+        scenario_map = {s["name"].lower().replace(" ", "_"): s for s in custom_scenarios}
+
+        if scenario_name not in scenario_map:
+            console.print(f"[red]Unknown scenario: {scenario_name}[/red]")
+            console.print(f"Available scenarios: {list(scenario_map.keys())}")
+            raise typer.Exit(1)
+
+        selected_scenario = scenario_map[scenario_name]
+
+        # Run evaluation
+        results = evaluator.evaluate_agent(
+            agent=agent,
+            agent_name=f"{agent_type.replace('_', ' ').title()} ({selected_scenario['name']})",
+            custom_scenarios=[selected_scenario],
+        )
+
+        # Print summary
+        evaluator.print_evaluation_summary(results)
+
+        # Save report
+        if save_reports:
+            report_path = output_dir / f"{agent_type}_{scenario_name}_report.md"
+            evaluator.generate_evaluation_report(results, report_path)
+            console.print(f"📄 Report saved: {report_path}")
+
+        console.print("[bold green]✅ Custom scenario evaluation complete![/bold green]")
+
+    except Exception as e:
+        console.print(f"[red]Error during custom scenario evaluation: {e}[/red]")
+        if verbose_count > 0:
+            raise
+        raise typer.Exit(1) from None
 
 
 if __name__ == "__main__":

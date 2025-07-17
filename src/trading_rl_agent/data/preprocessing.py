@@ -73,10 +73,13 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     # Handle outliers: clip to 3 std deviations for prices
     price_cols = ["open", "high", "low", "close"]
     for col in price_cols:
-        mean = df[col].mean()
-        std = df[col].std()
-        lower = max(0, mean - 3 * std)  # prices can't be negative
-        upper = mean + 3 * std
+        # Use median and MAD for more robust outlier detection
+        median = df[col].median()
+        mad = np.median(np.abs(df[col] - median))  # Median Absolute Deviation
+        # Convert MAD to approximate std (MAD ≈ 0.6745 for normal distribution)
+        std_approx = mad / 0.6745
+        lower = max(0, median - 3 * std_approx)  # prices can't be negative
+        upper = median + 3 * std_approx
         df[col] = df[col].clip(lower, upper)
 
     # Ensure no remaining NaNs

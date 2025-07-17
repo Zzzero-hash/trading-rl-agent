@@ -70,5 +70,7 @@ pathlib2>=2.3.0
 
 # Sentiment Analysis
 vaderSentiment>=3.3.2
-urllib3>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
-zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
+
+# Statistical Modeling
+statsmodels>=0.14.0
+arch>=6.2.0

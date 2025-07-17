@@ -102,3 +102,137 @@ class PPOConfig:
 
     # Exploration
     exploration_noise: float = 0.1
+
+
+@dataclass
+class AdvancedPPOConfig(PPOConfig):
+    """Enhanced PPO configuration with advanced features."""
+
+    # Advanced clipping parameters
+    adaptive_clip_ratio: bool = True
+    clip_ratio_decay: float = 0.995
+    min_clip_ratio: float = 0.05
+    max_clip_ratio: float = 0.3
+
+    # Trust region parameters
+    use_trust_region: bool = True
+    trust_region_radius: float = 0.01
+    max_kl_divergence: float = 0.01
+
+    # Natural gradient parameters
+    use_natural_gradient: bool = False
+    natural_gradient_damping: float = 1e-3
+    natural_gradient_max_iter: int = 10
+
+    # Multi-objective parameters
+    risk_weight: float = 0.1
+    return_weight: float = 0.9
+    sharpe_weight: float = 0.0
+    max_drawdown_weight: float = 0.0
+
+    # Adaptive learning rate
+    adaptive_lr: bool = True
+    lr_schedule: str = "cosine"  # cosine, linear, exponential
+    warmup_steps: int = 1000
+    min_lr_ratio: float = 0.1
+
+    # Performance tracking
+    performance_window: int = 100
+    early_stopping_patience: int = 20
+
+
+@dataclass
+class TRPOConfig:
+    """Configuration for Trust Region Policy Optimization."""
+
+    # Learning parameters
+    learning_rate: float = 3e-4
+    gamma: float = 0.99
+    gae_lambda: float = 0.95
+
+    # Trust region parameters
+    max_kl_divergence: float = 0.01
+    damping_coeff: float = 0.1
+    max_backtrack_iter: int = 10
+    backtrack_coeff: float = 0.8
+    max_cg_iter: int = 10
+    cg_tolerance: float = 1e-6
+
+    # Network architecture
+    hidden_dims: list[int] = field(default_factory=lambda: [256, 256])
+    activation: str = "tanh"
+
+    # Training parameters
+    batch_size: int = 256
+    n_epochs: int = 10
+    max_grad_norm: float = 0.5
+
+    # Value function parameters
+    vf_coef: float = 0.5
+    ent_coef: float = 0.01
+
+    # Buffer parameters
+    buffer_size: int = 2048
+
+    # Normalization
+    normalize_advantages: bool = True
+    normalize_returns: bool = True
+
+
+@dataclass
+class NaturalPolicyGradientConfig:
+    """Configuration for Natural Policy Gradient."""
+
+    # Learning parameters
+    learning_rate: float = 3e-4
+    gamma: float = 0.99
+    gae_lambda: float = 0.95
+
+    # Natural gradient parameters
+    damping_coeff: float = 1e-3
+    max_cg_iter: int = 10
+    cg_tolerance: float = 1e-6
+
+    # Network architecture
+    hidden_dims: list[int] = field(default_factory=lambda: [256, 256])
+    activation: str = "tanh"
+
+    # Training parameters
+    batch_size: int = 256
+    n_epochs: int = 10
+    max_grad_norm: float = 0.5
+
+    # Value function parameters
+    vf_coef: float = 0.5
+    ent_coef: float = 0.01
+
+    # Buffer parameters
+    buffer_size: int = 2048
+
+    # Normalization
+    normalize_advantages: bool = True
+    normalize_returns: bool = True
+
+
+@dataclass
+class MultiObjectiveConfig:
+    """Configuration for multi-objective optimization."""
+
+    # Objective weights
+    return_weight: float = 0.9
+    risk_weight: float = 0.1
+    sharpe_weight: float = 0.0
+    max_drawdown_weight: float = 0.0
+
+    # Risk parameters
+    var_alpha: float = 0.05
+    max_position_size: float = 1.0
+    max_leverage: float = 2.0
+
+    # Performance tracking
+    performance_window: int = 100
+    rebalancing_frequency: int = 10
+
+    # Optimization parameters
+    optimization_method: str = "weighted_sum"  # weighted_sum, pareto_frontier
+    pareto_points: int = 10

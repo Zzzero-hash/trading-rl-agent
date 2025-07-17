@@ -14,11 +14,7 @@ def test_load_config_from_path(tmp_path):
 
 
 def test_forward_invalid_features():
-    model = CNNLSTMModel(
-        input_dim=3,
-        cnn_filters=[4],
-        cnn_kernel_sizes=[2],
-    )
+    model = CNNLSTMModel(input_dim=3, config={"cnn_filters": [4], "cnn_kernel_sizes": [2]})
     x = torch.randn(2, 5, 4)  # wrong feature dimension
     with pytest.raises(ValueError):
         model(x)
