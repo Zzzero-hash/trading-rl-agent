@@ -1,0 +1,253 @@
+# Agent Scenario Evaluation Configuration
+# This configuration defines market scenarios and evaluation parameters for comprehensive agent testing
+
+# ============================================================================
+# EVALUATION SETTINGS
+# ============================================================================
+evaluation:
+  seed: 42 # Random seed for reproducible results
+  output_dir: "outputs/scenario_evaluation"
+  save_reports: true
+  save_visualizations: true
+  save_detailed_data: false
+
+# ============================================================================
+# DEFAULT SCENARIOS
+# ============================================================================
+default_scenarios:
+  trend_following:
+    name: "Trend Following"
+    description: "Market with clear directional trends and moderate volatility"
+    duration_days: 252
+    market_regime: "trend_following"
+    base_volatility: 0.015
+    drift: 0.0002
+    min_sharpe_ratio: 0.8
+    max_drawdown: 0.12
+    min_win_rate: 0.45
+    min_profit_factor: 1.3
+
+  mean_reversion:
+    name: "Mean Reversion"
+    description: "Market that reverts to mean price levels with moderate volatility"
+    duration_days: 252
+    market_regime: "mean_reversion"
+    base_volatility: 0.02
+    drift: 0.0
+    min_sharpe_ratio: 0.6
+    max_drawdown: 0.10
+    min_win_rate: 0.50
+    min_profit_factor: 1.4
+
+  volatility_breakout:
+    name: "Volatility Breakout"
+    description: "Market with sudden volatility spikes and regime changes"
+    duration_days: 252
+    market_regime: "volatility_breakout"
+    base_volatility: 0.01
+    drift: 0.0001
+    min_sharpe_ratio: 0.4
+    max_drawdown: 0.20
+    min_win_rate: 0.35
+    min_profit_factor: 1.1
+
+  crisis:
+    name: "Market Crisis"
+    description: "Simulated market crisis with high volatility and negative returns"
+    duration_days: 252
+    market_regime: "crisis"
+    base_volatility: 0.05
+    drift: -0.005
+    min_sharpe_ratio: 0.2
+    max_drawdown: 0.25
+    min_win_rate: 0.30
+    min_profit_factor: 1.0
+
+  regime_changes:
+    name: "Regime Changes"
+    description: "Market with multiple regime transitions and varying conditions"
+    duration_days: 252
+    market_regime: "regime_changes"
+    base_volatility: 0.02
+    drift: 0.0001
+    min_sharpe_ratio: 0.5
+    max_drawdown: 0.15
+    min_win_rate: 0.40
+    min_profit_factor: 1.2
+
+# ============================================================================
+# CUSTOM SCENARIOS
+# ============================================================================
+custom_scenarios:
+  strong_uptrend:
+    name: "Strong Uptrend"
+    description: "Market with strong upward trend and low volatility"
+    duration_days: 252
+    market_regime: "trend_following"
+    base_volatility: 0.01
+    drift: 0.002
+    min_sharpe_ratio: 1.0
+    max_drawdown: 0.08
+    min_win_rate: 0.55
+    min_profit_factor: 1.5
+
+  high_volatility_crisis:
+    name: "High Volatility Crisis"
+    description: "Market crisis with extreme volatility and negative returns"
+    duration_days: 252
+    market_regime: "crisis"
+    base_volatility: 0.08
+    drift: -0.003
+    min_sharpe_ratio: 0.0
+    max_drawdown: 0.35
+    min_win_rate: 0.25
+    min_profit_factor: 0.8
+
+  sideways_market:
+    name: "Sideways Market"
+    description: "Low volatility sideways market with mean reversion"
+    duration_days: 252
+    market_regime: "mean_reversion"
+    base_volatility: 0.008
+    drift: 0.0
+    min_sharpe_ratio: 0.4
+    max_drawdown: 0.06
+    min_win_rate: 0.45
+    min_profit_factor: 1.3
+
+  flash_crash:
+    name: "Flash Crash"
+    description: "Sudden market crash followed by recovery"
+    duration_days: 252
+    market_regime: "crisis"
+    base_volatility: 0.06
+    drift: -0.002
+    min_sharpe_ratio: 0.1
+    max_drawdown: 0.30
+    min_win_rate: 0.20
+    min_profit_factor: 0.9
+
+# ============================================================================
+# SCENARIO GENERATION PARAMETERS
+# ============================================================================
+scenario_generation:
+  trend_following:
+    trend_strength: 0.001
+    volatility: 0.015
+    trend_changes: 2
+
+  mean_reversion:
+    mean_price: 100.0
+    reversion_strength: 0.1
+    volatility: 0.02
+
+  volatility_breakout:
+    base_volatility: 0.01
+    breakout_volatility: 0.05
+    breakout_probability: 0.1
+
+  crisis:
+    crisis_start: 126
+    crisis_duration: 30
+    crisis_severity: 0.3
+
+  regime_changes:
+    regime_changes:
+      - start_day: 50
+        regime: "trend_up"
+        duration: 50
+      - start_day: 100
+        regime: "volatile"
+        duration: 30
+      - start_day: 130
+        regime: "trend_down"
+        duration: 50
+      - start_day: 180
+        regime: "calm"
+        duration: 72
+
+# ============================================================================
+# PERFORMANCE BENCHMARKS
+# ============================================================================
+benchmarks:
+  # Overall performance thresholds
+  overall_score:
+    excellent: 0.8
+    good: 0.6
+    acceptable: 0.4
+    poor: 0.2
+
+  # Robustness thresholds
+  robustness_score:
+    excellent: 0.8
+    good: 0.6
+    acceptable: 0.4
+    poor: 0.2
+
+  # Adaptation thresholds
+  adaptation_score:
+    excellent: 0.8
+    good: 0.6
+    acceptable: 0.4
+    poor: 0.2
+
+  # Scenario pass rate thresholds
+  pass_rate:
+    excellent: 0.8
+    good: 0.6
+    acceptable: 0.4
+    poor: 0.2
+
+# ============================================================================
+# FEATURE ENGINEERING
+# ============================================================================
+features:
+  # Technical indicators to include
+  technical_indicators:
+    - "sma_5"
+    - "sma_10"
+    - "sma_20"
+    - "rsi_14"
+    - "volatility_20"
+    - "momentum_10"
+
+  # Feature normalization
+  normalize: true
+  normalization_method: "standard" # standard, minmax, robust
+
+  # Feature selection
+  feature_selection: false
+  max_features: 50
+
+# ============================================================================
+# TRANSACTION COSTS
+# ============================================================================
+transaction_costs:
+  commission_rate: 0.001 # 0.1% commission
+  slippage_rate: 0.0001 # 0.01% slippage
+  market_impact_rate: 0.00005 # 0.005% market impact
+  bid_ask_spread: 0.0002 # 2 bps spread
+
+# ============================================================================
+# REPORTING
+# ============================================================================
+reporting:
+  # Report formats
+  formats:
+    - "markdown"
+    - "html"
+    - "json"
+
+  # Visualization settings
+  visualizations:
+    include_equity_curves: true
+    include_drawdown_charts: true
+    include_performance_radar: true
+    include_scenario_comparison: true
+
+  # Detailed analysis
+  detailed_analysis:
+    include_trade_analysis: false
+    include_risk_metrics: true
+    include_regime_analysis: true
+    include_adaptation_metrics: true
