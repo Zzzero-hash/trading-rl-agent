@@ -56,8 +56,7 @@ class HybridAgent(nn.Module):
         if self.cnn_lstm_model is None:
             self.cnn_lstm_model = CNNLSTMModel(
                 input_dim=10,  # OHLCV + technical indicators
-                output_size=hidden_dim,
-                config={"lstm_units": hidden_dim, "dropout": 0.1},
+                output_dim=hidden_dim,
             )
 
         # Feature fusion layer
