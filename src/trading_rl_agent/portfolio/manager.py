@@ -27,6 +27,13 @@ except ImportError:
     EMPYRICAL_AVAILABLE = False
 
 from ..core.logging import get_logger
+from .transaction_costs import (
+    TransactionCostModel,
+    MarketData,
+    OrderType,
+    MarketCondition,
+    BrokerType,
+)
 
 logger = get_logger(__name__)
 
@@ -77,7 +84,7 @@ class PortfolioConfig:
     rebalance_frequency: str = "monthly"  # daily, weekly, monthly
     rebalance_threshold: float = 0.05  # Rebalance if >5% drift
 
-    # Transaction costs
+    # Transaction costs (legacy - now handled by TransactionCostModel)
     commission_rate: float = 0.001  # 0.1% commission
     bid_ask_spread: float = 0.0002  # 2 bps spread
 
@@ -91,6 +98,11 @@ class PortfolioConfig:
 
     # Performance tracking
     benchmark_symbol: str = "SPY"  # Benchmark for comparison
+
+    # Transaction cost model configuration
+    broker_type: BrokerType = BrokerType.RETAIL
+    default_order_type: OrderType = OrderType.MARKET
+    default_market_condition: MarketCondition = MarketCondition.NORMAL
 
 
 class PortfolioManager:
@@ -109,6 +121,7 @@ class PortfolioManager:
         self,
         initial_capital: float,
         config: PortfolioConfig | None = None,
+        transaction_cost_model: TransactionCostModel | None = None,
     ):
         """
         Initialize portfolio manager.
@@ -116,10 +129,19 @@ class PortfolioManager:
         Args:
             initial_capital: Starting capital amount
             config: Portfolio configuration
+            transaction_cost_model: Optional custom transaction cost model
         """
         self.initial_capital = initial_capital
         self.config = config or PortfolioConfig()
         self.logger = get_logger(self.__class__.__name__)
+
+        # Initialize transaction cost model
+        if transaction_cost_model is not None:
+            self.transaction_cost_model = transaction_cost_model
+        else:
+            self.transaction_cost_model = TransactionCostModel.create_broker_model(
+                self.config.broker_type
+            )
 
         # Portfolio state
         self.cash = initial_capital
@@ -199,28 +221,66 @@ class PortfolioManager:
         quantity: float,
         price: float,
         side: str = "long",
+        order_type: OrderType | None = None,
+        market_condition: MarketCondition | None = None,
+        market_data: MarketData | None = None,
     ) -> bool:
         """
-        Execute a trade with risk checks.
+        Execute a trade with realistic transaction cost modeling.
 
         Args:
             symbol: Trading symbol
             quantity: Number of shares/units
             price: Execution price
             side: "long" or "short"
+            order_type: Type of order (default from config)
+            market_condition: Market condition (default from config)
+            market_data: Market data for cost modeling (auto-generated if None)
 
         Returns:
             True if trade executed successfully
         """
         try:
-            # Calculate trade value and costs
-            trade_value = abs(quantity * price)
-            commission = trade_value * self.config.commission_rate
-            spread_cost = trade_value * self.config.bid_ask_spread
-            total_cost = commission + spread_cost
+            # Use defaults if not provided
+            order_type = order_type or self.config.default_order_type
+            market_condition = market_condition or self.config.default_market_condition
+            
+            # Create market data if not provided
+            if market_data is None:
+                # Estimate bid-ask spread and other market data
+                estimated_spread = self.config.bid_ask_spread
+                bid = price * (1 - estimated_spread / 2)
+                ask = price * (1 + estimated_spread / 2)
+                
+                market_data = MarketData(
+                    timestamp=datetime.now(),
+                    bid=bid,
+                    ask=ask,
+                    mid_price=price,
+                    volume=abs(quantity) * 10,  # Estimate volume
+                    volatility=0.02,  # 2% volatility estimate
+                    avg_daily_volume=1000000,  # Default daily volume
+                    market_cap=1000000000,  # Default market cap
+                )
+
+            # Simulate execution with transaction costs
+            execution_result = self.transaction_cost_model.simulate_execution(
+                requested_quantity=abs(quantity),
+                market_data=market_data,
+                order_type=order_type,
+                market_condition=market_condition,
+            )
+
+            if not execution_result.success:
+                self.logger.warning(f"Trade execution failed: {execution_result.reason}")
+                return False
+
+            # Calculate actual trade value and costs
+            trade_value = execution_result.executed_quantity * execution_result.executed_price
+            total_cost = execution_result.total_cost
 
             # Pre-trade risk checks
-            if not self._validate_trade(symbol, quantity, price, side, total_cost):
+            if not self._validate_trade(symbol, execution_result.executed_quantity, execution_result.executed_price, side, total_cost):
                 return False
 
             # Execute the trade
@@ -237,13 +297,13 @@ class PortfolioManager:
                 if symbol in self.positions:
                     # Update existing position
                     pos = self.positions[symbol]
-                    new_quantity = pos.quantity + quantity
+                    new_quantity = pos.quantity + execution_result.executed_quantity
                     if new_quantity != 0:
                         # Weighted average price
-                        total_cost_basis = (pos.quantity * pos.entry_price) + (quantity * price)
+                        total_cost_basis = (pos.quantity * pos.entry_price) + (execution_result.executed_quantity * execution_result.executed_price)
                         pos.entry_price = total_cost_basis / new_quantity
                         pos.quantity = new_quantity
-                        pos.current_price = price
+                        pos.current_price = execution_result.executed_price
                     else:
                         # Position closed
                         del self.positions[symbol]
@@ -251,56 +311,66 @@ class PortfolioManager:
                     # New position
                     self.positions[symbol] = Position(
                         symbol=symbol,
-                        quantity=quantity,
-                        entry_price=price,
-                        current_price=price,
-                        timestamp=datetime.now(),
+                        quantity=execution_result.executed_quantity,
+                        entry_price=execution_result.executed_price,
+                        current_price=execution_result.executed_price,
+                        timestamp=execution_result.execution_time,
                         side=side,
                     )
 
             else:  # Sell/short
-                quantity = abs(quantity)
+                executed_quantity = abs(execution_result.executed_quantity)
 
                 if symbol in self.positions:
                     pos = self.positions[symbol]
-                    if pos.quantity >= quantity:
+                    if pos.quantity >= executed_quantity:
                         # Partial or full sale
-                        self.cash += (quantity * price) - total_cost
-                        pos.quantity -= quantity
+                        self.cash += (executed_quantity * execution_result.executed_price) - total_cost
+                        pos.quantity -= executed_quantity
                         if pos.quantity == 0:
                             del self.positions[symbol]
                     else:
                         self.logger.warning(
-                            f"Cannot sell {quantity} shares of {symbol}, only have {pos.quantity}",
+                            f"Cannot sell {executed_quantity} shares of {symbol}, only have {pos.quantity}",
                         )
                         return False
                 else:
                     # Short position
-                    self.cash += (quantity * price) - total_cost
+                    self.cash += (executed_quantity * execution_result.executed_price) - total_cost
                     self.positions[symbol] = Position(
                         symbol=symbol,
-                        quantity=-quantity,
-                        entry_price=price,
-                        current_price=price,
-                        timestamp=datetime.now(),
+                        quantity=-executed_quantity,
+                        entry_price=execution_result.executed_price,
+                        current_price=execution_result.executed_price,
+                        timestamp=execution_result.execution_time,
                         side="short",
                     )
 
-            # Record transaction
+            # Record detailed transaction
             self.transaction_history.append(
                 {
-                    "timestamp": datetime.now(),
+                    "timestamp": execution_result.execution_time,
                     "symbol": symbol,
-                    "quantity": quantity,
-                    "price": price,
+                    "quantity": execution_result.executed_quantity,
+                    "price": execution_result.executed_price,
                     "side": side,
-                    "commission": commission,
-                    "spread_cost": spread_cost,
+                    "order_type": order_type.value,
+                    "market_condition": market_condition.value,
+                    "commission": execution_result.cost_breakdown["commission"],
+                    "slippage": execution_result.cost_breakdown["slippage"],
+                    "market_impact": execution_result.cost_breakdown["market_impact"],
+                    "spread_cost": execution_result.cost_breakdown["spread_cost"],
                     "total_cost": total_cost,
+                    "delay_seconds": execution_result.delay_seconds,
+                    "partial_fills": execution_result.partial_fills,
+                    "success": execution_result.success,
                 },
             )
 
-            self.logger.info(f"Executed trade: {quantity} {symbol} at {price}")
+            self.logger.info(
+                f"Executed trade: {execution_result.executed_quantity} {symbol} at {execution_result.executed_price} "
+                f"(cost: ${total_cost:.2f}, delay: {execution_result.delay_seconds:.2f}s)"
+            )
             return True
 
         except Exception as e:
@@ -483,3 +553,35 @@ class PortfolioManager:
         gross_loss = abs(returns[returns < 0].sum())
 
         return float(gross_profit / gross_loss) if gross_loss > 0 else float("inf")
+
+    def get_transaction_cost_analysis(self) -> dict[str, Any]:
+        """Get detailed transaction cost analysis."""
+        from .transaction_costs import TransactionCostAnalyzer
+        
+        analyzer = TransactionCostAnalyzer(self.transaction_cost_model)
+        
+        return {
+            "cost_summary": self.transaction_cost_model.get_cost_summary(),
+            "cost_trends": analyzer.analyze_cost_trends(),
+            "efficiency_metrics": analyzer.calculate_cost_efficiency_metrics(),
+            "optimization_recommendations": self.transaction_cost_model.generate_optimization_recommendations(),
+            "cost_report": analyzer.generate_cost_report(),
+        }
+    
+    def optimize_transaction_costs(self) -> dict[str, Any]:
+        """Generate transaction cost optimization recommendations."""
+        recommendations = self.transaction_cost_model.generate_optimization_recommendations()
+        
+        # Calculate potential savings
+        total_potential_savings = sum(rec.expected_savings for rec in recommendations)
+        current_total_costs = self.transaction_cost_model.get_cost_summary()["total_transaction_costs"]
+        
+        return {
+            "recommendations": recommendations,
+            "total_potential_savings": total_potential_savings,
+            "current_total_costs": current_total_costs,
+            "savings_percentage": (total_potential_savings / current_total_costs * 100) if current_total_costs > 0 else 0,
+            "implementation_priority": sorted(recommendations, key=lambda x: {
+                "critical": 4, "high": 3, "medium": 2, "low": 1
+            }.get(x.priority, 0), reverse=True),
+        }

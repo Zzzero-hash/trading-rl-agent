@@ -19,6 +19,13 @@ from rich.table import Table
 
 from ..core.unified_config import BacktestConfig
 from ..portfolio.manager import PortfolioConfig, PortfolioManager
+from ..portfolio.transaction_costs import (
+    TransactionCostModel,
+    MarketData,
+    OrderType,
+    MarketCondition,
+    BrokerType,
+)
 from ..utils.metrics import (
     calculate_beta,
     calculate_calmar_ratio,
@@ -38,9 +45,11 @@ console = Console()
 logger = logging.getLogger(__name__)
 
 
+# Legacy TransactionCostModel - kept for backward compatibility
+# The new comprehensive model is in portfolio.transaction_costs
 @dataclass
 class TransactionCostModel:
-    """Configurable transaction cost model for realistic backtesting."""
+    """Legacy transaction cost model for backward compatibility."""
 
     # Commission structure
     commission_rate: float = 0.001  # 0.1% commission
@@ -271,17 +280,24 @@ class BacktestEvaluator:
         self.metrics_calculator = MetricsCalculator()
         self.statistical_tests = StatisticalTests()
 
-        # Portfolio manager
+        # Portfolio manager with new transaction cost model
         portfolio_config = PortfolioConfig(
             max_position_size=config.max_position_size,
             max_leverage=config.max_leverage,
             commission_rate=config.commission_rate,
             stop_loss_pct=config.stop_loss_pct,
             take_profit_pct=config.take_profit_pct,
+            broker_type=BrokerType.RETAIL,  # Default broker type
         )
+        
+        # Use the new comprehensive transaction cost model
+        from ..portfolio.transaction_costs import TransactionCostModel as NewTransactionCostModel
+        new_cost_model = NewTransactionCostModel.create_broker_model(BrokerType.RETAIL)
+        
         self.portfolio_manager = PortfolioManager(
             initial_capital=config.initial_capital,
             config=portfolio_config,
+            transaction_cost_model=new_cost_model,
         )
 
         # Results storage
