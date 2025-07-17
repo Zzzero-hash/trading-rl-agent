@@ -335,6 +335,8 @@ line-ending = "auto"
 # Allow subprocess in setup scripts
 "setup*.py" = ["S602", "S603", "S607"]
 "dev-*.sh" = ["S602", "S603", "S607"]
+# Allow typer argument defaults in CLI (B008 is required for typer)
+"src/trading_rl_agent/cli.py" = ["B008"]
 
 [tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10

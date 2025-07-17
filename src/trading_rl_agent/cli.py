@@ -86,6 +86,108 @@ DEFAULT_POLICY: str | None = None
 DEFAULT_MODELS: str | None = None
 DEFAULT_RESULTS_PATH: Path | None = None
 
+# Constants for new CLI commands to fix B008 errors
+DEFAULT_FEATURES_TECHNICAL_OUTPUT = DEFAULT_OUTPUT_DIR / "features" / "technical.csv"
+DEFAULT_FEATURES_CANDLESTICK_OUTPUT = DEFAULT_OUTPUT_DIR / "features" / "candlestick.csv"
+DEFAULT_FEATURES_MARKET_REGIME_OUTPUT = DEFAULT_OUTPUT_DIR / "features" / "market_regime.csv"
+DEFAULT_FEATURES_ALL_OUTPUT = DEFAULT_OUTPUT_DIR / "features" / "all_features.csv"
+DEFAULT_MA_WINDOWS = "5,10,20,50"
+DEFAULT_RSI_WINDOW = 14
+DEFAULT_VOL_WINDOW = 20
+DEFAULT_VOLATILITY_WINDOW = 20
+DEFAULT_TREND_WINDOW = 50
+DEFAULT_ADVANCED_CANDLES = True
+
+DEFAULT_OPTIMIZED_OUTPUT_DIR = DEFAULT_OUTPUT_DIR / "optimized"
+DEFAULT_SEQUENCE_LENGTH = 60
+DEFAULT_PREDICTION_HORIZON = 1
+DEFAULT_REAL_DATA_RATIO = 0.95
+DEFAULT_TECHNICAL_INDICATORS = True
+DEFAULT_SENTIMENT_FEATURES = True
+DEFAULT_MARKET_REGIME_FEATURES = True
+DEFAULT_MAX_WORKERS = None
+
+DEFAULT_STANDARDIZED_OUTPUT_PATH = DEFAULT_OUTPUT_DIR / "standardized" / "standardized.csv"
+DEFAULT_STANDARDIZATION_METHOD_ROBUST = "robust"
+DEFAULT_OUTLIER_THRESHOLD = 5.0
+DEFAULT_MISSING_VALUE_THRESHOLD = 0.25
+
+DEFAULT_SYNTHETIC_OUTPUT_PATH = DEFAULT_OUTPUT_DIR / "synthetic" / "synthetic_data.csv"
+DEFAULT_N_SAMPLES = 1000
+DEFAULT_VOLATILITY = 0.02
+DEFAULT_TREND = 0.001
+DEFAULT_NOISE_LEVEL = 0.01
+
+DEFAULT_ALTERNATIVE_OUTPUT_PATH = DEFAULT_OUTPUT_DIR / "alternative" / "alternative_data.csv"
+DEFAULT_INCLUDE_SENTIMENT = True
+DEFAULT_INCLUDE_NEWS = True
+DEFAULT_INCLUDE_SOCIAL = True
+
+DEFAULT_ADVANCED_MODELS_CNN_LSTM_OUTPUT = DEFAULT_OUTPUT_DIR / "advanced_models" / "cnn_lstm"
+DEFAULT_EPOCHS_100 = 100
+DEFAULT_BATCH_SIZE_32 = 32
+DEFAULT_LEARNING_RATE_001 = 0.001
+DEFAULT_ENABLE_AMP = True
+DEFAULT_ENABLE_CHECKPOINTING = True
+DEFAULT_MEMORY_EFFICIENT = True
+DEFAULT_SCHEDULER_TYPE = "cosine"
+DEFAULT_EARLY_STOPPING_PATIENCE = 15
+DEFAULT_MIXUP_ALPHA = 0.2
+DEFAULT_CUTMIX_PROB = 0.3
+
+DEFAULT_HYPEROPT_OUTPUT_DIR = DEFAULT_OUTPUT_DIR / "hyperopt"
+DEFAULT_N_TRIALS_100 = 100
+DEFAULT_STUDY_NAME = "cnn_lstm_optimization"
+DEFAULT_STORAGE = None
+
+DEFAULT_AUGMENTED_OUTPUT_PATH = DEFAULT_OUTPUT_DIR / "augmented" / "augmented_data.npz"
+DEFAULT_NOISE_FACTOR = 0.01
+DEFAULT_SEQUENCE_SHIFT = True
+DEFAULT_N_AUGMENTED_SAMPLES = 1000
+
+DEFAULT_NLP_NEWS_OUTPUT_PATH = DEFAULT_OUTPUT_DIR / "nlp" / "news_analysis.csv"
+DEFAULT_MIN_RELEVANCE = 0.5
+DEFAULT_MIN_IMPACT = 0.7
+
+DEFAULT_NLP_SENTIMENT_OUTPUT_PATH = DEFAULT_OUTPUT_DIR / "nlp" / "sentiment_analysis.csv"
+DEFAULT_TEXT_COLUMN = "text"
+DEFAULT_BATCH_SIZE_100 = 100
+
+DEFAULT_NLP_PROCESSED_OUTPUT_PATH = DEFAULT_OUTPUT_DIR / "nlp" / "processed_text.csv"
+DEFAULT_REMOVE_STOPWORDS = True
+DEFAULT_LEMMATIZE = True
+DEFAULT_REMOVE_PUNCTUATION = True
+DEFAULT_LOWERCASE = True
+
+DEFAULT_NLP_ENTITIES_OUTPUT_PATH = DEFAULT_OUTPUT_DIR / "nlp" / "entities.csv"
+DEFAULT_ENTITY_TYPES = "PERSON,ORG,GPE"
+
+DEFAULT_DASHBOARD_PORT = 8080
+DEFAULT_DASHBOARD_HOST = "localhost"
+DEFAULT_REFRESH_INTERVAL = 5
+DEFAULT_METRICS_COLLECTOR = None
+
+DEFAULT_MONITORING_SYSTEM_HEALTH_OUTPUT = DEFAULT_OUTPUT_DIR / "monitoring" / "system_health.json"
+DEFAULT_DETAILED_FALSE_2 = False
+
+DEFAULT_MONITORING_TRADING_METRICS_OUTPUT = DEFAULT_OUTPUT_DIR / "monitoring" / "trading_metrics.json"
+DEFAULT_SESSION_ID_NONE_2 = None
+
+DEFAULT_MONITORING_RISK_METRICS_OUTPUT = DEFAULT_OUTPUT_DIR / "monitoring" / "risk_metrics.json"
+DEFAULT_CONFIDENCE_LEVEL = 0.95
+
+DEFAULT_MONITORING_ALERTS_OUTPUT = DEFAULT_OUTPUT_DIR / "monitoring" / "alerts.json"
+DEFAULT_LIMIT = 10
+DEFAULT_ACTIVE_ONLY = True
+
+DEFAULT_ALERT_SEVERITY = "medium"
+DEFAULT_ALERT_CATEGORY = "general"
+DEFAULT_THRESHOLD = None
+
+DEFAULT_CATEGORY_NONE = None
+DEFAULT_SEVERITY_NONE = None
+DEFAULT_ALL_ALERTS = False
+
 # Add root directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_settings, load_settings
@@ -935,37 +1037,38 @@ def paper(
 @features_app.command()
 def technical_indicators(
     input_path: Path = typer.Argument(..., help="Path to input CSV file"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "features" / "technical.csv", "--output", "-o", help="Output path"),
-    ma_windows: str = typer.Option("5,10,20,50", "--ma-windows", help="Moving average windows (comma-separated)"),
-    rsi_window: int = typer.Option(14, "--rsi-window", help="RSI window"),
-    vol_window: int = typer.Option(20, "--vol-window", help="Volume window"),
+    output_path: Path = typer.Option(DEFAULT_FEATURES_TECHNICAL_OUTPUT, "--output", "-o", help="Output path"),
+    ma_windows: str = typer.Option(DEFAULT_MA_WINDOWS, "--ma-windows", help="Moving average windows (comma-separated)"),
+    rsi_window: int = typer.Option(DEFAULT_RSI_WINDOW, "--rsi-window", help="RSI window"),
+    vol_window: int = typer.Option(DEFAULT_VOL_WINDOW, "--vol-window", help="Volume window"),
 ) -> None:
     """Add technical indicators to market data."""
     try:
         import pandas as pd
+
         from .data.features import generate_features
-        
+
         # Load data
         df = pd.read_csv(input_path)
         console.print(f"[green]Loaded data: {len(df)} rows[/green]")
-        
+
         # Parse MA windows
         ma_windows_list = [int(x.strip()) for x in ma_windows.split(",")]
-        
+
         # Generate features
         featured_df = generate_features(
-            df, 
+            df,
             ma_windows=ma_windows_list,
             rsi_window=rsi_window,
             vol_window=vol_window,
-            advanced_candles=False
+            advanced_candles=DEFAULT_ADVANCED_CANDLES
         )
-        
+
         # Save output
         featured_df.to_csv(output_path, index=False)
         console.print(f"[green]Technical indicators added and saved to {output_path}[/green]")
         console.print(f"[blue]Added {len(featured_df.columns) - len(df.columns)} new features[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error adding technical indicators: {e}[/red]")
         raise typer.Exit(1) from e
@@ -974,33 +1077,34 @@ def technical_indicators(
 @features_app.command()
 def candlestick_patterns(
     input_path: Path = typer.Argument(..., help="Path to input CSV file"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "features" / "candlestick.csv", "--output", "-o", help="Output path"),
+    output_path: Path = typer.Option(DEFAULT_FEATURES_CANDLESTICK_OUTPUT, "--output", "-o", help="Output path"),
     advanced: bool = typer.Option(True, "--advanced/--basic", help="Include advanced patterns"),
 ) -> None:
     """Add candlestick pattern detection to market data."""
     try:
         import pandas as pd
-        from .data.features import compute_candle_features, add_missing_candlestick_patterns
-        
+
+        from .data.features import add_missing_candlestick_patterns, compute_candle_features
+
         # Load data
         df = pd.read_csv(input_path)
         console.print(f"[green]Loaded data: {len(df)} rows[/green]")
-        
+
         # Add basic candlestick features
         df = compute_candle_features(df, advanced=advanced)
-        
+
         # Add missing patterns if advanced
         if advanced:
             df = add_missing_candlestick_patterns(df)
-        
+
         # Save output
         df.to_csv(output_path, index=False)
         console.print(f"[green]Candlestick patterns added and saved to {output_path}[/green]")
-        
+
         # Count pattern columns
-        pattern_cols = [col for col in df.columns if any(pattern in col.lower() for pattern in ['doji', 'hammer', 'engulfing', 'star', 'harami', 'tweezer'])]
+        pattern_cols = [col for col in df.columns if any(pattern in col.lower() for pattern in ["doji", "hammer", "engulfing", "star", "harami", "tweezer"])]
         console.print(f"[blue]Added {len(pattern_cols)} candlestick pattern features[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error adding candlestick patterns: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1009,30 +1113,31 @@ def candlestick_patterns(
 @features_app.command()
 def market_regime(
     input_path: Path = typer.Argument(..., help="Path to input CSV file"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "features" / "market_regime.csv", "--output", "-o", help="Output path"),
-    volatility_window: int = typer.Option(20, "--volatility-window", help="Volatility calculation window"),
-    trend_window: int = typer.Option(50, "--trend-window", help="Trend calculation window"),
+    output_path: Path = typer.Option(DEFAULT_FEATURES_MARKET_REGIME_OUTPUT, "--output", "-o", help="Output path"),
+    volatility_window: int = typer.Option(DEFAULT_VOLATILITY_WINDOW, "--volatility-window", help="Volatility calculation window"),
+    trend_window: int = typer.Option(DEFAULT_TREND_WINDOW, "--trend-window", help="Trend calculation window"),
 ) -> None:
     """Add market regime features to market data."""
     try:
         import pandas as pd
+
         from .data.features import add_market_regime_features
-        
+
         # Load data
         df = pd.read_csv(input_path)
         console.print(f"[green]Loaded data: {len(df)} rows[/green]")
-        
+
         # Add market regime features
         df = add_market_regime_features(df)
-        
+
         # Save output
         df.to_csv(output_path, index=False)
         console.print(f"[green]Market regime features added and saved to {output_path}[/green]")
-        
+
         # Count regime columns
-        regime_cols = [col for col in df.columns if 'regime' in col.lower()]
+        regime_cols = [col for col in df.columns if "regime" in col.lower()]
         console.print(f"[blue]Added {len(regime_cols)} market regime features[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error adding market regime features: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1041,41 +1146,42 @@ def market_regime(
 @features_app.command()
 def all_features(
     input_path: Path = typer.Argument(..., help="Path to input CSV file"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "features" / "all_features.csv", "--output", "-o", help="Output path"),
-    ma_windows: str = typer.Option("5,10,20,50", "--ma-windows", help="Moving average windows (comma-separated)"),
-    rsi_window: int = typer.Option(14, "--rsi-window", help="RSI window"),
-    vol_window: int = typer.Option(20, "--vol-window", help="Volume window"),
+    output_path: Path = typer.Option(DEFAULT_FEATURES_ALL_OUTPUT, "--output", "-o", help="Output path"),
+    ma_windows: str = typer.Option(DEFAULT_MA_WINDOWS, "--ma-windows", help="Moving average windows (comma-separated)"),
+    rsi_window: int = typer.Option(DEFAULT_RSI_WINDOW, "--rsi-window", help="RSI window"),
+    vol_window: int = typer.Option(DEFAULT_VOL_WINDOW, "--vol-window", help="Volume window"),
     advanced_candles: bool = typer.Option(True, "--advanced-candles/--basic-candles", help="Include advanced candlestick patterns"),
 ) -> None:
     """Add all feature types to market data (technical indicators, candlestick patterns, market regimes)."""
     try:
         import pandas as pd
-        from .data.features import generate_features, add_market_regime_features
-        
+
+        from .data.features import add_market_regime_features, generate_features
+
         # Load data
         df = pd.read_csv(input_path)
         console.print(f"[green]Loaded data: {len(df)} rows[/green]")
-        
+
         # Parse MA windows
         ma_windows_list = [int(x.strip()) for x in ma_windows.split(",")]
-        
+
         # Generate all features
         featured_df = generate_features(
-            df, 
+            df,
             ma_windows=ma_windows_list,
             rsi_window=rsi_window,
             vol_window=vol_window,
             advanced_candles=advanced_candles
         )
-        
+
         # Add market regime features
         featured_df = add_market_regime_features(featured_df)
-        
+
         # Save output
         featured_df.to_csv(output_path, index=False)
         console.print(f"[green]All features added and saved to {output_path}[/green]")
         console.print(f"[blue]Total features: {len(featured_df.columns)} (original: {len(df.columns)})[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error adding all features: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1087,22 +1193,22 @@ def build_optimized_dataset(
     symbols: str = typer.Argument(..., help="Comma-separated list of symbols"),
     start_date: str = typer.Argument(..., help="Start date (YYYY-MM-DD)"),
     end_date: str = typer.Argument(..., help="End date (YYYY-MM-DD)"),
-    output_dir: Path = typer.Option(DEFAULT_OUTPUT_DIR / "optimized", "--output", "-o", help="Output directory"),
-    sequence_length: int = typer.Option(60, "--sequence-length", help="Sequence length for CNN+LSTM"),
-    prediction_horizon: int = typer.Option(1, "--prediction-horizon", help="Prediction horizon"),
-    real_data_ratio: float = typer.Option(0.95, "--real-data-ratio", help="Ratio of real data (0.0-1.0)"),
-    technical_indicators: bool = typer.Option(True, "--technical/--no-technical", help="Include technical indicators"),
-    sentiment_features: bool = typer.Option(True, "--sentiment/--no-sentiment", help="Include sentiment features"),
-    market_regime_features: bool = typer.Option(True, "--market-regime/--no-market-regime", help="Include market regime features"),
-    max_workers: int = typer.Option(None, "--max-workers", help="Maximum parallel workers"),
+    output_dir: Path = typer.Option(DEFAULT_OPTIMIZED_OUTPUT_DIR, "--output", "-o", help="Output directory"),
+    sequence_length: int = typer.Option(DEFAULT_SEQUENCE_LENGTH, "--sequence-length", help="Sequence length for CNN+LSTM"),
+    prediction_horizon: int = typer.Option(DEFAULT_PREDICTION_HORIZON, "--prediction-horizon", help="Prediction horizon"),
+    real_data_ratio: float = typer.Option(DEFAULT_REAL_DATA_RATIO, "--real-data-ratio", help="Ratio of real data (0.0-1.0)"),
+    technical_indicators: bool = typer.Option(DEFAULT_TECHNICAL_INDICATORS, "--technical/--no-technical", help="Include technical indicators"),
+    sentiment_features: bool = typer.Option(DEFAULT_SENTIMENT_FEATURES, "--sentiment/--no-sentiment", help="Include sentiment features"),
+    market_regime_features: bool = typer.Option(DEFAULT_MARKET_REGIME_FEATURES, "--market-regime/--no-market-regime", help="Include market regime features"),
+    max_workers: int = typer.Option(DEFAULT_MAX_WORKERS, "--max-workers", help="Maximum parallel workers"),
 ) -> None:
     """Build optimized dataset with parallel processing and advanced features."""
     try:
         from .data.optimized_dataset_builder import OptimizedDatasetBuilder, OptimizedDatasetConfig
-        
+
         # Parse symbols
         symbols_list = [s.strip() for s in symbols.split(",")]
-        
+
         # Create config
         config = OptimizedDatasetConfig(
             symbols=symbols_list,
@@ -1117,17 +1223,17 @@ def build_optimized_dataset(
             max_workers=max_workers,
             output_dir=str(output_dir)
         )
-        
+
         # Build dataset
         console.print(f"[green]Building optimized dataset for {len(symbols_list)} symbols...[/green]")
         builder = OptimizedDatasetBuilder(config)
         sequences, targets, dataset_info = builder.build_dataset()
-        
-        console.print(f"[green]✅ Optimized dataset built successfully![/green]")
+
+        console.print("[green]✅ Optimized dataset built successfully![/green]")
         console.print(f"[blue]Sequences shape: {sequences.shape}[/blue]")
         console.print(f"[blue]Targets shape: {targets.shape}[/blue]")
         console.print(f"[blue]Dataset info: {dataset_info}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error building optimized dataset: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1136,34 +1242,35 @@ def build_optimized_dataset(
 @advanced_data_app.command()
 def standardize_data(
     input_path: Path = typer.Argument(..., help="Path to input CSV file"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "standardized" / "standardized.csv", "--output", "-o", help="Output path"),
-    method: str = typer.Option("robust", "--method", help="Standardization method (robust, standard, minmax)"),
-    outlier_threshold: float = typer.Option(5.0, "--outlier-threshold", help="Outlier detection threshold"),
-    missing_value_threshold: float = typer.Option(0.25, "--missing-threshold", help="Missing value threshold"),
+    output_path: Path = typer.Option(DEFAULT_STANDARDIZED_OUTPUT_PATH, "--output", "-o", help="Output path"),
+    method: str = typer.Option(DEFAULT_STANDARDIZATION_METHOD_ROBUST, "--method", help="Standardization method (robust, standard, minmax)"),
+    outlier_threshold: float = typer.Option(DEFAULT_OUTLIER_THRESHOLD, "--outlier-threshold", help="Outlier detection threshold"),
+    missing_value_threshold: float = typer.Option(DEFAULT_MISSING_VALUE_THRESHOLD, "--missing-threshold", help="Missing value threshold"),
 ) -> None:
     """Standardize and clean market data."""
     try:
         import pandas as pd
+
         from .data.data_standardizer import DataStandardizer
-        
+
         # Load data
         df = pd.read_csv(input_path)
         console.print(f"[green]Loaded data: {len(df)} rows, {len(df.columns)} columns[/green]")
-        
+
         # Create standardizer
         standardizer = DataStandardizer(
             outlier_threshold=outlier_threshold,
             missing_value_threshold=missing_value_threshold
         )
-        
+
         # Standardize data
         standardized_df = standardizer.standardize(df, method=method)
-        
+
         # Save output
         standardized_df.to_csv(output_path, index=False)
         console.print(f"[green]Data standardized and saved to {output_path}[/green]")
         console.print(f"[blue]Final shape: {standardized_df.shape}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error standardizing data: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1172,23 +1279,24 @@ def standardize_data(
 @advanced_data_app.command()
 def generate_synthetic_data(
     symbols: str = typer.Argument(..., help="Comma-separated list of symbols"),
-    n_samples: int = typer.Option(1000, "--n-samples", help="Number of samples per symbol"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "synthetic" / "synthetic_data.csv", "--output", "-o", help="Output path"),
-    volatility: float = typer.Option(0.02, "--volatility", help="Volatility parameter"),
-    trend: float = typer.Option(0.001, "--trend", help="Trend parameter"),
-    noise_level: float = typer.Option(0.01, "--noise", help="Noise level"),
+    n_samples: int = typer.Option(DEFAULT_N_SAMPLES, "--n-samples", help="Number of samples per symbol"),
+    output_path: Path = typer.Option(DEFAULT_SYNTHETIC_OUTPUT_PATH, "--output", "-o", help="Output path"),
+    volatility: float = typer.Option(DEFAULT_VOLATILITY, "--volatility", help="Volatility parameter"),
+    trend: float = typer.Option(DEFAULT_TREND, "--trend", help="Trend parameter"),
+    noise_level: float = typer.Option(DEFAULT_NOISE_LEVEL, "--noise", help="Noise level"),
 ) -> None:
     """Generate synthetic market data for testing and augmentation."""
     try:
-        from .data.synthetic import fetch_synthetic_data
         import pandas as pd
-        
+
+        from .data.synthetic import fetch_synthetic_data
+
         # Parse symbols
         symbols_list = [s.strip() for s in symbols.split(",")]
-        
+
         # Generate synthetic data
         console.print(f"[green]Generating synthetic data for {len(symbols_list)} symbols...[/green]")
-        
+
         all_data = []
         for symbol in symbols_list:
             synthetic_df = fetch_synthetic_data(
@@ -1198,18 +1306,18 @@ def generate_synthetic_data(
                 trend=trend,
                 noise_level=noise_level
             )
-            synthetic_df['symbol'] = symbol
-            synthetic_df['data_source'] = 'synthetic'
+            synthetic_df["symbol"] = symbol
+            synthetic_df["data_source"] = "synthetic"
             all_data.append(synthetic_df)
-        
+
         # Combine all data
         combined_df = pd.concat(all_data, ignore_index=True)
-        
+
         # Save output
         combined_df.to_csv(output_path, index=False)
         console.print(f"[green]Synthetic data generated and saved to {output_path}[/green]")
         console.print(f"[blue]Total samples: {len(combined_df)}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error generating synthetic data: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1220,26 +1328,27 @@ def alternative_data(
     symbols: str = typer.Argument(..., help="Comma-separated list of symbols"),
     start_date: str = typer.Argument(..., help="Start date (YYYY-MM-DD)"),
     end_date: str = typer.Argument(..., help="End date (YYYY-MM-DD)"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "alternative" / "alternative_data.csv", "--output", "-o", help="Output path"),
-    include_sentiment: bool = typer.Option(True, "--sentiment/--no-sentiment", help="Include sentiment data"),
-    include_news: bool = typer.Option(True, "--news/--no-news", help="Include news data"),
-    include_social: bool = typer.Option(True, "--social/--no-social", help="Include social media data"),
+    output_path: Path = typer.Option(DEFAULT_ALTERNATIVE_OUTPUT_PATH, "--output", "-o", help="Output path"),
+    include_sentiment: bool = typer.Option(DEFAULT_INCLUDE_SENTIMENT, "--sentiment/--no-sentiment", help="Include sentiment data"),
+    include_news: bool = typer.Option(DEFAULT_INCLUDE_NEWS, "--news/--no-news", help="Include news data"),
+    include_social: bool = typer.Option(DEFAULT_INCLUDE_SOCIAL, "--social/--no-social", help="Include social media data"),
 ) -> None:
     """Fetch and process alternative data sources."""
     try:
-        from .features.alternative_data import AlternativeDataFeatures, AlternativeDataConfig
         import pandas as pd
-        
+
+        from .features.alternative_data import AlternativeDataConfig, AlternativeDataFeatures
+
         # Parse symbols
         symbols_list = [s.strip() for s in symbols.split(",")]
-        
+
         # Create config
         config = AlternativeDataConfig()
         alt_data = AlternativeDataFeatures(config)
-        
+
         # Fetch alternative data
         console.print(f"[green]Fetching alternative data for {len(symbols_list)} symbols...[/green]")
-        
+
         all_data = []
         for symbol in symbols_list:
             symbol_data = alt_data.get_alternative_data(
@@ -1251,20 +1360,20 @@ def alternative_data(
                 include_social=include_social
             )
             if symbol_data is not None and not symbol_data.empty:
-                symbol_data['symbol'] = symbol
+                symbol_data["symbol"] = symbol
                 all_data.append(symbol_data)
-        
+
         if all_data:
             # Combine all data
             combined_df = pd.concat(all_data, ignore_index=True)
-            
+
             # Save output
             combined_df.to_csv(output_path, index=False)
             console.print(f"[green]Alternative data saved to {output_path}[/green]")
             console.print(f"[blue]Total samples: {len(combined_df)}[/blue]")
         else:
             console.print("[yellow]No alternative data found for the specified symbols and date range[/yellow]")
-        
+
     except Exception as e:
         console.print(f"[red]Error fetching alternative data: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1274,42 +1383,42 @@ def alternative_data(
 @advanced_train_app.command()
 def optimized_cnn_lstm(
     data_path: Path = typer.Argument(..., help="Path to training data"),
-    output_dir: Path = typer.Option(DEFAULT_OUTPUT_DIR / "advanced_models" / "cnn_lstm", "--output", "-o", help="Output directory"),
-    epochs: int = typer.Option(100, "--epochs", help="Number of training epochs"),
-    batch_size: int = typer.Option(32, "--batch-size", help="Batch size"),
-    learning_rate: float = typer.Option(0.001, "--lr", help="Learning rate"),
-    enable_amp: bool = typer.Option(True, "--amp/--no-amp", help="Enable automatic mixed precision"),
-    enable_checkpointing: bool = typer.Option(True, "--checkpointing/--no-checkpointing", help="Enable gradient checkpointing"),
-    memory_efficient: bool = typer.Option(True, "--memory-efficient/--no-memory-efficient", help="Enable memory optimizations"),
-    scheduler_type: str = typer.Option("cosine", "--scheduler", help="Learning rate scheduler (cosine, onecycle, plateau)"),
-    early_stopping_patience: int = typer.Option(15, "--patience", help="Early stopping patience"),
-    mixup_alpha: float = typer.Option(0.2, "--mixup", help="MixUp augmentation alpha"),
-    cutmix_prob: float = typer.Option(0.3, "--cutmix", help="CutMix augmentation probability"),
+    output_dir: Path = typer.Option(DEFAULT_ADVANCED_MODELS_CNN_LSTM_OUTPUT, "--output", "-o", help="Output directory"),
+    epochs: int = typer.Option(DEFAULT_EPOCHS_100, "--epochs", help="Number of training epochs"),
+    batch_size: int = typer.Option(DEFAULT_BATCH_SIZE_32, "--batch-size", help="Batch size"),
+    learning_rate: float = typer.Option(DEFAULT_LEARNING_RATE_001, "--lr", help="Learning rate"),
+    enable_amp: bool = typer.Option(DEFAULT_ENABLE_AMP, "--amp/--no-amp", help="Enable automatic mixed precision"),
+    enable_checkpointing: bool = typer.Option(DEFAULT_ENABLE_CHECKPOINTING, "--checkpointing/--no-checkpointing", help="Enable gradient checkpointing"),
+    memory_efficient: bool = typer.Option(DEFAULT_MEMORY_EFFICIENT, "--memory-efficient/--no-memory-efficient", help="Enable memory optimizations"),
+    scheduler_type: str = typer.Option(DEFAULT_SCHEDULER_TYPE, "--scheduler", help="Learning rate scheduler (cosine, onecycle, plateau)"),
+    early_stopping_patience: int = typer.Option(DEFAULT_EARLY_STOPPING_PATIENCE, "--patience", help="Early stopping patience"),
+    mixup_alpha: float = typer.Option(DEFAULT_MIXUP_ALPHA, "--mixup", help="MixUp augmentation alpha"),
+    cutmix_prob: float = typer.Option(DEFAULT_CUTMIX_PROB, "--cutmix", help="CutMix augmentation probability"),
 ) -> None:
     """Train CNN+LSTM model with advanced optimizations."""
     try:
-        from .training.optimized_trainer import create_optimized_trainer, create_advanced_scheduler
-        from .training.train_cnn_lstm_enhanced import create_cnn_lstm_model
-        import torch
-        import torch.nn as nn
-        import torch.optim as optim
         import numpy as np
-        
+        import torch
+        from torch import nn, optim
+
+        from .training.optimized_trainer import create_advanced_scheduler, create_optimized_trainer
+        from .training.train_cnn_lstm_enhanced import create_cnn_lstm_model
+
         # Load data
         console.print(f"[green]Loading training data from {data_path}...[/green]")
         data = np.load(data_path)
-        sequences = data['sequences']
-        targets = data['targets']
-        
+        sequences = data["sequences"]
+        targets = data["targets"]
+
         # Create model
         model = create_cnn_lstm_model(
             input_shape=sequences.shape[1:],
             num_classes=targets.shape[-1] if len(targets.shape) > 1 else 1
         )
-        
+
         # Create optimizer
         optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
-        
+
         # Create scheduler
         scheduler = create_advanced_scheduler(
             scheduler_type=scheduler_type,
@@ -1317,10 +1426,10 @@ def optimized_cnn_lstm(
             epochs=epochs,
             steps_per_epoch=len(sequences) // batch_size
         )
-        
+
         # Create loss function
         criterion = nn.MSELoss()
-        
+
         # Create trainer
         trainer = create_optimized_trainer(
             model=model,
@@ -1328,22 +1437,22 @@ def optimized_cnn_lstm(
             enable_checkpointing=enable_checkpointing,
             memory_efficient=memory_efficient
         )
-        
+
         # Create data loaders
         from torch.utils.data import DataLoader, TensorDataset
         dataset = TensorDataset(
             torch.FloatTensor(sequences),
             torch.FloatTensor(targets)
         )
-        
+
         # Split data
         train_size = int(0.8 * len(dataset))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
-        
+
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-        
+
         # Train model
         console.print(f"[green]Starting optimized training for {epochs} epochs...[/green]")
         results = trainer.train(
@@ -1356,11 +1465,11 @@ def optimized_cnn_lstm(
             early_stopping_patience=early_stopping_patience,
             save_path=str(output_dir / "best_model.pth")
         )
-        
-        console.print(f"[green]✅ Optimized training completed![/green]")
+
+        console.print("[green]✅ Optimized training completed![/green]")
         console.print(f"[blue]Best validation loss: {results['best_val_loss']:.6f}[/blue]")
         console.print(f"[blue]Training history: {results['training_history']}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error in optimized training: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1369,27 +1478,27 @@ def optimized_cnn_lstm(
 @advanced_train_app.command()
 def hyperparameter_optimization(
     data_path: Path = typer.Argument(..., help="Path to training data"),
-    output_dir: Path = typer.Option(DEFAULT_OUTPUT_DIR / "hyperopt", "--output", "-o", help="Output directory"),
-    n_trials: int = typer.Option(100, "--n-trials", help="Number of optimization trials"),
-    study_name: str = typer.Option("cnn_lstm_optimization", "--study-name", help="Optuna study name"),
-    storage: str = typer.Option(None, "--storage", help="Optuna storage URL"),
+    output_dir: Path = typer.Option(DEFAULT_HYPEROPT_OUTPUT_DIR, "--output", "-o", help="Output directory"),
+    n_trials: int = typer.Option(DEFAULT_N_TRIALS_100, "--n-trials", help="Number of optimization trials"),
+    study_name: str = typer.Option(DEFAULT_STUDY_NAME, "--study-name", help="Optuna study name"),
+    storage: str = typer.Option(DEFAULT_STORAGE, "--storage", help="Optuna storage URL"),
 ) -> None:
     """Run hyperparameter optimization for CNN+LSTM model."""
     try:
+        import numpy as np
         import optuna
+        import torch
+        from torch import nn, optim
+
         from .training.optimized_trainer import create_optimized_trainer
         from .training.train_cnn_lstm_enhanced import create_cnn_lstm_model
-        import torch
-        import torch.nn as nn
-        import torch.optim as optim
-        import numpy as np
-        
+
         # Load data
         console.print(f"[green]Loading training data from {data_path}...[/green]")
         data = np.load(data_path)
-        sequences = data['sequences']
-        targets = data['targets']
-        
+        sequences = data["sequences"]
+        targets = data["targets"]
+
         def objective(trial):
             # Suggest hyperparameters
             lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
@@ -1397,7 +1506,7 @@ def hyperparameter_optimization(
             hidden_size = trial.suggest_categorical("hidden_size", [64, 128, 256, 512])
             num_layers = trial.suggest_int("num_layers", 1, 4)
             dropout = trial.suggest_float("dropout", 0.1, 0.5)
-            
+
             # Create model
             model = create_cnn_lstm_model(
                 input_shape=sequences.shape[1:],
@@ -1406,29 +1515,29 @@ def hyperparameter_optimization(
                 num_layers=num_layers,
                 dropout=dropout
             )
-            
+
             # Create optimizer and criterion
             optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
             criterion = nn.MSELoss()
-            
+
             # Create trainer
             trainer = create_optimized_trainer(model=model, enable_amp=True)
-            
+
             # Create data loaders
             from torch.utils.data import DataLoader, TensorDataset
             dataset = TensorDataset(
                 torch.FloatTensor(sequences),
                 torch.FloatTensor(targets)
             )
-            
+
             # Split data
             train_size = int(0.8 * len(dataset))
             val_size = len(dataset) - train_size
             train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
-            
+
             train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-            
+
             # Train for a few epochs
             results = trainer.train(
                 train_loader=train_loader,
@@ -1438,38 +1547,38 @@ def hyperparameter_optimization(
                 epochs=10,  # Short training for optimization
                 early_stopping_patience=5
             )
-            
-            return results['best_val_loss']
-        
+
+            return results["best_val_loss"]
+
         # Create study
         study = optuna.create_study(
             direction="minimize",
             study_name=study_name,
             storage=storage
         )
-        
+
         # Run optimization
         console.print(f"[green]Starting hyperparameter optimization with {n_trials} trials...[/green]")
         study.optimize(objective, n_trials=n_trials)
-        
+
         # Save results
         import json
         best_params = study.best_params
         best_value = study.best_value
-        
+
         results = {
             "best_params": best_params,
             "best_value": best_value,
             "n_trials": n_trials
         }
-        
+
         with open(output_dir / "optimization_results.json", "w") as f:
             json.dump(results, f, indent=2)
-        
-        console.print(f"[green]✅ Hyperparameter optimization completed![/green]")
+
+        console.print("[green]✅ Hyperparameter optimization completed![/green]")
         console.print(f"[blue]Best validation loss: {best_value:.6f}[/blue]")
         console.print(f"[blue]Best parameters: {best_params}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error in hyperparameter optimization: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1478,25 +1587,26 @@ def hyperparameter_optimization(
 @advanced_train_app.command()
 def data_augmentation_test(
     input_path: Path = typer.Argument(..., help="Path to input data"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "augmented" / "augmented_data.npz", "--output", "-o", help="Output path"),
-    mixup_alpha: float = typer.Option(0.2, "--mixup", help="MixUp augmentation alpha"),
-    cutmix_prob: float = typer.Option(0.3, "--cutmix", help="CutMix augmentation probability"),
-    noise_factor: float = typer.Option(0.01, "--noise", help="Noise factor"),
-    sequence_shift: bool = typer.Option(True, "--sequence-shift/--no-sequence-shift", help="Enable sequence shifting"),
-    n_augmented_samples: int = typer.Option(1000, "--n-samples", help="Number of augmented samples to generate"),
+    output_path: Path = typer.Option(DEFAULT_AUGMENTED_OUTPUT_PATH, "--output", "-o", help="Output path"),
+    mixup_alpha: float = typer.Option(DEFAULT_MIXUP_ALPHA, "--mixup", help="MixUp augmentation alpha"),
+    cutmix_prob: float = typer.Option(DEFAULT_CUTMIX_PROB, "--cutmix", help="CutMix augmentation probability"),
+    noise_factor: float = typer.Option(DEFAULT_NOISE_FACTOR, "--noise", help="Noise factor"),
+    sequence_shift: bool = typer.Option(DEFAULT_SEQUENCE_SHIFT, "--sequence-shift/--no-sequence-shift", help="Enable sequence shifting"),
+    n_augmented_samples: int = typer.Option(DEFAULT_N_AUGMENTED_SAMPLES, "--n-samples", help="Number of augmented samples to generate"),
 ) -> None:
     """Test and apply data augmentation techniques."""
     try:
-        from .training.optimized_trainer import AdvancedDataAugmentation
-        import torch
         import numpy as np
-        
+        import torch
+
+        from .training.optimized_trainer import AdvancedDataAugmentation
+
         # Load data
         console.print(f"[green]Loading data from {input_path}...[/green]")
         data = np.load(input_path)
-        sequences = data['sequences']
-        targets = data['targets']
-        
+        sequences = data["sequences"]
+        targets = data["targets"]
+
         # Create augmentation
         augmentation = AdvancedDataAugmentation(
             mixup_alpha=mixup_alpha,
@@ -1504,40 +1614,40 @@ def data_augmentation_test(
             noise_factor=noise_factor,
             sequence_shift=sequence_shift
         )
-        
+
         # Convert to tensors
         data_tensor = torch.FloatTensor(sequences)
         target_tensor = torch.FloatTensor(targets)
-        
+
         # Generate augmented samples
         console.print(f"[green]Generating {n_augmented_samples} augmented samples...[/green]")
-        
+
         augmented_sequences = []
         augmented_targets = []
-        
+
         for i in range(n_augmented_samples):
             # Randomly select a sample
             idx = np.random.randint(0, len(data_tensor))
             sample_data = data_tensor[idx:idx+1]
             sample_target = target_tensor[idx:idx+1]
-            
+
             # Apply augmentation
             aug_data, aug_target = augmentation.augment_batch(sample_data, sample_target)
-            
+
             augmented_sequences.append(aug_data.numpy())
             augmented_targets.append(aug_target.numpy())
-        
+
         # Combine augmented data
         aug_sequences = np.concatenate(augmented_sequences, axis=0)
         aug_targets = np.concatenate(augmented_targets, axis=0)
-        
+
         # Save augmented data
         np.savez(output_path, sequences=aug_sequences, targets=aug_targets)
-        
-        console.print(f"[green]✅ Data augmentation completed![/green]")
+
+        console.print("[green]✅ Data augmentation completed![/green]")
         console.print(f"[blue]Augmented sequences shape: {aug_sequences.shape}[/blue]")
         console.print(f"[blue]Augmented targets shape: {aug_targets.shape}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error in data augmentation: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1547,75 +1657,77 @@ def data_augmentation_test(
 @nlp_app.command()
 def analyze_news(
     input_path: Path = typer.Argument(..., help="Path to news articles CSV file"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "nlp" / "news_analysis.csv", "--output", "-o", help="Output path"),
-    min_relevance: float = typer.Option(0.5, "--min-relevance", help="Minimum relevance score"),
-    min_impact: float = typer.Option(0.7, "--min-impact", help="Minimum market impact score"),
+    output_path: Path = typer.Option(DEFAULT_NLP_NEWS_OUTPUT_PATH, "--output", "-o", help="Output path"),
+    min_relevance: float = typer.Option(DEFAULT_MIN_RELEVANCE, "--min-relevance", help="Minimum relevance score"),
+    min_impact: float = typer.Option(DEFAULT_MIN_IMPACT, "--min-impact", help="Minimum market impact score"),
 ) -> None:
     """Analyze news articles for sentiment and market impact."""
     try:
-        from .nlp.news_analyzer import NewsAnalyzer, NewsArticle
         from datetime import datetime
+
         import pandas as pd
-        
+
+        from .nlp.news_analyzer import NewsAnalyzer, NewsArticle
+
         # Load news data
         console.print(f"[green]Loading news data from {input_path}...[/green]")
         df = pd.read_csv(input_path)
-        
+
         # Create news analyzer
         analyzer = NewsAnalyzer()
-        
+
         # Convert to NewsArticle objects
         articles = []
         for _, row in df.iterrows():
             article = NewsArticle(
-                title=row.get('title', ''),
-                content=row.get('content', ''),
-                source=row.get('source', 'unknown'),
-                published_at=datetime.fromisoformat(row.get('published_at', datetime.now().isoformat())),
-                url=row.get('url'),
-                author=row.get('author'),
-                category=row.get('category')
+                title=row.get("title", ""),
+                content=row.get("content", ""),
+                source=row.get("source", "unknown"),
+                published_at=datetime.fromisoformat(row.get("published_at", datetime.now().isoformat())),
+                url=row.get("url"),
+                author=row.get("author"),
+                category=row.get("category")
             )
             articles.append(article)
-        
+
         # Analyze articles
         console.print(f"[green]Analyzing {len(articles)} news articles...[/green]")
         analyses = analyzer.analyze_batch(articles)
-        
+
         # Filter by relevance and impact
         relevant_analyses = analyzer.filter_relevant_articles(analyses, min_relevance=min_relevance)
         high_impact_analyses = analyzer.get_high_impact_articles(analyses, min_impact=min_impact)
-        
+
         # Get market sentiment
         market_sentiment = analyzer.get_market_sentiment(analyses)
-        
+
         # Convert to DataFrame
         results = []
         for analysis in analyses:
             results.append({
-                'title': analysis.article.title,
-                'source': analysis.article.source,
-                'published_at': analysis.article.published_at.isoformat(),
-                'sentiment_score': analysis.sentiment.sentiment_score,
-                'sentiment_label': analysis.sentiment.sentiment_label,
-                'market_impact': analysis.market_impact,
-                'relevance_score': analysis.relevance_score,
-                'entities': ', '.join(analysis.entities),
-                'is_relevant': analysis.relevance_score >= min_relevance,
-                'is_high_impact': analysis.market_impact >= min_impact
+                "title": analysis.article.title,
+                "source": analysis.article.source,
+                "published_at": analysis.article.published_at.isoformat(),
+                "sentiment_score": analysis.sentiment.sentiment_score,
+                "sentiment_label": analysis.sentiment.sentiment_label,
+                "market_impact": analysis.market_impact,
+                "relevance_score": analysis.relevance_score,
+                "entities": ", ".join(analysis.entities),
+                "is_relevant": analysis.relevance_score >= min_relevance,
+                "is_high_impact": analysis.market_impact >= min_impact
             })
-        
+
         results_df = pd.DataFrame(results)
-        
+
         # Save results
         results_df.to_csv(output_path, index=False)
-        
-        console.print(f"[green]✅ News analysis completed![/green]")
+
+        console.print("[green]✅ News analysis completed![/green]")
         console.print(f"[blue]Total articles analyzed: {len(analyses)}[/blue]")
         console.print(f"[blue]Relevant articles: {len(relevant_analyses)}[/blue]")
         console.print(f"[blue]High impact articles: {len(high_impact_analyses)}[/blue]")
         console.print(f"[blue]Market sentiment: {market_sentiment}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error analyzing news: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1624,54 +1736,55 @@ def analyze_news(
 @nlp_app.command()
 def sentiment_analysis(
     input_path: Path = typer.Argument(..., help="Path to text data CSV file"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "nlp" / "sentiment_analysis.csv", "--output", "-o", help="Output path"),
-    text_column: str = typer.Option("text", "--text-column", help="Column name containing text to analyze"),
-    batch_size: int = typer.Option(100, "--batch-size", help="Batch size for processing"),
+    output_path: Path = typer.Option(DEFAULT_NLP_SENTIMENT_OUTPUT_PATH, "--output", "-o", help="Output path"),
+    text_column: str = typer.Option(DEFAULT_TEXT_COLUMN, "--text-column", help="Column name containing text to analyze"),
+    batch_size: int = typer.Option(DEFAULT_BATCH_SIZE_100, "--batch-size", help="Batch size for processing"),
 ) -> None:
     """Perform sentiment analysis on text data."""
     try:
-        from .nlp.sentiment_analyzer import SentimentAnalyzer
         import pandas as pd
-        
+
+        from .nlp.sentiment_analyzer import SentimentAnalyzer
+
         # Load text data
         console.print(f"[green]Loading text data from {input_path}...[/green]")
         df = pd.read_csv(input_path)
-        
+
         if text_column not in df.columns:
             raise ValueError(f"Column '{text_column}' not found in data")
-        
+
         # Create sentiment analyzer
         analyzer = SentimentAnalyzer()
-        
+
         # Analyze sentiment
         console.print(f"[green]Analyzing sentiment for {len(df)} texts...[/green]")
-        
+
         results = []
         for i in range(0, len(df), batch_size):
             batch = df[text_column].iloc[i:i+batch_size]
             batch_results = [analyzer.analyze_sentiment(text) for text in batch]
             results.extend(batch_results)
-            
+
             if (i + batch_size) % 1000 == 0:
                 console.print(f"[blue]Processed {i + batch_size} texts...[/blue]")
-        
+
         # Add sentiment results to DataFrame
-        df['sentiment_score'] = [r.sentiment_score for r in results]
-        df['sentiment_label'] = [r.sentiment_label for r in results]
-        df['sentiment_confidence'] = [r.confidence for r in results]
-        
+        df["sentiment_score"] = [r.sentiment_score for r in results]
+        df["sentiment_label"] = [r.sentiment_label for r in results]
+        df["sentiment_confidence"] = [r.confidence for r in results]
+
         # Save results
         df.to_csv(output_path, index=False)
-        
+
         # Calculate summary statistics
-        sentiment_counts = df['sentiment_label'].value_counts()
-        avg_confidence = df['sentiment_confidence'].mean()
-        
-        console.print(f"[green]✅ Sentiment analysis completed![/green]")
+        sentiment_counts = df["sentiment_label"].value_counts()
+        avg_confidence = df["sentiment_confidence"].mean()
+
+        console.print("[green]✅ Sentiment analysis completed![/green]")
         console.print(f"[blue]Total texts analyzed: {len(df)}[/blue]")
         console.print(f"[blue]Sentiment distribution: {sentiment_counts.to_dict()}[/blue]")
         console.print(f"[blue]Average confidence: {avg_confidence:.3f}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error in sentiment analysis: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1680,31 +1793,32 @@ def sentiment_analysis(
 @nlp_app.command()
 def process_text(
     input_path: Path = typer.Argument(..., help="Path to text data CSV file"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "nlp" / "processed_text.csv", "--output", "-o", help="Output path"),
-    text_column: str = typer.Option("text", "--text-column", help="Column name containing text to process"),
-    remove_stopwords: bool = typer.Option(True, "--remove-stopwords/--keep-stopwords", help="Remove stopwords"),
-    lemmatize: bool = typer.Option(True, "--lemmatize/--no-lemmatize", help="Apply lemmatization"),
-    remove_punctuation: bool = typer.Option(True, "--remove-punctuation/--keep-punctuation", help="Remove punctuation"),
-    lowercase: bool = typer.Option(True, "--lowercase/--no-lowercase", help="Convert to lowercase"),
+    output_path: Path = typer.Option(DEFAULT_NLP_PROCESSED_OUTPUT_PATH, "--output", "-o", help="Output path"),
+    text_column: str = typer.Option(DEFAULT_TEXT_COLUMN, "--text-column", help="Column name containing text to process"),
+    remove_stopwords: bool = typer.Option(DEFAULT_REMOVE_STOPWORDS, "--remove-stopwords/--keep-stopwords", help="Remove stopwords"),
+    lemmatize: bool = typer.Option(DEFAULT_LEMMATIZE, "--lemmatize/--no-lemmatize", help="Apply lemmatization"),
+    remove_punctuation: bool = typer.Option(DEFAULT_REMOVE_PUNCTUATION, "--remove-punctuation/--keep-punctuation", help="Remove punctuation"),
+    lowercase: bool = typer.Option(DEFAULT_LOWERCASE, "--lowercase/--no-lowercase", help="Convert to lowercase"),
 ) -> None:
     """Process and clean text data."""
     try:
-        from .nlp.text_processor import TextProcessor
         import pandas as pd
-        
+
+        from .nlp.text_processor import TextProcessor
+
         # Load text data
         console.print(f"[green]Loading text data from {input_path}...[/green]")
         df = pd.read_csv(input_path)
-        
+
         if text_column not in df.columns:
             raise ValueError(f"Column '{text_column}' not found in data")
-        
+
         # Create text processor
         processor = TextProcessor()
-        
+
         # Process text
         console.print(f"[green]Processing {len(df)} texts...[/green]")
-        
+
         processed_texts = []
         for text in df[text_column]:
             processed = processor.process_text(
@@ -1715,25 +1829,25 @@ def process_text(
                 lowercase=lowercase
             )
             processed_texts.append(processed)
-        
+
         # Add processed text to DataFrame
-        df['processed_text'] = [pt.processed_text for pt in processed_texts]
-        df['tokens'] = [pt.tokens for pt in processed_texts]
-        df['token_count'] = [len(pt.tokens) for pt in processed_texts]
-        df['entities'] = [pt.entities for pt in processed_texts]
-        
+        df["processed_text"] = [pt.processed_text for pt in processed_texts]
+        df["tokens"] = [pt.tokens for pt in processed_texts]
+        df["token_count"] = [len(pt.tokens) for pt in processed_texts]
+        df["entities"] = [pt.entities for pt in processed_texts]
+
         # Save results
         df.to_csv(output_path, index=False)
-        
+
         # Calculate summary statistics
-        avg_tokens = df['token_count'].mean()
-        total_entities = sum(len(entities) for entities in df['entities'])
-        
-        console.print(f"[green]✅ Text processing completed![/green]")
+        avg_tokens = df["token_count"].mean()
+        total_entities = sum(len(entities) for entities in df["entities"])
+
+        console.print("[green]✅ Text processing completed![/green]")
         console.print(f"[blue]Total texts processed: {len(df)}[/blue]")
         console.print(f"[blue]Average tokens per text: {avg_tokens:.1f}[/blue]")
         console.print(f"[blue]Total entities found: {total_entities}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error in text processing: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1742,67 +1856,68 @@ def process_text(
 @nlp_app.command()
 def extract_entities(
     input_path: Path = typer.Argument(..., help="Path to text data CSV file"),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "nlp" / "entities.csv", "--output", "-o", help="Output path"),
-    text_column: str = typer.Option("text", "--text-column", help="Column name containing text to analyze"),
-    entity_types: str = typer.Option("PERSON,ORG,GPE", "--entity-types", help="Comma-separated list of entity types to extract"),
+    output_path: Path = typer.Option(DEFAULT_NLP_ENTITIES_OUTPUT_PATH, "--output", "-o", help="Output path"),
+    text_column: str = typer.Option(DEFAULT_TEXT_COLUMN, "--text-column", help="Column name containing text to analyze"),
+    entity_types: str = typer.Option(DEFAULT_ENTITY_TYPES, "--entity-types", help="Comma-separated list of entity types to extract"),
 ) -> None:
     """Extract named entities from text data."""
     try:
-        from .nlp.text_processor import TextProcessor
         import pandas as pd
-        
+
+        from .nlp.text_processor import TextProcessor
+
         # Load text data
         console.print(f"[green]Loading text data from {input_path}...[/green]")
         df = pd.read_csv(input_path)
-        
+
         if text_column not in df.columns:
             raise ValueError(f"Column '{text_column}' not found in data")
-        
+
         # Parse entity types
         entity_types_list = [et.strip() for et in entity_types.split(",")]
-        
+
         # Create text processor
         processor = TextProcessor()
-        
+
         # Extract entities
         console.print(f"[green]Extracting entities from {len(df)} texts...[/green]")
-        
+
         all_entities = []
         for text in df[text_column]:
             entities = processor.extract_entities(text, entity_types=entity_types_list)
             all_entities.append(entities)
-        
+
         # Add entities to DataFrame
-        df['entities'] = all_entities
-        df['entity_count'] = [len(entities) for entities in all_entities]
-        
+        df["entities"] = all_entities
+        df["entity_count"] = [len(entities) for entities in all_entities]
+
         # Create entity summary
         entity_summary = {}
         for entities in all_entities:
             for entity in entities:
-                entity_type = entity.get('type', 'UNKNOWN')
-                entity_text = entity.get('text', '')
+                entity_type = entity.get("type", "UNKNOWN")
+                entity_text = entity.get("text", "")
                 if entity_type not in entity_summary:
                     entity_summary[entity_type] = {}
                 if entity_text not in entity_summary[entity_type]:
                     entity_summary[entity_type][entity_text] = 0
                 entity_summary[entity_type][entity_text] += 1
-        
+
         # Save results
         df.to_csv(output_path, index=False)
-        
+
         # Save entity summary
         summary_path = output_path.parent / "entity_summary.json"
         import json
-        with open(summary_path, 'w') as f:
+        with open(summary_path, "w") as f:
             json.dump(entity_summary, f, indent=2)
-        
-        console.print(f"[green]✅ Entity extraction completed![/green]")
+
+        console.print("[green]✅ Entity extraction completed![/green]")
         console.print(f"[blue]Total texts processed: {len(df)}[/blue]")
         console.print(f"[blue]Total entities found: {sum(df['entity_count'])}[/blue]")
         console.print(f"[blue]Entity types found: {list(entity_summary.keys())}[/blue]")
         console.print(f"[blue]Entity summary saved to: {summary_path}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error in entity extraction: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1811,25 +1926,26 @@ def extract_entities(
 # Monitoring Commands
 @monitor_app.command()
 def dashboard(
-    port: int = typer.Option(8080, "--port", help="Dashboard port"),
-    host: str = typer.Option("localhost", "--host", help="Dashboard host"),
-    refresh_interval: int = typer.Option(5, "--refresh", help="Refresh interval in seconds"),
-    metrics_collector: str = typer.Option(None, "--metrics", help="Path to metrics collector config"),
+    port: int = typer.Option(DEFAULT_DASHBOARD_PORT, "--port", help="Dashboard port"),
+    host: str = typer.Option(DEFAULT_DASHBOARD_HOST, "--host", help="Dashboard host"),
+    refresh_interval: int = typer.Option(DEFAULT_REFRESH_INTERVAL, "--refresh", help="Refresh interval in seconds"),
+    metrics_collector: str = typer.Option(DEFAULT_METRICS_COLLECTOR, "--metrics", help="Path to metrics collector config"),
 ) -> None:
     """Start the monitoring dashboard."""
     try:
-        from .monitoring.dashboard import Dashboard
-        from .monitoring.alert_manager import AlertManager
-        import time
         import threading
-        
+        import time
+
+        from .monitoring.alert_manager import AlertManager
+        from .monitoring.dashboard import Dashboard
+
         # Create dashboard components
         alert_manager = AlertManager()
         dashboard = Dashboard(alert_manager=alert_manager)
-        
+
         console.print(f"[green]Starting monitoring dashboard on {host}:{port}...[/green]")
         console.print(f"[blue]Refresh interval: {refresh_interval} seconds[/blue]")
-        
+
         # Start dashboard in a separate thread
         def run_dashboard():
             try:
@@ -1839,29 +1955,29 @@ def dashboard(
                     overview = dashboard.get_system_overview()
                     trading_metrics = dashboard.get_trading_metrics()
                     risk_metrics = dashboard.get_risk_metrics()
-                    
+
                     console.print(f"[blue]System Status: {overview['system_status']}[/blue]")
                     console.print(f"[blue]P&L: ${trading_metrics['pnl']:.2f}[/blue]")
                     console.print(f"[blue]Risk (VaR): ${risk_metrics['var_95']:.2f}[/blue]")
-                    
+
                     time.sleep(refresh_interval)
-                    
+
             except KeyboardInterrupt:
                 console.print("[yellow]Dashboard stopped by user[/yellow]")
-        
+
         # Start dashboard thread
         dashboard_thread = threading.Thread(target=run_dashboard, daemon=True)
         dashboard_thread.start()
-        
+
         console.print("[green]✅ Dashboard started! Press Ctrl+C to stop.[/green]")
-        
+
         # Keep main thread alive
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
             console.print("[yellow]Stopping dashboard...[/yellow]")
-        
+
     except Exception as e:
         console.print(f"[red]Error starting dashboard: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1869,53 +1985,55 @@ def dashboard(
 
 @monitor_app.command()
 def system_health(
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "monitoring" / "system_health.json", "--output", "-o", help="Output path"),
-    detailed: bool = typer.Option(False, "--detailed/--summary", help="Include detailed metrics"),
+    output_path: Path = typer.Option(DEFAULT_MONITORING_SYSTEM_HEALTH_OUTPUT, "--output", "-o", help="Output path"),
+    detailed: bool = typer.Option(DEFAULT_DETAILED_FALSE_2, "--detailed/--summary", help="Include detailed metrics"),
 ) -> None:
     """Get system health metrics."""
     try:
-        from .monitoring.dashboard import Dashboard
         import json
+
         import psutil
-        
+
+        from .monitoring.dashboard import Dashboard
+
         # Create dashboard
         dashboard = Dashboard()
-        
+
         # Get system health
         health_metrics = dashboard.get_system_health()
-        
+
         # Add additional system metrics if detailed
         if detailed:
             # CPU info
-            health_metrics['cpu_count'] = psutil.cpu_count()
-            health_metrics['cpu_freq'] = psutil.cpu_freq()._asdict() if psutil.cpu_freq() else None
-            
+            health_metrics["cpu_count"] = psutil.cpu_count()
+            health_metrics["cpu_freq"] = psutil.cpu_freq()._asdict() if psutil.cpu_freq() else None
+
             # Memory info
             memory = psutil.virtual_memory()
-            health_metrics['memory_total'] = memory.total
-            health_metrics['memory_available'] = memory.available
-            health_metrics['memory_percent'] = memory.percent
-            
+            health_metrics["memory_total"] = memory.total
+            health_metrics["memory_available"] = memory.available
+            health_metrics["memory_percent"] = memory.percent
+
             # Disk info
-            disk = psutil.disk_usage('/')
-            health_metrics['disk_total'] = disk.total
-            health_metrics['disk_free'] = disk.free
-            health_metrics['disk_percent'] = disk.percent
-            
+            disk = psutil.disk_usage("/")
+            health_metrics["disk_total"] = disk.total
+            health_metrics["disk_free"] = disk.free
+            health_metrics["disk_percent"] = disk.percent
+
             # Network info
             network = psutil.net_io_counters()
-            health_metrics['network_bytes_sent'] = network.bytes_sent
-            health_metrics['network_bytes_recv'] = network.bytes_recv
-        
+            health_metrics["network_bytes_sent"] = network.bytes_sent
+            health_metrics["network_bytes_recv"] = network.bytes_recv
+
         # Save metrics
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(health_metrics, f, indent=2)
-        
+
         console.print(f"[green]✅ System health metrics saved to {output_path}[/green]")
         console.print(f"[blue]CPU Usage: {health_metrics.get('cpu_usage', 0):.1f}%[/blue]")
         console.print(f"[blue]Memory Usage: {health_metrics.get('memory_usage', 0):.1f}%[/blue]")
         console.print(f"[blue]Disk Usage: {health_metrics.get('disk_usage', 0):.1f}%[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error getting system health: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1923,31 +2041,32 @@ def system_health(
 
 @monitor_app.command()
 def trading_metrics(
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "monitoring" / "trading_metrics.json", "--output", "-o", help="Output path"),
-    session_id: str = typer.Option(None, "--session-id", help="Trading session ID"),
+    output_path: Path = typer.Option(DEFAULT_MONITORING_TRADING_METRICS_OUTPUT, "--output", "-o", help="Output path"),
+    session_id: str = typer.Option(DEFAULT_SESSION_ID_NONE_2, "--session-id", help="Trading session ID"),
 ) -> None:
     """Get trading performance metrics."""
     try:
-        from .monitoring.dashboard import Dashboard
         import json
-        
+
+        from .monitoring.dashboard import Dashboard
+
         # Create dashboard
         dashboard = Dashboard()
-        
+
         # Get trading metrics
         trading_metrics = dashboard.get_trading_metrics()
-        
+
         # Save metrics
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(trading_metrics, f, indent=2)
-        
+
         console.print(f"[green]✅ Trading metrics saved to {output_path}[/green]")
         console.print(f"[blue]P&L: ${trading_metrics.get('pnl', 0):.2f}[/blue]")
         console.print(f"[blue]Total Return: {trading_metrics.get('total_return', 0):.2%}[/blue]")
         console.print(f"[blue]Sharpe Ratio: {trading_metrics.get('sharpe_ratio', 0):.3f}[/blue]")
         console.print(f"[blue]Win Rate: {trading_metrics.get('win_rate', 0):.1%}[/blue]")
         console.print(f"[blue]Total Trades: {trading_metrics.get('total_trades', 0)}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error getting trading metrics: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1955,34 +2074,35 @@ def trading_metrics(
 
 @monitor_app.command()
 def risk_metrics(
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "monitoring" / "risk_metrics.json", "--output", "-o", help="Output path"),
-    confidence_level: float = typer.Option(0.95, "--confidence", help="Confidence level for VaR/CVaR"),
+    output_path: Path = typer.Option(DEFAULT_MONITORING_RISK_METRICS_OUTPUT, "--output", "-o", help="Output path"),
+    confidence_level: float = typer.Option(DEFAULT_CONFIDENCE_LEVEL, "--confidence", help="Confidence level for VaR/CVaR"),
 ) -> None:
     """Get risk management metrics."""
     try:
-        from .monitoring.dashboard import Dashboard
         import json
-        
+
+        from .monitoring.dashboard import Dashboard
+
         # Create dashboard
         dashboard = Dashboard()
-        
+
         # Get risk metrics
         risk_metrics = dashboard.get_risk_metrics()
-        
+
         # Add confidence level
-        risk_metrics['confidence_level'] = confidence_level
-        
+        risk_metrics["confidence_level"] = confidence_level
+
         # Save metrics
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(risk_metrics, f, indent=2)
-        
+
         console.print(f"[green]✅ Risk metrics saved to {output_path}[/green]")
         console.print(f"[blue]VaR ({confidence_level:.0%}): ${risk_metrics.get('var_95', 0):.2f}[/blue]")
         console.print(f"[blue]CVaR ({confidence_level:.0%}): ${risk_metrics.get('cvar_95', 0):.2f}[/blue]")
         console.print(f"[blue]Current Exposure: ${risk_metrics.get('current_exposure', 0):.2f}[/blue]")
         console.print(f"[blue]Volatility: {risk_metrics.get('volatility', 0):.2%}[/blue]")
         console.print(f"[blue]Beta: {risk_metrics.get('beta', 0):.3f}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error getting risk metrics: {e}[/red]")
         raise typer.Exit(1) from e
@@ -1990,40 +2110,41 @@ def risk_metrics(
 
 @monitor_app.command()
 def alerts(
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_DIR / "monitoring" / "alerts.json", "--output", "-o", help="Output path"),
-    limit: int = typer.Option(10, "--limit", help="Maximum number of alerts to return"),
-    active_only: bool = typer.Option(True, "--active-only/--all", help="Show only active alerts"),
+    output_path: Path = typer.Option(DEFAULT_MONITORING_ALERTS_OUTPUT, "--output", "-o", help="Output path"),
+    limit: int = typer.Option(DEFAULT_LIMIT, "--limit", help="Maximum number of alerts to return"),
+    active_only: bool = typer.Option(DEFAULT_ACTIVE_ONLY, "--active-only/--all", help="Show only active alerts"),
 ) -> None:
     """Get system alerts."""
     try:
-        from .monitoring.dashboard import Dashboard
-        from .monitoring.alert_manager import AlertManager
         import json
-        
+
+        from .monitoring.alert_manager import AlertManager
+        from .monitoring.dashboard import Dashboard
+
         # Create components
         alert_manager = AlertManager()
         dashboard = Dashboard(alert_manager=alert_manager)
-        
+
         # Get alerts
         alerts = dashboard.get_recent_alerts(limit=limit)
-        
+
         # Filter active alerts if requested
         if active_only:
-            alerts = [alert for alert in alerts if alert.get('status') == 'active']
-        
+            alerts = [alert for alert in alerts if alert.get("status") == "active"]
+
         # Save alerts
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(alerts, f, indent=2)
-        
+
         console.print(f"[green]✅ Alerts saved to {output_path}[/green]")
         console.print(f"[blue]Total alerts: {len(alerts)}[/blue]")
-        
+
         # Show alert summary
         if alerts:
             for alert in alerts[:5]:  # Show first 5 alerts
-                status_color = "red" if alert.get('severity') == 'high' else "yellow" if alert.get('severity') == 'medium' else "blue"
+                status_color = "red" if alert.get("severity") == "high" else "yellow" if alert.get("severity") == "medium" else "blue"
                 console.print(f"[{status_color}]{alert.get('title', 'Unknown')}: {alert.get('message', 'No message')}[/{status_color}]")
-        
+
     except Exception as e:
         console.print(f"[red]Error getting alerts: {e}[/red]")
         raise typer.Exit(1) from e
@@ -2033,17 +2154,17 @@ def alerts(
 def create_alert(
     title: str = typer.Argument(..., help="Alert title"),
     message: str = typer.Argument(..., help="Alert message"),
-    severity: str = typer.Option("medium", "--severity", help="Alert severity (low, medium, high)"),
-    category: str = typer.Option("general", "--category", help="Alert category"),
-    threshold: float = typer.Option(None, "--threshold", help="Threshold value for the alert"),
+    severity: str = typer.Option(DEFAULT_ALERT_SEVERITY, "--severity", help="Alert severity (low, medium, high)"),
+    category: str = typer.Option(DEFAULT_ALERT_CATEGORY, "--category", help="Alert category"),
+    threshold: float = typer.Option(DEFAULT_THRESHOLD, "--threshold", help="Threshold value for the alert"),
 ) -> None:
     """Create a new alert."""
     try:
         from .monitoring.alert_manager import AlertManager
-        
+
         # Create alert manager
         alert_manager = AlertManager()
-        
+
         # Create alert
         alert = alert_manager.create_alert(
             title=title,
@@ -2052,13 +2173,13 @@ def create_alert(
             category=category,
             threshold=threshold
         )
-        
-        console.print(f"[green]✅ Alert created successfully![/green]")
+
+        console.print("[green]✅ Alert created successfully![/green]")
         console.print(f"[blue]Alert ID: {alert.id}[/blue]")
         console.print(f"[blue]Title: {alert.title}[/blue]")
         console.print(f"[blue]Severity: {alert.severity}[/blue]")
         console.print(f"[blue]Category: {alert.category}[/blue]")
-        
+
     except Exception as e:
         console.print(f"[red]Error creating alert: {e}[/red]")
         raise typer.Exit(1) from e
@@ -2066,17 +2187,17 @@ def create_alert(
 
 @monitor_app.command()
 def clear_alerts(
-    category: str = typer.Option(None, "--category", help="Clear alerts by category"),
-    severity: str = typer.Option(None, "--severity", help="Clear alerts by severity"),
-    all_alerts: bool = typer.Option(False, "--all", help="Clear all alerts"),
+    category: str = typer.Option(DEFAULT_CATEGORY_NONE, "--category", help="Clear alerts by category"),
+    severity: str = typer.Option(DEFAULT_SEVERITY_NONE, "--severity", help="Clear alerts by severity"),
+    all_alerts: bool = typer.Option(DEFAULT_ALL_ALERTS, "--all", help="Clear all alerts"),
 ) -> None:
     """Clear system alerts."""
     try:
         from .monitoring.alert_manager import AlertManager
-        
+
         # Create alert manager
         alert_manager = AlertManager()
-        
+
         # Clear alerts based on criteria
         if all_alerts:
             alert_manager.clear_all_alerts()
@@ -2089,7 +2210,7 @@ def clear_alerts(
             console.print(f"[green]✅ Alerts with severity '{severity}' cleared![/green]")
         else:
             console.print("[yellow]Please specify --category, --severity, or --all to clear alerts[/yellow]")
-        
+
     except Exception as e:
         console.print(f"[red]Error clearing alerts: {e}[/red]")
         raise typer.Exit(1) from e
