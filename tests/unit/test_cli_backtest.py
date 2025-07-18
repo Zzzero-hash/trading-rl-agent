@@ -180,7 +180,7 @@ class TestCLIBacktest:
                 commission_rate=0.001,
                 slippage_rate=0.0001,
             )
-        
+
         # Verify exit code is 0 (success)
         assert exc_info.value.exit_code == 0
 
@@ -245,7 +245,7 @@ class TestCLIBacktest:
                 config_file=None,
                 initial_capital=10000.0,
             )
-        
+
         # Verify exit code is 0 (success)
         assert exc_info.value.exit_code == 0
 
@@ -297,7 +297,10 @@ class TestCLIBacktest:
         mock_results.total_transaction_costs = 25.0
 
         mock_evaluator_instance = Mock()
-        mock_evaluator_instance.compare_strategies.return_value = {"momentum": mock_results, "mean_reversion": mock_results}
+        mock_evaluator_instance.compare_strategies.return_value = {
+            "momentum": mock_results,
+            "mean_reversion": mock_results,
+        }
         mock_evaluator.return_value = mock_evaluator_instance
 
         # Test the command - expect typer.Exit(0) on success
@@ -310,7 +313,7 @@ class TestCLIBacktest:
                 config_file=None,
                 output_dir=self.temp_path,
             )
-        
+
         # Verify exit code is 0 (success)
         assert exc_info.value.exit_code == 0
 
@@ -435,7 +438,7 @@ class TestCLIBacktest:
                     commission_rate=None,
                     slippage_rate=None,
                 )
-            
+
             # Verify exit code is 0 (success)
             assert exc_info.value.exit_code == 0
 
@@ -504,7 +507,7 @@ class TestCLIBacktest:
                     commission_rate=0.001,
                     slippage_rate=0.0001,
                 )
-            
+
             # Verify exit code is 0 (success)
             assert exc_info.value.exit_code == 0
 
