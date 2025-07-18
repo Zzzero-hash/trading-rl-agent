@@ -1,0 +1,35 @@
+PERFORMANCE ATTRIBUTION REPORT
+==================================================
+Generated: 2025-07-18 18:51:53
+
+FACTOR ANALYSIS
+--------------------
+total_factor_contribution: 0.0000
+idiosyncratic_contribution: 0.0015
+
+BRINSON ATTRIBUTION
+--------------------
+allocation_effect: -0.0239
+selection_effect: 0.0263
+interaction_effect: -0.0239
+total_attribution: -0.0214
+
+RISK ANALYSIS
+--------------------
+Portfolio Risk Metrics:
+  volatility: 0.0187
+  var_95: -0.0283
+  cvar_95: -0.0351
+  max_drawdown: -0.1811
+  skewness: 0.1969
+  kurtosis: 0.0337
+  sharpe_ratio: 0.0739
+
+Benchmark Risk Metrics:
+  volatility: 0.0175
+  var_95: -0.0271
+  cvar_95: -0.0322
+  max_drawdown: -0.1562
+  skewness: 0.2792
+  kurtosis: 0.1070
+  sharpe_ratio: 0.1010
