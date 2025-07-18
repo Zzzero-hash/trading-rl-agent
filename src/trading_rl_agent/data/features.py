@@ -517,19 +517,17 @@ def detect_hanging_man(df: pd.DataFrame) -> pd.Series:
 
 def detect_inside_bar(df: pd.DataFrame) -> pd.Series:
     """Detect Inside Bar pattern: current bar completely inside previous bar."""
-    inside_bar = (
-        (df["high"] <= df["high"].shift(1))  # Current high <= previous high
-        & (df["low"] >= df["low"].shift(1))  # Current low >= previous low
-    )
+    inside_bar = (df["high"] <= df["high"].shift(1)) & (  # Current high <= previous high
+        df["low"] >= df["low"].shift(1)
+    )  # Current low >= previous low
     return inside_bar.fillna(False).astype(int)
 
 
 def detect_outside_bar(df: pd.DataFrame) -> pd.Series:
     """Detect Outside Bar pattern: current bar completely engulfs previous bar."""
-    outside_bar = (
-        (df["high"] > df["high"].shift(1))  # Current high > previous high
-        & (df["low"] < df["low"].shift(1))  # Current low < previous low
-    )
+    outside_bar = (df["high"] > df["high"].shift(1)) & (  # Current high > previous high
+        df["low"] < df["low"].shift(1)
+    )  # Current low < previous low
     return outside_bar.fillna(False).astype(int)
 
 

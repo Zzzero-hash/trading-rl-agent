@@ -356,11 +356,7 @@ class TestConfigurationValidation:
 
     def test_invalid_configuration_type(self):
         """Test that invalid configuration types raise errors."""
-        config_data = {
-            "data": {
-                "feature_window": "invalid_string"  # Should be int
-            }
-        }
+        config_data = {"data": {"feature_window": "invalid_string"}}  # Should be int
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(config_data, f)

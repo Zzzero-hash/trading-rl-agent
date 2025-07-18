@@ -534,9 +534,9 @@ class TestHyperparameterOptimization:
                 assert param in model_config, f"Missing required parameter: {param}"
 
             # Verify CNN architecture coordination
-            assert len(model_config["cnn_filters"]) == len(model_config["cnn_kernel_sizes"]), (
-                f"CNN architecture mismatch: {len(model_config['cnn_filters'])} filters vs {len(model_config['cnn_kernel_sizes'])} kernels"
-            )
+            assert len(model_config["cnn_filters"]) == len(
+                model_config["cnn_kernel_sizes"]
+            ), f"CNN architecture mismatch: {len(model_config['cnn_filters'])} filters vs {len(model_config['cnn_kernel_sizes'])} kernels"
 
             return 0.1  # Return a dummy loss value
 

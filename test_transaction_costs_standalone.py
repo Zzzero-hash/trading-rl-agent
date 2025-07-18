@@ -52,7 +52,9 @@ class MockNumpy:
         return simple_math_sqrt(x)
 
     @staticmethod
-    def choice(choices: list[Any], size: int | None = None, p: list[float] | None = None) -> Any | list[Any]:  # noqa: ARG004
+    def choice(
+        choices: list[Any], size: int | None = None, p: list[float] | None = None  # noqa: ARG004
+    ) -> Any | list[Any]:
         if size is None:
             return choices[int(simple_random() * len(choices))]
         return [choices[int(simple_random() * len(choices))] for _ in range(size)]

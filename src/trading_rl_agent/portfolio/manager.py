@@ -605,9 +605,9 @@ class PortfolioManager:
             "recommendations": recommendations,
             "total_potential_savings": total_potential_savings,
             "current_total_costs": current_total_costs,
-            "savings_percentage": (total_potential_savings / current_total_costs * 100)
-            if current_total_costs > 0
-            else 0,
+            "savings_percentage": (
+                (total_potential_savings / current_total_costs * 100) if current_total_costs > 0 else 0
+            ),
             "implementation_priority": sorted(
                 recommendations,
                 key=lambda x: {"critical": 4, "high": 3, "medium": 2, "low": 1}.get(x.priority, 0),

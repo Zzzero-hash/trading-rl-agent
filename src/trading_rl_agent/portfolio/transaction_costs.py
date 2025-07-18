@@ -768,15 +768,17 @@ class TransactionCostAnalyzer:
                 "num_trades": len(trades),
                 "total_cost": total_cost,
                 "avg_cost_per_trade": avg_cost,
-                "commission_pct": sum(trade["cost_breakdown"]["commission"] for trade in trades) / total_cost
-                if total_cost > 0
-                else 0,
-                "slippage_pct": sum(trade["cost_breakdown"]["slippage"] for trade in trades) / total_cost
-                if total_cost > 0
-                else 0,
-                "market_impact_pct": sum(trade["cost_breakdown"]["market_impact"] for trade in trades) / total_cost
-                if total_cost > 0
-                else 0,
+                "commission_pct": (
+                    sum(trade["cost_breakdown"]["commission"] for trade in trades) / total_cost if total_cost > 0 else 0
+                ),
+                "slippage_pct": (
+                    sum(trade["cost_breakdown"]["slippage"] for trade in trades) / total_cost if total_cost > 0 else 0
+                ),
+                "market_impact_pct": (
+                    sum(trade["cost_breakdown"]["market_impact"] for trade in trades) / total_cost
+                    if total_cost > 0
+                    else 0
+                ),
             }
 
         return trends
@@ -795,16 +797,16 @@ class TransactionCostAnalyzer:
             "cost_efficiency_ratio": total_costs / total_value if total_value > 0 else 0,
             "avg_cost_per_trade": total_costs / len(self.cost_model.trade_history),
             "cost_percentage": (total_costs / total_value * 100) if total_value > 0 else 0,
-            "commission_efficiency": sum(
-                trade["cost_breakdown"]["commission"] for trade in self.cost_model.trade_history
-            )
-            / total_costs
-            if total_costs > 0
-            else 0,
-            "slippage_efficiency": sum(trade["cost_breakdown"]["slippage"] for trade in self.cost_model.trade_history)
-            / total_costs
-            if total_costs > 0
-            else 0,
+            "commission_efficiency": (
+                sum(trade["cost_breakdown"]["commission"] for trade in self.cost_model.trade_history) / total_costs
+                if total_costs > 0
+                else 0
+            ),
+            "slippage_efficiency": (
+                sum(trade["cost_breakdown"]["slippage"] for trade in self.cost_model.trade_history) / total_costs
+                if total_costs > 0
+                else 0
+            ),
         }
 
     def generate_cost_report(self) -> str:

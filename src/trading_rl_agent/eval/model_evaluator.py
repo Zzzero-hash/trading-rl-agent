@@ -230,12 +230,16 @@ class ModelEvaluator:
             if metric_values:
                 comparison_results[metric] = {
                     "values": metric_values,
-                    "best_model": min(metric_values, key=lambda k: metric_values[k])
-                    if metric in ["mae", "rmse", "max_drawdown"]
-                    else max(metric_values, key=lambda k: metric_values[k]),
-                    "worst_model": max(metric_values, key=lambda k: metric_values[k])
-                    if metric in ["mae", "rmse", "max_drawdown"]
-                    else min(metric_values, key=lambda k: metric_values[k]),
+                    "best_model": (
+                        min(metric_values, key=lambda k: metric_values[k])
+                        if metric in ["mae", "rmse", "max_drawdown"]
+                        else max(metric_values, key=lambda k: metric_values[k])
+                    ),
+                    "worst_model": (
+                        max(metric_values, key=lambda k: metric_values[k])
+                        if metric in ["mae", "rmse", "max_drawdown"]
+                        else min(metric_values, key=lambda k: metric_values[k])
+                    ),
                     "mean": float(np.mean(list(metric_values.values()))),
                     "std": float(np.std(list(metric_values.values()))),
                 }
