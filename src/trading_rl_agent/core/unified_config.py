@@ -29,7 +29,8 @@ class DataConfig(BaseModel):
 
     # Data collection
     symbols: list[str] = Field(
-        default=["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"], description="Trading symbols to collect data for"
+        default=["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"],
+        description="Trading symbols to collect data for",
     )
     start_date: str = Field(default="2023-01-01", description="Start date for data collection")
     end_date: str = Field(default="2024-01-01", description="End date for data collection")
@@ -138,7 +139,8 @@ class BacktestConfig(BaseModel):
 
     # Evaluation metrics
     metrics: list[str] = Field(
-        default=["total_return", "sharpe_ratio", "max_drawdown", "win_rate"], description="Backtest metrics"
+        default=["total_return", "sharpe_ratio", "max_drawdown", "win_rate"],
+        description="Backtest metrics",
     )
 
     # Output settings
@@ -358,7 +360,7 @@ class UnifiedConfig(BaseSettings):
                 "alphavantage_api_key",
                 "newsapi_key",
                 "social_api_key",
-            }
+            },
         )
 
         with open(yaml_path, "w") as f:

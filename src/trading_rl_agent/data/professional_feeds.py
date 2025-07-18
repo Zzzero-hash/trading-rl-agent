@@ -156,7 +156,7 @@ class ProfessionalDataProvider:
 
         if not api_key or not secret:
             raise ValueError(
-                f"{exchange_name.upper()} API credentials required. Set {exchange_name.upper()}_API_KEY and _SECRET"
+                f"{exchange_name.upper()} API credentials required. Set {exchange_name.upper()}_API_KEY and _SECRET",
             )
 
         exchange_class = getattr(ccxt, exchange_name)
@@ -164,7 +164,7 @@ class ProfessionalDataProvider:
             {
                 "apiKey": api_key,
                 "secret": secret,
-            }
+            },
         )
         logger.info(f"CCXT {exchange_name} data provider initialized")
 
@@ -335,7 +335,11 @@ class ProfessionalDataProvider:
             return pd.DataFrame()
 
     def _get_alpha_vantage_data(
-        self, symbols: list[str], start_date: str, end_date: str, timeframe: str = "1Day"
+        self,
+        symbols: list[str],
+        start_date: str,
+        end_date: str,
+        timeframe: str = "1Day",
     ) -> pd.DataFrame:
         """Get data from Alpha Vantage."""
         try:
@@ -373,7 +377,7 @@ class ProfessionalDataProvider:
                         "6. volume": "volume",
                         "7. dividend amount": "dividend",
                         "8. split coefficient": "split",
-                    }
+                    },
                 )
 
                 df["symbol"] = symbol
@@ -395,7 +399,11 @@ class ProfessionalDataProvider:
             return pd.DataFrame()
 
     def _get_ccxt_data(
-        self, symbols: list[str], start_date: str, end_date: str, timeframe: str = "1Day"
+        self,
+        symbols: list[str],
+        start_date: str,
+        end_date: str,
+        timeframe: str = "1Day",
     ) -> pd.DataFrame:
         """Get data from CCXT exchange."""
         try:

@@ -92,7 +92,7 @@ class EnsembleEvaluator:
                     "length": episode_length,
                     "avg_consensus": np.mean(episode_consensus),
                     "std_consensus": np.std(episode_consensus),
-                }
+                },
             )
 
             consensus_events.extend(episode_consensus)
@@ -247,7 +247,9 @@ class EnsembleEvaluator:
         }
 
     def _calculate_diagnostics(
-        self, agent_actions: dict[str, list[np.ndarray]], episode_results: list[dict[str, Any]]
+        self,
+        agent_actions: dict[str, list[np.ndarray]],
+        episode_results: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """Calculate detailed ensemble diagnostics."""
         diagnostics = {}

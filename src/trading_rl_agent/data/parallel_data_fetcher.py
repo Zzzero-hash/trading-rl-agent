@@ -46,7 +46,12 @@ class ParallelDataFetcher:
         self.ttl = ttl_hours * 3600
 
     def fetch_symbol_data(
-        self, symbol: str, start_date: str, end_date: str, interval: str = "1d", max_retries: int = 3
+        self,
+        symbol: str,
+        start_date: str,
+        end_date: str,
+        interval: str = "1d",
+        max_retries: int = 3,
     ) -> dict[str, Any]:
         """Fetch data for a single symbol with caching and retry logic."""
 
@@ -240,7 +245,12 @@ class ParallelDataManager:
         logger.info("ParallelDataManager initialized")
 
     def fetch_multiple_symbols(
-        self, symbols: list[str], start_date: str, end_date: str, interval: str = "1d", show_progress: bool = True
+        self,
+        symbols: list[str],
+        start_date: str,
+        end_date: str,
+        interval: str = "1d",
+        show_progress: bool = True,
     ) -> dict[str, pd.DataFrame]:
         """Fetch data for multiple symbols in parallel."""
 
@@ -257,16 +267,20 @@ class ParallelDataManager:
         results = []
         if show_progress:
             with tqdm(total=len(symbols), desc="Fetching data") as pbar:
-                for future in ray.as_completed(futures):
-                    result = ray.get(future)
-                    results.append(result)
-                    pbar.update(1)
-                    pbar.set_postfix(
-                        {
-                            "success": sum(1 for r in results if r["success"]),
-                            "failed": sum(1 for r in results if not r["success"]),
-                        }
-                    )
+                # Use ray.wait() instead of ray.as_completed()
+                remaining_futures = futures.copy()
+                while remaining_futures:
+                    ready_futures, remaining_futures = ray.wait(remaining_futures, num_returns=1)
+                    for future in ready_futures:
+                        result = ray.get(future)
+                        results.append(result)
+                        pbar.update(1)
+                        pbar.set_postfix(
+                            {
+                                "success": sum(1 for r in results if r["success"]),
+                                "failed": sum(1 for r in results if not r["success"]),
+                            },
+                        )
         else:
             results = ray.get(futures)
 
@@ -295,7 +309,12 @@ class ParallelDataManager:
         return successful_data
 
     def fetch_with_retry(
-        self, symbols: list[str], start_date: str, end_date: str, interval: str = "1d", max_retries: int = 3
+        self,
+        symbols: list[str],
+        start_date: str,
+        end_date: str,
+        interval: str = "1d",
+        max_retries: int = 3,
     ) -> dict[str, pd.DataFrame]:
         """Fetch data with retry logic for failed symbols."""
 
@@ -310,7 +329,11 @@ class ParallelDataManager:
 
             # Fetch remaining symbols
             batch_data = self.fetch_multiple_symbols(
-                remaining_symbols, start_date, end_date, interval, show_progress=False
+                remaining_symbols,
+                start_date,
+                end_date,
+                interval,
+                show_progress=False,
             )
 
             # Update successful fetches

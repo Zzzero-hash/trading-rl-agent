@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 import random
 from collections import deque
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from ray.rllib.policy.policy import Policy
@@ -50,7 +51,7 @@ def weighted_policy_mapping(weights: dict[str, float]) -> Callable[[str, Any | N
         raise ValueError("Weights dictionary cannot be empty")
 
     # Pre-compute the choices and weights for efficiency
-    choices, wts = zip(*norm_weights.items())
+    choices, wts = zip(*norm_weights.items(), strict=False)
 
     def mapping_fn(agent_id: str, episode: Any | None = None, worker: Any | None = None, **kwargs: Any) -> str:
         return str(random.choices(choices, weights=wts, k=1)[0])

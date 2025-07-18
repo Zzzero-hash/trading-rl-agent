@@ -198,7 +198,7 @@ class BacktestEvaluator:
         """
         self.config = config
         self.transaction_cost_model = transaction_cost_model or NewTransactionCostModel.create_broker_model(
-            BrokerType.RETAIL
+            BrokerType.RETAIL,
         )
 
         # Initialize components

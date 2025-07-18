@@ -302,7 +302,11 @@ class PortfolioManager:
 
             # Pre-trade risk checks
             if not self._validate_trade(
-                symbol, execution_result.executed_quantity, execution_result.executed_price, side, total_cost
+                symbol,
+                execution_result.executed_quantity,
+                execution_result.executed_price,
+                side,
+                total_cost,
             ):
                 return False
 
@@ -394,7 +398,7 @@ class PortfolioManager:
 
             self.logger.info(
                 f"Executed trade: {execution_result.executed_quantity} {symbol} at {execution_result.executed_price} "
-                f"(cost: ${total_cost:.2f}, delay: {execution_result.delay_seconds:.2f}s)"
+                f"(cost: ${total_cost:.2f}, delay: {execution_result.delay_seconds:.2f}s)",
             )
             return True
 

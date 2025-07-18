@@ -287,7 +287,10 @@ class MultiObjectiveOptimizer:
         return float(np.sum(returns))
 
     def _compute_risk_objective(
-        self, returns: np.ndarray, actions: np.ndarray, risk_metrics: dict[str, float] | None = None
+        self,
+        returns: np.ndarray,
+        actions: np.ndarray,
+        risk_metrics: dict[str, float] | None = None,
     ) -> float:
         """Compute risk objective (negative volatility)."""
         if len(returns) < 2:
@@ -701,7 +704,7 @@ class TRPO:
 
             # Temporarily update policy
             old_params = [param.clone() for param in self.policy_net.parameters()]
-            for param, new_param in zip(self.policy_net.parameters(), new_params):
+            for param, new_param in zip(self.policy_net.parameters(), new_params, strict=False):
                 param.data = new_param.data
 
             # Compute KL divergence

@@ -40,7 +40,7 @@ class MetricsCollector:
         self.gauges: dict[str, float] = {}
         self.histograms: dict[str, list[float]] = defaultdict(list)
 
-    def record_metric(self, name: str, value: float | int | str, metadata: dict[str, Any] | None = None) -> None:
+    def record_metric(self, name: str, value: float | str, metadata: dict[str, Any] | None = None) -> None:
         """Record a metric value with timestamp.
 
         Args:
@@ -80,7 +80,10 @@ class MetricsCollector:
         self.histograms[name].append(value)
 
     def get_metric_history(
-        self, name: str, start_time: float | None = None, end_time: float | None = None
+        self,
+        name: str,
+        start_time: float | None = None,
+        end_time: float | None = None,
     ) -> list[MetricPoint]:
         """Get metric history for a specific metric.
 

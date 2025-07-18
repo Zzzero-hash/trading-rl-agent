@@ -103,7 +103,9 @@ class HybridAgent(nn.Module):
         self.logger.info(f"Hybrid agent initialized on {self.device}")
 
     def forward(
-        self, state: torch.Tensor, market_data: torch.Tensor | None = None
+        self,
+        state: torch.Tensor,
+        market_data: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass through the hybrid agent.
@@ -141,7 +143,10 @@ class HybridAgent(nn.Module):
         return actions, value
 
     def select_action(
-        self, state: torch.Tensor, market_data: torch.Tensor | None = None, evaluate: bool = False
+        self,
+        state: torch.Tensor,
+        market_data: torch.Tensor | None = None,
+        evaluate: bool = False,
     ) -> np.ndarray:
         """
         Select action using the hybrid agent.
@@ -278,7 +283,11 @@ class HybridAgent(nn.Module):
         return policy_loss - 0.01 * entropy
 
     def _compute_value_loss(
-        self, current_values: torch.Tensor, rewards: torch.Tensor, next_values: torch.Tensor, dones: torch.Tensor
+        self,
+        current_values: torch.Tensor,
+        rewards: torch.Tensor,
+        next_values: torch.Tensor,
+        dones: torch.Tensor,
     ) -> torch.Tensor:
         """Compute value loss (critic)."""
         gamma = 0.99
@@ -338,7 +347,10 @@ class EnsembleHybridAgent:
         self.logger.info(f"Ensemble of {num_agents} hybrid agents initialized.")
 
     def select_action(
-        self, state: torch.Tensor, market_data: torch.Tensor | None = None, evaluate: bool = False
+        self,
+        state: torch.Tensor,
+        market_data: torch.Tensor | None = None,
+        evaluate: bool = False,
     ) -> np.ndarray:
         """Select action using ensemble voting."""
         actions = []

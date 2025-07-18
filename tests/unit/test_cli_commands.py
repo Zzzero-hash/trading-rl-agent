@@ -81,6 +81,13 @@ class TestCLICommands:
     def test_download_all_command(self, mock_get_config, mock_console):
         """Test download all command."""
         mock_config = Mock()
+        mock_config.data.symbols = ["AAPL", "GOOGL"]
+        mock_config.data.start_date = "2024-01-01"
+        mock_config.data.end_date = "2024-01-02"
+        mock_config.data.data_path = str(self.temp_path)
+        mock_config.data.primary_source = "yfinance"
+        mock_config.data.timeframe = "1d"
+        mock_config.infrastructure.max_workers = 4
         mock_get_config.return_value = mock_config
 
         download_all(
@@ -119,6 +126,13 @@ class TestCLICommands:
     def test_refresh_command(self, mock_get_config, mock_console):
         """Test refresh command."""
         mock_config = Mock()
+        mock_config.data.symbols = ["AAPL", "GOOGL"]
+        mock_config.data.start_date = "2024-01-01"
+        mock_config.data.end_date = "2024-01-02"
+        mock_config.data.data_path = str(self.temp_path)
+        mock_config.data.primary_source = "yfinance"
+        mock_config.data.timeframe = "1d"
+        mock_config.infrastructure.max_workers = 4
         mock_get_config.return_value = mock_config
 
         refresh(days=1, symbols="AAPL", output_dir=self.temp_path, source="yfinance", timeframe="1d", parallel=False)

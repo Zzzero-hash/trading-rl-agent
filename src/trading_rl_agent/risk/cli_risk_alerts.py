@@ -87,7 +87,10 @@ def start_monitoring(ctx: click.Context, portfolio_id: str, interval: int) -> No
 
     # Create risk alert system
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id=portfolio_id
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id=portfolio_id,
     )
 
     console.print(Panel(f"Starting risk monitoring for portfolio: {portfolio_id}", style="green"))
@@ -116,7 +119,10 @@ def status(ctx: click.Context, portfolio_id: str) -> None:
     alert_manager = AlertManager()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id=portfolio_id
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id=portfolio_id,
     )
 
     summary = risk_alert_system.get_risk_summary()
@@ -153,7 +159,9 @@ def status(ctx: click.Context, portfolio_id: str) -> None:
 @click.option("--limit", default=10, help="Number of alerts to show")
 @click.option("--severity", type=click.Choice(["info", "warning", "error", "critical"]), help="Filter by severity")
 @click.option(
-    "--status", type=click.Choice(["active", "acknowledged", "resolved", "dismissed"]), help="Filter by status"
+    "--status",
+    type=click.Choice(["active", "acknowledged", "resolved", "dismissed"]),
+    help="Filter by status",
 )
 @click.pass_context
 def alerts(ctx: click.Context, portfolio_id: str, limit: int, severity: str | None, status: str | None) -> None:
@@ -163,7 +171,10 @@ def alerts(ctx: click.Context, portfolio_id: str, limit: int, severity: str | No
     alert_manager = AlertManager()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id=portfolio_id
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id=portfolio_id,
     )
 
     # Get alerts from alert manager
@@ -221,7 +232,10 @@ def report(ctx: click.Context, portfolio_id: str, days: int, output: str | None)
     alert_manager = AlertManager()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id=portfolio_id
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id=portfolio_id,
     )
 
     end_time = datetime.now()
@@ -281,7 +295,10 @@ def thresholds(ctx: click.Context, portfolio_id: str) -> None:
     alert_manager = AlertManager()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id=portfolio_id
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id=portfolio_id,
     )
 
     if not risk_alert_system.alert_thresholds:
@@ -319,7 +336,10 @@ def circuit_breakers(ctx: click.Context, portfolio_id: str) -> None:
     alert_manager = AlertManager()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id=portfolio_id
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id=portfolio_id,
     )
 
     if not risk_alert_system.circuit_breaker_rules:
@@ -357,7 +377,10 @@ def reset(ctx: click.Context, portfolio_id: str) -> None:
     alert_manager = AlertManager()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id=portfolio_id
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id=portfolio_id,
     )
 
     if Confirm.ask(f"Reset circuit breaker status for portfolio {portfolio_id}?"):
@@ -396,11 +419,15 @@ def config_show(ctx: click.Context, portfolio_id: str) -> None:
     notification_table.add_column("Details", style="yellow")
 
     notification_table.add_row(
-        "Email", "✓" if notifications.email_enabled else "✗", f"{len(notifications.email_recipients)} recipients"
+        "Email",
+        "✓" if notifications.email_enabled else "✗",
+        f"{len(notifications.email_recipients)} recipients",
     )
     notification_table.add_row("Slack", "✓" if notifications.slack_enabled else "✗", notifications.slack_channel)
     notification_table.add_row(
-        "SMS", "✓" if notifications.sms_enabled else "✗", f"{len(notifications.sms_recipients)} recipients"
+        "SMS",
+        "✓" if notifications.sms_enabled else "✗",
+        f"{len(notifications.sms_recipients)} recipients",
     )
     notification_table.add_row(
         "Webhook",
@@ -415,11 +442,17 @@ def config_show(ctx: click.Context, portfolio_id: str) -> None:
 @click.option("--portfolio-id", default="default", help="Portfolio identifier")
 @click.option("--metric", required=True, help="Metric name")
 @click.option(
-    "--threshold-type", required=True, type=click.Choice(["min", "max", "change_rate"]), help="Threshold type"
+    "--threshold-type",
+    required=True,
+    type=click.Choice(["min", "max", "change_rate"]),
+    help="Threshold type",
 )
 @click.option("--value", required=True, type=float, help="Threshold value")
 @click.option(
-    "--severity", required=True, type=click.Choice(["info", "warning", "error", "critical"]), help="Alert severity"
+    "--severity",
+    required=True,
+    type=click.Choice(["info", "warning", "error", "critical"]),
+    help="Alert severity",
 )
 @click.option(
     "--escalation",
@@ -447,7 +480,10 @@ def add_threshold(
     alert_manager = AlertManager()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id=portfolio_id
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id=portfolio_id,
     )
 
     threshold = AlertThreshold(
@@ -500,7 +536,10 @@ def add_circuit_breaker(
     alert_manager = AlertManager()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id=portfolio_id
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id=portfolio_id,
     )
 
     rule = CircuitBreakerRule(

@@ -139,7 +139,7 @@ class TieredCommission(CommissionStructure):
             (10000, 0.002),  # 0.2% for trades up to $10k
             (100000, 0.001),  # 0.1% for trades up to $100k
             (float("inf"), 0.0005),  # 0.05% for trades above $100k
-        ]
+        ],
     )
     min_commission: float = 1.0
 
@@ -341,7 +341,9 @@ class PartialFillModel:
     fill_probability: float = 0.9
 
     def simulate_fill(
-        self, requested_quantity: float, market_data: MarketData
+        self,
+        requested_quantity: float,
+        market_data: MarketData,
     ) -> tuple[float, list[tuple[float, float, datetime]]]:
         """Simulate partial fills for an order."""
         if np.random.random() > self.fill_probability:
@@ -411,7 +413,7 @@ class TransactionCostModel:
             MarketCondition.LIQUID: 0.8,
             MarketCondition.ILLIQUID: 1.8,
             MarketCondition.CRISIS: 2.5,
-        }
+        },
     )
 
     # Cost tracking
@@ -515,7 +517,11 @@ class TransactionCostModel:
         # Calculate costs
         trade_value = abs(requested_quantity * market_data.mid_price)
         cost_breakdown = self.calculate_total_cost(
-            trade_value, requested_quantity, market_data, order_type, market_condition
+            trade_value,
+            requested_quantity,
+            market_data,
+            order_type,
+            market_condition,
         )
 
         # Simulate execution delay
@@ -614,7 +620,7 @@ class TransactionCostModel:
                     confidence=0.8,
                     implementation_difficulty="medium",
                     priority="high" if commission_pct > 0.6 else "medium",
-                )
+                ),
             )
 
         # Slippage analysis
@@ -630,7 +636,7 @@ class TransactionCostModel:
                     confidence=0.7,
                     implementation_difficulty="hard",
                     priority="high" if slippage_pct > 0.5 else "medium",
-                )
+                ),
             )
 
         # Market impact analysis
@@ -646,7 +652,7 @@ class TransactionCostModel:
                     confidence=0.8,
                     implementation_difficulty="hard",
                     priority="high" if impact_pct > 0.4 else "medium",
-                )
+                ),
             )
 
         # Delay analysis
@@ -660,7 +666,7 @@ class TransactionCostModel:
                     confidence=0.6,
                     implementation_difficulty="medium",
                     priority="medium",
-                )
+                ),
             )
 
         # Order size optimization
@@ -676,7 +682,7 @@ class TransactionCostModel:
                     confidence=0.7,
                     implementation_difficulty="medium",
                     priority="medium",
-                )
+                ),
             )
 
         return recommendations

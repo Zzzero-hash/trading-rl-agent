@@ -301,7 +301,7 @@ class TradingSession:
             f"Portfolio Value: ${self.portfolio_value:,.2f} | "
             f"Cash: ${self.cash:,.2f} | "
             f"Positions: {len(self.positions)} | "
-            f"Total Return: {0:.2f}%"  # Placeholder for total return
+            f"Total Return: {0:.2f}%",  # Placeholder for total return
         )
 
         # Log portfolio history
@@ -319,7 +319,7 @@ class TradingSession:
                 "positions": len(self.positions),
                 "total_return": 0,  # Placeholder for total return
                 "sharpe_ratio": sharpe_ratio,
-            }
+            },
         )
 
     def _save_session_data(self) -> None:

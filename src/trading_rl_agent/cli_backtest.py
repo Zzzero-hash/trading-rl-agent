@@ -201,7 +201,7 @@ def run(
                 "win_rate": f"{results.win_rate:.2%}",
                 "num_trades": results.num_trades,
                 "total_costs": f"${results.total_transaction_costs:.2f}",
-            }
+            },
         ]
         print_metrics_table(summary)
 
@@ -253,7 +253,8 @@ def run(
 def batch(
     strategies: str = typer.Argument(..., help="Comma-separated list of strategies"),
     periods: str = typer.Argument(
-        ..., help="Comma-separated list of periods as start:end (e.g. 2023-01-01:2023-06-01,2023-06-02:2023-12-31)"
+        ...,
+        help="Comma-separated list of periods as start:end (e.g. 2023-01-01:2023-06-01,2023-06-02:2023-12-31)",
     ),
     symbols: str | None = None,
     export_csv: Path | None = typer.Option(DEFAULT_EXPORT_CSV, "--export-csv", help="Export summary metrics to CSV"),  # noqa: B008
@@ -324,7 +325,7 @@ def batch(
                             "win_rate": f"{backtest_results.win_rate:.2%}",
                             "num_trades": backtest_results.num_trades,
                             "total_costs": f"${backtest_results.total_transaction_costs:.2f}",
-                        }
+                        },
                     )
 
                 except Exception as be:
@@ -339,7 +340,7 @@ def batch(
                             "win_rate": "0.00%",
                             "num_trades": 0,
                             "total_costs": "$0.00",
-                        }
+                        },
                     )
 
         print_metrics_table(results)
@@ -480,7 +481,7 @@ def compare(
                         "win_rate": f"{results.win_rate:.2%}",
                         "num_trades": results.num_trades,
                         "total_costs": f"${results.total_transaction_costs:.2f}",
-                    }
+                    },
                 )
             print_metrics_table(summary)
 

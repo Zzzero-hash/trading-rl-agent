@@ -58,7 +58,7 @@ class PolicyNetwork(nn.Module):
                     nn.Linear(input_dim, hidden_dim),
                     self._get_activation(activation),
                     nn.Dropout(0.1),
-                ]
+                ],
             )
             input_dim = hidden_dim
 
@@ -116,7 +116,7 @@ class ValueNetwork(nn.Module):
                     nn.Linear(input_dim, hidden_dim),
                     self._get_activation(activation),
                     nn.Dropout(0.1),
-                ]
+                ],
             )
             input_dim = hidden_dim
 

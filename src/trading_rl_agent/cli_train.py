@@ -49,10 +49,14 @@ def train(
     epochs: int | None = typer.Option(DEFAULT_EPOCHS, "--epochs", "-e", help="Override number of epochs"),
     lr: float | None = typer.Option(DEFAULT_LR, "--lr", help="Override learning rate"),
     devices: str | None = typer.Option(
-        DEFAULT_DEVICES, "--devices", help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')"
+        DEFAULT_DEVICES,
+        "--devices",
+        help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')",
     ),
     checkpoint_out: Path | None = typer.Option(  # noqa: B008
-        DEFAULT_CHECKPOINT_OUT, "--checkpoint-out", help="Output checkpoint directory"
+        DEFAULT_CHECKPOINT_OUT,
+        "--checkpoint-out",
+        help="Output checkpoint directory",
     ),
     log_interval: int = typer.Option(DEFAULT_LOG_INTERVAL, "--log-interval", help="Log metrics every N epochs/steps"),
 ) -> None:
@@ -94,7 +98,9 @@ def train(
 def resume(
     config_file: Path | None = typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file"),  # noqa: B008
     devices: str | None = typer.Option(
-        DEFAULT_DEVICES, "--devices", help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')"
+        DEFAULT_DEVICES,
+        "--devices",
+        help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')",
     ),
     log_interval: int = typer.Option(DEFAULT_LOG_INTERVAL, "--log-interval", help="Log metrics every N epochs/steps"),
 ) -> None:

@@ -324,12 +324,16 @@ class ModelEvaluator:
 
                 # T-test on residuals
                 tests["residual_t_test"] = self.metrics_calculator.calculate_statistical_significance(
-                    residuals1, residuals2, "t_test"
+                    residuals1,
+                    residuals2,
+                    "t_test",
                 )
 
                 # Wilcoxon test on residuals
                 tests["residual_wilcoxon"] = self.metrics_calculator.calculate_statistical_significance(
-                    residuals1, residuals2, "wilcoxon"
+                    residuals1,
+                    residuals2,
+                    "wilcoxon",
                 )
 
                 # Compare key metrics

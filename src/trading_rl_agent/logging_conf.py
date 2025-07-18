@@ -321,9 +321,9 @@ def setup_structured_logging(verbose_level: int = 0) -> None:
                         structlog.processors.CallsiteParameter.FILENAME,
                         structlog.processors.CallsiteParameter.FUNC_NAME,
                         structlog.processors.CallsiteParameter.LINENO,
-                    }
+                    },
                 ),
-            ]
+            ],
         )
 
     if verbose_level >= 3:
@@ -332,7 +332,7 @@ def setup_structured_logging(verbose_level: int = 0) -> None:
             [
                 structlog.stdlib.add_log_level_number,
                 structlog.stdlib.add_log_level_number,
-            ]
+            ],
         )
 
     # Add formatter wrapper

@@ -181,7 +181,9 @@ class ForexSentimentData:
         return df.corr()
 
     def get_risk_sentiment(
-        self, safe_havens: list[str] | None = None, risk_currencies: list[str] | None = None
+        self,
+        safe_havens: list[str] | None = None,
+        risk_currencies: list[str] | None = None,
     ) -> float:
         """Get overall risk sentiment based on safe haven vs risk currency sentiment."""
         if safe_havens is None:
@@ -191,12 +193,12 @@ class ForexSentimentData:
 
         # Get average sentiment for safe haven currencies
         safe_haven_sentiment = np.mean(
-            [self.analyzer.get_symbol_sentiment(currency, days_back=7) for currency in safe_havens]
+            [self.analyzer.get_symbol_sentiment(currency, days_back=7) for currency in safe_havens],
         )
 
         # Get average sentiment for risk currencies
         risk_currency_sentiment = np.mean(
-            [self.analyzer.get_symbol_sentiment(currency, days_back=7) for currency in risk_currencies]
+            [self.analyzer.get_symbol_sentiment(currency, days_back=7) for currency in risk_currencies],
         )
 
         # Risk sentiment: positive when risk currencies outperform safe havens

@@ -5,6 +5,6 @@ This module re-exports logging functions from the core logging module
 for convenience.
 """
 
-from ..core.logging import get_logger, get_structured_logger
+from trading_rl_agent.core.logging import get_logger, get_structured_logger
 
 __all__ = ["get_logger", "get_structured_logger"]

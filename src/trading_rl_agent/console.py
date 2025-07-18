@@ -49,7 +49,7 @@ def print_table(
     # Single row fallback
     if len(rows) == 1:
         if headers:
-            for header, value in zip(headers, rows[0]):
+            for header, value in zip(headers, rows[0], strict=False):
                 console.print(f"{header}: {value}")
         else:
             console.print(rows[0])
@@ -242,7 +242,7 @@ def example_train_usage() -> None:
     losses = [0.85, 0.72, 0.65, 0.58, 0.52]
     accuracies = [0.65, 0.72, 0.78, 0.82, 0.85]
 
-    rows = [[epoch, f"{loss:.3f}", f"{acc:.2%}"] for epoch, loss, acc in zip(epochs, losses, accuracies)]
+    rows = [[epoch, f"{loss:.3f}", f"{acc:.2%}"] for epoch, loss, acc in zip(epochs, losses, accuracies, strict=False)]
     headers = ["Epoch", "Loss", "Accuracy"]
 
     print("=== Training Progress ===")

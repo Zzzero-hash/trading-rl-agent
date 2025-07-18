@@ -36,7 +36,8 @@ def setup_logging(verbose: bool = False) -> None:
 
 
 def create_algorithm_config(
-    algorithm: str, **kwargs: Any
+    algorithm: str,
+    **kwargs: Any,
 ) -> AdvancedPPOConfig | TRPOConfig | NaturalPolicyGradientConfig:
     """Create algorithm configuration based on type."""
     if algorithm == "advanced_ppo":

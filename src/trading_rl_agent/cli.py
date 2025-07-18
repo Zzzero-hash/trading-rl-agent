@@ -9,8 +9,9 @@ This module provides a comprehensive command-line interface for all trading RL a
 """
 
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated, Any, Callable, TypeVar
+from typing import Annotated, Any, TypeVar
 
 import pandas as pd
 import typer
@@ -183,7 +184,8 @@ app.add_typer(trade_app, help="Live trading operations")
 def main(
     config_file: Annotated[Path | None, typer.Option("--config", "-c", help="Path to configuration file")] = None,
     verbose: Annotated[
-        int, typer.Option("--verbose", "-v", count=True, help="Increase verbosity (use multiple times for more detail)")
+        int,
+        typer.Option("--verbose", "-v", count=True, help="Increase verbosity (use multiple times for more detail)"),
     ] = 0,
     env_file: Annotated[Path | None, typer.Option("--env-file", help="Path to environment file (.env)")] = None,
 ) -> None:
@@ -529,7 +531,11 @@ def refresh(
         # Check cache and download fresh data
         console.print("[yellow]Checking cache and downloading fresh data...[/yellow]")
         data_dict = data_manager.fetch_multiple_symbols(
-            symbols=symbol_list, start_date=start_date, end_date=end_date, interval=timeframe, show_progress=True
+            symbols=symbol_list,
+            start_date=start_date,
+            end_date=end_date,
+            interval=timeframe,
+            show_progress=True,
         )
 
         # Log results
@@ -604,9 +610,25 @@ def process(
     parallel: bool = DEFAULT_PARALLEL,
 ) -> None:
     """Process and standardize downloaded data."""
-    if config_file is None:
-        config_file = Path("config.yaml")  # Provide a default config file
-    # ... rest of function implementation
+    try:
+        if config_file is None:
+            config_file = Path("config.yaml")  # Provide a default config file
+
+        console.print(f"[green]Processing data with config: {config_file}[/green]")
+        console.print(f"[cyan]Output directory: {output_dir}[/cyan]")
+        console.print(f"[cyan]Force rebuild: {force_rebuild}[/cyan]")
+        console.print(f"[cyan]Parallel processing: {parallel}[/cyan]")
+
+        # Create output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        console.print("[blue]PLACEHOLDER: Data processing pipeline would run here[/blue]")
+        console.print("[blue]Target module: src/trading_rl_agent/data/pipeline.py[/blue]")
+
+    except Exception as e:
+        console.print(f"[red]Error during processing: {e}[/red]")
+        logger.error(f"Processing failed: {e}", exc_info=True)
+        raise typer.Exit(1) from e
 
 
 @data_app.command()
@@ -616,9 +638,24 @@ def standardize(
     method: str = DEFAULT_STANDARDIZATION_METHOD,
 ) -> None:
     """Standardize data format."""
-    if input_path is None:
-        input_path = Path("data/raw")  # Provide a default input path
-    # ... rest of function implementation
+    try:
+        if input_path is None:
+            input_path = Path("data/raw")  # Provide a default input path
+
+        console.print(f"[green]Standardizing data from: {input_path}[/green]")
+        console.print(f"[cyan]Output path: {output_path}[/cyan]")
+        console.print(f"[cyan]Method: {method}[/cyan]")
+
+        # Create output directory
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        console.print("[blue]PLACEHOLDER: Data standardization would run here[/blue]")
+        console.print("[blue]Target module: src/trading_rl_agent/data/data_standardizer.py[/blue]")
+
+    except Exception as e:
+        console.print(f"[red]Error during standardization: {e}[/red]")
+        logger.error(f"Standardization failed: {e}", exc_info=True)
+        raise typer.Exit(1) from e
 
 
 @data_app.command()
@@ -627,9 +664,23 @@ def pipeline(
     output_dir: Path = DEFAULT_PIPELINE_OUTPUT,
 ) -> None:
     """Run complete data pipeline."""
-    if config_path is None:
-        config_path = Path("config.yaml")  # Provide a default config path
-    # ... rest of function implementation
+    try:
+        if config_path is None:
+            config_path = Path("config.yaml")  # Provide a default config path
+
+        console.print(f"[green]Running data pipeline with config: {config_path}[/green]")
+        console.print(f"[cyan]Output directory: {output_dir}[/cyan]")
+
+        # Create output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        console.print("[blue]PLACEHOLDER: Complete data pipeline would run here[/blue]")
+        console.print("[blue]Target module: src/trading_rl_agent/data/pipeline.py[/blue]")
+
+    except Exception as e:
+        console.print(f"[red]Error during pipeline execution: {e}[/red]")
+        logger.error(f"Pipeline failed: {e}", exc_info=True)
+        raise typer.Exit(1) from e
 
 
 # ============================================================================
@@ -656,7 +707,7 @@ def cnn_lstm(
     """
     console.print(f"[blue]PLACEHOLDER: Would train CNN+LSTM model for {epochs} epochs[/blue]")
     console.print(
-        "[blue]Target module: src/trading_rl_agent/training/optimized_trainer.py - OptimizedTrainingManager.train()[/blue]"
+        "[blue]Target module: src/trading_rl_agent/training/optimized_trainer.py - OptimizedTrainingManager.train()[/blue]",
     )
 
 
@@ -753,7 +804,7 @@ def evaluate(
     """
     console.print(f"[blue]PLACEHOLDER: Would evaluate model {model_path} on test data[/blue]")
     console.print(
-        "[blue]Target module: src/trading_rl_agent/training/optimized_trainer.py - OptimizedTrainingManager.evaluate()[/blue]"
+        "[blue]Target module: src/trading_rl_agent/training/optimized_trainer.py - OptimizedTrainingManager.evaluate()[/blue]",
     )
 
 
@@ -778,7 +829,7 @@ def walk_forward(
     """
     console.print(f"[blue]PLACEHOLDER: Would perform walk-forward analysis on {data_path}[/blue]")
     console.print(
-        "[blue]Target module: src/trading_rl_agent/eval/walk_forward_analyzer.py - WalkForwardAnalyzer[/blue]"
+        "[blue]Target module: src/trading_rl_agent/eval/walk_forward_analyzer.py - WalkForwardAnalyzer[/blue]",
     )
 
     # TODO: Implement actual walk-forward analysis
@@ -854,7 +905,7 @@ def start(
     """
     console.print(f"[blue]PLACEHOLDER: Would start live trading with ${initial_capital} capital[/blue]")
     console.print(
-        "[blue]Target module: src/trading_rl_agent/core/live_trading.py - LiveTradingEngine, TradingSession[/blue]"
+        "[blue]Target module: src/trading_rl_agent/core/live_trading.py - LiveTradingEngine, TradingSession[/blue]",
     )
 
 
@@ -871,7 +922,7 @@ def stop(
     """
     console.print("[blue]PLACEHOLDER: Would stop trading session(s)[/blue]")
     console.print(
-        "[blue]Target module: src/trading_rl_agent/core/live_trading.py - LiveTradingEngine.stop_all_sessions()[/blue]"
+        "[blue]Target module: src/trading_rl_agent/core/live_trading.py - LiveTradingEngine.stop_all_sessions()[/blue]",
     )
 
 
@@ -997,8 +1048,7 @@ def scenario_evaluate(
 
     except Exception as e:
         console.print(f"[red]Error during scenario evaluation: {e}[/red]")
-        if verbose_count > 0:
-            raise
+        # Note: verbose_count is not available in this scope, so we'll just exit
         raise typer.Exit(1) from None
 
 

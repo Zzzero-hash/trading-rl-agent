@@ -96,7 +96,9 @@ class OptimizedDatasetBuilder:
 
         # Initialize parallel data manager
         self.data_manager = ParallelDataManager(
-            cache_dir=config.cache_dir, ttl_hours=config.cache_ttl_hours, max_workers=config.max_workers
+            cache_dir=config.cache_dir,
+            ttl_hours=config.cache_ttl_hours,
+            max_workers=config.max_workers,
         )
 
         # Initialize scaler and metadata
@@ -231,7 +233,7 @@ class OptimizedDatasetBuilder:
         }
 
         logger.info(
-            f"📈 Collected {len(combined_df)} total samples ({real_data_count} real, {synthetic_data_count} synthetic)"
+            f"📈 Collected {len(combined_df)} total samples ({real_data_count} real, {synthetic_data_count} synthetic)",
         )
 
         return combined_df
@@ -508,7 +510,9 @@ class OptimizedDatasetBuilder:
             step_size = max(1, int(self.config.sequence_length * (1 - self.config.overlap_ratio)))
 
             for i in range(
-                0, len(features) - self.config.sequence_length - self.config.prediction_horizon + 1, step_size
+                0,
+                len(features) - self.config.sequence_length - self.config.prediction_horizon + 1,
+                step_size,
             ):
                 target = target_values[i + self.config.sequence_length - 1]
 
@@ -604,7 +608,8 @@ class OptimizedDatasetBuilder:
 
         # Convert sequences to DataFrame for CSV saving
         sequences_df = pd.DataFrame(
-            sequences.reshape(-1, sequences.shape[-1]), columns=[f"feature_{i}" for i in range(sequences.shape[-1])]
+            sequences.reshape(-1, sequences.shape[-1]),
+            columns=[f"feature_{i}" for i in range(sequences.shape[-1])],
         )
         targets_df = pd.DataFrame(targets, columns=["target"])
 
@@ -621,7 +626,8 @@ class OptimizedDatasetBuilder:
         if self.config.use_memory_mapping:
             mmap_path = self.output_dir / "sequences.mmap"
             mmap_dataset = self.data_manager.create_memory_mapped_dataset(
-                {"sequences": pd.DataFrame(sequences.reshape(-1, sequences.shape[-1]))}, str(mmap_path)
+                {"sequences": pd.DataFrame(sequences.reshape(-1, sequences.shape[-1]))},
+                str(mmap_path),
             )
             logger.info(f"  ✓ Created memory-mapped dataset: {mmap_path}")
 
