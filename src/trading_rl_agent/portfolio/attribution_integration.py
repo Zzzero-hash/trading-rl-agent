@@ -84,7 +84,9 @@ class AttributionIntegration:
             raise ValueError("No data available for specified date range")
             
         # Extract portfolio returns
-        portfolio_returns = perf_df.set_index('timestamp')['total_return'].pct_change().dropna()
+        # If total_return is cumulative return (not value), calculate period returns differently
+        portfolio_values = perf_df.set_index('timestamp')['total_value']
+        portfolio_returns = portfolio_values.pct_change().dropna()
         
         # Get benchmark returns (if available)
         benchmark_returns = self._get_benchmark_returns(portfolio_returns.index)
