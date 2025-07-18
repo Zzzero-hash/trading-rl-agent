@@ -31,13 +31,13 @@ from src.trading_rl_agent.portfolio.manager import PortfolioManager, PortfolioCo
 
 
 @pytest.fixture
-def sample_data():
+def sample_data(random_seed=42):
     """Create sample data for testing."""
     dates = pd.date_range('2023-01-01', '2023-12-31', freq='D')
     symbols = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']
     
     # Generate sample returns
-    np.random.seed(42)
+    np.random.seed(random_seed)
     asset_returns = pd.DataFrame(
         np.random.normal(0.001, 0.02, (len(symbols), len(dates))),
         index=symbols,
