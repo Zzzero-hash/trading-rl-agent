@@ -12,6 +12,7 @@ A production-grade hybrid reinforcement learning trading system that combines CN
 - **Data Pipeline**: Multi-source data ingestion with parallel processing
 - **Risk Management**: VaR, CVaR, position sizing, and portfolio optimization
 - **Real-time Processing**: Live data feeds and sentiment analysis
+- **Performance Dashboard**: Real-time P&L and performance monitoring with interactive visualizations
 
 ### Infrastructure
 
@@ -55,6 +56,9 @@ A production-grade hybrid reinforcement learning trading system that combines CN
 
    # Add ML dependencies
    ./setup-env.sh ml
+
+   # Add dashboard for real-time monitoring
+   ./setup-env.sh dashboard
 
    # Full production setup
    ./setup-env.sh full
@@ -102,6 +106,37 @@ python main.py backtest data/historical_data.csv --model models/agent.zip
 python main.py live start --paper --symbols "AAPL,GOOGL"
 ```
 
+### 3. Real-Time Performance Dashboard
+
+Monitor your trading performance with the interactive dashboard:
+
+```bash
+# Quick dashboard installation
+./install-dashboard.sh
+
+# Start basic dashboard
+python -m trading_rl_agent.cli_dashboard run
+
+# Start with real-time streaming
+python -m trading_rl_agent.cli_dashboard run --streaming
+
+# Run dashboard example with sample data
+python examples/dashboard_example.py basic
+```
+
+**Dashboard Features:**
+- 📊 Real-time P&L tracking with interactive charts
+- ⚠️ Risk metrics visualization (VaR, CVaR, volatility)
+- 📋 Position overview and management
+- 🏥 System health monitoring
+- 🚨 Real-time alerts and notifications
+- 🔄 WebSocket streaming for live updates
+- 🎨 Customizable layouts and themes
+
+**Access URLs:**
+- Web Dashboard: http://localhost:8501
+- Streaming Server: ws://localhost:8765
+
 ### 2. Alternative Entry Points
 
 ```bash
@@ -119,6 +154,7 @@ python -m trading_rl_agent.cli train cnn-lstm
 - **[Project Status](PROJECT_STATUS.md)**: Current development status and roadmap
 - **[Development Roadmap](TODO.md)**: Detailed task list and priorities
 - **[Contributing Guidelines](CONTRIBUTING.md)**: How to contribute to the project
+- **[Dashboard Documentation](docs/DASHBOARD_README.md)**: Real-time P&L and performance dashboard guide
 
 ## 🏗️ Architecture
 

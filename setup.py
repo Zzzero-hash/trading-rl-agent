@@ -9,6 +9,13 @@ setup(
     package_dir={"": "src"},
     python_requires=">=3.8",
     install_requires=Path("requirements.txt").read_text().splitlines(),
+    extras_require={
+        "dashboard": [
+            "streamlit>=1.28.0",
+            "plotly>=5.17.0",
+            "websockets>=11.0.0",
+        ],
+    },
     entry_points={
         "console_scripts": [
             "trading-rl-agent=main:app",

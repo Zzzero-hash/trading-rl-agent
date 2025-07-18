@@ -179,13 +179,24 @@ install_deps() {
                 return 1
             fi
             ;;
+        "dashboard")
+            echo -e "\n📦 Installing dashboard dependencies..."
+            if [ -f "requirements-dashboard.txt" ]; then
+                $PIP_BIN install -r requirements-dashboard.txt
+                print_status "Dashboard dependencies installed (~200MB)"
+            else
+                print_error "requirements-dashboard.txt not found"
+                return 1
+            fi
+            ;;
         *)
-            echo "Usage: $0 [core|ml|full|dev|production]"
+            echo "Usage: $0 [core|ml|full|dev|production|dashboard]"
             echo "  core:       Fast installation for basic development (~50MB)"
             echo "  ml:         Includes PyTorch for neural network development (~2.1GB)"
             echo "  full:       Production-ready with all features (~2.6GB)"
             echo "  dev:        Development tools and testing (~500MB)"
             echo "  production: Optimized for deployment (~2.6GB)"
+            echo "  dashboard:  Real-time P&L and performance dashboard (~200MB)"
             exit 1
             ;;
     esac
@@ -198,17 +209,19 @@ if [ $# -eq 0 ]; then
     echo "2) ml         - Neural networks (~2.1GB)"
     echo "3) full       - Production ready (~2.6GB)"
     echo "4) dev        - Development tools (~500MB)"
-    echo "5) production - Optimized deployment (~2.6GB)"
-    echo "6) skip       - Just fix environment"
-    printf "Choose [1-6]: "
+    echo "5) dashboard  - Real-time P&L dashboard (~200MB)"
+    echo "6) production - Optimized deployment (~2.6GB)"
+    echo "7) skip       - Just fix environment"
+    printf "Choose [1-7]: "
     read -r choice
     case $choice in
         1) install_deps "core" ;;
         2) install_deps "ml" ;;
         3) install_deps "full" ;;
         4) install_deps "dev" ;;
-        5) install_deps "production" ;;
-        6) echo "Skipping dependency installation" ;;
+        5) install_deps "dashboard" ;;
+        6) install_deps "production" ;;
+        7) echo "Skipping dependency installation" ;;
         *) echo "Invalid choice"; exit 1 ;;
     esac
 else
@@ -278,6 +291,7 @@ echo "To activate aliases in current session:"
 echo "  source ~/.bashrc"
 echo ""
 echo "Development phases:"
-echo "  ./setup-env.sh core   # Fast development setup"
-echo "  ./setup-env.sh ml     # Add neural networks"
-echo "  ./setup-env.sh full   # Production ready"
+echo "  ./setup-env.sh core      # Fast development setup"
+echo "  ./setup-env.sh ml        # Add neural networks"
+echo "  ./setup-env.sh dashboard # Real-time P&L dashboard"
+echo "  ./setup-env.sh full      # Production ready"
