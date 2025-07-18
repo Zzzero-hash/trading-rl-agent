@@ -134,7 +134,10 @@ def conditional_value_at_risk(returns: np.ndarray | list, cutoff: float = 0.05) 
         return 0.0
 
     var = value_at_risk(returns, cutoff)
-    return float(np.mean(returns[returns <= var]))
+    subset = returns[returns <= var]
+    if len(subset) == 0:
+        return 0.0
+    return float(np.mean(subset))
 
 
 def beta(returns: np.ndarray | list, benchmark_returns: np.ndarray | list) -> float:

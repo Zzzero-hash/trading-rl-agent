@@ -167,18 +167,22 @@ class TestCLIBacktest:
         mock_evaluator_instance.run_backtest.return_value = mock_results
         mock_evaluator.return_value = mock_evaluator_instance
 
-        # Test the command
-        run(
-            strategy="momentum",
-            start_date="2024-01-01",
-            end_date="2024-01-31",
-            symbols="AAPL",
-            export_csv=None,
-            config_file=None,
-            initial_capital=10000.0,
-            commission_rate=0.001,
-            slippage_rate=0.0001,
-        )
+        # Test the command - expect typer.Exit(0) on success
+        with pytest.raises(typer.Exit) as exc_info:
+            run(
+                strategy="momentum",
+                start_date="2024-01-01",
+                end_date="2024-01-31",
+                symbols="AAPL",
+                export_csv=None,
+                config_file=None,
+                initial_capital=10000.0,
+                commission_rate=0.001,
+                slippage_rate=0.0001,
+            )
+
+        # Verify exit code is 0 (success)
+        assert exc_info.value.exit_code == 0
 
         # Verify calls
         mock_console.print.assert_called()
@@ -231,15 +235,19 @@ class TestCLIBacktest:
         mock_evaluator_instance.run_backtest.return_value = mock_results
         mock_evaluator.return_value = mock_evaluator_instance
 
-        # Test the command
-        batch(
-            strategies="momentum,mean_reversion",
-            periods="2024-01-01:2024-01-15,2024-01-16:2024-01-31",
-            symbols="AAPL",
-            export_csv=None,
-            config_file=None,
-            initial_capital=10000.0,
-        )
+        # Test the command - expect typer.Exit(0) on success
+        with pytest.raises(typer.Exit) as exc_info:
+            batch(
+                strategies="momentum,mean_reversion",
+                periods="2024-01-01:2024-01-15,2024-01-16:2024-01-31",
+                symbols="AAPL",
+                export_csv=None,
+                config_file=None,
+                initial_capital=10000.0,
+            )
+
+        # Verify exit code is 0 (success)
+        assert exc_info.value.exit_code == 0
 
         # Verify calls
         mock_console.print.assert_called()
@@ -289,24 +297,31 @@ class TestCLIBacktest:
         mock_results.total_transaction_costs = 25.0
 
         mock_evaluator_instance = Mock()
-        mock_evaluator_instance.run_backtest.return_value = mock_results
+        mock_evaluator_instance.compare_strategies.return_value = {
+            "momentum": mock_results,
+            "mean_reversion": mock_results,
+        }
         mock_evaluator.return_value = mock_evaluator_instance
 
-        # Test the command
-        compare(
-            strategies="momentum,mean_reversion",
-            start_date="2024-01-01",
-            end_date="2024-01-31",
-            symbols="AAPL",
-            config_file=None,
-            output_dir=self.temp_path,
-        )
+        # Test the command - expect typer.Exit(0) on success
+        with pytest.raises(typer.Exit) as exc_info:
+            compare(
+                strategies="momentum,mean_reversion",
+                start_date="2024-01-01",
+                end_date="2024-01-31",
+                symbols="AAPL",
+                config_file=None,
+                output_dir=self.temp_path,
+            )
+
+        # Verify exit code is 0 (success)
+        assert exc_info.value.exit_code == 0
 
         # Verify calls
         mock_console.print.assert_called()
         mock_load_data.assert_called()
         mock_generate_signals.assert_called()
-        mock_evaluator_instance.run_backtest.assert_called()
+        mock_evaluator_instance.compare_strategies.assert_called()
 
     @patch("trading_rl_agent.cli_backtest.console")
     @patch("trading_rl_agent.cli_backtest.load_settings")
@@ -551,18 +566,22 @@ class TestCLIBacktest:
             mock_evaluator_instance.run_backtest.return_value = mock_results
             mock_evaluator.return_value = mock_evaluator_instance
 
-            # Test the command
-            run(
-                strategy="momentum",
-                start_date=None,
-                end_date=None,
-                symbols=None,
-                export_csv=None,
-                config_file=config_file,
-                initial_capital=None,
-                commission_rate=None,
-                slippage_rate=None,
-            )
+            # Test the command - expect typer.Exit(0) on success
+            with pytest.raises(typer.Exit) as exc_info:
+                run(
+                    strategy="momentum",
+                    start_date=None,
+                    end_date=None,
+                    symbols=None,
+                    export_csv=None,
+                    config_file=config_file,
+                    initial_capital=None,
+                    commission_rate=None,
+                    slippage_rate=None,
+                )
+
+            # Verify exit code is 0 (success)
+            assert exc_info.value.exit_code == 0
 
             # Verify config was loaded
             mock_load_settings.assert_called_once_with(config_path=config_file)
@@ -616,18 +635,22 @@ class TestCLIBacktest:
             mock_evaluator_instance.run_backtest.return_value = mock_results
             mock_evaluator.return_value = mock_evaluator_instance
 
-            # Test the command
-            run(
-                strategy="momentum",
-                start_date="2024-01-01",
-                end_date="2024-01-31",
-                symbols="AAPL",
-                export_csv=export_csv,
-                config_file=None,
-                initial_capital=10000.0,
-                commission_rate=0.001,
-                slippage_rate=0.0001,
-            )
+            # Test the command - expect typer.Exit(0) on success
+            with pytest.raises(typer.Exit) as exc_info:
+                run(
+                    strategy="momentum",
+                    start_date="2024-01-01",
+                    end_date="2024-01-31",
+                    symbols="AAPL",
+                    export_csv=export_csv,
+                    config_file=None,
+                    initial_capital=10000.0,
+                    commission_rate=0.001,
+                    slippage_rate=0.0001,
+                )
+
+            # Verify exit code is 0 (success)
+            assert exc_info.value.exit_code == 0
 
             # Verify CSV file was created (the function exits after creating the file)
             # The test passes if no exception is raised

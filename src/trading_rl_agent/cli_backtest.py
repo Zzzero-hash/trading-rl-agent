@@ -459,6 +459,10 @@ def compare(
                         f.write(f"- Win Rate: {results.win_rate:.2%}\n")
                         f.write(f"- Number of Trades: {results.num_trades}\n")
                         f.write(f"- Total Transaction Costs: ${results.total_transaction_costs:.2f}\n\n")
+                else:
+                    # Handle non-dict results - this is reachable in some cases
+                    f.write("## Comparison Results\n")
+                    f.write("Results format not supported for detailed reporting.\n")
 
             console.print(f"[blue]Comparison report saved to {comparison_report_path}[/blue]")
 
@@ -480,6 +484,7 @@ def compare(
                 )
             print_metrics_table(summary)
 
+        console.print("[bold green]✅ Strategy comparison complete[/bold green]")
         raise typer.Exit(0)
     except typer.Exit:
         # Re-raise typer.Exit exceptions without modification

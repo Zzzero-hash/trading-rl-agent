@@ -169,12 +169,12 @@ class Settings(BaseSettings):
         """Get API credentials for a specific exchange."""
         if exchange.lower() == "alpaca":
             return {
-                "api_key": self.alpaca_api_key,
-                "secret_key": self.alpaca_secret_key,
-                "base_url": self.alpaca_base_url,
+                "api_key": self.alpaca_api_key or "",
+                "secret_key": self.alpaca_secret_key or "",
+                "base_url": self.alpaca_base_url or "",
             }
         if exchange.lower() == "alphavantage":
-            return {"api_key": self.alphavantage_api_key}
+            return {"api_key": self.alphavantage_api_key or ""}
         raise ValueError(f"Unknown exchange: {exchange}")
 
 
