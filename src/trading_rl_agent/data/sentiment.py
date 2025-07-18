@@ -62,9 +62,32 @@ class SentimentConfig:
     def __post_init__(self) -> None:
         # Try to get API keys from environment if not provided
         if self.news_api_key is None:
-            self.news_api_key = os.environ.get("NEWSAPI_KEY")
+            # Try unified config first
+            try:
+                from ..core.unified_config import UnifiedConfig
+
+                config = UnifiedConfig()
+                self.news_api_key = config.newsapi_key
+            except Exception:
+                pass
+
+            # Fallback to direct environment access
+            if self.news_api_key is None:
+                self.news_api_key = os.environ.get("NEWSAPI_KEY")
+
         if self.social_api_key is None:
-            self.social_api_key = os.environ.get("SOCIAL_API_KEY")
+            # Try unified config first
+            try:
+                from ..core.unified_config import UnifiedConfig
+
+                config = UnifiedConfig()
+                self.social_api_key = config.social_api_key
+            except Exception:
+                pass
+
+            # Fallback to direct environment access
+            if self.social_api_key is None:
+                self.social_api_key = os.environ.get("SOCIAL_API_KEY")
 
 
 class SentimentProvider(ABC):

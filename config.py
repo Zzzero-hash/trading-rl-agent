@@ -153,11 +153,36 @@ class Settings(BaseSettings):
     alpaca_api_key: str | None = Field(default=None, description="Alpaca API key")
     alpaca_secret_key: str | None = Field(default=None, description="Alpaca secret key")
     alpaca_base_url: str | None = Field(default=None, description="Alpaca base URL")
+    alpaca_data_url: str | None = Field(default=None, description="Alpaca data URL")
+    alpaca_use_v2: bool = Field(default=True, description="Use Alpaca V2 API")
+    alpaca_paper_trading: bool = Field(default=True, description="Enable paper trading")
+    alpaca_max_retries: int = Field(default=3, description="Alpaca max retries")
+    alpaca_retry_delay: float = Field(default=1.0, description="Alpaca retry delay")
+    alpaca_websocket_timeout: int = Field(default=30, description="Alpaca websocket timeout")
+    alpaca_order_timeout: int = Field(default=60, description="Alpaca order timeout")
+    alpaca_cache_dir: str | None = Field(default=None, description="Alpaca cache directory")
+    alpaca_cache_ttl: int = Field(default=3600, description="Alpaca cache TTL")
+    alpaca_data_feed: str = Field(default="iex", description="Alpaca data feed")
+    alpaca_extended_hours: bool = Field(default=False, description="Alpaca extended hours")
+    alpaca_max_position_size: float = Field(default=10000.0, description="Alpaca max position size")
+    alpaca_max_daily_trades: int = Field(default=100, description="Alpaca max daily trades")
+    alpaca_log_level: str = Field(default="INFO", description="Alpaca log level")
+    alpaca_log_trades: bool = Field(default=True, description="Alpaca log trades")
+
+    # Data source API keys
+    polygon_api_key: str | None = Field(default=None, description="Polygon API key")
     alphavantage_api_key: str | None = Field(default=None, description="Alpha Vantage API key")
     newsapi_key: str | None = Field(default=None, description="News API key")
     social_api_key: str | None = Field(default=None, description="Social media API key")
 
-    @field_validator("alpaca_api_key", "alpaca_secret_key", "alphavantage_api_key", "newsapi_key", "social_api_key")
+    @field_validator(
+        "alpaca_api_key",
+        "alpaca_secret_key",
+        "alphavantage_api_key",
+        "newsapi_key",
+        "social_api_key",
+        "polygon_api_key",
+    )
     @classmethod
     def validate_api_keys(cls, v: str | None) -> str | None:
         """Validate API keys - empty strings become None."""
@@ -172,9 +197,30 @@ class Settings(BaseSettings):
                 "api_key": self.alpaca_api_key or "",
                 "secret_key": self.alpaca_secret_key or "",
                 "base_url": self.alpaca_base_url or "",
+                "data_url": self.alpaca_data_url or "",
+                "use_v2": str(self.alpaca_use_v2).lower(),
+                "paper_trading": str(self.alpaca_paper_trading).lower(),
+                "max_retries": str(self.alpaca_max_retries),
+                "retry_delay": str(self.alpaca_retry_delay),
+                "websocket_timeout": str(self.alpaca_websocket_timeout),
+                "order_timeout": str(self.alpaca_order_timeout),
+                "cache_dir": self.alpaca_cache_dir or "",
+                "cache_ttl": str(self.alpaca_cache_ttl),
+                "data_feed": self.alpaca_data_feed,
+                "extended_hours": str(self.alpaca_extended_hours).lower(),
+                "max_position_size": str(self.alpaca_max_position_size),
+                "max_daily_trades": str(self.alpaca_max_daily_trades),
+                "log_level": self.alpaca_log_level,
+                "log_trades": str(self.alpaca_log_trades).lower(),
             }
         if exchange.lower() == "alphavantage":
             return {"api_key": self.alphavantage_api_key or ""}
+        if exchange.lower() == "polygon":
+            return {"api_key": self.polygon_api_key or ""}
+        if exchange.lower() == "newsapi":
+            return {"api_key": self.newsapi_key or ""}
+        if exchange.lower() == "social":
+            return {"api_key": self.social_api_key or ""}
         raise ValueError(f"Unknown exchange: {exchange}")
 
 

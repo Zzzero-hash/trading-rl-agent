@@ -302,11 +302,37 @@ class UnifiedConfig(BaseSettings):
     alpaca_api_key: str | None = Field(default=None, description="Alpaca API key")
     alpaca_secret_key: str | None = Field(default=None, description="Alpaca secret key")
     alpaca_base_url: str | None = Field(default=None, description="Alpaca base URL")
+    alpaca_data_url: str | None = Field(default=None, description="Alpaca data URL")
+    alpaca_use_v2: bool = Field(default=True, description="Use Alpaca V2 API")
+    alpaca_paper_trading: bool = Field(default=True, description="Enable paper trading")
+    alpaca_max_retries: int = Field(default=3, description="Alpaca max retries")
+    alpaca_retry_delay: float = Field(default=1.0, description="Alpaca retry delay")
+    alpaca_websocket_timeout: int = Field(default=30, description="Alpaca websocket timeout")
+    alpaca_order_timeout: int = Field(default=60, description="Alpaca order timeout")
+    alpaca_cache_dir: str | None = Field(default=None, description="Alpaca cache directory")
+    alpaca_cache_ttl: int = Field(default=3600, description="Alpaca cache TTL")
+    alpaca_data_feed: str = Field(default="iex", description="Alpaca data feed")
+    alpaca_extended_hours: bool = Field(default=False, description="Alpaca extended hours")
+    alpaca_max_position_size: float = Field(default=10000.0, description="Alpaca max position size")
+    alpaca_max_daily_trades: int = Field(default=100, description="Alpaca max daily trades")
+    alpaca_log_level: str = Field(default="INFO", description="Alpaca log level")
+    alpaca_log_trades: bool = Field(default=True, description="Alpaca log trades")
+
+    # Data source API keys
+    polygon_api_key: str | None = Field(default=None, description="Polygon API key")
     alphavantage_api_key: str | None = Field(default=None, description="Alpha Vantage API key")
     newsapi_key: str | None = Field(default=None, description="News API key")
     social_api_key: str | None = Field(default=None, description="Social media API key")
 
-    @field_validator("alpaca_api_key", "alpaca_secret_key", "newsapi_key", mode="before")
+    @field_validator(
+        "alpaca_api_key",
+        "alpaca_secret_key",
+        "newsapi_key",
+        "polygon_api_key",
+        "alphavantage_api_key",
+        "social_api_key",
+        mode="before",
+    )
     @classmethod
     def validate_api_keys(cls, v: Any) -> Any:
         """Validate API keys are not empty strings."""
@@ -325,10 +351,39 @@ class UnifiedConfig(BaseSettings):
                 credentials["secret_key"] = self.alpaca_secret_key
             if self.alpaca_base_url:
                 credentials["base_url"] = self.alpaca_base_url
+            if self.alpaca_data_url:
+                credentials["data_url"] = self.alpaca_data_url
+            credentials["use_v2"] = str(self.alpaca_use_v2).lower()
+            credentials["paper_trading"] = str(self.alpaca_paper_trading).lower()
+            credentials["max_retries"] = str(self.alpaca_max_retries)
+            credentials["retry_delay"] = str(self.alpaca_retry_delay)
+            credentials["websocket_timeout"] = str(self.alpaca_websocket_timeout)
+            credentials["order_timeout"] = str(self.alpaca_order_timeout)
+            if self.alpaca_cache_dir:
+                credentials["cache_dir"] = self.alpaca_cache_dir
+            credentials["cache_ttl"] = str(self.alpaca_cache_ttl)
+            credentials["data_feed"] = self.alpaca_data_feed
+            credentials["extended_hours"] = str(self.alpaca_extended_hours).lower()
+            credentials["max_position_size"] = str(self.alpaca_max_position_size)
+            credentials["max_daily_trades"] = str(self.alpaca_max_daily_trades)
+            credentials["log_level"] = self.alpaca_log_level
+            credentials["log_trades"] = str(self.alpaca_log_trades).lower()
 
         elif exchange.lower() == "alphavantage":
             if self.alphavantage_api_key:
                 credentials["api_key"] = self.alphavantage_api_key
+
+        elif exchange.lower() == "polygon":
+            if self.polygon_api_key:
+                credentials["api_key"] = self.polygon_api_key
+
+        elif exchange.lower() == "newsapi":
+            if self.newsapi_key:
+                credentials["api_key"] = self.newsapi_key
+
+        elif exchange.lower() == "social":
+            if self.social_api_key:
+                credentials["api_key"] = self.social_api_key
 
         return credentials
 
