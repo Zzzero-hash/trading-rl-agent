@@ -401,7 +401,7 @@ class StatisticalTests:
 
                 # Calculate test statistic
                 r_squared = 1 - np.sum((squared_residuals - predicted_squared) ** 2) / np.sum(
-                    (squared_residuals - np.mean(squared_residuals)) ** 2
+                    (squared_residuals - np.mean(squared_residuals)) ** 2,
                 )
                 statistic = len(residuals) * r_squared
 

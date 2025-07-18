@@ -299,7 +299,7 @@ class NewsSentimentProvider(SentimentProvider):
                     timestamp=timestamp,
                     source="news_api",
                     raw_data=article,
-                )
+                ),
             )
 
         return sentiment_data
@@ -350,7 +350,7 @@ class NewsSentimentProvider(SentimentProvider):
                             timestamp=datetime.datetime.now(),
                             source="news_scrape",
                             raw_data={"headline": headline, "source": source_url},
-                        )
+                        ),
                     )
 
                 # If we got some data, break
@@ -384,7 +384,7 @@ class NewsSentimentProvider(SentimentProvider):
                     timestamp=timestamp,
                     source="news_mock",
                     raw_data={"mock": True, "article_id": i},
-                )
+                ),
             )
 
         return sentiment_data
@@ -428,7 +428,7 @@ class SocialSentimentProvider(SentimentProvider):
                     timestamp=timestamp,
                     source="social_mock",
                     raw_data={"mock": True, "post_id": i},
-                )
+                ),
             )
 
         return sentiment_data
@@ -550,7 +550,7 @@ class SentimentAnalyzer:
                     "sentiment_magnitude": avg_magnitude,
                     "sentiment_sources": source_count,
                     "sentiment_direction": np.sign(sentiment_score),
-                }
+                },
             )
 
         return pd.DataFrame(features)

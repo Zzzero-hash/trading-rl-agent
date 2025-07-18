@@ -9,9 +9,10 @@ This module provides comprehensive alerting capabilities for:
 """
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 class AlertSeverity(Enum):
@@ -74,7 +75,7 @@ class AlertManager:
         """
         self.alert_handlers[alert_type] = handler
 
-    def set_threshold(self, metric_name: str, threshold_type: str, value: float | int) -> None:
+    def set_threshold(self, metric_name: str, threshold_type: str, value: float) -> None:
         """Set a threshold for a metric.
 
         Args:
@@ -140,7 +141,7 @@ class AlertManager:
 
         return alert
 
-    def check_threshold(self, metric_name: str, value: float | int) -> list[Alert]:
+    def check_threshold(self, metric_name: str, value: float) -> list[Alert]:
         """Check if a metric value violates any thresholds.
 
         Args:

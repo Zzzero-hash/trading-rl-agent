@@ -7,10 +7,11 @@ robustness to market shocks, and measure adaptation to changing conditions.
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -138,7 +139,10 @@ class MarketScenarioGenerator:
 
             # Generate prices for this segment
             segment_prices = self._generate_trend_segment(
-                length=segment_length, start_price=current_price, trend=segment_trend, volatility=volatility
+                length=segment_length,
+                start_price=current_price,
+                trend=segment_trend,
+                volatility=volatility,
             )
             prices.extend(segment_prices)
             current_price = segment_prices[-1]
@@ -363,7 +367,7 @@ class MarketScenarioGenerator:
                 "low": lows,
                 "close": prices,
                 "volume": volumes,
-            }
+            },
         )
 
 
@@ -993,7 +997,9 @@ class AgentScenarioEvaluator:
         table.add_row("Avg Total Return", f"{aggregate_metrics['avg_total_return']:.1%}", "")
         table.add_row("Avg Max Drawdown", f"{aggregate_metrics['avg_max_drawdown']:.1%}", "")
         table.add_row(
-            "Pass Rate", f"{aggregate_metrics['pass_rate']:.1%}", "✅" if aggregate_metrics["pass_rate"] > 0.6 else "❌"
+            "Pass Rate",
+            f"{aggregate_metrics['pass_rate']:.1%}",
+            "✅" if aggregate_metrics["pass_rate"] > 0.6 else "❌",
         )
 
         console.print(table)

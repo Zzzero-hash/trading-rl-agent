@@ -92,7 +92,11 @@ class MarketPatternGenerator:
         return df
 
     def generate_reversal_pattern(
-        self, pattern_type: str, n_periods: int = 252, pattern_intensity: float = 0.5, base_volatility: float = 0.02
+        self,
+        pattern_type: str,
+        n_periods: int = 252,
+        pattern_intensity: float = 0.5,
+        base_volatility: float = 0.02,
     ) -> pd.DataFrame:
         """Generate reversal patterns (head and shoulders, double tops/bottoms)."""
         if pattern_type == PatternType.HEAD_AND_SHOULDERS.value:
@@ -112,12 +116,16 @@ class MarketPatternGenerator:
         raise ValueError(f"Unknown pattern type: {pattern_type}")
 
     def generate_volatility_clustering(
-        self, n_periods: int, volatility_regimes: list[dict], regime_durations: list[int], base_price: float = 100.0
+        self,
+        n_periods: int,
+        volatility_regimes: list[dict],
+        regime_durations: list[int],
+        base_price: float = 100.0,
     ) -> pd.DataFrame:
         """Simulate volatility clustering and regime changes using GARCH or simplified models."""
         returns = []
         current_period = 0
-        for regime, duration in zip(volatility_regimes, regime_durations):
+        for regime, duration in zip(volatility_regimes, regime_durations, strict=False):
             if current_period >= n_periods:
                 break
             if STATSMODELS_AVAILABLE:
@@ -390,7 +398,10 @@ class MarketPatternGenerator:
         return df
 
     def detect_enhanced_regime(
-        self, data: pd.DataFrame, window: int = 20, method: str = "rolling_stats"
+        self,
+        data: pd.DataFrame,
+        window: int = 20,
+        method: str = "rolling_stats",
     ) -> pd.DataFrame:
         """Enhanced market regime detection with multiple methods."""
         df = data.copy()
@@ -456,7 +467,7 @@ class MarketPatternGenerator:
                 "low": lows,
                 "close": prices,
                 "volume": volumes,
-            }
+            },
         )
 
     def _generate_head_and_shoulders(self, n_periods: int, intensity: float, volatility: float) -> pd.DataFrame:
@@ -495,11 +506,14 @@ class MarketPatternGenerator:
         return modified_returns
 
     def _assign_volatility_regimes(
-        self, n_periods: int, volatility_regimes: list[dict], regime_durations: list[int]
+        self,
+        n_periods: int,
+        volatility_regimes: list[dict],
+        regime_durations: list[int],
     ) -> list[str]:
         regimes = []
         current_period = 0
-        for i, (regime, duration) in enumerate(zip(volatility_regimes, regime_durations)):
+        for i, (regime, duration) in enumerate(zip(volatility_regimes, regime_durations, strict=False)):
             if current_period >= n_periods:
                 break
             regime_label = regime.get("label", f"regime_{i}")

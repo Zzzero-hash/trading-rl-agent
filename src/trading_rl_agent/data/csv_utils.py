@@ -5,8 +5,9 @@ This module provides optimized CSV operations for large datasets,
 including chunked saving to reduce memory usage and improve performance.
 """
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pandas as pd
 from tqdm import tqdm
@@ -446,7 +447,11 @@ def create_standardized_dataset_streaming(
 
     logger.info("Transforming data in streaming fashion and saving to file...")
     process_csv_in_stream(
-        filepath, transform_chunk, chunk_size=chunk_size, show_progress=show_progress, output_file=output_file
+        filepath,
+        transform_chunk,
+        chunk_size=chunk_size,
+        show_progress=show_progress,
+        output_file=output_file,
     )
 
     # Save the standardizer

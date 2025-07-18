@@ -184,7 +184,8 @@ class AlternativeDataFeatures:
             # Get sentiment scores
             if self.sentiment_analyzer is not None:
                 sentiment_score = self.sentiment_analyzer.get_symbol_sentiment(
-                    symbol, days_back=self.config.sentiment_lookback_days
+                    symbol,
+                    days_back=self.config.sentiment_lookback_days,
                 )
             else:
                 sentiment_score = 0.0
@@ -330,7 +331,7 @@ class AlternativeDataFeatures:
                 f"{self.config.sentiment_column}_direction",
                 f"{self.config.sentiment_column}_ma_5",
                 f"{self.config.sentiment_column}_std_5",
-            ]
+            ],
         )
 
         # Economic indicators

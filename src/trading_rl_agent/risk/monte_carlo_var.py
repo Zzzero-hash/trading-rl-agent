@@ -144,7 +144,7 @@ class MonteCarloVaR:
         self._calculate_correlation_matrix()
 
         self.logger.info(
-            f"Updated data with {len(self._returns_data)} observations for {len(self._returns_data.columns)} assets"
+            f"Updated data with {len(self._returns_data)} observations for {len(self._returns_data.columns)} assets",
         )
 
     def _calculate_covariance_matrix(self) -> None:
@@ -158,7 +158,9 @@ class MonteCarloVaR:
                 lw = LedoitWolf()
                 lw.fit(self._returns_data)
                 self._covariance_matrix = pd.DataFrame(
-                    lw.covariance_, index=self._returns_data.columns, columns=self._returns_data.columns
+                    lw.covariance_,
+                    index=self._returns_data.columns,
+                    columns=self._returns_data.columns,
                 )
             else:
                 # Standard sample covariance
@@ -453,7 +455,9 @@ class MonteCarloVaR:
         return np.random.normal(0, 1, (self.config.n_simulations, n_assets))
 
     def _calculate_simulated_portfolio_returns(
-        self, weights: dict[str, float], simulated_returns: np.ndarray
+        self,
+        weights: dict[str, float],
+        simulated_returns: np.ndarray,
     ) -> np.ndarray:
         """Calculate portfolio returns from simulated asset returns."""
         if self._returns_data is None:

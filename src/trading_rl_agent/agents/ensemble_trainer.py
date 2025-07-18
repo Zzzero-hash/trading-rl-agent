@@ -11,8 +11,9 @@ This module provides comprehensive training workflows for ensemble agents includ
 
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import torch
@@ -573,7 +574,7 @@ class EnsembleTrainer:
                                             agent_action = agent_action.flatten()
                                     except Exception as module_error:
                                         self.logger.debug(
-                                            f"RLModule API failed: {module_error}, falling back to compute_single_action"
+                                            f"RLModule API failed: {module_error}, falling back to compute_single_action",
                                         )
                                         agent_action, _, _ = agent.compute_single_action(obs)
                                 else:
@@ -678,7 +679,10 @@ class EnsembleTrainer:
                 agent_rewards_dict[agent_name].append(reward)
 
     def _log_training_progress(
-        self, iteration: int, agent_rewards: dict[str, float], ensemble_metrics: dict[str, float]
+        self,
+        iteration: int,
+        agent_rewards: dict[str, float],
+        ensemble_metrics: dict[str, float],
     ) -> None:
         """Log training progress with detailed metrics."""
         self.logger.info(
@@ -686,7 +690,7 @@ class EnsembleTrainer:
             f"Ensemble Reward: {ensemble_metrics.get('ensemble_reward', 0.0):.2f} ± "
             f"{ensemble_metrics.get('ensemble_std', 0.0):.2f}, "
             f"Diversity: {ensemble_metrics.get('diversity_score', 0.0):.3f}, "
-            f"Consensus: {ensemble_metrics.get('consensus_rate', 0.0):.3f}"
+            f"Consensus: {ensemble_metrics.get('consensus_rate', 0.0):.3f}",
         )
 
         # Log individual agent performance
@@ -761,7 +765,7 @@ class EnsembleTrainer:
                 "current_iteration": self.current_iteration,
                 "save_dir": str(self.save_dir),
                 "device": str(self.device),
-            }
+            },
         )
 
         return info

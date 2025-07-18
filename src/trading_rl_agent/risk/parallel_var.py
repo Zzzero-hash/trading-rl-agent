@@ -169,7 +169,9 @@ class ParallelVaRCalculator:
         return max(
             1,
             min(
-                n_simulations // self.config.chunk_size, max_sims_per_chunk // self.config.chunk_size, max_chunks_by_cpu
+                n_simulations // self.config.chunk_size,
+                max_sims_per_chunk // self.config.chunk_size,
+                max_chunks_by_cpu,
             ),
         )
 
@@ -187,7 +189,10 @@ class ParallelVaRCalculator:
         return chunk_sizes
 
     def _execute_parallel_chunks_process(
-        self, chunk_configs: list[MonteCarloVaRConfig], returns_data: pd.DataFrame, weights: dict[str, float]
+        self,
+        chunk_configs: list[MonteCarloVaRConfig],
+        returns_data: pd.DataFrame,
+        weights: dict[str, float],
     ) -> list[VaRResult]:
         """Execute VaR calculations using process pool."""
         if not self._process_executor:
@@ -212,7 +217,10 @@ class ParallelVaRCalculator:
         return chunk_results
 
     def _execute_parallel_chunks_thread(
-        self, chunk_configs: list[MonteCarloVaRConfig], returns_data: pd.DataFrame, weights: dict[str, float]
+        self,
+        chunk_configs: list[MonteCarloVaRConfig],
+        returns_data: pd.DataFrame,
+        weights: dict[str, float],
     ) -> list[VaRResult]:
         """Execute VaR calculations using thread pool."""
         if not self._thread_executor:
@@ -238,7 +246,9 @@ class ParallelVaRCalculator:
 
     @staticmethod
     def _calculate_chunk_var(
-        config: MonteCarloVaRConfig, returns_data: pd.DataFrame, weights: dict[str, float]
+        config: MonteCarloVaRConfig,
+        returns_data: pd.DataFrame,
+        weights: dict[str, float],
     ) -> VaRResult:
         """Calculate VaR for a single chunk (for parallel execution)."""
         var_calculator = MonteCarloVaR(config)
@@ -246,7 +256,9 @@ class ParallelVaRCalculator:
         return var_calculator.monte_carlo_var(weights)
 
     def _aggregate_chunk_results(
-        self, chunk_results: list[VaRResult], original_config: MonteCarloVaRConfig
+        self,
+        chunk_results: list[VaRResult],
+        original_config: MonteCarloVaRConfig,
     ) -> VaRResult:
         """Aggregate results from multiple chunks."""
         if not chunk_results:
@@ -342,7 +354,10 @@ class ParallelVaRCalculator:
 
     @staticmethod
     def _calculate_stress_scenario(
-        config: MonteCarloVaRConfig, returns_data: pd.DataFrame, weights: dict[str, float], scenario: str
+        config: MonteCarloVaRConfig,
+        returns_data: pd.DataFrame,
+        weights: dict[str, float],
+        scenario: str,
     ) -> tuple[str, VaRResult]:
         """Calculate VaR for a single stress scenario (for parallel execution)."""
         var_calculator = MonteCarloVaR(config)
@@ -400,7 +415,10 @@ class ParallelVaRCalculator:
 
     @staticmethod
     def _calculate_method_var(
-        config: MonteCarloVaRConfig, returns_data: pd.DataFrame, weights: dict[str, float], method: str
+        config: MonteCarloVaRConfig,
+        returns_data: pd.DataFrame,
+        weights: dict[str, float],
+        method: str,
     ) -> tuple[str, VaRResult]:
         """Calculate VaR using a specific method (for parallel execution)."""
         var_calculator = MonteCarloVaR(config)

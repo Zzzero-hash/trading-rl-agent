@@ -171,7 +171,7 @@ class LiveDataFeed:
                 [
                     news_sentiment,
                     social_sentiment,
-                ]
+                ],
             )
 
         except Exception:

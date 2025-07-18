@@ -90,7 +90,10 @@ class ModelEvaluator:
 
         # Split data
         X_train, X_test, y_train, y_test = train_test_split(
-            X_array, y_array, test_size=test_size, random_state=random_state
+            X_array,
+            y_array,
+            test_size=test_size,
+            random_state=random_state,
         )
 
         # Train model
@@ -112,7 +115,11 @@ class ModelEvaluator:
         return metrics
 
     def compare_models(
-        self, models: list[BaseSupervisedModel], X: np.ndarray | pd.DataFrame, y: np.ndarray | pd.Series, cv: int = 5
+        self,
+        models: list[BaseSupervisedModel],
+        X: np.ndarray | pd.DataFrame,
+        y: np.ndarray | pd.Series,
+        cv: int = 5,
     ) -> dict[str, dict[str, Any]]:
         """Compare multiple models using cross-validation.
 
@@ -177,7 +184,10 @@ class ModelEvaluator:
         raise ValueError("Could not find best model")
 
     def generate_report(
-        self, model: BaseSupervisedModel, X: np.ndarray | pd.DataFrame, y: np.ndarray | pd.Series
+        self,
+        model: BaseSupervisedModel,
+        X: np.ndarray | pd.DataFrame,
+        y: np.ndarray | pd.Series,
     ) -> str:
         """Generate a comprehensive evaluation report.
 

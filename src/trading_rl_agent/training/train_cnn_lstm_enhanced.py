@@ -179,7 +179,9 @@ class EnhancedCNNLSTMTrainer:
         return self.model
 
     def create_optimizer(
-        self, model: CNNLSTMModel | None = None, learning_rate: float | None = None
+        self,
+        model: CNNLSTMModel | None = None,
+        learning_rate: float | None = None,
     ) -> optim.Optimizer:
         if model is not None:
             self.model = model
@@ -193,7 +195,9 @@ class EnhancedCNNLSTMTrainer:
         return self._create_scheduler()
 
     def calculate_metrics(
-        self, predictions: np.ndarray | torch.Tensor, targets: np.ndarray | torch.Tensor
+        self,
+        predictions: np.ndarray | torch.Tensor,
+        targets: np.ndarray | torch.Tensor,
     ) -> dict[str, float]:
         # Accepts torch tensors or numpy arrays
         if isinstance(predictions, torch.Tensor):
@@ -517,7 +521,8 @@ class HyperparameterOptimizer:
         """Suggest model configuration."""
         return {
             "cnn_filters": trial.suggest_categorical(
-                "cnn_filters", [[32, 64], [64, 128], [32, 64, 128], [64, 128, 256]]
+                "cnn_filters",
+                [[32, 64], [64, 128], [32, 64, 128], [64, 128, 256]],
             ),
             "cnn_kernel_sizes": trial.suggest_categorical("cnn_kernel_sizes", [[3, 3], [5, 5], [3, 5], [3, 3, 3]]),
             "lstm_units": trial.suggest_int("lstm_units", 32, 512),

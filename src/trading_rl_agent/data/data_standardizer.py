@@ -51,7 +51,7 @@ class FeatureConfig:
             "adx_14",
             "wr_14",
             "obv",
-        ]
+        ],
     )
 
     # Candlestick patterns (binary features)
@@ -75,7 +75,7 @@ class FeatureConfig:
             "bearish_harami",
             "dark_cloud_cover",
             "piercing_line",
-        ]
+        ],
     )
 
     # Candlestick characteristics
@@ -90,7 +90,7 @@ class FeatureConfig:
             "rel_lower_shadow",
             "body_position",
             "body_type",
-        ]
+        ],
     )
 
     # Rolling averages of candlestick features
@@ -111,7 +111,7 @@ class FeatureConfig:
             "avg_lower_shadow_20",
             "avg_body_pos_20",
             "body_momentum_20",
-        ]
+        ],
     )
 
     # Sentiment features
@@ -122,7 +122,7 @@ class FeatureConfig:
 
     # Market regime features
     market_regime_features: list[str] = field(
-        default_factory=lambda: ["price_change_pct", "high_low_pct", "volume_ma_20", "volume_ratio", "volume_change"]
+        default_factory=lambda: ["price_change_pct", "high_low_pct", "volume_ma_20", "volume_ratio", "volume_change"],
     )
 
     # Target variable
@@ -267,7 +267,11 @@ class DataStandardizer:
             self.logger.warning("sklearn not available, skipping scaler fitting")
 
     def transform(
-        self, df: pd.DataFrame, is_training: bool = False, chunk_size: int = 5000, show_progress: bool = True
+        self,
+        df: pd.DataFrame,
+        is_training: bool = False,
+        chunk_size: int = 5000,
+        show_progress: bool = True,
     ) -> pd.DataFrame:
         """Transform data to standardized format, with chunked processing and progress reporting."""
         self.logger.info(f"Transforming data (training={is_training}) with chunk_size={chunk_size}...")
@@ -541,7 +545,9 @@ class LiveDataProcessor:
 
 
 def create_standardized_dataset(
-    df: pd.DataFrame, save_path: str | None = None, feature_config: FeatureConfig | None = None
+    df: pd.DataFrame,
+    save_path: str | None = None,
+    feature_config: FeatureConfig | None = None,
 ) -> tuple[pd.DataFrame, DataStandardizer]:
     """Create a standardized dataset with consistent features."""
 
@@ -581,7 +587,7 @@ def create_live_inference_processor(standardizer_path: str = "outputs/data_stand
         return LiveDataProcessor(standardizer)
     except FileNotFoundError as err:
         raise FileNotFoundError(
-            f"Standardizer not found at {standardizer_path}. Please run dataset building first."
+            f"Standardizer not found at {standardizer_path}. Please run dataset building first.",
         ) from err
     except Exception as err:
         raise RuntimeError(f"Failed to create live inference processor: {err}") from err

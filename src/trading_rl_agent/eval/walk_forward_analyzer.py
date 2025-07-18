@@ -706,7 +706,7 @@ class WalkForwardAnalyzer:
         ax.grid(True, alpha=0.3)
 
         # Add value labels on bars
-        for bar, corr in zip(bars, correlations):
+        for bar, corr in zip(bars, correlations, strict=False):
             height = bar.get_height()
             ax.text(
                 bar.get_x() + bar.get_width() / 2.0,
@@ -737,7 +737,7 @@ class WalkForwardAnalyzer:
         ax.grid(True, alpha=0.3)
 
         # Add value labels on bars
-        for bar, value in zip(bars, values):
+        for bar, value in zip(bars, values, strict=False):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width() / 2.0, height, f"{value:.3f}", ha="center", va="bottom")
 
@@ -784,7 +784,7 @@ class WalkForwardAnalyzer:
                     "inference_time": result.inference_time,
                 }
                 for result in self.window_results
-            ]
+            ],
         )
 
         results_df.to_csv(self.output_dir / "window_results.csv", index=False)

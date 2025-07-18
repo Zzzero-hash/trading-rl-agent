@@ -309,7 +309,10 @@ class AdvancedLRScheduler:
 
     @staticmethod
     def create_cosine_annealing_warm_restarts(
-        optimizer: optim.Optimizer, T_0: int = 10, T_mult: int = 2, eta_min: float = 0.0
+        optimizer: optim.Optimizer,
+        T_0: int = 10,
+        T_mult: int = 2,
+        eta_min: float = 0.0,
     ) -> optim.lr_scheduler.CosineAnnealingWarmRestarts:
         """Create cosine annealing with warm restarts."""
         return optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=T_0, T_mult=T_mult, eta_min=eta_min)
@@ -337,11 +340,19 @@ class AdvancedLRScheduler:
 
     @staticmethod
     def create_reduce_lr_on_plateau(
-        optimizer: optim.Optimizer, mode: str = "min", patience: int = 10, factor: float = 0.5, min_lr: float = 1e-7
+        optimizer: optim.Optimizer,
+        mode: str = "min",
+        patience: int = 10,
+        factor: float = 0.5,
+        min_lr: float = 1e-7,
     ) -> optim.lr_scheduler.ReduceLROnPlateau:
         """Create ReduceLROnPlateau scheduler."""
         return optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode=mode, patience=patience, factor=factor, min_lr=min_lr
+            optimizer,
+            mode=mode,
+            patience=patience,
+            factor=factor,
+            min_lr=min_lr,
         )
 
 
@@ -420,7 +431,7 @@ class OptimizedTrainingManager:
                     "avg_loss": f"{total_loss / (batch_idx + 1):.6f}",
                     "grad_norm": f"{step_metrics['grad_norm']:.4f}",
                     "lr": f"{step_metrics['lr']:.6f}",
-                }
+                },
             )
 
         # Calculate metrics
@@ -468,7 +479,7 @@ class OptimizedTrainingManager:
                     {
                         "loss": f"{step_metrics['loss']:.6f}",
                         "avg_loss": f"{total_loss / (batch_idx + 1):.6f}",
-                    }
+                    },
                 )
 
         # Calculate metrics
@@ -614,7 +625,9 @@ def create_optimized_trainer(
 
 
 def create_advanced_scheduler(
-    scheduler_type: str, optimizer: optim.Optimizer, **kwargs: Any
+    scheduler_type: str,
+    optimizer: optim.Optimizer,
+    **kwargs: Any,
 ) -> optim.lr_scheduler._LRScheduler:
     """Create an advanced learning rate scheduler."""
 
