@@ -147,7 +147,7 @@ class TestConsoleFunctions:
 
             assert "Strategy Comparison" in output
             assert "momentum" in output
-            assert "mean_reversi" in output  # Accept partial match due to truncation
+            assert "mean_reversion" in output
             assert "15.00%" in output  # formatted percentage
             assert "8.00%" in output  # formatted percentage
             assert "1.25" in output
