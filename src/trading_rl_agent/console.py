@@ -64,7 +64,7 @@ def print_table(
         return
 
     # Rich table with styling
-    table = Table(title=title, show_header=headers is not None)
+    table = Table(title=title, show_header=True)
 
     # Determine column widths automatically
     all_data = rows.copy()
@@ -88,14 +88,21 @@ def print_table(
     # Add columns with calculated widths
     if headers:
         for i, header in enumerate(headers):
+            # Ensure minimum width for headers, especially for metrics table
+            min_width = len(str(header)) + 2
+            # For metrics table, allow wider columns to prevent truncation
+            max_width = 80 if "strategy" in str(header).lower() else 50
             table.add_column(
                 header,
-                width=min(col_widths[i] + 2, 50),  # Add padding, cap at 50
+                width=max(min_width, min(col_widths[i] + 2, max_width)),  # Add padding, cap at max_width
                 style="cyan",
+                no_wrap=True if "strategy" in str(header).lower() else False,  # Prevent wrapping for strategy column
             )
     else:
         for i in range(len(rows[0])):
-            table.add_column(f"Col {i + 1}", width=min(col_widths[i] + 2, 50), style="cyan")
+            # Ensure minimum width for "Col X" headers
+            min_width = len(f"Col {i + 1}") + 2
+            table.add_column(f"Col {i + 1}", width=max(min_width, min(col_widths[i] + 2, 50)), style="cyan")
 
     # Add rows
     for row in rows:
@@ -151,8 +158,11 @@ def print_metrics_table(results: list[dict], title: str = "Results Summary") -> 
             value = result.get(header, "-")
             # Format percentages and numbers
             if isinstance(value, float):
-                if "ratio" in header.lower() or "rate" in header.lower() or "return" in header.lower():
+                if "return" in header.lower() or "rate" in header.lower():
                     row.append(f"{value:.2%}")
+                elif "ratio" in header.lower():
+                    # Ratios like Sharpe ratio should be decimal, not percentage
+                    row.append(f"{value:.2f}")
                 else:
                     row.append(f"{value:.2f}")
             else:
