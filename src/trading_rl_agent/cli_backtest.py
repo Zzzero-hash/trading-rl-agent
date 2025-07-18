@@ -242,7 +242,7 @@ def run(
                 console.print(f"[yellow]Warning: Could not save detailed report: {e}[/yellow]")
 
         # Export to CSV
-        if export_csv is not None and export_csv != typer.Option(None):
+        if export_csv is not None:
             try:
                 summary_df = pd.DataFrame(summary)
                 summary_df.to_csv(export_csv, index=False)
