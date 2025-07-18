@@ -1,219 +1,340 @@
-# Getting Started
+# Getting Started with Trading RL Agent
 
-Welcome to the Trading RL Agent! This guide will help you get up and running with the hybrid reinforcement learning trading system.
+This guide will help you get up and running with the Trading RL Agent, a production-grade hybrid reinforcement learning trading system.
 
-## 🚀 **Quick Installation**
+## 🚀 Quick Installation
 
-### **Prerequisites**
+### Prerequisites
 
-- Python 3.9 or higher
-- Git
-- Virtual environment (recommended)
+- **Python**: 3.9+ (3.12 recommended)
+- **Git**: For cloning the repository
+- **Docker**: Optional, for containerized deployment
+- **GPU**: Optional, for accelerated training (CUDA 11.8+)
 
-### **Installation Steps**
+### Step 1: Clone the Repository
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/trading-rl-agent.git
+git clone https://github.com/yourusername/trading-rl-agent.git
 cd trading-rl-agent
+```
 
+### Step 2: Set Up Environment
+
+Choose one of the following setup options:
+
+#### Option A: Full Setup (Recommended)
+
+```bash
+# Full production setup with all dependencies
+./setup-env.sh full
+```
+
+#### Option B: Core Setup (Fast)
+
+```bash
+# Core dependencies only
+./setup-env.sh core
+
+# Add ML dependencies later
+./setup-env.sh ml
+```
+
+#### Option C: Manual Setup
+
+```bash
 # Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# For development (optional)
+# For development
 pip install -r requirements.dev.txt
 ```
 
-## 🧪 **First Steps**
-
-### **1. Basic Data Loading**
-
-Start by loading some market data:
-
-```python
-from trading_rl_agent import ConfigManager
-from trading_rl_agent.data.robust_dataset_builder import RobustDatasetBuilder
-
-# Initialize configuration
-config = ConfigManager("configs/development.yaml")
-
-# Build dataset with features
-builder = RobustDatasetBuilder()
-dataset = builder.build_dataset(
-    symbols=["AAPL", "GOOGL", "MSFT"],
-    start_date="2023-01-01",
-    end_date="2024-01-01"
-)
-
-print(f"Dataset shape: {dataset.shape}")
-print(f"Features: {dataset.columns.tolist()}")
-```
-
-### **2. Using the CLI**
-
-The project provides a unified CLI interface:
+### Step 3: Verify Installation
 
 ```bash
-# Generate synthetic data
-python cli.py generate-data configs/finrl_synthetic_data.yaml --synthetic
+# Test basic import
+python -c "import trading_rl_agent; print('✅ Package imported successfully')"
 
-# Train CNN+LSTM model
-python cli.py train cnn-lstm configs/cnn_lstm_training.yaml
+# Check CLI
+python main.py version
 
-# Run backtest
-python cli.py backtest data/price_data.csv --policy "lambda p: 'buy' if p > 100 else 'sell'"
+# Show system info
+python main.py info
 ```
 
-### **3. Feature Engineering**
+## 🎯 First Steps
 
-Explore the comprehensive feature engineering capabilities:
+### 1. Download Market Data
 
-```python
-from trading_rl_agent.data.features import FeatureEngineer
+```bash
+# Download data for popular stocks
+python main.py data download --symbols "AAPL,GOOGL,MSFT" --start 2023-01-01
 
-# Initialize feature engineer
-engineer = FeatureEngineer()
+# Download forex data
+python main.py data download --symbols "EURUSD=X,GBPUSD=X" --start 2023-01-01
 
-# Add technical indicators
-features = engineer.add_technical_indicators(
-    data=dataset,
-    indicators=["sma", "ema", "rsi", "macd", "bollinger_bands"]
-)
-
-# Add temporal features
-features = engineer.add_temporal_features(features)
-
-print(f"Enhanced dataset shape: {features.shape}")
+# Download with custom parameters
+python main.py data download \
+    --symbols "AAPL,GOOGL,MSFT" \
+    --start 2023-01-01 \
+    --end 2024-01-01 \
+    --timeframe "1d" \
+    --output data/market_data
 ```
 
-## 📊 **Configuration**
+### 2. Process and Build Datasets
 
-The system uses YAML-based configuration files:
+```bash
+# Process downloaded data into training datasets
+python main.py data process --force
+
+# Standardize data for consistent training
+python main.py data standardize --method robust
+
+# Build complete pipeline
+python main.py data pipeline
+```
+
+### 3. Train Your First Model
+
+#### CNN+LSTM Model
+
+```bash
+# Basic training
+python main.py train cnn-lstm --epochs 100 --output models/cnn_lstm
+
+# With GPU acceleration
+python main.py train cnn-lstm \
+    --epochs 100 \
+    --gpu \
+    --mixed-precision \
+    --output models/cnn_lstm_gpu
+
+# With custom parameters
+python main.py train cnn-lstm \
+    --epochs 200 \
+    --batch-size 64 \
+    --learning-rate 0.001 \
+    --output models/cnn_lstm_custom
+```
+
+#### Reinforcement Learning Agent
+
+```bash
+# Train PPO agent
+python main.py train rl --agent-type ppo --timesteps 1000000
+
+# Train SAC agent
+python main.py train rl --agent-type sac --timesteps 1000000
+
+# Train with Ray cluster
+python main.py train rl \
+    --agent-type ppo \
+    --timesteps 1000000 \
+    --ray-address "ray://localhost:10001" \
+    --num-workers 4
+```
+
+### 4. Evaluate Your Models
+
+```bash
+# Evaluate CNN+LSTM model
+python main.py evaluate models/cnn_lstm/best_model.pth --data data/test_data.csv
+
+# Run backtesting
+python main.py backtest strategy \
+    --data data/historical_data.csv \
+    --model models/agent.zip \
+    --initial-capital 10000
+
+# Compare multiple models
+python main.py backtest compare \
+    --models "models/model1.pth,models/model2.pth" \
+    --data data/test_data.csv
+```
+
+### 5. Run Paper Trading
+
+```bash
+# Start paper trading session
+python main.py trade start \
+    --symbols "AAPL,GOOGL" \
+    --paper-trading \
+    --initial-capital 100000
+
+# Monitor trading session
+python main.py trade monitor --session-id <session_id>
+
+# Stop trading session
+python main.py trade stop --session-id <session_id>
+```
+
+## 📊 Understanding the Results
+
+### Model Performance Metrics
+
+The system provides comprehensive performance metrics:
+
+- **Returns**: Total return, annualized return, Sharpe ratio
+- **Risk Metrics**: VaR, CVaR, maximum drawdown, volatility
+- **Trading Metrics**: Win rate, profit factor, average trade
+- **Risk-Adjusted Metrics**: Sortino ratio, Calmar ratio, information ratio
+
+### Backtesting Results
+
+Backtesting provides detailed analysis including:
+
+- Equity curve and drawdown analysis
+- Trade-by-trade breakdown
+- Risk metrics and performance attribution
+- Transaction cost analysis
+
+## 🔧 Configuration
+
+### Basic Configuration
+
+The system uses YAML-based configuration. Create a `config.yaml` file:
 
 ```yaml
-# configs/development.yaml
-environment: development
-debug: true
-
+# Data configuration
 data:
-  data_sources:
-    primary: yfinance
-    backup: alpha_vantage
-  feature_window: 50
   symbols: ["AAPL", "GOOGL", "MSFT"]
+  start_date: "2023-01-01"
+  end_date: "2024-01-01"
+  timeframe: "1d"
+  source: "yfinance"
 
-training:
-  cnn_lstm:
+# Model configuration
+model:
+  type: "cnn_lstm"
+  architecture:
+    cnn_layers: [32, 64, 128]
+    lstm_units: 128
+    dense_layers: [64, 32]
+  training:
     epochs: 100
     batch_size: 32
     learning_rate: 0.001
-    early_stopping_patience: 10
+
+# Risk management
+risk:
+  max_position_size: 0.1
+  stop_loss: 0.02
+  take_profit: 0.04
+  max_drawdown: 0.15
 ```
 
-## 🧠 **CNN+LSTM Models**
+### Environment Variables
 
-Work with the hybrid neural network models:
+Set important environment variables:
 
-```python
-from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
+```bash
+# API keys (if using premium data sources)
+export ALPHA_VANTAGE_API_KEY="your_key_here"
+export YAHOO_FINANCE_API_KEY="your_key_here"
 
-# Initialize model
-model = CNNLSTMModel(
-    input_dim=50,  # Number of features
-    config={
-        "cnn_filters": [32, 64, 128],
-        "lstm_units": 256,
-        "dropout_rate": 0.2,
-        "uncertainty_estimation": True
-    }
-)
+# Logging
+export LOG_LEVEL="INFO"
+export LOG_FILE="trading_rl_agent.log"
 
-print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
+# Ray configuration
+export RAY_ADDRESS="ray://localhost:10001"
+export RAY_DISABLE_IMPORT_WARNING=1
 ```
 
-## 🧪 **Testing Your Setup**
+## 🧪 Testing Your Setup
 
-Run the test suite to verify your installation:
+### Run the Test Suite
 
 ```bash
 # Run all tests
-pytest tests/ -v
+python -m pytest
 
 # Run specific test categories
-pytest -m unit          # Unit tests
-pytest -m integration   # Integration tests
+python -m pytest tests/unit/
+python -m pytest tests/integration/
 
-# Check code quality
-ruff check src/ tests/
-mypy src/
+# Run with coverage
+python -m pytest --cov=trading_rl_agent --cov-report=html
 ```
 
-## 📚 **Next Steps**
-
-### **For Data Scientists**
-
-- Explore the [Feature Engineering](../src/trading_rl_agent/features/) module
-- Study the [CNN+LSTM Models](../src/trading_rl_agent/models/) architecture
-- Review the [Data Pipeline](../src/trading_rl_agent/data/) implementation
-
-### **For Developers**
-
-- Check out the [Development Guide](DEVELOPMENT_GUIDE.md)
-- Review the [Contributing Guide](../CONTRIBUTING.md)
-- Explore the [Test Suite](../tests/)
-
-### **For Researchers**
-
-- Examine the [Model Architectures](../src/trading_rl_agent/models/)
-- Review the [Training Pipeline](../src/training/)
-- Study the [Evaluation Framework](../src/evaluation/)
-
-## 🆘 **Troubleshooting**
-
-### **Common Issues**
-
-**Import Errors**: Make sure you're in the virtual environment and have installed all dependencies:
+### Quick Validation
 
 ```bash
-source venv/bin/activate
-pip install -r requirements.txt
+# Test data download
+python main.py data download --symbols "AAPL" --start 2024-01-01 --end 2024-01-10
+
+# Test model training (small scale)
+python main.py train cnn-lstm --epochs 5 --output test_models/
+
+# Test backtesting
+python main.py backtest strategy --data data/AAPL_2024.csv --initial-capital 1000
 ```
 
-**Configuration Errors**: Check that your config files are valid YAML:
+## 🚨 Troubleshooting
+
+### Common Issues
+
+#### 1. Import Errors
 
 ```bash
-python -c "import yaml; yaml.safe_load(open('configs/development.yaml'))"
+# Ensure you're in the correct environment
+source .venv/bin/activate  # or conda activate trading-rl-agent
+
+# Reinstall dependencies
+pip install -r requirements.txt --force-reinstall
 ```
 
-**Data Loading Issues**: Verify your data sources are accessible:
+#### 2. Ray Compatibility Issues
 
-```python
-import yfinance as yf
-data = yf.download("AAPL", start="2023-01-01", end="2024-01-01")
-print(data.head())
+```bash
+# Use sequential processing instead of Ray
+python main.py data download --symbols "AAPL" --parallel false
+
+# Or update Ray version
+pip install "ray[default]>=2.8.0"
 ```
 
-### **Getting Help**
+#### 3. GPU Issues
 
-- **Documentation**: Check the [API Reference](../src/) for detailed information
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/your-org/trading-rl-agent/issues)
-- **Examples**: See [examples.md](examples.md) for working code examples
+```bash
+# Check CUDA installation
+python -c "import torch; print(torch.cuda.is_available())"
 
-## 🎯 **What's Next?**
+# Use CPU-only mode
+python main.py train cnn-lstm --gpu false
+```
 
-Now that you're set up, you can:
+#### 4. Data Download Issues
 
-1. **Explore the Data Pipeline**: Build custom datasets with different features
-2. **Train CNN+LSTM Models**: Experiment with different architectures
-3. **Develop RL Agents**: Implement and train reinforcement learning agents
-4. **Contribute**: Help improve the project by contributing code or documentation
+```bash
+# Check internet connection
+python -c "import yfinance; print(yfinance.download('AAPL', period='1d'))"
 
-Check out the [TODO.md](../TODO.md) file to see what features are planned and in progress.
+# Use different data source
+python main.py data download --source "alpha_vantage" --symbols "AAPL"
+```
+
+### Getting Help
+
+- **Documentation**: Check the [main documentation](index.md)
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/yourusername/trading-rl-agent/issues)
+- **Discussions**: Join community discussions for questions
+
+## 🎯 Next Steps
+
+Now that you have the basic setup working, explore:
+
+1. **[Advanced Training](enhanced_training_guide.md)** - Optimize your models
+2. **[Risk Management](RISK_ALERT_SYSTEM.md)** - Implement proper risk controls
+3. **[Live Trading](examples.md#live-trading)** - Deploy to production
+4. **[Ensemble Methods](ENSEMBLE_SYSTEM_GUIDE.md)** - Combine multiple models
+5. **[Custom Strategies](examples.md)** - Build your own trading strategies
 
 ---
 
-**Happy trading! 🚀**
+_Happy trading! 🚀_

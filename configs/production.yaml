@@ -1,29 +1,76 @@
+# Trading RL Agent - Default Configuration
+
 environment: production
 debug: false
 
 data:
   data_sources:
-    primary: alpaca
-    backup: yfinance
-  real_time_enabled: true
+    primary: yfinance
+    backup: null
+  data_path: data/
+  cache_enabled: true
+  cache_ttl: 3600
   feature_window: 50
+  technical_indicators: true
+  alternative_data: false
+  real_time_enabled: false
+  update_frequency: 60
+
+model:
+  cnn_filters: [32, 64, 128]
+  cnn_kernel_size: 3
+  lstm_units: 256
+  lstm_layers: 2
+  dropout_rate: 0.2
+  batch_normalization: true
+  batch_size: 32
+  learning_rate: 0.001
+  epochs: 100
+  early_stopping_patience: 10
+  model_save_path: models/
+  checkpoint_frequency: 10
 
 agent:
   agent_type: sac
-  ensemble_size: 3
+  sac_learning_rate: 0.0003
+  sac_buffer_size: 1000000
+  sac_tau: 0.005
+  sac_gamma: 0.99
+  sac_alpha: 0.2
   total_timesteps: 1000000
+  eval_frequency: 10000
+  save_frequency: 50000
 
 risk:
   max_position_size: 0.1
   max_leverage: 1.0
+  max_drawdown: 0.1
   var_confidence_level: 0.05
+  var_time_horizon: 1
+  kelly_fraction: 0.25
+  risk_per_trade: 0.02
 
 execution:
   broker: alpaca
   paper_trading: false
   order_timeout: 60
+  max_slippage: 0.001
+  commission_rate: 0.0
+  execution_frequency: 5
+  market_hours_only: true
 
 monitoring:
-  mlflow_enabled: true
-  alerts_enabled: true
+  log_level: INFO
+  log_file: logs/trading_system.log
+  structured_logging: true
+  metrics_enabled: true
   metrics_frequency: 300
+  alerts_enabled: true
+  email_alerts: false
+  slack_alerts: false
+  mlflow_enabled: false
+  mlflow_tracking_uri: http://localhost:5000
+
+use_gpu: false
+max_workers: 4
+memory_limit: 8GB
