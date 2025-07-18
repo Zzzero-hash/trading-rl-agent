@@ -136,6 +136,8 @@ class FactorModel:
                 continue
         
         self.factor_loadings = pd.DataFrame(loadings).T
+        if self.factors is None or not hasattr(self.factors, 'columns'):
+            raise ValueError("self.factors must be a DataFrame with valid columns before calculating factor loadings.")
         self.factor_loadings.columns = self.factors.columns
         self.residuals = pd.DataFrame(residuals).T
         self.r_squared = pd.Series(r_squared)
