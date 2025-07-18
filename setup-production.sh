@@ -34,26 +34,49 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Function to check if running as root
+is_root() {
+    [ "$(id -u)" -eq 0 ]
+}
+
+# Function to get package manager
+get_package_manager() {
+    if command_exists apt-get; then
+        echo "apt"
+    elif command_exists yum; then
+        echo "yum"
+    elif command_exists dnf; then
+        echo "dnf"
+    elif command_exists pacman; then
+        echo "pacman"
+    elif command_exists zypper; then
+        echo "zypper"
+    else
+        echo "unknown"
+    fi
+}
+
 # Function to check Python version
 check_python_version() {
     print_status "Checking Python version..."
 
-    if command_exists python3; then
-        python_version=$(python3 --version 2>&1 | cut -d' ' -f2)
-        major_version=$(echo $python_version | cut -d'.' -f1)
-        minor_version=$(echo $python_version | cut -d'.' -f2)
+    # Try multiple Python commands
+    for python_cmd in python3.12 python3.11 python3.10 python3.9 python3; do
+        if command_exists "$python_cmd"; then
+            python_version=$("$python_cmd" --version 2>&1 | cut -d' ' -f2)
+            major_version=$(echo "$python_version" | cut -d'.' -f1)
+            minor_version=$(echo "$python_version" | cut -d'.' -f2)
 
-        if [ "$major_version" -eq 3 ] && [ "$minor_version" -ge 9 ]; then
-            print_success "Python $python_version is supported"
-            return 0
-        else
-            print_error "Python 3.9+ required, found $python_version"
-            return 1
+            if [ "$major_version" -eq 3 ] && [ "$minor_version" -ge 9 ]; then
+                print_success "Python $python_version is supported"
+                PYTHON_CMD="$python_cmd"
+                return 0
+            fi
         fi
-    else
-        print_error "Python3 not found. Please install Python 3.9 or higher."
-        return 1
-    fi
+    done
+
+    print_error "Python 3.9+ not found. Please install Python 3.9 or higher."
+    return 1
 }
 
 # Function to setup Python virtual environment
@@ -67,7 +90,7 @@ setup_virtual_env() {
     fi
 
     # Create new virtual environment
-    python3 -m venv venv
+    "$PYTHON_CMD" -m venv venv
 
     # Activate virtual environment
     source venv/bin/activate
@@ -85,9 +108,12 @@ install_core_dependencies() {
     # Install production requirements
     if [ -f "requirements-production.txt" ]; then
         pip install -r requirements-production.txt
-    else
+    elif [ -f "requirements.txt" ]; then
         print_warning "requirements-production.txt not found, installing basic requirements..."
         pip install -r requirements.txt
+    else
+        print_error "No requirements file found. Please create requirements.txt or requirements-production.txt"
+        return 1
     fi
 
     print_success "Core dependencies installed"
@@ -117,39 +143,82 @@ install_optional_dependencies() {
     esac
 }
 
-# Function to install system dependencies (Linux/Ubuntu)
+# Function to install system dependencies (cross-platform)
 install_system_dependencies() {
     print_status "Checking system dependencies..."
 
-    if command_exists apt-get; then
-        print_status "Installing system dependencies via apt-get..."
+    local pkg_manager=$(get_package_manager)
+    local install_cmd=""
+    local update_cmd=""
 
-        # Update package list
-        sudo apt-get update
+    case $pkg_manager in
+        "apt")
+            install_cmd="apt-get install -y"
+            update_cmd="apt-get update"
+            ;;
+        "yum")
+            install_cmd="yum install -y"
+            update_cmd="yum update -y"
+            ;;
+        "dnf")
+            install_cmd="dnf install -y"
+            update_cmd="dnf update -y"
+            ;;
+        "pacman")
+            install_cmd="pacman -S --noconfirm"
+            update_cmd="pacman -Sy"
+            ;;
+        "zypper")
+            install_cmd="zypper install -y"
+            update_cmd="zypper refresh"
+            ;;
+        *)
+            print_warning "Unsupported package manager. Please install system dependencies manually."
+            return 0
+            ;;
+    esac
 
-        # Install essential build tools
-        sudo apt-get install -y \
-            build-essential \
-            cmake \
-            git \
-            curl \
-            wget \
-            unzip \
-            pkg-config
-
-
-        # Install Redis (for caching)
-        sudo apt-get install -y redis-server
-
-        # Install PostgreSQL (for data storage)
-        sudo apt-get install -y postgresql postgresql-contrib
-
-        print_success "System dependencies installed"
-    else
-        print_warning "apt-get not available. Please install system dependencies manually."
+    # Check if we need sudo
+    local sudo_prefix=""
+    if ! is_root && command_exists sudo; then
+        sudo_prefix="sudo"
+    elif ! is_root; then
+        print_warning "Not running as root and sudo not available. Some system dependencies may fail."
     fi
-}
 
+    # Update package list
+    print_status "Updating package list..."
+    $sudo_prefix $update_cmd || print_warning "Package list update failed, continuing..."
+
+    # Install essential build tools
+    print_status "Installing essential build tools..."
+    $sudo_prefix $install_cmd build-essential cmake git curl wget unzip pkg-config || {
+        print_warning "Some build tools installation failed, continuing..."
+    }
+
+    # Try to install Redis (optional)
+    print_status "Installing Redis (optional)..."
+    $sudo_prefix $install_cmd redis-server 2>/dev/null || print_warning "Redis installation failed or not available"
+
+    # Try to install PostgreSQL (optional)
+    print_status "Installing PostgreSQL (optional)..."
+    case $pkg_manager in
+        "apt")
+            $sudo_prefix $install_cmd postgresql postgresql-contrib 2>/dev/null || print_warning "PostgreSQL installation failed"
+            ;;
+        "yum"|"dnf")
+            $sudo_prefix $install_cmd postgresql postgresql-server 2>/dev/null || print_warning "PostgreSQL installation failed"
+            ;;
+        "pacman")
+            $sudo_prefix $install_cmd postgresql 2>/dev/null || print_warning "PostgreSQL installation failed"
+            ;;
+        *)
+            print_warning "PostgreSQL installation not configured for this package manager"
+            ;;
+    esac
+
+    print_success "System dependencies installation completed"
+}
 
 # Function to setup configuration files
 setup_configurations() {
@@ -160,7 +229,7 @@ setup_configurations() {
 
     # Create default configuration if it doesn't exist
     if [ ! -f "configs/config.yaml" ]; then
-        cat > configs/config.yaml << EOF
+        cat > configs/config.yaml << 'EOF'
 # Trading RL Agent - Default Configuration
 
 environment: development
@@ -283,7 +352,7 @@ setup_pre_commit() {
     if command_exists pre-commit; then
         # Create .pre-commit-config.yaml if it doesn't exist
         if [ ! -f ".pre-commit-config.yaml" ]; then
-            cat > .pre-commit-config.yaml << EOF
+            cat > .pre-commit-config.yaml << 'EOF'
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
