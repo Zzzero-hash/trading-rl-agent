@@ -122,8 +122,8 @@ def run(
     start_date: str | None = typer.Option(None, "--start", help="Start date (YYYY-MM-DD)"),
     end_date: str | None = typer.Option(None, "--end", help="End date (YYYY-MM-DD)"),
     symbols: str | None = typer.Option(None, "--symbols", help="Comma-separated list of symbols"),
-    export_csv: Path | None = typer.Option(DEFAULT_EXPORT_CSV, "--export-csv", help="Export summary metrics to CSV"),  # noqa: B008
-    config_file: Path | None = typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file"),  # noqa: B008
+    export_csv: Path | None = typer.Option(None, "--export-csv", help="Export summary metrics to CSV"),  # noqa: B008
+    config_file: Path | None = typer.Option(None, "--config", "-c", help="Path to config file"),  # noqa: B008
     initial_capital: float | None = None,
     commission_rate: float | None = None,
     slippage_rate: float | None = None,
@@ -257,14 +257,20 @@ def batch(
         help="Comma-separated list of periods as start:end (e.g. 2023-01-01:2023-06-01,2023-06-02:2023-12-31)",
     ),
     symbols: str | None = None,
-    export_csv: Path | None = typer.Option(DEFAULT_EXPORT_CSV, "--export-csv", help="Export summary metrics to CSV"),  # noqa: B008
-    config_file: Path | None = typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file"),  # noqa: B008
+    export_csv: Path | None = typer.Option(None, "--export-csv", help="Export summary metrics to CSV"),  # noqa: B008
+    config_file: Path | None = typer.Option(None, "--config", "-c", help="Path to config file"),  # noqa: B008
     initial_capital: float | None = None,
 ) -> None:
     """
     Run multiple strategies over a grid of periods and print summary metrics.
     """
     try:
+        # Handle defaults
+        if export_csv is None:
+            export_csv = DEFAULT_EXPORT_CSV
+        if config_file is None:
+            config_file = DEFAULT_CONFIG_FILE
+
         # Load settings
         settings = load_settings(config_path=config_file) if config_file else get_settings()
 
@@ -368,7 +374,7 @@ def compare(
     start_date: str | None = typer.Option(None, "--start", help="Start date (YYYY-MM-DD)"),
     end_date: str | None = typer.Option(None, "--end", help="End date (YYYY-MM-DD)"),
     symbols: str | None = typer.Option(None, "--symbols", help="Comma-separated list of symbols"),
-    config_file: Path | None = typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file"),  # noqa: B008
+    config_file: Path | None = typer.Option(None, "--config", "-c", help="Path to config file"),  # noqa: B008
     output_dir: Path | None = None,
 ) -> None:
     """

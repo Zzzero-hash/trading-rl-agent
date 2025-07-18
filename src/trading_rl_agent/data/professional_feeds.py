@@ -101,9 +101,19 @@ class ProfessionalDataProvider:
         if not ALPACA_AVAILABLE:
             raise ImportError("Alpaca Trade API required: pip install alpaca-trade-api")
 
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
-        base_url = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+        # Try to get configuration from the unified config system first
+        try:
+            from ..core.unified_config import UnifiedConfig
+
+            config = UnifiedConfig()
+            api_key = config.alpaca_api_key
+            secret_key = config.alpaca_secret_key
+            base_url = config.alpaca_base_url or "https://paper-api.alpaca.markets"
+        except Exception:
+            # Fallback to direct environment variable access
+            api_key = os.getenv("ALPACA_API_KEY")
+            secret_key = os.getenv("ALPACA_SECRET_KEY")
+            base_url = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
 
         if not api_key or not secret_key:
             raise ValueError(
@@ -138,7 +148,16 @@ class ProfessionalDataProvider:
         if not ALPHA_VANTAGE_AVAILABLE:
             raise ImportError("Alpha Vantage required: pip install alpha-vantage")
 
-        api_key = os.getenv("ALPHA_VANTAGE_KEY")
+        # Try to get configuration from the unified config system first
+        try:
+            from ..core.unified_config import UnifiedConfig
+
+            config = UnifiedConfig()
+            api_key = config.alphavantage_api_key
+        except Exception:
+            # Fallback to direct environment variable access
+            api_key = os.getenv("ALPHA_VANTAGE_KEY")
+
         if not api_key:
             raise ValueError("Alpha Vantage API key required. Set ALPHA_VANTAGE_KEY environment variable.")
 

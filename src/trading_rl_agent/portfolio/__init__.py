@@ -10,6 +10,18 @@ Provides sophisticated portfolio management capabilities including:
 - Advanced performance attribution analysis
 """
 
+from .attribution import (
+    AttributionConfig,
+    AttributionVisualizer,
+    BrinsonAttributor,
+    FactorModel,
+    PerformanceAttributor,
+    RiskAdjustedAttributor,
+)
+from .attribution_integration import (
+    AttributionIntegration,
+    AutomatedAttributionWorkflow,
+)
 from .manager import PortfolioConfig, PortfolioManager, Position
 from .transaction_costs import (
     AdaptiveImpactModel,
@@ -33,18 +45,6 @@ from .transaction_costs import (
     TransactionCostModel,
     VolumeBasedSlippageModel,
 )
-from .attribution import (
-    AttributionConfig,
-    AttributionVisualizer,
-    BrinsonAttributor,
-    FactorModel,
-    PerformanceAttributor,
-    RiskAdjustedAttributor,
-)
-from .attribution_integration import (
-    AttributionIntegration,
-    AutomatedAttributionWorkflow,
-)
 
 __all__ = [
     "AdaptiveImpactModel",
@@ -65,8 +65,8 @@ __all__ = [
     "MarketData",
     "OrderType",
     "PartialFillModel",
-    "PerformanceAttributor",
     "PerShareCommission",
+    "PerformanceAttributor",
     "PortfolioConfig",
     "PortfolioManager",
     "Position",
