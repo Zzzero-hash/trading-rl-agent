@@ -1,8 +1,15 @@
 """
-Feature engineering utilities for trading data pipelines.
+Feature generation for financial time series data.
+
+This module provides functions for generating technical indicators and features
+from financial time series data.
 """
 
+# Monkey patch for pandas_ta numpy compatibility
 import numpy as np
+if not hasattr(np, 'NaN'):
+    np.NaN = np.nan
+
 import pandas as pd
 import pandas_ta as ta
 
