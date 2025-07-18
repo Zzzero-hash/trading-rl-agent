@@ -81,35 +81,52 @@ def main(
     Provides commands to start, stop, and monitor live trading sessions
     with support for paper trading and real money trading.
     """
-    if config_file is None:
-        config_file = typer.Option(None, "--config", "-c", help="Path to configuration file")
-    if verbose is None:
-        verbose = typer.Option(
-            0, "--verbose", "-v", count=True, help="Increase verbosity (use multiple times for more detail)"
-        )
-    if env_file is None:
-        env_file = typer.Option(None, "--env-file", help="Path to environment file (.env)")
+    # Handle potential typer.OptionInfo objects by converting to appropriate types or None
+    resolved_config_file = None
+    resolved_verbose = 0
+    resolved_env_file = None
+
+    if config_file is not None:
+        # Check if it's an OptionInfo object and extract the value
+        if hasattr(config_file, "default"):
+            resolved_config_file = None  # OptionInfo with None default
+        else:
+            resolved_config_file = config_file
+
+    if verbose is not None:
+        # Check if it's an OptionInfo object and extract the value
+        if hasattr(verbose, "default"):
+            resolved_verbose = verbose.default  # OptionInfo with default value
+        else:
+            resolved_verbose = verbose
+
+    if env_file is not None:
+        # Check if it's an OptionInfo object and extract the value
+        if hasattr(env_file, "default"):
+            resolved_env_file = None  # OptionInfo with None default
+        else:
+            resolved_env_file = env_file
 
     global verbose_count, _settings
 
     # Set global verbose count
-    verbose_count = verbose or 0
+    verbose_count = resolved_verbose
 
     # Setup logging
     log_level = get_log_level()
     setup_logging(log_level=log_level)
 
     # Load environment file if provided
-    if env_file:
-        if not env_file.exists():
-            console.print(f"[red]Environment file not found: {env_file}[/red]")
+    if resolved_env_file:
+        if not resolved_env_file.exists():
+            console.print(f"[red]Environment file not found: {resolved_env_file}[/red]")
             raise typer.Exit(1)
 
         try:
             from dotenv import load_dotenv
 
-            load_dotenv(env_file)
-            console.print(f"[green]Loaded environment from: {env_file}[/green]")
+            load_dotenv(resolved_env_file)
+            console.print(f"[green]Loaded environment from: {resolved_env_file}[/green]")
         except ImportError:
             console.print("[yellow]python-dotenv not installed, skipping .env file[/yellow]")
         except Exception as e:
@@ -117,14 +134,14 @@ def main(
             raise typer.Exit(1) from e
 
     # Load configuration if provided
-    if config_file:
-        if not config_file.exists():
-            console.print(f"[red]Configuration file not found: {config_file}[/red]")
+    if resolved_config_file:
+        if not resolved_config_file.exists():
+            console.print(f"[red]Configuration file not found: {resolved_config_file}[/red]")
             raise typer.Exit(1)
 
         try:
-            _settings = load_settings(config_path=config_file, env_file=env_file)
-            console.print(f"[green]Loaded configuration from: {config_file}[/green]")
+            _settings = load_settings(config_path=resolved_config_file, env_file=resolved_env_file)
+            console.print(f"[green]Loaded configuration from: {resolved_config_file}[/green]")
         except Exception as e:
             console.print(f"[red]Failed to load configuration: {e}[/red]")
             raise typer.Exit(1) from e

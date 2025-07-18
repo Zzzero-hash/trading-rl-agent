@@ -24,7 +24,30 @@ try:
 
     EMPYRICAL_AVAILABLE = True
 except ImportError:
-    EMPYRICAL_AVAILABLE = False
+    from ..utils.empyrical_mock import (
+        beta,
+        calmar_ratio,
+        conditional_value_at_risk,
+        max_drawdown,
+        sharpe_ratio,
+        sortino_ratio,
+        value_at_risk,
+    )
+
+    empyrical = type(
+        "MockEmpyrical",
+        (),
+        {
+            "sharpe_ratio": sharpe_ratio,
+            "max_drawdown": max_drawdown,
+            "sortino_ratio": sortino_ratio,
+            "calmar_ratio": calmar_ratio,
+            "value_at_risk": value_at_risk,
+            "conditional_value_at_risk": conditional_value_at_risk,
+            "beta": beta,
+        },
+    )()
+    EMPYRICAL_AVAILABLE = True
 
 from ..core.logging import get_logger
 from .transaction_costs import (
@@ -582,9 +605,9 @@ class PortfolioManager:
             "recommendations": recommendations,
             "total_potential_savings": total_potential_savings,
             "current_total_costs": current_total_costs,
-            "savings_percentage": (total_potential_savings / current_total_costs * 100)
-            if current_total_costs > 0
-            else 0,
+            "savings_percentage": (
+                (total_potential_savings / current_total_costs * 100) if current_total_costs > 0 else 0
+            ),
             "implementation_priority": sorted(
                 recommendations,
                 key=lambda x: {"critical": 4, "high": 3, "medium": 2, "low": 1}.get(x.priority, 0),

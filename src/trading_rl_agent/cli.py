@@ -311,9 +311,13 @@ def download_all(
         source = source or settings.data.primary_source
         timeframe = timeframe or settings.data.timeframe
 
+        # Resolve date values before printing
+        resolved_start_date = start_date or settings.data.start_date
+        resolved_end_date = end_date or settings.data.end_date
+
         console.print("[green]Starting download of all configured datasets[/green]")
         console.print(f"[cyan]Symbols: {', '.join(symbols)}[/cyan]")
-        console.print(f"[cyan]Date range: {start_date} to {end_date}[/cyan]")
+        console.print(f"[cyan]Date range: {resolved_start_date} to {resolved_end_date}[/cyan]")
         console.print(f"[cyan]Source: {source}[/cyan]")
         console.print(f"[cyan]Timeframe: {timeframe}[/cyan]")
         console.print(f"[cyan]Output: {output_dir}[/cyan]")
@@ -329,8 +333,8 @@ def download_all(
             console.print("[yellow]Using parallel data fetching...[/yellow]")
             data_dict = fetch_data_parallel(
                 symbols=symbols,
-                start_date=start_date or settings.data.start_date,
-                end_date=end_date or settings.data.end_date,
+                start_date=resolved_start_date,
+                end_date=resolved_end_date,
                 interval=timeframe,
                 cache_dir=str(output_dir / "cache"),
                 max_workers=settings.infrastructure.max_workers,
@@ -339,8 +343,8 @@ def download_all(
             console.print("[yellow]Using sequential data fetching...[/yellow]")
             data_dict = fetch_data_with_retry(
                 symbols=symbols,
-                start_date=start_date or settings.data.start_date,
-                end_date=end_date or settings.data.end_date,
+                start_date=resolved_start_date,
+                end_date=resolved_end_date,
                 interval=timeframe,
                 cache_dir=str(output_dir / "cache"),
                 max_retries=3,
@@ -358,7 +362,7 @@ def download_all(
                 console.print(f"[green]✓ {symbol}: {rows:,} rows[/green]")
 
                 # Save to output directory
-                output_file = output_dir / f"{symbol}_{start_date}_{end_date}_{timeframe}.parquet"
+                output_file = output_dir / f"{symbol}_{resolved_start_date}_{resolved_end_date}_{timeframe}.parquet"
                 data.to_parquet(output_file)
                 console.print(f"[blue]  Saved to: {output_file}[/blue]")
             else:
@@ -401,15 +405,15 @@ def symbols(
             symbol_list = [s.strip() for s in symbols.split(",")]
 
         # Use config values with CLI overrides
-        start_date = start_date or settings.data.start_date
-        end_date = end_date or settings.data.end_date
+        resolved_start_date = start_date or settings.data.start_date
+        resolved_end_date = end_date or settings.data.end_date
         output_dir = output_dir or Path(settings.data.data_path)
         source = source or settings.data.primary_source
         timeframe = timeframe or settings.data.timeframe
 
         console.print("[green]Starting download for specific symbols[/green]")
         console.print(f"[cyan]Symbols: {', '.join(symbol_list)}[/cyan]")
-        console.print(f"[cyan]Date range: {start_date} to {end_date}[/cyan]")
+        console.print(f"[cyan]Date range: {resolved_start_date} to {resolved_end_date}[/cyan]")
         console.print(f"[cyan]Source: {source}[/cyan]")
         console.print(f"[cyan]Timeframe: {timeframe}[/cyan]")
         console.print(f"[cyan]Output: {output_dir}[/cyan]")
@@ -454,7 +458,7 @@ def symbols(
                 console.print(f"[green]✓ {symbol}: {rows:,} rows[/green]")
 
                 # Save to output directory
-                output_file = output_dir / f"{symbol}_{start_date}_{end_date}_{timeframe}.parquet"
+                output_file = output_dir / f"{symbol}_{resolved_start_date}_{resolved_end_date}_{timeframe}.parquet"
                 data.to_parquet(output_file)
                 console.print(f"[blue]  Saved to: {output_file}[/blue]")
             else:

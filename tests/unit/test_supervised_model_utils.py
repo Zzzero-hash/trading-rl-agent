@@ -3,11 +3,11 @@ import pandas as pd  # type: ignore  # pandas-stubs missing in some environments
 import pytest
 
 # import torch  # unused
-from trading_rl_agent.supervised_model import (
+from trading_rl_agent.supervised_model import (  # type: ignore  # may show as unresolved in some editors
     ModelEvaluator,
     PricePredictor,
     SignalClassifier,
-)  # type: ignore  # may show as unresolved in some editors
+)
 
 
 def test_base_supervised_model_initialization():

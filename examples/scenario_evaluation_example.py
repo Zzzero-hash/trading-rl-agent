@@ -29,8 +29,10 @@ def create_simple_moving_average_agent(window: int = 20) -> Callable[[np.ndarray
 
         # Generate signals: 1 for buy, -1 for sell, 0 for hold
         signals = np.zeros_like(close_prices)
-        signals[ma_short > ma_long] = 1  # Buy signal
-        signals[ma_short < ma_long] = -1  # Sell signal
+        ma_short_array = np.array(ma_short)
+        ma_long_array = np.array(ma_long)
+        signals[ma_short_array > ma_long_array] = 1  # Buy signal
+        signals[ma_short_array < ma_long_array] = -1  # Sell signal
 
         return signals
 
@@ -50,8 +52,9 @@ def create_momentum_agent(lookback: int = 10) -> Callable[[np.ndarray], np.ndarr
 
         # Generate signals based on momentum
         signals = np.zeros_like(close_prices)
-        signals[momentum > 0.02] = 1  # Strong positive momentum
-        signals[momentum < -0.02] = -1  # Strong negative momentum
+        momentum_array = np.array(momentum)
+        signals[momentum_array > 0.02] = 1  # Strong positive momentum
+        signals[momentum_array < -0.02] = -1  # Strong negative momentum
 
         return signals
 
@@ -71,7 +74,9 @@ def create_mean_reversion_agent(lookback: int = 20) -> Callable[[np.ndarray], np
         rolling_std = pd.Series(close_prices).rolling(lookback).std().bfill().values
 
         # Calculate z-score
-        z_score = (close_prices - rolling_mean) / (rolling_std + 1e-8)
+        rolling_mean_array = np.array(rolling_mean)
+        rolling_std_array = np.array(rolling_std)
+        z_score = (close_prices - rolling_mean_array) / (rolling_std_array + 1e-8)
 
         # Generate signals: buy when oversold, sell when overbought
         signals = np.zeros_like(close_prices)
@@ -102,12 +107,15 @@ def create_volatility_breakout_agent(vol_window: int = 20) -> Callable[[np.ndarr
         signals = np.zeros_like(close_prices)
 
         # Buy on high volatility with positive price movement
-        high_vol_mask = volatility > rolling_vol * 1.5
-        positive_move_mask = price_changes > 0.01
+        volatility_array = np.array(volatility)
+        rolling_vol_array = np.array(rolling_vol)
+        price_changes_array = np.array(price_changes)
+        high_vol_mask = volatility_array > rolling_vol_array * 1.5
+        positive_move_mask = price_changes_array > 0.01
         signals[high_vol_mask & positive_move_mask] = 1
 
         # Sell on high volatility with negative price movement
-        negative_move_mask = price_changes < -0.01
+        negative_move_mask = price_changes_array < -0.01
         signals[high_vol_mask & negative_move_mask] = -1
 
         return signals
@@ -260,7 +268,7 @@ def main() -> None:
     print("=" * 50)
 
     custom_scenarios = create_custom_scenarios()
-    best_agent_func = agents[best_agent]
+    best_agent_func = agents[str(best_agent)]
 
     custom_results = evaluator.evaluate_agent(
         agent=best_agent_func,

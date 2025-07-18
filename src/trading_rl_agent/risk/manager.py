@@ -7,7 +7,7 @@ for the trading system.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -264,7 +264,7 @@ class RiskManager:
             if portfolio_returns.empty:
                 return 0.0
 
-            cumulative_returns = (1 + portfolio_returns).cumprod()
+            cumulative_returns: pd.Series = (1 + portfolio_returns).cumprod()
             rolling_max = cumulative_returns.expanding().max()
             drawdowns = (cumulative_returns - rolling_max) / rolling_max
             return float(abs(drawdowns.min()))
@@ -342,7 +342,7 @@ class RiskManager:
             if benchmark_variance == 0:
                 return 1.0
 
-            return float(covariance / benchmark_variance)
+            return float(float(covariance) / float(benchmark_variance))
 
         except Exception as e:
             self.logger.exception(f"Beta calculation failed: {e}")
@@ -375,7 +375,7 @@ class RiskManager:
                     if i != j:
                         weight_product = weights[asset1] * weights[asset2]
                         correlation = correlation_matrix.loc[asset1, asset2]
-                        total_correlation += weight_product * abs(correlation)
+                        total_correlation += weight_product * abs(float(correlation))
                         total_weight_pairs += weight_product
 
             if total_weight_pairs == 0:
@@ -605,9 +605,9 @@ class RiskManager:
     def _calculate_max_drawdown(self, returns: pd.Series) -> float:
         """Calculate maximum drawdown from returns series."""
         try:
-            cumulative_returns = (1 + returns).cumprod()
+            cumulative_returns: pd.Series = (1 + returns).cumprod()
             rolling_max = cumulative_returns.expanding().max()
             drawdowns = (cumulative_returns - rolling_max) / rolling_max
-            return abs(cast("float", drawdowns.min()))
+            return float(abs(drawdowns.min()))
         except Exception:
             return 0.0

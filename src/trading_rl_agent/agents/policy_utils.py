@@ -81,7 +81,7 @@ class WeightedEnsembleAgent:
         # Ensure consistent action shape - flatten to 1D if needed
         if action.ndim > 1:
             action = action.flatten()
-        return action
+        return np.array(action, dtype=np.float32)
 
 
 class EnsembleAgent(WeightedEnsembleAgent):
@@ -189,11 +189,11 @@ class EnsembleAgent(WeightedEnsembleAgent):
 
             # If standard deviation is low, use consensus
             if np.all(std_action < self.consensus_threshold):
-                return mean_action
+                return np.array(mean_action, dtype=np.float32)
             # Use weighted voting as fallback
             return self._weighted_voting(obs)
 
-        return actions[0] if actions else np.array([0.0])
+        return np.array(actions[0], dtype=np.float32) if actions else np.array([0.0], dtype=np.float32)
 
     def _diversity_aware_voting(self, obs: np.ndarray) -> np.ndarray:
         """Voting that considers agent diversity."""
@@ -363,7 +363,7 @@ class EnsembleAgent(WeightedEnsembleAgent):
         for performances in self.agent_performances.values():
             all_performances.extend(performances)
         if all_performances:
-            self.diagnostics["performance_variance"] = np.var(all_performances)
+            self.diagnostics["performance_variance"] = float(np.var(all_performances))
 
         # Store current weights for next stability calculation
         self._previous_weights = self.weights.copy()

@@ -25,9 +25,7 @@ from ..portfolio.transaction_costs import (
     MarketData,
     OrderType,
 )
-from ..portfolio.transaction_costs import (
-    TransactionCostModel as NewTransactionCostModel,
-)
+from ..portfolio.transaction_costs import TransactionCostModel as NewTransactionCostModel
 from ..utils.metrics import (
     calculate_beta,
     calculate_calmar_ratio,
