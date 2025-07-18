@@ -334,7 +334,13 @@ def export_data(
 
 def _load_config(config_file: str) -> AttributionConfig:
     """Load configuration from file."""
-    import yaml
+    try:
+        import yaml
+    except ImportError:
+        raise RuntimeError(
+            "The 'yaml' library is required to load configuration files but is not installed. "
+            "Please install it by running 'pip install PyYAML'."
+        )
     
     with open(config_file, 'r') as f:
         config_data = yaml.safe_load(f)
