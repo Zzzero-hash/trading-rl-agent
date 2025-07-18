@@ -1,0 +1,7 @@
+pandas-stubs
+scipy-stubs
+types-PyYAML
+types-beautifulsoup4
+types-psutil
+types-requests
+types-tqdm
