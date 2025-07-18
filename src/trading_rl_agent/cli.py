@@ -604,9 +604,25 @@ def process(
     parallel: bool = DEFAULT_PARALLEL,
 ) -> None:
     """Process and standardize downloaded data."""
-    if config_file is None:
-        config_file = Path("config.yaml")  # Provide a default config file
-    # ... rest of function implementation
+    try:
+        if config_file is None:
+            config_file = Path("config.yaml")  # Provide a default config file
+        
+        console.print(f"[green]Processing data with config: {config_file}[/green]")
+        console.print(f"[cyan]Output directory: {output_dir}[/cyan]")
+        console.print(f"[cyan]Force rebuild: {force_rebuild}[/cyan]")
+        console.print(f"[cyan]Parallel processing: {parallel}[/cyan]")
+        
+        # Create output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        console.print("[blue]PLACEHOLDER: Data processing pipeline would run here[/blue]")
+        console.print("[blue]Target module: src/trading_rl_agent/data/pipeline.py[/blue]")
+        
+    except Exception as e:
+        console.print(f"[red]Error during processing: {e}[/red]")
+        logger.error(f"Processing failed: {e}", exc_info=True)
+        raise typer.Exit(1) from e
 
 
 @data_app.command()
@@ -616,9 +632,24 @@ def standardize(
     method: str = DEFAULT_STANDARDIZATION_METHOD,
 ) -> None:
     """Standardize data format."""
-    if input_path is None:
-        input_path = Path("data/raw")  # Provide a default input path
-    # ... rest of function implementation
+    try:
+        if input_path is None:
+            input_path = Path("data/raw")  # Provide a default input path
+        
+        console.print(f"[green]Standardizing data from: {input_path}[/green]")
+        console.print(f"[cyan]Output path: {output_path}[/cyan]")
+        console.print(f"[cyan]Method: {method}[/cyan]")
+        
+        # Create output directory
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        console.print("[blue]PLACEHOLDER: Data standardization would run here[/blue]")
+        console.print("[blue]Target module: src/trading_rl_agent/data/data_standardizer.py[/blue]")
+        
+    except Exception as e:
+        console.print(f"[red]Error during standardization: {e}[/red]")
+        logger.error(f"Standardization failed: {e}", exc_info=True)
+        raise typer.Exit(1) from e
 
 
 @data_app.command()
@@ -627,9 +658,23 @@ def pipeline(
     output_dir: Path = DEFAULT_PIPELINE_OUTPUT,
 ) -> None:
     """Run complete data pipeline."""
-    if config_path is None:
-        config_path = Path("config.yaml")  # Provide a default config path
-    # ... rest of function implementation
+    try:
+        if config_path is None:
+            config_path = Path("config.yaml")  # Provide a default config path
+        
+        console.print(f"[green]Running data pipeline with config: {config_path}[/green]")
+        console.print(f"[cyan]Output directory: {output_dir}[/cyan]")
+        
+        # Create output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        console.print("[blue]PLACEHOLDER: Complete data pipeline would run here[/blue]")
+        console.print("[blue]Target module: src/trading_rl_agent/data/pipeline.py[/blue]")
+        
+    except Exception as e:
+        console.print(f"[red]Error during pipeline execution: {e}[/red]")
+        logger.error(f"Pipeline failed: {e}", exc_info=True)
+        raise typer.Exit(1) from e
 
 
 # ============================================================================
@@ -997,8 +1042,7 @@ def scenario_evaluate(
 
     except Exception as e:
         console.print(f"[red]Error during scenario evaluation: {e}[/red]")
-        if verbose_count > 0:
-            raise
+        # Note: verbose_count is not available in this scope, so we'll just exit
         raise typer.Exit(1) from None
 
 

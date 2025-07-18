@@ -257,16 +257,20 @@ class ParallelDataManager:
         results = []
         if show_progress:
             with tqdm(total=len(symbols), desc="Fetching data") as pbar:
-                for future in ray.as_completed(futures):
-                    result = ray.get(future)
-                    results.append(result)
-                    pbar.update(1)
-                    pbar.set_postfix(
-                        {
-                            "success": sum(1 for r in results if r["success"]),
-                            "failed": sum(1 for r in results if not r["success"]),
-                        }
-                    )
+                # Use ray.wait() instead of ray.as_completed()
+                remaining_futures = futures.copy()
+                while remaining_futures:
+                    ready_futures, remaining_futures = ray.wait(remaining_futures, num_returns=1)
+                    for future in ready_futures:
+                        result = ray.get(future)
+                        results.append(result)
+                        pbar.update(1)
+                        pbar.set_postfix(
+                            {
+                                "success": sum(1 for r in results if r["success"]),
+                                "failed": sum(1 for r in results if not r["success"]),
+                            }
+                        )
         else:
             results = ray.get(futures)
 
