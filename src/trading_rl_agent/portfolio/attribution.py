@@ -19,7 +19,13 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy import stats
-from scipy.optimize import minimize
+
+try:
+    from sklearn.decomposition import PCA
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+    PCA = None  # type: ignore
 
 try:
     import plotly.graph_objects as go
@@ -28,7 +34,6 @@ try:
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
-
 from ..core.logging import get_logger
 
 logger = get_logger(__name__)
