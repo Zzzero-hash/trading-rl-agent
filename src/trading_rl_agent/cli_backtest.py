@@ -366,7 +366,7 @@ def batch(
 
         print_metrics_table(results)
 
-        if export_csv is not None and export_csv != typer.Option(None):
+        if export_csv is not None:
             try:
                 pd.DataFrame(results).to_csv(export_csv, index=False)
                 console.print(f"[blue]Exported summary to {export_csv}[/blue]")
