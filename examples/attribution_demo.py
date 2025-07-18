@@ -466,15 +466,9 @@ def demo_reporting(attributor, data):
     print("-" * 40)
     print(report_content[:500] + "..." if len(report_content) > 500 else report_content)
     
-    # Export data to Excel
-    data_path = output_dir / "attribution_data.xlsx"
-    attributor.export_attribution_data(
-        start_date=data['dates'][0],
-        end_date=data['dates'][-1],
-        symbols=data['symbols'],
-        output_path=str(data_path)
-    )
-    
+    # Note: Excel export is available through AttributionIntegration
+    # For standalone attributor, data export would need to be implemented separately
+    print("\nNote: For Excel export, use AttributionIntegration with a PortfolioManager")
     print(f"\nData exported to: {data_path}")
     
     return results
