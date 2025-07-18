@@ -11,6 +11,8 @@ This module provides real-time monitoring capabilities including:
 from .alert_manager import AlertManager, AlertSeverity, AlertStatus
 from .dashboard import Dashboard
 from .metrics_collector import MetricsCollector
+from .performance_dashboard import PerformanceDashboard, run_performance_dashboard
+from .streaming_dashboard import StreamingDashboard, WebSocketClient, run_streaming_dashboard
 
 __all__ = [
     "AlertManager",
@@ -18,4 +20,9 @@ __all__ = [
     "AlertStatus",
     "Dashboard",
     "MetricsCollector",
+    "PerformanceDashboard",
+    "run_performance_dashboard",
+    "StreamingDashboard",
+    "WebSocketClient",
+    "run_streaming_dashboard",
 ]
