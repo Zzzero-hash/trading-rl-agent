@@ -34,7 +34,7 @@ class TestCLI:
         """Test root command --help."""
         result = self.run_cli_command(["--help"])
         assert result.returncode == 0
-        assert "Trading RL Agent" in result.stdout
+        assert "trading RL agent" in result.stdout.lower()
         assert "data" in result.stdout
         assert "train" in result.stdout
         assert "backtest" in result.stdout
@@ -44,7 +44,7 @@ class TestCLI:
         """Test version command."""
         result = self.run_cli_command(["version"])
         assert result.returncode == 0
-        assert "Trading RL Agent" in result.stdout
+        assert "trading RL agent" in result.stdout.lower()
 
     def test_info(self):
         """Test info command."""

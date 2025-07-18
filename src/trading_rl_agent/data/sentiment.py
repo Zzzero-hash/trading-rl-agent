@@ -537,17 +537,17 @@ class SentimentAnalyzer:
             sentiment_data = self.fetch_all_sentiment(symbol, days_back)
 
             if sentiment_data:
-                magnitude = np.mean([d.magnitude for d in sentiment_data])
+                avg_magnitude = np.mean([d.magnitude for d in sentiment_data])
                 source_count = len({d.source for d in sentiment_data})
             else:
-                magnitude = 0.0
+                avg_magnitude = 0.0
                 source_count = 0
 
             features.append(
                 {
                     "symbol": symbol,
                     "sentiment_score": sentiment_score,
-                    "sentiment_magnitude": magnitude,
+                    "sentiment_magnitude": avg_magnitude,
                     "sentiment_sources": source_count,
                     "sentiment_direction": np.sign(sentiment_score),
                 }

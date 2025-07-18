@@ -129,7 +129,7 @@ class EnsembleEvaluator:
 
         if action_magnitude > 0:
             normalized_std = np.linalg.norm(std_action) / action_magnitude
-            consensus_score = max(0.0, 1.0 - normalized_std)
+            consensus_score = max(0.0, 1.0 - float(normalized_std))
         else:
             consensus_score = 1.0
 

@@ -275,8 +275,8 @@ class ParallelVaRCalculator:
 
         # Create aggregated result
         return VaRResult(
-            var_value=aggregated_var,
-            cvar_value=aggregated_cvar,
+            var_value=float(aggregated_var),
+            cvar_value=float(aggregated_cvar),
             confidence_level=original_config.confidence_level,
             time_horizon=original_config.time_horizon,
             method="parallel_monte_carlo",

@@ -74,3 +74,4 @@ vaderSentiment>=3.3.2
 # Statistical Modeling
 statsmodels>=0.14.0
 arch>=6.2.0
+quantstats>=0.0.62

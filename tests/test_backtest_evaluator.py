@@ -15,8 +15,8 @@ from trading_rl_agent.eval.backtest_evaluator import (
     BacktestEvaluator,
     BacktestResult,
     TradeRecord,
-    TransactionCostModel,
 )
+from trading_rl_agent.portfolio.transaction_costs import TransactionCostModel
 
 
 class TestTransactionCostModel:

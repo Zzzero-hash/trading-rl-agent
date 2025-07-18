@@ -45,44 +45,21 @@ def get_trainer(algo: str) -> Any:
 
 @app.command()
 def train(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    epochs: int | None = DEFAULT_EPOCHS,
-    lr: float | None = DEFAULT_LR,
-    devices: str | None = DEFAULT_DEVICES,
-    checkpoint_out: Path | None = DEFAULT_CHECKPOINT_OUT,
-    log_interval: int = DEFAULT_LOG_INTERVAL,
+    config_file: Path | None = typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file"),  # noqa: B008
+    epochs: int | None = typer.Option(DEFAULT_EPOCHS, "--epochs", "-e", help="Override number of epochs"),
+    lr: float | None = typer.Option(DEFAULT_LR, "--lr", help="Override learning rate"),
+    devices: str | None = typer.Option(
+        DEFAULT_DEVICES, "--devices", help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')"
+    ),
+    checkpoint_out: Path | None = typer.Option(  # noqa: B008
+        DEFAULT_CHECKPOINT_OUT, "--checkpoint-out", help="Output checkpoint directory"
+    ),
+    log_interval: int = typer.Option(DEFAULT_LOG_INTERVAL, "--log-interval", help="Log metrics every N epochs/steps"),
 ) -> None:
     """
     Train a model using the algorithm specified in Settings.model.algorithm.
     CLI options override config values.
     """
-    config_file = (
-        config_file
-        if config_file is not None
-        else typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file")
-    )
-    epochs = (
-        epochs
-        if epochs is not None
-        else typer.Option(DEFAULT_EPOCHS, "--epochs", "-e", help="Override number of epochs")
-    )
-    lr = lr if lr is not None else typer.Option(DEFAULT_LR, "--lr", help="Override learning rate")
-    devices = (
-        devices
-        if devices is not None
-        else typer.Option(DEFAULT_DEVICES, "--devices", help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')")
-    )
-    checkpoint_out = (
-        checkpoint_out
-        if checkpoint_out is not None
-        else typer.Option(DEFAULT_CHECKPOINT_OUT, "--checkpoint-out", help="Output checkpoint directory")
-    )
-    log_interval = (
-        log_interval
-        if log_interval is not None
-        else typer.Option(DEFAULT_LOG_INTERVAL, "--log-interval", help="Log metrics every N epochs/steps")
-    )
-
     try:
         settings = load_settings(config_path=config_file) if config_file else get_settings()
         algo = settings.model.algorithm
@@ -115,29 +92,15 @@ def train(
 
 @app.command()
 def resume(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    devices: str | None = DEFAULT_DEVICES,
-    log_interval: int = DEFAULT_LOG_INTERVAL,
+    config_file: Path | None = typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file"),  # noqa: B008
+    devices: str | None = typer.Option(
+        DEFAULT_DEVICES, "--devices", help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')"
+    ),
+    log_interval: int = typer.Option(DEFAULT_LOG_INTERVAL, "--log-interval", help="Log metrics every N epochs/steps"),
 ) -> None:
     """
     Resume training from the last checkpoint in Settings.model.checkpoint_dir.
     """
-    config_file = (
-        config_file
-        if config_file is not None
-        else typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file")
-    )
-    devices = (
-        devices
-        if devices is not None
-        else typer.Option(DEFAULT_DEVICES, "--devices", help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')")
-    )
-    log_interval = (
-        log_interval
-        if log_interval is not None
-        else typer.Option(DEFAULT_LOG_INTERVAL, "--log-interval", help="Log metrics every N epochs/steps")
-    )
-
     try:
         settings = load_settings(config_path=config_file) if config_file else get_settings()
         algo = settings.model.algorithm

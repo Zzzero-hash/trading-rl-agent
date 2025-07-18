@@ -2,4 +2,10 @@
 
 import numpy as np
 
-np.float_ = np.float64  # Alias for compatibility with code expecting np.float_
+# Alias for compatibility with code expecting np.float_
+try:
+    if not hasattr(np, "float_"):
+        np.float_ = np.float64
+except AttributeError:
+    # np.float_ was removed in newer numpy versions
+    pass

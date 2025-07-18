@@ -204,7 +204,7 @@ class MonteCarloVaR:
             raise ValueError("No overlapping assets between weights and data")
 
         # Prepare portfolio returns
-        portfolio_returns = self._calculate_portfolio_returns(weights, available_assets)
+        portfolio_returns = self._calculate_portfolio_returns(weights, self._returns_data)
 
         if use_bootstrap:
             var_value, cvar_value = self._bootstrap_historical_var(portfolio_returns)
@@ -334,7 +334,7 @@ class MonteCarloVaR:
         portfolio_variance = 0.0
         for asset1 in available_assets:
             for asset2 in available_assets:
-                cov = self._covariance_matrix.loc[asset1, asset2]
+                cov = float(self._covariance_matrix.loc[asset1, asset2])
                 portfolio_variance += weights[asset1] * weights[asset2] * cov
 
         portfolio_std = float(np.sqrt(portfolio_variance))
@@ -431,10 +431,10 @@ class MonteCarloVaR:
         try:
             chol_matrix = np.linalg.cholesky(self._covariance_matrix.values)
         except np.linalg.LinAlgError:
-            # Fallback to nearest positive definite matrix
-            from scipy.linalg import nearest_posdef
-
-            cov_matrix_pd = nearest_posdef(self._covariance_matrix.values)
+            # Fallback to nearest positive definite matrix using eigendecomposition
+            eigenvals, eigenvecs = np.linalg.eigh(self._covariance_matrix.values)
+            eigenvals = np.maximum(eigenvals, 1e-8)  # Ensure positive eigenvalues
+            cov_matrix_pd = eigenvecs @ np.diag(eigenvals) @ eigenvecs.T
             chol_matrix = np.linalg.cholesky(cov_matrix_pd)
 
         # Generate uncorrelated random numbers
@@ -575,12 +575,12 @@ class MonteCarloVaR:
                 actual_returns.append(actual_return)
 
         # Calculate backtesting metrics
-        var_predictions = np.array(var_predictions)
-        actual_returns = np.array(actual_returns)
+        var_predictions_array = np.array(var_predictions)
+        actual_returns_array = np.array(actual_returns)
 
         # Count VaR breaches
-        breaches = actual_returns < -var_predictions
-        breach_rate = np.mean(breaches)
+        breaches = actual_returns_array < -var_predictions_array
+        breach_rate = float(np.mean(breaches))
 
         # Kupiec test for VaR accuracy
         kupiec_stat, kupiec_pvalue = self._kupiec_test(breaches, self.config.confidence_level)
@@ -591,15 +591,15 @@ class MonteCarloVaR:
         results = {
             "method": method,
             "total_predictions": len(var_predictions),
-            "breach_count": np.sum(breaches),
+            "breach_count": int(np.sum(breaches)),
             "breach_rate": breach_rate,
             "expected_breach_rate": self.config.confidence_level,
             "kupiec_statistic": kupiec_stat,
             "kupiec_pvalue": kupiec_pvalue,
             "christoffersen_statistic": christoffersen_stat,
             "christoffersen_pvalue": christoffersen_pvalue,
-            "var_predictions": var_predictions.tolist(),
-            "actual_returns": actual_returns.tolist(),
+            "var_predictions": var_predictions_array.tolist(),
+            "actual_returns": actual_returns_array.tolist(),
             "breaches": breaches.tolist(),
         }
 
