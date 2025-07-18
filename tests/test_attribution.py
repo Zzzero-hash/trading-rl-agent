@@ -489,7 +489,7 @@ class TestIntegrationWithRealData:
         portfolio_manager.performance_history = [
             {
                 'timestamp': date,
-                'total_return': 1000000 * (1 + sample_data['portfolio_returns'][:date].sum()),
+                'total_return': sample_data['portfolio_returns'][:date].sum(),  # or multiply by initial capital for absolute return
                 'total_value': 1000000 * (1 + sample_data['portfolio_returns'][:date].sum()),
                 'cash': 100000,
                 'equity_value': 900000 * (1 + sample_data['portfolio_returns'][:date].sum())
