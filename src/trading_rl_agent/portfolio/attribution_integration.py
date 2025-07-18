@@ -109,7 +109,8 @@ class AttributionIntegration:
         
         # For now, create synthetic benchmark returns
         # In a real implementation, you would fetch actual benchmark data
-        np.random.seed(42)  # For reproducible results
+        if random_seed is not None:
+            np.random.seed(random_seed)  # For reproducible results
         benchmark_returns = pd.Series(
             np.random.normal(0.0005, 0.015, len(dates)),  # Daily returns ~12% annual
             index=dates,
