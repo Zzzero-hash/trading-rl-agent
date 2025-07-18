@@ -1,6 +1,7 @@
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pandas as pd
 import ray
@@ -225,7 +226,7 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
     fetched = ray.get(list(tasks.values())) if tasks else []
 
     results = {}
-    for key, df in zip(tasks.keys(), fetched):
+    for key, df in zip(tasks.keys(), fetched, strict=False):
         if key.startswith("synthetic_") and "close" in df.columns:
             df = generate_features(df)
         if key.startswith("live_"):

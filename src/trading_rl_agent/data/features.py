@@ -1,8 +1,16 @@
 """
-Feature engineering utilities for trading data pipelines.
+Feature generation for financial time series data.
+
+This module provides functions for generating technical indicators and features
+from financial time series data.
 """
 
+# Monkey patch for pandas_ta numpy compatibility
 import numpy as np
+
+if not hasattr(np, "NaN"):
+    np.nan = np.nan
+
 import pandas as pd
 import pandas_ta as ta
 
@@ -296,7 +304,7 @@ def generate_features(
 
     # Calculate minimum required data length
     min_required_length = max(
-        [*ma_windows, rsi_window, vol_window, 26, 20, 14, 9, 3, 100]
+        [*ma_windows, rsi_window, vol_window, 26, 20, 14, 9, 3, 100],
     )  # Added 100 for long-term features
 
     if len(df) < min_required_length:
@@ -331,7 +339,7 @@ def generate_features(
 
     # Volatility with proper handling
     df[f"vol_{vol_window}"] = df["log_return"].rolling(vol_window, min_periods=1).std(ddof=0).fillna(0) * np.sqrt(
-        vol_window
+        vol_window,
     )
 
     # Add sentiment features

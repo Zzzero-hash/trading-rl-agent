@@ -563,7 +563,7 @@ Please review and take appropriate action.
                         ],
                         "footer": "Risk Alert System",
                         "ts": int(alert.timestamp),
-                    }
+                    },
                 ],
             }
 
@@ -718,7 +718,9 @@ Please review and take appropriate action.
         return EscalationLevel.LEVEL_1.value
 
     def generate_risk_report(
-        self, start_time: datetime | None = None, end_time: datetime | None = None
+        self,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> dict[str, Any]:
         """Generate a comprehensive risk report."""
         if not start_time:

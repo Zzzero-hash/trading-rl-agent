@@ -202,7 +202,7 @@ class Dashboard:
                     "source": alert.source,
                     "timestamp": alert.timestamp,
                     "status": alert.status.value,
-                }
+                },
             )
 
         return alerts_data
@@ -232,7 +232,7 @@ class Dashboard:
                 {
                     "timestamp": point.timestamp,
                     "value": point.value,
-                }
+                },
             )
 
         # Calculate summary statistics

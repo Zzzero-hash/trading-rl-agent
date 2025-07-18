@@ -12,7 +12,11 @@ import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -361,7 +365,7 @@ class BenchmarkFramework:
         ax.grid(True, alpha=0.3)
 
         # Add value labels on bars
-        for bar, reward in zip(bars, final_rewards):
+        for bar, reward in zip(bars, final_rewards, strict=False):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width() / 2.0, height + 0.01, f"{reward:.3f}", ha="center", va="bottom")
 
@@ -382,7 +386,7 @@ class BenchmarkFramework:
         ax.grid(True, alpha=0.3)
 
         # Add value labels on bars
-        for bar, time_val in zip(bars, training_times):
+        for bar, time_val in zip(bars, training_times, strict=False):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width() / 2.0, height + 0.01, f"{time_val:.1f}s", ha="center", va="bottom")
 
@@ -410,7 +414,7 @@ class BenchmarkFramework:
         ax.grid(True, alpha=0.3)
 
         # Add value labels on bars
-        for bar, conv_ep in zip(bars, convergence_episodes):
+        for bar, conv_ep in zip(bars, convergence_episodes, strict=False):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width() / 2.0, height + 0.01, f"{conv_ep:.0f}", ha="center", va="bottom")
 
@@ -435,7 +439,7 @@ class BenchmarkFramework:
                         "memory_usage": result.memory_usage,
                         "convergence_episode": result.convergence_episode,
                         "evaluation_metrics": result.evaluation_metrics,
-                    }
+                    },
                 )
 
         detailed_path = self.save_dir / "detailed_results.json"
@@ -470,7 +474,7 @@ class BenchmarkFramework:
                             "run_id": run_id,
                             "episode": episode,
                             "reward": reward,
-                        }
+                        },
                     )
 
         learning_curve_df = pd.DataFrame(learning_curve_data)

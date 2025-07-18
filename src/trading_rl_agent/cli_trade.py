@@ -154,12 +154,12 @@ def validate_api_credentials(settings: Any, exchange: str) -> bool:
     if exchange.lower() == "alpaca":
         if not credentials.get("api_key"):
             console.print(
-                "[red]Missing Alpaca API key. Set TRADING_RL_AGENT_ALPACA_API_KEY environment variable.[/red]"
+                "[red]Missing Alpaca API key. Set TRADING_RL_AGENT_ALPACA_API_KEY environment variable.[/red]",
             )
             return False
         if not credentials.get("secret_key"):
             console.print(
-                "[red]Missing Alpaca secret key. Set TRADING_RL_AGENT_ALPACA_SECRET_KEY environment variable.[/red]"
+                "[red]Missing Alpaca secret key. Set TRADING_RL_AGENT_ALPACA_SECRET_KEY environment variable.[/red]",
             )
             return False
         return True
@@ -279,7 +279,7 @@ def start(
             f"Max Position Size: {trading_config.max_position_size:.1%}\n"
             f"Update Interval: {trading_config.update_interval}s",
             title="Trading Configuration",
-        )
+        ),
     )
 
     # Confirm for live trading
@@ -392,7 +392,7 @@ def status(
                     f"Positions: {len(session.positions)}\n"
                     f"Orders: {len(session.orders)}",
                     title=f"Session {i} Details",
-                )
+                ),
             )
 
 
@@ -432,7 +432,7 @@ async def monitor(
                         f"Positions: {len(session.positions)}\n"
                         f"Recent Orders: {len(session.orders)}",
                         title=f"Live Monitoring - Session {i}",
-                    )
+                    ),
                 )
 
             # Wait for next update

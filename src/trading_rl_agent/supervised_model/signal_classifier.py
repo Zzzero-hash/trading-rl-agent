@@ -109,10 +109,10 @@ class SignalClassifier(BaseSupervisedModel):
             return None
         if hasattr(self.model, "feature_importances_"):
             importance_scores = self.model.feature_importances_
-            return dict(zip(self.feature_names, importance_scores))
+            return dict(zip(self.feature_names, importance_scores, strict=False))
         if hasattr(self.model, "coef_"):
             coef_scores = np.abs(self.model.coef_0)  # Take first class for multiclass
-            return dict(zip(self.feature_names, coef_scores))
+            return dict(zip(self.feature_names, coef_scores, strict=False))
         raise AttributeError("Model does not have feature importances or coefficients.")
 
     def evaluate(self, X: np.ndarray | pd.DataFrame, y: np.ndarray | pd.Series) -> dict[str, float]:
@@ -169,4 +169,4 @@ class SignalClassifier(BaseSupervisedModel):
         """
         y_array = y.values if isinstance(y, pd.Series) else y
         unique, counts = np.unique(y_array, return_counts=True)
-        return dict(zip(unique, counts))
+        return dict(zip(unique, counts, strict=False))
