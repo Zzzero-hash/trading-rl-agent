@@ -10,17 +10,44 @@ This module provides a comprehensive command-line interface for all trading RL a
 
 import sys
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Annotated, Any, Callable, TypeVar
 
 import pandas as pd
 import typer
 from rich.console import Console
 from rich.table import Table
 
+# Add root directory to path for config import
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+try:
+    from config import Settings, get_settings, load_settings
+    from trading_rl_agent.logging_conf import get_logger, setup_logging_for_typer
+except ImportError:
+    # Fallback for when running as module
+    # Import config functions differently to avoid redefinition
+    import importlib.util
+
+    from .logging_conf import get_logger, setup_logging_for_typer
+
+    spec = importlib.util.spec_from_file_location("config", Path(__file__).parent.parent / "config.py")
+    if spec and spec.loader:
+        config_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(config_module)
+        get_settings = config_module.get_settings
+        load_settings = config_module.load_settings
+        Settings = config_module.Settings  # type: ignore[misc]
+    else:
+        # Final fallback
+        def get_settings() -> Any:  # type: ignore[misc]
+            return None
+
+        def load_settings(config_path: "Path | None" = None, env_file: "Path | None" = None) -> Any:  # type: ignore[misc]
+            return None
+
+
 # Type variable for decorator functions
 F = TypeVar("F", bound=Callable[..., Any])
-
-from trading_rl_agent.logging_conf import get_logger, setup_logging_for_typer
 
 # Module-level constants for typer defaults to fix B008 errors
 DEFAULT_OUTPUT_DIR = Path("outputs/datasets")
@@ -86,10 +113,6 @@ DEFAULT_MODEL_PATH: Path | None = None
 DEFAULT_POLICY: str | None = None
 DEFAULT_MODELS: str | None = None
 DEFAULT_RESULTS_PATH: Path | None = None
-
-# Add root directory to path for config import
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_settings, load_settings
 
 # Initialize console for rich output
 console = Console()
@@ -158,9 +181,11 @@ app.add_typer(trade_app, help="Live trading operations")
 
 @app.callback()
 def main(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    verbose: int = DEFAULT_VERBOSE,
-    env_file: Path | None = DEFAULT_ENV_FILE,
+    config_file: Annotated[Path | None, typer.Option("--config", "-c", help="Path to configuration file")] = None,
+    verbose: Annotated[
+        int, typer.Option("--verbose", "-v", count=True, help="Increase verbosity (use multiple times for more detail)")
+    ] = 0,
+    env_file: Annotated[Path | None, typer.Option("--env-file", help="Path to environment file (.env)")] = None,
 ) -> None:
     """
     Trading RL Agent - Production-grade live trading system.
@@ -168,29 +193,14 @@ def main(
     A hybrid reinforcement learning trading system that combines CNN+LSTM supervised learning
     with deep RL optimization for algorithmic trading.
     """
-    config_file = (
-        config_file
-        if config_file is not None
-        else typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to configuration file")
-    )
-    verbose = (
-        verbose
-        if verbose is not None
-        else typer.Option(
-            DEFAULT_VERBOSE,
-            "--verbose",
-            "-v",
-            count=True,
-            help="Increase verbosity (use multiple times for more detail)",
-        )
-    )
-    env_file = (
-        env_file
-        if env_file is not None
-        else typer.Option(DEFAULT_ENV_FILE, "--env-file", help="Path to environment file (.env)")
-    )
 
     global verbose_count, _settings
+
+    # Set defaults if not provided
+    if config_file is None:
+        config_file = Path("config.yaml")
+    if env_file is None:
+        env_file = Path(".env")
 
     # Set global verbose count
     verbose_count = verbose
@@ -230,7 +240,8 @@ def main(
 
     # Set up logging based on configuration
     if _settings:
-        setup_logging_for_typer(verbose, _settings.monitoring.log_level)
+        # Note: setup_logging_for_typer already called above, no need to call again
+        pass
 
 
 @app.command()
@@ -622,7 +633,7 @@ def pipeline(
 # ============================================================================
 
 
-@train_app.command()
+@train_app.command(name="cnn_lstm")
 def cnn_lstm(
     config_file: Path | None = DEFAULT_CONFIG_FILE,
     epochs: int = DEFAULT_EPOCHS,
@@ -645,7 +656,7 @@ def cnn_lstm(
     )
 
 
-@train_app.command()
+@train_app.command(name="rl")
 def rl(
     agent_type: str | None = DEFAULT_AGENT_TYPE,
     config_file: Path | None = DEFAULT_CONFIG_FILE,
@@ -664,7 +675,7 @@ def rl(
     console.print("[blue]Target module: src/trading_rl_agent/agents/trainer.py - Trainer.train()[/blue]")
 
 
-@train_app.command()
+@train_app.command(name="hybrid")
 def hybrid(
     config_file: Path | None = DEFAULT_CONFIG_FILE,
     cnn_lstm_path: Path | None = DEFAULT_CNN_LSTM_PATH,
@@ -681,7 +692,7 @@ def hybrid(
     console.print("[blue]Target module: src/trading_rl_agent/agents/hybrid.py - HybridAgent[/blue]")
 
 
-@train_app.command()
+@train_app.command(name="hyperopt")
 def hyperopt(
     config_file: Path | None = DEFAULT_CONFIG_FILE,
     n_trials: int = DEFAULT_N_TRIALS,

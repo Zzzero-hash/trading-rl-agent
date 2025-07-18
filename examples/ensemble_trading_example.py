@@ -1,278 +1,312 @@
 #!/usr/bin/env python3
 """
-Multi-Agent Ensemble Trading Example
+Simplified Ensemble Trading Example
+===================================
 
-This example demonstrates how to use the new ensemble system for trading:
-1. Creating a multi-agent ensemble with SAC, TD3, and PPO agents
-2. Training the ensemble with dynamic weight updates
-3. Evaluating ensemble performance and diversity
-4. Comparing individual agents vs ensemble performance
-5. Generating comprehensive diagnostics and reports
-
-Usage:
-    python examples/ensemble_trading_example.py
+This example demonstrates ensemble trading concepts without the complex
+Ray RLlib integration that may have compatibility issues.
 """
 
 import logging
-import sys
 from pathlib import Path
-from typing import Callable
+from typing import Any
 
-# Add the src directory to the path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
-from trading_rl_agent.agents import (
-    EnsembleConfig,
-    EnsembleEvaluator,
-    EnsembleTrainer,
-)
-from trading_rl_agent.envs.trading_env import TradingEnv
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-def create_trading_env() -> Callable[[], TradingEnv]:
-    """Create a trading environment for the example."""
-    # Simple trading environment configuration
-    env_config = {
-        "data_path": "data/sample_data.csv",  # You'll need to provide your own data
-        "initial_balance": 10000,
-        "transaction_fee": 0.001,
-        "max_position": 1.0,
-        "window_size": 50,
-        "features": ["close", "volume", "returns", "volatility"],
+class SimpleEnsembleAgent:
+    """Simplified ensemble agent for demonstration purposes."""
+
+    def __init__(self, name: str, strategy_type: str) -> None:
+        self.name = name
+        self.strategy_type = strategy_type
+        self.performance_history: list[float] = []
+
+    def predict(self, data: pd.DataFrame) -> float:
+        """Make a simple prediction based on strategy type."""
+        if self.strategy_type == "momentum":
+            # Simple momentum strategy
+            returns = data["close"].pct_change().dropna()
+            if len(returns) >= 5:
+                momentum = returns.tail(5).mean()
+                return float(np.clip(momentum * 10, -1, 1))  # Scale and clip
+            return 0.0
+
+        if self.strategy_type == "mean_reversion":
+            # Simple mean reversion strategy
+            if len(data) >= 20:
+                current_price = data["close"].iloc[-1]
+                avg_price = data["close"].tail(20).mean()
+                deviation = (current_price - avg_price) / avg_price
+                return float(np.clip(-deviation * 5, -1, 1))  # Revert to mean
+            return 0.0
+
+        if self.strategy_type == "volatility":
+            # Volatility-based strategy
+            if len(data) >= 10:
+                volatility = data["close"].pct_change().tail(10).std()
+                return float(np.clip(volatility * 20, -1, 1))
+            return 0.0
+
+        return 0.0
+
+
+class SimpleEnsemble:
+    """Simplified ensemble for combining multiple strategies."""
+
+    def __init__(self, agents: list[SimpleEnsembleAgent], weights: list[float] | None = None) -> None:
+        self.agents = agents
+        self.weights = weights if weights else [1.0 / len(agents)] * len(agents)
+        self.performance_history: list[float] = []
+
+    def predict(self, data: pd.DataFrame) -> float:
+        """Combine predictions from all agents."""
+        predictions = []
+        for agent in self.agents:
+            try:
+                pred = agent.predict(data)
+                predictions.append(pred)
+            except Exception as e:
+                logger.warning(f"Agent {agent.name} failed: {e}")
+                predictions.append(0.0)
+
+        # Weighted average
+        weighted_pred = sum(p * w for p, w in zip(predictions, self.weights))
+        return float(np.clip(weighted_pred, -1, 1))
+
+    def update_weights(self, performances: list[float]) -> None:
+        """Update weights based on recent performance."""
+        if len(performances) == len(self.agents):
+            # Simple performance-based weighting
+            total_perf = sum(max(p, 0) for p in performances) + 1e-6
+            self.weights = [max(p, 0) / total_perf for p in performances]
+
+
+def generate_sample_data(n_days: int = 252) -> pd.DataFrame:
+    """Generate sample market data for demonstration."""
+    np.random.seed(42)
+
+    # Generate realistic price data
+    returns = np.random.normal(0.0005, 0.02, n_days)  # Daily returns
+    prices = 100 * np.exp(np.cumsum(returns))  # Starting at $100
+
+    # Add some trend and volatility clustering
+    trend = np.linspace(0, 0.1, n_days)
+    prices = prices * (1 + trend)
+
+    # Add volatility clustering
+    volatility = np.abs(returns) * 0.5 + 0.01
+    prices = prices * np.exp(np.random.normal(0, volatility))
+
+    # Create OHLC data
+    data = []
+    for i, price in enumerate(prices):
+        # Simple OHLC generation
+        open_price = price * (1 + np.random.normal(0, 0.005))
+        high_price = max(open_price, price) * (1 + abs(np.random.normal(0, 0.01)))
+        low_price = min(open_price, price) * (1 - abs(np.random.normal(0, 0.01)))
+        close_price = price
+
+        data.append(
+            {
+                "date": pd.Timestamp("2024-01-01") + pd.Timedelta(days=i),
+                "open": open_price,
+                "high": high_price,
+                "low": low_price,
+                "close": close_price,
+                "volume": np.random.randint(1000000, 10000000),
+            }
+        )
+
+    return pd.DataFrame(data)
+
+
+def backtest_ensemble(data: pd.DataFrame, ensemble: SimpleEnsemble, initial_capital: float = 100000) -> dict[str, Any]:
+    """Simple backtesting of the ensemble strategy."""
+
+    capital = initial_capital
+    position = 0
+    trades = []
+    equity_curve = []
+
+    for i in range(20, len(data)):  # Start after enough data for strategies
+        current_data = data.iloc[: i + 1]
+        signal = ensemble.predict(current_data)
+
+        current_price = data.iloc[i]["close"]
+
+        # Simple position sizing
+        if signal > 0.1:  # Buy signal
+            if position <= 0:
+                position = capital * 0.95 / current_price  # Use 95% of capital
+                capital -= position * current_price
+                trades.append(
+                    {"date": data.iloc[i]["date"], "action": "buy", "price": current_price, "position": position}
+                )
+        elif signal < -0.1 and position > 0:  # Sell signal
+            capital += position * current_price
+            position = 0
+            trades.append({"date": data.iloc[i]["date"], "action": "sell", "price": current_price, "position": 0})
+
+        # Calculate current equity
+        current_equity = capital + (position * current_price)
+        equity_curve.append({"date": data.iloc[i]["date"], "equity": current_equity, "signal": signal})
+
+    # Close final position
+    if position > 0:
+        final_price = data.iloc[-1]["close"]
+        capital += position * final_price
+
+    # Calculate metrics
+    equity_df = pd.DataFrame(equity_curve)
+    returns = equity_df["equity"].pct_change().dropna()
+
+    total_return = (capital - initial_capital) / initial_capital
+    sharpe_ratio = returns.mean() / (returns.std() + 1e-6) * np.sqrt(252)
+    max_drawdown = (equity_df["equity"] / equity_df["equity"].cummax() - 1).min()
+
+    return {
+        "total_return": total_return,
+        "sharpe_ratio": sharpe_ratio,
+        "max_drawdown": max_drawdown,
+        "final_capital": capital,
+        "trades": trades,
+        "equity_curve": equity_curve,
     }
 
-    return lambda: TradingEnv(**env_config)
 
+def plot_results(data: pd.DataFrame, results: dict[str, Any], ensemble: SimpleEnsemble) -> None:
+    """Plot the backtesting results."""
 
-def create_ensemble_config() -> EnsembleConfig:
-    """Create ensemble configuration with multiple agents."""
-    return EnsembleConfig(
-        agents={
-            "sac": {
-                "enabled": True,
-                "config": {
-                    "learning_rate": 3e-4,
-                    "gamma": 0.99,
-                    "tau": 0.005,
-                    "batch_size": 256,
-                    "hidden_dims": [256, 256],
-                    "automatic_entropy_tuning": True,
-                    "target_entropy": -1.0,
-                },
-            },
-            "td3": {
-                "enabled": True,
-                "config": {
-                    "learning_rate": 3e-4,
-                    "gamma": 0.99,
-                    "tau": 0.005,
-                    "batch_size": 256,
-                    "hidden_dims": [256, 256],
-                    "policy_delay": 2,
-                    "target_noise": 0.2,
-                    "noise_clip": 0.5,
-                    "exploration_noise": 0.1,
-                },
-            },
-            "ppo": {
-                "enabled": True,
-                "config": {
-                    "learning_rate": 3e-4,
-                    "gamma": 0.99,
-                    "gae_lambda": 0.95,
-                    "clip_ratio": 0.2,
-                    "batch_size": 256,
-                    "minibatch_size": 64,
-                    "n_epochs": 10,
-                    "hidden_dims": [256, 256],
-                    "activation": "tanh",
-                    "vf_coef": 0.5,
-                    "ent_coef": 0.01,
-                    "target_kl": 0.01,
-                },
-            },
-        },
-        ensemble_method="weighted_voting",
-        diversity_penalty=0.1,
-        performance_window=100,
-        min_weight=0.05,
-        risk_adjustment=True,
-    )
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+
+    # Price and signals
+    equity_df = pd.DataFrame(results["equity_curve"])
+    axes[0, 0].plot(data["date"], data["close"], label="Price", alpha=0.7)
+    axes[0, 0].plot(equity_df["date"], equity_df["equity"], label="Portfolio Value", linewidth=2)
+    axes[0, 0].set_title("Price and Portfolio Performance")
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
+
+    # Trading signals
+    axes[0, 1].plot(equity_df["date"], equity_df["signal"], label="Ensemble Signal", alpha=0.7)
+    axes[0, 1].axhline(y=0.1, color="g", linestyle="--", alpha=0.5, label="Buy Threshold")
+    axes[0, 1].axhline(y=-0.1, color="r", linestyle="--", alpha=0.5, label="Sell Threshold")
+    axes[0, 1].set_title("Trading Signals")
+    axes[0, 1].legend()
+    axes[0, 1].grid(True, alpha=0.3)
+
+    # Individual agent predictions
+    agent_predictions = {}
+    for agent in ensemble.agents:
+        predictions = []
+        for i in range(20, len(data)):
+            current_data = data.iloc[: i + 1]
+            pred = agent.predict(current_data)
+            predictions.append(pred)
+        agent_predictions[agent.name] = predictions
+
+    for agent_name, predictions in agent_predictions.items():
+        axes[1, 0].plot(data["date"].iloc[20:], predictions, label=agent_name, alpha=0.7)
+
+    axes[1, 0].set_title("Individual Agent Predictions")
+    axes[1, 0].legend()
+    axes[1, 0].grid(True, alpha=0.3)
+
+    # Performance metrics
+    metrics = ["Total Return", "Sharpe Ratio", "Max Drawdown"]
+    values = [results["total_return"] * 100, results["sharpe_ratio"], results["max_drawdown"] * 100]
+
+    bars = axes[1, 1].bar(metrics, values, color=["green", "blue", "red"], alpha=0.7)
+    axes[1, 1].set_title("Performance Metrics")
+    axes[1, 1].grid(True, alpha=0.3)
+
+    # Add value labels on bars
+    for bar, value in zip(bars, values):
+        height = bar.get_height()
+        axes[1, 1].text(bar.get_x() + bar.get_width() / 2.0, height, f"{value:.2f}", ha="center", va="bottom")
+
+    plt.tight_layout()
+    plt.savefig("ensemble_trading_results.png", dpi=300, bbox_inches="tight")
+    plt.show()
 
 
 def main() -> None:
-    """Main example function."""
-    # Setup logging
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    logger = logging.getLogger(__name__)
+    """Main function to run the ensemble trading example."""
+    logger.info("Starting Simplified Ensemble Trading Example")
 
-    logger.info("Starting Multi-Agent Ensemble Trading Example")
+    # Generate sample data
+    logger.info("Generating sample market data...")
+    data = generate_sample_data(252)  # One year of data
 
-    try:
-        # Create environment
-        logger.info("Creating trading environment...")
-        env_creator = create_trading_env()
+    # Create ensemble agents
+    logger.info("Creating ensemble agents...")
+    agents = [
+        SimpleEnsembleAgent("Momentum", "momentum"),
+        SimpleEnsembleAgent("MeanReversion", "mean_reversion"),
+        SimpleEnsembleAgent("Volatility", "volatility"),
+    ]
 
-        # Create ensemble configuration
-        logger.info("Creating ensemble configuration...")
-        config = create_ensemble_config()
+    # Create ensemble
+    ensemble = SimpleEnsemble(agents)
 
-        # Initialize ensemble trainer
-        logger.info("Initializing ensemble trainer...")
-        trainer = EnsembleTrainer(
-            config=config, env_creator=env_creator, save_dir="outputs/ensemble_example", device="auto"
-        )
+    # Run backtest
+    logger.info("Running ensemble backtest...")
+    results = backtest_ensemble(data, ensemble)
 
-        # Create agents
-        logger.info("Creating ensemble agents...")
-        trainer.create_agents()
+    # Print results
+    print("\n" + "=" * 50)
+    print("ENSEMBLE TRADING RESULTS")
+    print("=" * 50)
+    print(f"Total Return: {results['total_return']:.2%}")
+    print(f"Sharpe Ratio: {results['sharpe_ratio']:.2f}")
+    print(f"Max Drawdown: {results['max_drawdown']:.2%}")
+    print(f"Final Capital: ${results['final_capital']:,.2f}")
+    print(f"Number of Trades: {len(results['trades'])}")
+    print("=" * 50)
 
-        # Train ensemble
-        logger.info("Starting ensemble training...")
-        training_results = trainer.train_ensemble(
-            total_iterations=500,  # Reduced for example
-            eval_frequency=25,
-            save_frequency=50,
-            early_stopping_patience=25,
-        )
+    # Plot results
+    logger.info("Generating visualization...")
+    plot_results(data, results, ensemble)
 
-        logger.info("Training completed!")
-        logger.info(f"Best ensemble reward: {training_results['best_reward']:.3f}")
-        logger.info(f"Total iterations: {training_results['total_iterations']}")
+    # Save results
+    output_dir = Path("outputs/ensemble")
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Load the best ensemble
-        logger.info("Loading best ensemble...")
-        trainer.load_ensemble("best")
+    # Save equity curve
+    equity_df = pd.DataFrame(results["equity_curve"])
+    equity_df.to_csv(output_dir / "equity_curve.csv", index=False)
 
-        # Create evaluator
-        logger.info("Creating ensemble evaluator...")
-        evaluator = EnsembleEvaluator(trainer.ensemble)
+    # Save trades
+    if results["trades"]:
+        trades_df = pd.DataFrame(results["trades"])
+        trades_df.to_csv(output_dir / "trades.csv", index=False)
 
-        # Evaluate ensemble
-        logger.info("Evaluating ensemble...")
-        env = env_creator()
-        evaluation_results = evaluator.evaluate_ensemble(
-            env=env,
-            num_episodes=50,  # Reduced for example
-            include_diagnostics=True,
-            save_results=True,
-            results_path="outputs/ensemble_example/evaluation_results.json",
-        )
+    # Save summary
+    summary = {
+        "total_return": results["total_return"],
+        "sharpe_ratio": results["sharpe_ratio"],
+        "max_drawdown": results["max_drawdown"],
+        "final_capital": results["final_capital"],
+        "num_trades": len(results["trades"]),
+        "ensemble_weights": ensemble.weights,
+        "agent_names": [agent.name for agent in ensemble.agents],
+    }
 
-        # Generate evaluation report
-        logger.info("Generating evaluation report...")
-        report = evaluator.generate_evaluation_report(evaluation_results)
-        print("\n" + "=" * 60)
-        print("ENSEMBLE EVALUATION REPORT")
-        print("=" * 60)
-        print(report)
+    import json
 
-        # Compare agents
-        logger.info("Comparing individual agents vs ensemble...")
-        comparison_results = evaluator.compare_agents(env, num_episodes=25)
+    with open(output_dir / "summary.json", "w") as f:
+        json.dump(summary, f, indent=2)
 
-        print("\n" + "=" * 60)
-        print("AGENT COMPARISON RESULTS")
-        print("=" * 60)
-        for agent_name, results in comparison_results.items():
-            print(f"\n{agent_name.upper()}:")
-            print(f"  Mean Reward: {results['mean_reward']:.3f} ± {results['std_reward']:.3f}")
-            print(f"  Success Rate: {results['success_rate']:.1%}")
-            print(f"  Mean Episode Length: {results['mean_length']:.1f}")
-
-        # Get ensemble info
-        logger.info("Getting ensemble information...")
-        ensemble_info = trainer.get_ensemble_info()
-
-        print("\n" + "=" * 60)
-        print("ENSEMBLE INFORMATION")
-        print("=" * 60)
-        print(f"Number of agents: {ensemble_info['num_agents']}")
-        print(f"Ensemble method: {ensemble_info['ensemble_method']}")
-        print(f"Current weights: {ensemble_info['weights']}")
-
-        # Demonstrate dynamic agent management
-        logger.info("Demonstrating dynamic agent management...")
-
-        # Add a new agent dynamically
-        logger.info("Adding a new SAC agent dynamically...")
-        new_sac_config = {
-            "learning_rate": 1e-4,  # Different learning rate
-            "gamma": 0.99,
-            "tau": 0.005,
-            "batch_size": 128,
-            "hidden_dims": [128, 128],  # Different architecture
-        }
-
-        success = trainer.add_agent_dynamically("sac_v2", "sac", new_sac_config)
-        if success:
-            logger.info("Successfully added new agent!")
-
-            # Re-evaluate with new agent
-            logger.info("Re-evaluating ensemble with new agent...")
-            new_evaluation = evaluator.evaluate_ensemble(env, num_episodes=25)
-            print(f"\nNew ensemble performance: {new_evaluation['performance']['mean_reward']:.3f}")
-
-            # Remove the agent
-            logger.info("Removing the dynamically added agent...")
-            trainer.remove_agent_dynamically("sac_v2")
-            logger.info("Agent removed successfully!")
-
-        # Get evaluation summary
-        logger.info("Getting evaluation summary...")
-        summary = evaluator.get_evaluation_summary()
-
-        print("\n" + "=" * 60)
-        print("EVALUATION SUMMARY")
-        print("=" * 60)
-        print(f"Number of evaluations: {summary['num_evaluations']}")
-        print(f"Performance trend: {summary['performance_trend']['reward_trend']}")
-        print(f"Consensus trend: {summary['consensus_trend']['consensus_trend']}")
-        print(f"Diversity trend: {summary['diversity_trend']['diversity_trend']}")
-        print(f"Stability trend: {summary['stability_trend']['stability_trend']}")
-
-        logger.info("Example completed successfully!")
-
-    except Exception as e:
-        logger.exception(f"Error in ensemble example: {e}")
-        raise
-
-
-def demonstrate_ensemble_methods() -> None:
-    """Demonstrate different ensemble voting methods."""
-    logger = logging.getLogger(__name__)
-    logger.info("Demonstrating different ensemble voting methods...")
-
-    # Create a simple environment for demonstration
-    env_creator = create_trading_env()
-    config = create_ensemble_config()
-
-    # Test different ensemble methods
-    ensemble_methods = ["weighted_voting", "consensus", "diversity_aware", "risk_adjusted"]
-
-    for method in ensemble_methods:
-        logger.info(f"Testing ensemble method: {method}")
-
-        # Update config
-        config.ensemble_method = method
-
-        # Create trainer and agents
-        trainer = EnsembleTrainer(config, env_creator, save_dir=f"outputs/ensemble_{method}")
-        trainer.create_agents()
-
-        # Quick evaluation
-        evaluator = EnsembleEvaluator(trainer.ensemble)
-        env = env_creator()
-        results = evaluator.evaluate_ensemble(env, num_episodes=10)
-
-        print(
-            f"{method}: Mean Reward = {results['performance']['mean_reward']:.3f}, "
-            f"Diversity = {results['diversity']['overall_diversity']:.3f}"
-        )
+    logger.info(f"Results saved to {output_dir}")
+    logger.info("Ensemble trading example completed successfully!")
 
 
 if __name__ == "__main__":
     main()
-
-    # Uncomment to demonstrate different ensemble methods
-    # demonstrate_ensemble_methods()

@@ -19,6 +19,15 @@ from rich.table import Table
 
 from ..core.unified_config import BacktestConfig
 from ..portfolio.manager import PortfolioConfig, PortfolioManager
+from ..portfolio.transaction_costs import (
+    BrokerType,
+    MarketCondition,
+    MarketData,
+    OrderType,
+)
+from ..portfolio.transaction_costs import (
+    TransactionCostModel as NewTransactionCostModel,
+)
 from ..utils.metrics import (
     calculate_beta,
     calculate_calmar_ratio,
@@ -36,78 +45,6 @@ from .statistical_tests import StatisticalTests
 
 console = Console()
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class TransactionCostModel:
-    """Configurable transaction cost model for realistic backtesting."""
-
-    # Commission structure
-    commission_rate: float = 0.001  # 0.1% commission
-    min_commission: float = 1.0  # Minimum commission per trade
-    max_commission: float = 1000.0  # Maximum commission per trade
-
-    # Slippage model
-    slippage_rate: float = 0.0001  # 0.01% slippage
-    slippage_model: str = "linear"  # linear, square_root, volume_based
-
-    # Market impact model
-    market_impact_rate: float = 0.00005  # 0.005% market impact
-    impact_model: str = "linear"  # linear, square_root
-
-    # Bid-ask spread
-    bid_ask_spread: float = 0.0002  # 2 bps spread
-
-    def calculate_total_cost(
-        self,
-        trade_value: float,
-        trade_volume: float,
-        avg_daily_volume: float = 1000000.0,
-    ) -> dict[str, float]:
-        """
-        Calculate total transaction costs for a trade.
-
-        Args:
-            trade_value: Dollar value of the trade
-            trade_volume: Number of shares/units traded
-            avg_daily_volume: Average daily volume for market impact
-
-        Returns:
-            Dictionary with cost breakdown
-        """
-        # Commission
-        commission = max(self.min_commission, min(trade_value * self.commission_rate, self.max_commission))
-
-        # Slippage
-        if self.slippage_model == "linear":
-            slippage = trade_value * self.slippage_rate
-        elif self.slippage_model == "square_root":
-            slippage = trade_value * self.slippage_rate * np.sqrt(trade_volume / 1000)
-        else:
-            slippage = trade_value * self.slippage_rate
-
-        # Market impact
-        volume_ratio = trade_volume / avg_daily_volume if avg_daily_volume > 0 else 0
-        if self.impact_model == "linear":
-            market_impact = trade_value * self.market_impact_rate * volume_ratio
-        elif self.impact_model == "square_root":
-            market_impact = trade_value * self.market_impact_rate * np.sqrt(volume_ratio)
-        else:
-            market_impact = trade_value * self.market_impact_rate
-
-        # Bid-ask spread
-        spread_cost = trade_value * self.bid_ask_spread
-
-        total_cost = commission + slippage + market_impact + spread_cost
-
-        return {
-            "commission": commission,
-            "slippage": slippage,
-            "market_impact": market_impact,
-            "spread_cost": spread_cost,
-            "total_cost": total_cost,
-            "cost_pct": total_cost / trade_value if trade_value > 0 else 0,
-        }
 
 
 @dataclass
@@ -252,7 +189,7 @@ class BacktestEvaluator:
     def __init__(
         self,
         config: BacktestConfig,
-        transaction_cost_model: TransactionCostModel | None = None,
+        transaction_cost_model: NewTransactionCostModel | None = None,
     ):
         """
         Initialize the backtest evaluator.
@@ -262,26 +199,28 @@ class BacktestEvaluator:
             transaction_cost_model: Optional custom transaction cost model
         """
         self.config = config
-        self.transaction_cost_model = transaction_cost_model or TransactionCostModel(
-            commission_rate=config.commission_rate,
-            slippage_rate=config.slippage_rate,
+        self.transaction_cost_model = transaction_cost_model or NewTransactionCostModel.create_broker_model(
+            BrokerType.RETAIL
         )
 
         # Initialize components
         self.metrics_calculator = MetricsCalculator()
         self.statistical_tests = StatisticalTests()
 
-        # Portfolio manager
+        # Portfolio manager with new transaction cost model
         portfolio_config = PortfolioConfig(
             max_position_size=config.max_position_size,
             max_leverage=config.max_leverage,
             commission_rate=config.commission_rate,
             stop_loss_pct=config.stop_loss_pct,
             take_profit_pct=config.take_profit_pct,
+            broker_type=BrokerType.RETAIL,  # Default broker type
         )
+
         self.portfolio_manager = PortfolioManager(
             initial_capital=config.initial_capital,
             config=portfolio_config,
+            transaction_cost_model=self.transaction_cost_model,
         )
 
         # Results storage
@@ -453,12 +392,25 @@ class BacktestEvaluator:
         if quantity == 0:
             return
 
-        # Calculate transaction costs
-        trade_value = abs(quantity * price)
+        # Create market data for transaction cost calculation
+        market_data = MarketData(
+            timestamp=timestamp,
+            bid=price * 0.9999,  # Estimate bid
+            ask=price * 1.0001,  # Estimate ask
+            mid_price=price,
+            volume=volume,
+            volatility=0.02,  # Default volatility
+            avg_daily_volume=volume * 100,  # Estimate daily volume
+            market_cap=1000000000,  # Default market cap
+        )
+
+        # Calculate transaction costs using new API
         costs = self.transaction_cost_model.calculate_total_cost(
-            trade_value=trade_value,
-            trade_volume=abs(quantity),
-            avg_daily_volume=volume,
+            trade_value=abs(quantity * price),
+            quantity=abs(quantity),
+            market_data=market_data,
+            order_type=OrderType.MARKET,
+            market_condition=MarketCondition.NORMAL,
         )
 
         # Execute trade
@@ -477,7 +429,7 @@ class BacktestEvaluator:
                 side=side,
                 quantity=abs(quantity),
                 price=price,
-                trade_value=trade_value,
+                trade_value=abs(quantity * price),
                 costs=costs,
                 portfolio_value=self.portfolio_manager.total_value,
                 cash=self.portfolio_manager.cash,

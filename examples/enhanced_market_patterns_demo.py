@@ -276,7 +276,7 @@ def demonstrate_regime_detection(generator: MarketPatternGenerator) -> None:
         n_periods=100, trend_type="uptrend", trend_strength=0.001, volatility=0.02, regime_changes=regime_changes
     )
 
-    fig, axes = plt.subplots(3, 1, figsize=(12, 10))
+    fig, axes = plt.subplots(4, 1, figsize=(12, 12))
     fig.suptitle("Enhanced Regime Detection", fontsize=16)
 
     # Plot price series

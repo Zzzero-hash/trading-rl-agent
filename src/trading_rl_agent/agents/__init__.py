@@ -1,7 +1,6 @@
 """Agents package - Contains reinforcement learning agents and training utilities."""
 
-# Configs are imported separately by each agent to avoid circular dependencies
-
+# Import configs
 # Import agents and trainer
 # Import advanced policy optimization components
 from .advanced_policy_optimization import (
@@ -14,6 +13,16 @@ from .advanced_policy_optimization import (
 )
 from .advanced_trainer import AdvancedTrainer, MultiObjectiveTrainer
 from .benchmark_framework import BenchmarkConfig, BenchmarkFramework, run_quick_benchmark
+from .configs import (
+    AdvancedPPOConfig,
+    EnsembleConfig,
+    MultiObjectiveConfig,
+    NaturalPolicyGradientConfig,
+    PPOConfig,
+    SACConfig,
+    TD3Config,
+    TRPOConfig,
+)
 from .ensemble_evaluator import EnsembleEvaluator
 
 # Import new ensemble components
@@ -29,26 +38,28 @@ from .trainer import Trainer
 __all__ = [
     "TRPO",
     "AdaptiveLearningRateScheduler",
-    # Advanced policy optimization
     "AdvancedPPO",
+    "AdvancedPPOConfig",
     "AdvancedTrainer",
-    # Benchmarking
     "BenchmarkConfig",
     "BenchmarkFramework",
-    # Core agents
     "CallablePolicy",
     "EnsembleAgent",
+    "EnsembleConfig",
     "EnsembleEvaluator",
     "EnsembleTrainer",
-    # Multi-objective optimization
+    "MultiObjectiveConfig",
     "MultiObjectiveOptimizer",
     "MultiObjectiveTrainer",
     "NaturalPolicyGradient",
-    # Policy optimization utilities
+    "NaturalPolicyGradientConfig",
+    "PPOConfig",
     "PolicyOptimizationComparison",
+    "SACConfig",
+    "TD3Config",
+    "TRPOConfig",
     "Trainer",
     "WeightedEnsembleAgent",
-    # Benchmarking utilities
     "run_quick_benchmark",
     "weighted_policy_mapping",
 ]

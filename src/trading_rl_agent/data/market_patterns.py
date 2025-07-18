@@ -223,14 +223,42 @@ class MarketPatternGenerator:
         # Generate ARIMA process
         np.random.seed(self.seed if self.seed is not None else np.random.randint(0, 10000))
 
-        if seasonal_order:
-            model = SARIMAX(np.zeros(n_periods), order=order, seasonal_order=seasonal_order, trend="c")
+        # For integrated models (d > 0), we can't use constant trend
+        # Use linear trend instead, or no trend for d > 1
+        if order[1] > 0:  # d > 0
+            trend_param = "t" if order[1] == 1 else None  # linear trend for d=1, no trend for d>1
         else:
-            model = ARIMA(np.zeros(n_periods), order=order, trend="c")
+            trend_param = "c"  # constant trend for d=0
+
+        if seasonal_order:
+            model = SARIMAX(np.zeros(n_periods), order=order, seasonal_order=seasonal_order, trend=trend_param)
+        else:
+            model = ARIMA(np.zeros(n_periods), order=order, trend=trend_param)
+
+        # Calculate the correct number of parameters for the ARIMA model
+        # For ARIMA(p,d,q): p + q parameters (excluding trend)
+        # For SARIMA(p,d,q)(P,D,Q,s): p + q + P + Q parameters (excluding trend)
+        p, d, q = order
+        if seasonal_order:
+            P, D, Q, s = seasonal_order
+            n_params = p + q + P + Q
+        else:
+            n_params = p + q
+
+        # Generate appropriate parameters
+        if trend_param == "c":
+            # Constant trend model
+            params = [trend_strength] + [0.1] * n_params
+        elif trend_param == "t":
+            # Linear trend model
+            params = [trend_strength, 0.001] + [0.1] * n_params
+        else:
+            # No trend model
+            params = [0.1] * n_params
 
         # Simulate ARIMA process
         arima_returns = model.simulate(
-            params=[trend_strength, 0.1, 0.1, 0.8] + ([0.1, 0.1, 0.8, 12] if seasonal_order else []),
+            params=params,
             nsimulations=n_periods,
         )
 

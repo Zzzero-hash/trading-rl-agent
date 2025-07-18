@@ -611,18 +611,18 @@ class AgentScenarioEvaluator:
 
         # Moving averages
         for window in [5, 10, 20]:
-            ma = pd.Series(close_prices).rolling(window=window).mean().fillna(method="bfill").values
+            ma = pd.Series(close_prices).rolling(window=window).mean().bfill().values
             features.append(ma)
 
         # Volatility
-        volatility = pd.Series(returns).rolling(window=20).std().fillna(method="bfill").values
+        volatility = pd.Series(returns).rolling(window=20).std().bfill().values
         features.append(volatility)
 
         # RSI-like indicator
         gains = np.where(returns > 0, returns, 0)
         losses = np.where(returns < 0, -returns, 0)
-        avg_gain = pd.Series(gains).rolling(window=14).mean().fillna(method="bfill").values
-        avg_loss = pd.Series(losses).rolling(window=14).mean().fillna(method="bfill").values
+        avg_gain = pd.Series(gains).rolling(window=14).mean().bfill().values
+        avg_loss = pd.Series(losses).rolling(window=14).mean().bfill().values
         rs = avg_gain / (avg_loss + 1e-8)
         rsi = 100 - (100 / (1 + rs))
         features.append(rsi)
@@ -649,8 +649,10 @@ class AgentScenarioEvaluator:
                     features_tensor = torch.FloatTensor(features)
                     predictions = agent(features_tensor).cpu().numpy().flatten()
             elif callable(agent):
-                # Function-based agent
-                predictions = np.array([agent(feature_row) for feature_row in features])
+                # Function-based agent - pass the entire feature matrix
+                predictions = agent(features)
+                if not isinstance(predictions, np.ndarray):
+                    predictions = np.array(predictions)
             else:
                 # Try to call directly
                 predictions = agent(features)
@@ -838,10 +840,10 @@ class AgentScenarioEvaluator:
         for result in scenario_results:
             status = "✅ PASSED" if result["passed_criteria"] else "❌ FAILED"
             report += f"""
-### {result["scenario"]["name"]} - {status}
+### {result["scenario"].name} - {status}
 
-**Description**: {result["scenario"]["description"]}
-**Market Regime**: {result["scenario"]["market_regime"]}
+**Description**: {result["scenario"].description}
+**Market Regime**: {result["scenario"].market_regime}
 
 **Performance Metrics**:
 - Total Return: {result["total_return"]:.1%}
@@ -851,10 +853,10 @@ class AgentScenarioEvaluator:
 - Profit Factor: {result["profit_factor"]:.2f}
 
 **Success Criteria**:
-- Min Sharpe Ratio: {result["scenario"]["min_sharpe_ratio"]} (Actual: {result["sharpe_ratio"]:.3f})
-- Max Drawdown: {result["scenario"]["max_drawdown"]:.1%} (Actual: {result["max_drawdown"]:.1%})
-- Min Win Rate: {result["scenario"]["min_win_rate"]:.1%} (Actual: {result["win_rate"]:.1%})
-- Min Profit Factor: {result["scenario"]["min_profit_factor"]:.2f} (Actual: {result["profit_factor"]:.2f})
+- Min Sharpe Ratio: {result["scenario"].min_sharpe_ratio} (Actual: {result["sharpe_ratio"]:.3f})
+- Max Drawdown: {result["scenario"].max_drawdown:.1%} (Actual: {result["max_drawdown"]:.1%})
+- Min Win Rate: {result["scenario"].min_win_rate:.1%} (Actual: {result["win_rate"]:.1%})
+- Min Profit Factor: {result["scenario"].min_profit_factor:.2f} (Actual: {result["profit_factor"]:.2f})
 
 """
 
@@ -886,7 +888,7 @@ class AgentScenarioEvaluator:
         fig.suptitle(f"Agent Scenario Evaluation: {evaluation_results['agent_name']}", fontsize=16)
 
         # 1. Sharpe Ratio by Scenario
-        scenario_names = [r["scenario"]["name"] for r in scenario_results]
+        scenario_names = [r["scenario"].name for r in scenario_results]
         sharpe_ratios = [r["sharpe_ratio"] for r in scenario_results]
         colors = ["green" if r["passed_criteria"] else "red" for r in scenario_results]
 
@@ -1000,7 +1002,7 @@ class AgentScenarioEvaluator:
         console.print("\n[bold]Scenario Results:[/bold]")
         for result in evaluation_results["scenario_results"]:
             status = "✅ PASSED" if result["passed_criteria"] else "❌ FAILED"
-            console.print(f"  {result['scenario']['name']}: {status}")
+            console.print(f"  {result['scenario'].name}: {status}")
             if result["failure_reasons"]:
                 for reason in result["failure_reasons"]:
                     console.print(f"    - {reason}")

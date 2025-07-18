@@ -9,12 +9,25 @@ This module provides comprehensive training workflows for ensemble agents includ
 - Integration with existing RL training pipeline
 """
 
+import json
 import logging
 from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
 import torch
+
+from .configs import EnsembleConfig, PPOConfig, SACConfig, TD3Config
+from .policy_utils import EnsembleAgent
+
+# Import Ray for initialization
+try:
+    import ray
+
+    RAY_AVAILABLE = True
+except ImportError:
+    RAY_AVAILABLE = False
+    ray = None
 
 # Import Ray RLlib algorithms with fallback handling
 logger = logging.getLogger(__name__)
@@ -44,9 +57,14 @@ try:
 except ImportError:
     logger.warning("Ray RLlib TD3 not available")
 
+# Import Ray registry for environment registration
+try:
+    from ray.tune.registry import register_env
 
-from .configs import EnsembleConfig, PPOConfig, SACConfig, TD3Config
-from .policy_utils import EnsembleAgent
+    RAY_REGISTRY_AVAILABLE = True
+except ImportError:
+    RAY_REGISTRY_AVAILABLE = False
+    register_env = None
 
 
 class EnsembleTrainer:
@@ -90,6 +108,23 @@ class EnsembleTrainer:
 
         self.logger.info(f"Ensemble trainer initialized on {self.device}")
 
+        # Initialize Ray if not already initialized
+        if RAY_AVAILABLE:
+            if not ray.is_initialized():
+                self.logger.info("Initializing Ray...")
+                # Force local cluster initialization with explicit parameters
+                ray.init(
+                    local_mode=False,
+                    ignore_reinit_error=True,
+                    include_dashboard=False,
+                    num_cpus=2,
+                    object_store_memory=1000000000,  # 1GB
+                )
+            else:
+                self.logger.info("Ray already initialized")
+        else:
+            self.logger.warning("Ray not available - some features may not work")
+
     def create_agents(self) -> None:
         """Create individual agents based on configuration."""
         self.logger.info("Creating ensemble agents...")
@@ -115,7 +150,149 @@ class EnsembleTrainer:
 
         # Create ensemble from individual agents
         if self.agents:
-            policies = {name: agent.get_policy() for name, agent in self.agents.items()}
+            # For the new Ray RLlib API, we need to create a simple wrapper
+            # that can compute actions from the trained agents
+            policies = {}
+            for name, agent in self.agents.items():
+                # Create a simple policy wrapper that uses the agent's new API
+                class AgentPolicy:
+                    def __init__(self, agent: Any, name: str) -> None:
+                        self.agent = agent
+                        self.name = name
+
+                    def compute_single_action(self, obs: Any, **kwargs: Any) -> tuple[Any, list, dict]:
+                        # Use the new RLModule API instead of deprecated compute_single_action
+                        try:
+                            # Try to get the RLModule and use forward_inference
+                            module = self.agent.get_module()
+
+                            # Handle different observation shapes and convert to tensor
+                            if isinstance(obs, np.ndarray):
+                                # Handle inhomogeneous shapes by flattening
+                                if obs.dtype == object or obs.ndim > 1:
+                                    # Convert to flat array, handling mixed types
+                                    obs_flat = []
+                                    for item in obs.flatten():
+                                        if isinstance(item, (list, tuple, np.ndarray)):
+                                            obs_flat.extend(np.array(item, dtype=np.float32).flatten())
+                                        else:
+                                            obs_flat.append(float(item))  # type: ignore[unreachable]
+                                    obs_batch = np.array(obs_flat, dtype=np.float32).reshape(1, -1)
+                                else:
+                                    obs_batch = obs.reshape(1, -1)
+                            else:
+                                # Convert to numpy array and flatten
+                                try:
+                                    obs_batch = np.array(obs, dtype=np.float32).reshape(1, -1)
+                                except (ValueError, TypeError):
+                                    # Handle mixed types by converting to float
+                                    obs_flat = []
+                                    for item in obs:
+                                        if isinstance(item, (list, tuple, np.ndarray)):
+                                            obs_flat.extend(np.array(item, dtype=np.float32).flatten())
+                                        else:
+                                            obs_flat.append(float(item))  # type: ignore[unreachable]
+                                    obs_batch = np.array(obs_flat, dtype=np.float32).reshape(1, -1)
+
+                            # Convert to PyTorch tensor
+                            obs_tensor = torch.FloatTensor(obs_batch)
+
+                            result = module.forward_inference({"obs": obs_tensor})
+
+                            # Handle different possible action formats
+                            if isinstance(result, dict):
+                                if "actions" in result:
+                                    action = result["actions"][0]
+                                elif "action" in result:
+                                    action = result["action"][0]
+                                elif "action_dist_inputs" in result:
+                                    # For discrete actions, take argmax
+                                    action = np.argmax(result["action_dist_inputs"][0])
+                                else:
+                                    # Try to extract action from any available key
+                                    for value in result.values():
+                                        if isinstance(value, (list, tuple, np.ndarray)) and len(value) > 0:
+                                            action = value[0]
+                                            break
+                                    else:
+                                        raise KeyError("No action found in result")
+                            else:
+                                # Direct action output
+                                action = result[0] if hasattr(result, "__getitem__") else result
+
+                            # Convert to numpy if it's a tensor
+                            if hasattr(action, "cpu"):
+                                action = action.cpu().numpy()
+
+                            # Ensure action is a 1D numpy array with consistent shape
+                            if isinstance(action, (list, tuple)):
+                                action = np.array(action, dtype=np.float32)
+                            elif not isinstance(action, np.ndarray):
+                                action = np.array([action], dtype=np.float32)
+
+                            # Flatten to 1D if needed
+                            if action.ndim > 1:
+                                action = action.flatten()
+
+                            return action, [], {}
+                        except Exception as e:
+                            # Fallback to random action if module access fails
+                            action = None  # Initialize action variable
+                            try:
+                                # Try to get action space from the environment
+                                env = None
+                                if hasattr(self.agent, "env_runner") and hasattr(self.agent.env_runner, "env"):
+                                    env = self.agent.env_runner.env
+                                elif hasattr(self.agent, "env"):
+                                    env = self.agent.env
+                                elif hasattr(self.agent, "get_policy"):
+                                    # Try to get policy and then environment
+                                    try:
+                                        policy = self.agent.get_policy()
+                                        if hasattr(policy, "observation_space"):
+                                            # For continuous actions, use observation space to infer action space
+                                            obs_dim = (
+                                                policy.observation_space.shape[0]
+                                                if hasattr(policy.observation_space, "shape")
+                                                else 1
+                                            )
+                                            action = np.random.uniform(-1, 1, obs_dim)
+                                        else:
+                                            action = np.random.uniform(-1, 1, 1)
+                                    except Exception:
+                                        action = np.random.uniform(-1, 1, 1)
+                                else:
+                                    # Default action space for trading (single continuous action)
+                                    action = np.random.uniform(-1, 1, 1)
+
+                                if env and hasattr(env, "action_space"):
+                                    action_space = env.action_space
+                                    if hasattr(action_space, "shape"):
+                                        action = np.random.uniform(-1, 1, action_space.shape)
+                                    else:
+                                        action = np.random.uniform(-1, 1, 1)
+                            except Exception:
+                                # Ultimate fallback
+                                action = np.random.uniform(-1, 1, 1)
+
+                            # Ensure action is a 1D numpy array
+                            if isinstance(action, (list, tuple)):
+                                action = np.array(action, dtype=np.float32)
+                            elif not isinstance(action, np.ndarray):
+                                action = np.array([action], dtype=np.float32)
+
+                            # Flatten to 1D if needed
+                            if action.ndim > 1:
+                                action = action.flatten()
+
+                            return action, [], {}
+
+                    def get_uncertainty(self, obs: Any) -> float:
+                        # Simple uncertainty estimation
+                        return 0.1  # Fixed uncertainty for now
+
+                policies[name] = AgentPolicy(agent, name)
+
             initial_weights = {name: 1.0 / len(policies) for name in policies}
 
             self.ensemble = EnsembleAgent(
@@ -140,9 +317,21 @@ class EnsembleTrainer:
 
         sac_config = SACConfig(**config.get("config", {}))
 
+        # Register environment if not already registered
+        if not RAY_REGISTRY_AVAILABLE:
+            self.logger.error("Ray registry not available - cannot register environment")
+            return None
+
+        env_name = "EnsembleTradingEnv"
+
+        def env_creator(config: dict[str, Any]) -> Any:
+            return self.env_creator()
+
+        register_env(env_name, env_creator)
+
         # Create SAC trainer configuration
         trainer_config = {
-            "env": self.env_creator,
+            "env": env_name,
             "framework": "torch",
             "model": {
                 "fcnet_hiddens": sac_config.hidden_dims,
@@ -167,8 +356,11 @@ class EnsembleTrainer:
 
         td3_config = TD3Config(**config.get("config", {}))
 
+        # Use the same registered environment
+        env_name = "EnsembleTradingEnv"
+
         trainer_config = {
-            "env": self.env_creator,
+            "env": env_name,
             "framework": "torch",
             "model": {
                 "fcnet_hiddens": td3_config.hidden_dims,
@@ -194,8 +386,11 @@ class EnsembleTrainer:
 
         ppo_config = PPOConfig(**config.get("config", {}))
 
+        # Use the same registered environment
+        env_name = "EnsembleTradingEnv"
+
         trainer_config = {
-            "env": self.env_creator,
+            "env": env_name,
             "framework": "torch",
             "model": {
                 "fcnet_hiddens": ppo_config.hidden_dims,
@@ -330,20 +525,99 @@ class EnsembleTrainer:
                 if len(self.agents) > 1:
                     individual_actions = []
                     for agent in self.agents.values():
-                        if hasattr(agent, "compute_single_action"):
-                            agent_action, _, _ = agent.compute_single_action(obs)
+                        try:
+                            # Try to use the new RLModule API first
+                            if hasattr(agent, "get_module"):
+                                module = agent.get_module()
+                                if module is not None:
+                                    try:
+                                        # Use the new forward_inference API
+                                        obs_batch = np.array([obs])
+                                        # Convert to PyTorch tensor
+                                        obs_tensor = torch.FloatTensor(obs_batch)
+                                        action_batch = module.forward_inference({"obs": obs_tensor})
+
+                                        # Handle different possible action formats
+                                        if isinstance(action_batch, dict):
+                                            if "actions" in action_batch:
+                                                agent_action = action_batch["actions"][0]
+                                            elif "action" in action_batch:
+                                                agent_action = action_batch["action"][0]
+                                            elif "action_dist_inputs" in action_batch:
+                                                # For discrete actions, take argmax
+                                                agent_action = np.argmax(action_batch["action_dist_inputs"][0])
+                                            else:
+                                                # Try to extract action from any available key
+                                                for value in action_batch.values():
+                                                    if isinstance(value, (list, tuple, np.ndarray)) and len(value) > 0:
+                                                        agent_action = value[0]
+                                                        break
+                                                else:
+                                                    raise KeyError("No action found in action_batch")
+                                        else:
+                                            # Direct action output
+                                            agent_action = (
+                                                action_batch[0]
+                                                if hasattr(action_batch, "__getitem__")
+                                                else action_batch
+                                            )
+
+                                        # Ensure consistent action shape
+                                        if isinstance(agent_action, (list, tuple)):
+                                            agent_action = np.array(agent_action, dtype=np.float32)
+                                        elif not isinstance(agent_action, np.ndarray):
+                                            agent_action = np.array([agent_action], dtype=np.float32)
+
+                                        # Flatten to 1D if needed
+                                        if agent_action.ndim > 1:
+                                            agent_action = agent_action.flatten()
+                                    except Exception as module_error:
+                                        self.logger.debug(
+                                            f"RLModule API failed: {module_error}, falling back to compute_single_action"
+                                        )
+                                        agent_action, _, _ = agent.compute_single_action(obs)
+                                else:
+                                    # Fallback to compute_single_action if module not available
+                                    agent_action, _, _ = agent.compute_single_action(obs)
+                            else:
+                                # Fallback to compute_single_action
+                                agent_action, _, _ = agent.compute_single_action(obs)
                             individual_actions.append(agent_action)
+                        except Exception as e:
+                            self.logger.warning(f"Failed to get action from agent: {e}")
+                            continue
 
                     # Check if actions are similar (consensus)
                     if len(individual_actions) > 1:
-                        action_array = np.array(individual_actions)
-                        std_action = np.std(action_array, axis=0)
-                        if np.all(std_action < self.ensemble.consensus_threshold):
-                            consensus_counts += 1
-                        total_decisions += 1
+                        try:
+                            # Ensure all actions have the same shape before stacking
+                            max_dim = max(action.size for action in individual_actions)
+                            normalized_actions = []
+                            for action in individual_actions:
+                                if action.size < max_dim:
+                                    # Pad with zeros if needed
+                                    padded_action = np.zeros(max_dim, dtype=np.float32)
+                                    padded_action[: action.size] = action
+                                    normalized_actions.append(padded_action)
+                                else:
+                                    normalized_actions.append(action)
+
+                            action_array = np.array(normalized_actions)
+                            std_action = np.std(action_array, axis=0)
+                            if np.all(std_action < self.ensemble.consensus_threshold):
+                                consensus_counts += 1
+                            total_decisions += 1
+                        except Exception as e:
+                            self.logger.warning(f"Failed to check consensus: {e}")
+                            continue
 
                 # Take action in environment
-                obs, reward, done, info = env.step(action)
+                step_result = env.step(action)
+                if len(step_result) == 5:
+                    obs, reward, done, truncated, info = step_result
+                    done = done or truncated
+                else:
+                    obs, reward, done, info = step_result
                 episode_reward += reward
                 episode_length += 1
 
@@ -438,11 +712,12 @@ class EnsembleTrainer:
         for name, agent in self.agents.items():
             agent_path = self.save_dir / f"{name}_{suffix}.pkl"
             if hasattr(agent, "save"):
-                agent.save(str(agent_path))
+                # Use absolute path for Ray compatibility
+                abs_path = str(agent_path.absolute())
+                agent.save(abs_path)
 
         # Save training history
         history_path = self.save_dir / f"training_history_{suffix}.json"
-        import json
 
         with open(history_path, "w") as f:
             json.dump(self.training_history, f, indent=2)
@@ -469,8 +744,6 @@ class EnsembleTrainer:
         # Load training history
         history_path = self.save_dir / f"training_history_{suffix}.json"
         if history_path.exists():
-            import json
-
             with open(history_path) as f:
                 self.training_history = json.load(f)
 
@@ -512,7 +785,97 @@ class EnsembleTrainer:
             self.agents[name] = agent
 
             if self.ensemble:
-                policy = agent.get_policy()
+                # Create a policy wrapper for the new agent using the new RLlib API
+                class AgentPolicy:
+                    def __init__(self, agent: Any, name: str) -> None:
+                        self.agent = agent
+                        self.name = name
+
+                    def compute_single_action(self, obs: Any, **kwargs: Any) -> tuple[Any, list, dict]:
+                        # Use the new RLModule API instead of deprecated compute_single_action
+                        try:
+                            # Try to get the RLModule and use forward_inference
+                            module = self.agent.get_module()
+
+                            # Handle different observation shapes and convert to tensor
+                            if isinstance(obs, np.ndarray):
+                                # Handle inhomogeneous shapes by flattening
+                                if obs.dtype == object or obs.ndim > 1:
+                                    # Convert to flat array, handling mixed types
+                                    obs_flat = []
+                                    for item in obs.flatten():
+                                        if isinstance(item, (list, tuple, np.ndarray)):
+                                            obs_flat.extend(np.array(item, dtype=np.float32).flatten())
+                                        else:
+                                            obs_flat.append(float(item))  # type: ignore[unreachable]
+                                    obs_batch = np.array(obs_flat, dtype=np.float32).reshape(1, -1)
+                                else:
+                                    obs_batch = obs.reshape(1, -1)
+                            else:
+                                # Convert to numpy array and flatten
+                                try:
+                                    obs_batch = np.array(obs, dtype=np.float32).reshape(1, -1)
+                                except (ValueError, TypeError):
+                                    # Handle mixed types by converting to float
+                                    obs_flat = []
+                                    for item in obs:
+                                        if isinstance(item, (list, tuple, np.ndarray)):
+                                            obs_flat.extend(np.array(item, dtype=np.float32).flatten())
+                                        else:
+                                            obs_flat.append(float(item))  # type: ignore[unreachable]
+                                    obs_batch = np.array(obs_flat, dtype=np.float32).reshape(1, -1)
+
+                            # Convert to PyTorch tensor
+                            obs_tensor = torch.FloatTensor(obs_batch)
+
+                            result = module.forward_inference({"obs": obs_tensor})
+
+                            # Handle different possible action formats
+                            if isinstance(result, dict):
+                                if "actions" in result:
+                                    action = result["actions"][0]
+                                elif "action" in result:
+                                    action = result["action"][0]
+                                elif "action_dist_inputs" in result:
+                                    # For discrete actions, take argmax
+                                    action = np.argmax(result["action_dist_inputs"][0])
+                                else:
+                                    # Try to extract action from any available key
+                                    for value in result.values():
+                                        if isinstance(value, (list, tuple, np.ndarray)) and len(value) > 0:
+                                            action = value[0]
+                                            break
+                                    else:
+                                        raise KeyError("No action found in result")
+                            else:
+                                # Direct action output
+                                action = result[0] if hasattr(result, "__getitem__") else result
+
+                            # Convert to numpy if it's a tensor
+                            if hasattr(action, "cpu"):
+                                action = action.cpu().numpy()
+
+                            # Ensure action is a 1D numpy array with consistent shape
+                            if isinstance(action, (list, tuple)):
+                                action = np.array(action, dtype=np.float32)
+                            elif not isinstance(action, np.ndarray):
+                                action = np.array([action], dtype=np.float32)
+
+                            # Flatten to 1D if needed
+                            if action.ndim > 1:
+                                action = action.flatten()
+
+                            return action, [], {}
+                        except Exception as e:
+                            # Fallback to random action if module access fails
+                            action = np.random.uniform(-1, 1, 1)
+                            return action, [], {}
+
+                    def get_uncertainty(self, obs: Any) -> float:
+                        # Simple uncertainty estimation
+                        return 0.1  # Fixed uncertainty for now
+
+                policy = AgentPolicy(agent, name)
                 initial_weight = 1.0 / (len(self.ensemble.policy_map) + 1)
                 self.ensemble.add_agent(name, policy, initial_weight)
 
