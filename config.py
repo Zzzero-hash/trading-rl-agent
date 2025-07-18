@@ -6,10 +6,9 @@ for type-safe configuration management with support for YAML files, environment
 variables, and .env files.
 """
 
-import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field, field_validator
@@ -18,12 +17,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class DataConfig(BaseModel):
     """Configuration for data sources and processing."""
-    
+
     primary_source: str = Field(default="yfinance", description="Primary data source")
     backup_source: str = Field(default="yfinance", description="Backup data source")
     real_time_enabled: bool = Field(default=False, description="Enable real-time data feeds")
     update_frequency: int = Field(default=60, description="Data update frequency in seconds")
-    symbols: List[str] = Field(default=["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"], description="Trading symbols")
+    symbols: list[str] = Field(default=["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"], description="Trading symbols")
     start_date: str = Field(default="2023-01-01", description="Start date for historical data")
     end_date: str = Field(default="2024-01-01", description="End date for historical data")
     timeframe: str = Field(default="1d", description="Data timeframe")
@@ -37,16 +36,16 @@ class DataConfig(BaseModel):
 
 class ModelConfig(BaseModel):
     """Configuration for model architecture and training."""
-    
+
     type: str = Field(default="cnn_lstm", description="Model type")
     algorithm: str = Field(default="sac", description="RL algorithm")
-    cnn_filters: List[int] = Field(default=[64, 128, 256], description="CNN filter sizes")
-    cnn_kernel_sizes: List[int] = Field(default=[3, 3, 3], description="CNN kernel sizes")
+    cnn_filters: list[int] = Field(default=[64, 128, 256], description="CNN filter sizes")
+    cnn_kernel_sizes: list[int] = Field(default=[3, 3, 3], description="CNN kernel sizes")
     cnn_dropout: float = Field(default=0.2, description="CNN dropout rate")
     lstm_units: int = Field(default=128, description="Number of LSTM units")
     lstm_layers: int = Field(default=2, description="Number of LSTM layers")
     lstm_dropout: float = Field(default=0.2, description="LSTM dropout rate")
-    dense_units: List[int] = Field(default=[64, 32], description="Dense layer units")
+    dense_units: list[int] = Field(default=[64, 32], description="Dense layer units")
     batch_size: int = Field(default=32, description="Training batch size")
     learning_rate: float = Field(default=0.001, description="Learning rate")
     epochs: int = Field(default=100, description="Number of training epochs")
@@ -58,7 +57,7 @@ class ModelConfig(BaseModel):
 
 class AgentConfig(BaseModel):
     """Configuration for RL agent settings."""
-    
+
     agent_type: str = Field(default="sac", description="Agent type")
     ensemble_size: int = Field(default=1, description="Number of agents in ensemble")
     eval_frequency: int = Field(default=10000, description="Evaluation frequency in timesteps")
@@ -67,7 +66,7 @@ class AgentConfig(BaseModel):
 
 class RiskConfig(BaseModel):
     """Configuration for risk management."""
-    
+
     max_position_size: float = Field(default=0.1, description="Maximum position size")
     max_leverage: float = Field(default=1.0, description="Maximum leverage")
     max_drawdown: float = Field(default=0.15, description="Maximum drawdown")
@@ -78,7 +77,7 @@ class RiskConfig(BaseModel):
 
 class ExecutionConfig(BaseModel):
     """Configuration for trade execution."""
-    
+
     broker: str = Field(default="alpaca", description="Trading broker")
     paper_trading: bool = Field(default=True, description="Enable paper trading")
     order_timeout: int = Field(default=60, description="Order timeout in seconds")
@@ -90,7 +89,7 @@ class ExecutionConfig(BaseModel):
 
 class MonitoringConfig(BaseModel):
     """Configuration for monitoring and logging."""
-    
+
     log_level: str = Field(default="INFO", description="Log level")
     log_file: str = Field(default="logs/trading_system.log", description="Log file path")
     structured_logging: bool = Field(default=True, description="Enable structured logging")
@@ -102,11 +101,11 @@ class MonitoringConfig(BaseModel):
 
 class InfrastructureConfig(BaseModel):
     """Configuration for infrastructure settings."""
-    
+
     distributed: bool = Field(default=False, description="Enable distributed computing")
     num_workers: int = Field(default=4, description="Number of worker processes")
     gpu_enabled: bool = Field(default=True, description="Enable GPU support")
-    ray_address: Optional[str] = Field(default=None, description="Ray cluster address")
+    ray_address: str | None = Field(default=None, description="Ray cluster address")
     use_gpu: bool = Field(default=False, description="Use GPU for training")
     max_workers: int = Field(default=4, description="Maximum number of workers")
     memory_limit: str = Field(default="8GB", description="Memory limit per worker")
@@ -114,19 +113,15 @@ class InfrastructureConfig(BaseModel):
 
 class Settings(BaseSettings):
     """Main settings class for the Trading RL Agent."""
-    
+
     model_config = SettingsConfigDict(
-        env_prefix="TRADING_RL_AGENT_",
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_prefix="TRADING_RL_AGENT_", env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
-    
+
     # Environment settings
     environment: str = Field(default="development", description="Environment")
     debug: bool = Field(default=False, description="Debug mode")
-    
+
     # Component configurations
     data: DataConfig = Field(default_factory=DataConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
@@ -135,85 +130,81 @@ class Settings(BaseSettings):
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
     infrastructure: InfrastructureConfig = Field(default_factory=InfrastructureConfig)
-    
+
     # API keys (loaded from environment variables)
-    alpaca_api_key: Optional[str] = Field(default=None, description="Alpaca API key")
-    alpaca_secret_key: Optional[str] = Field(default=None, description="Alpaca secret key")
-    alpaca_base_url: Optional[str] = Field(default=None, description="Alpaca base URL")
-    alphavantage_api_key: Optional[str] = Field(default=None, description="Alpha Vantage API key")
-    newsapi_key: Optional[str] = Field(default=None, description="News API key")
-    social_api_key: Optional[str] = Field(default=None, description="Social media API key")
-    
+    alpaca_api_key: str | None = Field(default=None, description="Alpaca API key")
+    alpaca_secret_key: str | None = Field(default=None, description="Alpaca secret key")
+    alpaca_base_url: str | None = Field(default=None, description="Alpaca base URL")
+    alphavantage_api_key: str | None = Field(default=None, description="Alpha Vantage API key")
+    newsapi_key: str | None = Field(default=None, description="News API key")
+    social_api_key: str | None = Field(default=None, description="Social media API key")
+
     @field_validator("alpaca_api_key", "alpaca_secret_key", "alphavantage_api_key", "newsapi_key", "social_api_key")
     @classmethod
-    def validate_api_keys(cls, v: Optional[str]) -> Optional[str]:
+    def validate_api_keys(cls, v: str | None) -> str | None:
         """Validate API keys - empty strings become None."""
         if v == "":
             return None
         return v
-    
-    def get_api_credentials(self, exchange: str) -> Dict[str, str]:
+
+    def get_api_credentials(self, exchange: str) -> dict[str, str]:
         """Get API credentials for a specific exchange."""
         if exchange.lower() == "alpaca":
             return {
-                "api_key": self.alpaca_api_key,
-                "secret_key": self.alpaca_secret_key,
-                "base_url": self.alpaca_base_url
+                "api_key": self.alpaca_api_key or "",
+                "secret_key": self.alpaca_secret_key or "",
+                "base_url": self.alpaca_base_url or "",
             }
-        elif exchange.lower() == "alphavantage":
-            return {"api_key": self.alphavantage_api_key}
-        else:
-            raise ValueError(f"Unknown exchange: {exchange}")
+        if exchange.lower() == "alphavantage":
+            return {"api_key": self.alphavantage_api_key or ""}
+        raise ValueError(f"Unknown exchange: {exchange}")
 
 
 # Global settings cache
-_settings_cache: Optional[Settings] = None
+_settings_cache: Settings | None = None
 
 
-def load_settings(
-    config_path: Optional[Union[str, Path]] = None,
-    env_file: Optional[Union[str, Path]] = None
-) -> Settings:
+def load_settings(config_path: str | Path | None = None, env_file: str | Path | None = None) -> Settings:
     """
     Load settings from configuration file and environment variables.
-    
+
     Args:
         config_path: Path to YAML configuration file
         env_file: Path to .env file
-        
+
     Returns:
         Settings object with loaded configuration
     """
     global _settings_cache
-    
+
     # Load YAML configuration if provided
-    config_data = {}
+    config_data: dict[str, Any] = {}
     if config_path:
         config_path = Path(config_path)
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
-        
+
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 config_data = yaml.safe_load(f) or {}
         except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML configuration: {e}")
-    
+            raise ValueError(f"Invalid YAML configuration: {e}") from e
+
     # Load environment file if provided
     env_file_path = None
     if env_file:
         env_file_path = Path(env_file)
         if not env_file_path.exists():
             raise FileNotFoundError(f"Environment file not found: {env_file_path}")
-    
+
     # Create settings with environment file
     settings_kwargs = {}
     if env_file_path:
         settings_kwargs["_env_file"] = str(env_file_path)
-    
+
     # Create settings object
     settings = Settings(**settings_kwargs)
-    
+
     # Override with YAML config
     if config_data:
         # Update nested configurations
@@ -226,17 +217,17 @@ def load_settings(
                     setattr(settings, key, updated_config)
             elif hasattr(settings, key):
                 setattr(settings, key, value)
-    
+
     # Cache the settings
     _settings_cache = settings
     return settings
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """
     Get cached settings instance.
-    
+
     Returns:
         Cached Settings object
     """
@@ -254,6 +245,6 @@ def clear_settings_cache() -> None:
 
 
 # Convenience function for backward compatibility
-def load_config(config_path: Optional[Union[str, Path]] = None) -> Settings:
+def load_config(config_path: str | Path | None = None) -> Settings:
     """Alias for load_settings for backward compatibility."""
     return load_settings(config_path=config_path)

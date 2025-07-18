@@ -96,7 +96,7 @@ def print_table(
                 header,
                 width=max(min_width, min(col_widths[i] + 2, max_width)),  # Add padding, cap at max_width
                 style="cyan",
-                no_wrap=True if "strategy" in str(header).lower() else False,  # Prevent wrapping for strategy column
+                no_wrap="strategy" in str(header).lower(),  # Prevent wrapping for strategy column
             )
     else:
         for i in range(len(rows[0])):

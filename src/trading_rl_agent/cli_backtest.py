@@ -1,6 +1,7 @@
 import sys
 import traceback
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -43,7 +44,7 @@ def _load_historical_data(symbols: list[str], start_date: str, end_date: str) ->
     if yf is None:
         console.print("[red]yfinance not available. Please install with: pip install yfinance[/red]")
         raise typer.Exit(1) from None
-    
+
     try:
         # Load data for all symbols
         data_frames = []
@@ -86,13 +87,13 @@ def _generate_sample_signals(data: pd.DataFrame, strategy_type: str = "momentum"
     # Handle empty data
     if data.empty:
         return pd.Series(dtype=float)
-    
+
     # Handle data without required columns
     if "close" not in data.columns:
         # Create a simple random signal if no close price data
         np.random.seed(42)
         return pd.Series(np.random.choice([-1, 0, 1], size=len(data), p=[0.3, 0.4, 0.3]), index=data.index)
-    
+
     if strategy_type == "momentum":
         # Simple momentum strategy
         returns = data["close"].pct_change()
@@ -153,7 +154,11 @@ def run(
         # Use config or CLI overrides
         start = start_date or settings.backtest.start_date
         end = end_date or settings.backtest.end_date
-        symbol_list = [s.strip() for s in symbols.split(",")] if symbols and isinstance(symbols, str) else settings.backtest.symbols
+        symbol_list = (
+            [s.strip() for s in symbols.split(",")]
+            if symbols and isinstance(symbols, str)
+            else settings.backtest.symbols
+        )
         capital = initial_capital or settings.backtest.initial_capital
         commission = commission_rate or settings.backtest.commission_rate
         slippage = slippage_rate or settings.backtest.slippage_rate
@@ -214,7 +219,9 @@ def run(
         # Generate detailed report
         if settings.backtest.save_trades:
             try:
-                output_dir = str(settings.backtest.output_dir) if hasattr(settings.backtest.output_dir, '__str__') else "reports"
+                output_dir = (
+                    str(settings.backtest.output_dir) if hasattr(settings.backtest.output_dir, "__str__") else "reports"
+                )
                 report_path = Path(output_dir) / f"{strategy}_report.txt"
                 report_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -408,13 +415,17 @@ def compare(
         start = start_date or settings.backtest.start_date
         end = end_date or settings.backtest.end_date
         symbol_list = [s.strip() for s in symbols.split(",")] if symbols else settings.backtest.symbols
-        
+
         # Handle output directory
         if output_dir is not None:
             output_path = Path(output_dir)
         else:
             try:
-                output_path = Path(str(settings.backtest.output_dir)) if hasattr(settings.backtest.output_dir, '__str__') else Path("reports")
+                output_path = (
+                    Path(str(settings.backtest.output_dir))
+                    if hasattr(settings.backtest.output_dir, "__str__")
+                    else Path("reports")
+                )
             except Exception:
                 output_path = Path("reports")
 
@@ -454,7 +465,7 @@ def compare(
 
         # Compare strategies
         console.print("[yellow]Running strategy comparison...[/yellow]")
-        comparison_results = evaluator.compare_strategies(data, strategy_signals)
+        comparison_results: dict | Any = evaluator.compare_strategies(data, strategy_signals)
 
         # Generate comparison report
         if settings.backtest.save_trades:
@@ -473,10 +484,27 @@ def compare(
                         f.write(f"- Number of Trades: {results.num_trades}\n")
                         f.write(f"- Total Transaction Costs: ${results.total_transaction_costs:.2f}\n\n")
                 else:
+                    # Handle non-dict results - this is reachable in some cases
                     f.write("## Comparison Results\n")
                     f.write("Results format not supported for detailed reporting.\n")
 
             console.print(f"[blue]Comparison report saved to {comparison_report_path}[/blue]")
+
+        # Display results in console
+        if isinstance(comparison_results, dict):
+            results_list = []
+            for strategy_name, results in comparison_results.items():
+                results_list.append(
+                    {
+                        "strategy": strategy_name,
+                        "total_return": f"{results.total_return:.2%}",
+                        "sharpe_ratio": f"{results.sharpe_ratio:.2f}",
+                        "max_drawdown": f"{results.max_drawdown:.2%}",
+                        "win_rate": f"{results.win_rate:.2%}",
+                        "num_trades": results.num_trades,
+                    }
+                )
+            print_metrics_table(results_list)
 
         console.print("[bold green]✅ Strategy comparison complete[/bold green]")
         raise typer.Exit(0)

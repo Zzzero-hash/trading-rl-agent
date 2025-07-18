@@ -13,23 +13,28 @@ try:
     import empyrical as _empyrical
 except ImportError:
     from .empyrical_mock import (
-        sharpe_ratio,
-        max_drawdown,
-        sortino_ratio,
-        calmar_ratio,
-        value_at_risk,
-        conditional_value_at_risk,
         beta,
+        calmar_ratio,
+        conditional_value_at_risk,
+        max_drawdown,
+        sharpe_ratio,
+        sortino_ratio,
+        value_at_risk,
     )
-    _empyrical = type('MockEmpyrical', (), {
-        'sharpe_ratio': sharpe_ratio,
-        'max_drawdown': max_drawdown,
-        'sortino_ratio': sortino_ratio,
-        'calmar_ratio': calmar_ratio,
-        'value_at_risk': value_at_risk,
-        'conditional_value_at_risk': conditional_value_at_risk,
-        'beta': beta,
-    })()
+
+    _empyrical = type(
+        "MockEmpyrical",
+        (),
+        {
+            "sharpe_ratio": sharpe_ratio,
+            "max_drawdown": max_drawdown,
+            "sortino_ratio": sortino_ratio,
+            "calmar_ratio": calmar_ratio,
+            "value_at_risk": value_at_risk,
+            "conditional_value_at_risk": conditional_value_at_risk,
+            "beta": beta,
+        },
+    )()
 import numpy as np
 import pandas as pd
 
