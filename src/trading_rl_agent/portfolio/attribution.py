@@ -209,10 +209,18 @@ class BrinsonAttributor:
         returns = returns[common_index]
         
         # Calculate attribution components
-        allocation_effect = (portfolio_weights - benchmark_weights) * returns
-        selection_effect = benchmark_weights * (returns - returns.mean())
-        interaction_effect = (portfolio_weights - benchmark_weights) * (returns - returns.mean())
-        
+def calculate_attribution(
+    self,
+    portfolio_weights: pd.Series,
+    benchmark_weights: pd.Series,
+    returns: pd.Series,
+    benchmark_returns: pd.Series,
+    grouping_column: str
+) -> Dict[str, float]:
+    allocation_effect = (portfolio_weights - benchmark_weights) * benchmark_returns
+    selection_effect  =  benchmark_weights * (returns - benchmark_returns)
+    interaction_effect = (portfolio_weights - benchmark_weights) * (returns - benchmark_returns)
+    # … rest of the method …
         return {
             'allocation': allocation_effect.sum(),
             'selection': selection_effect.sum(),
