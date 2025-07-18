@@ -6,12 +6,13 @@ agent performance across different market regimes and scenarios.
 """
 
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
 import numpy as np
 import pandas as pd
 
 from trading_rl_agent.eval import AgentScenarioEvaluator
+from trading_rl_agent.eval.scenario_evaluator import MarketScenario
 
 
 def create_simple_moving_average_agent(window: int = 20) -> Callable[[np.ndarray], np.ndarray]:
@@ -23,8 +24,8 @@ def create_simple_moving_average_agent(window: int = 20) -> Callable[[np.ndarray
         close_prices = features[:, 0]
 
         # Calculate moving averages
-        ma_short = pd.Series(close_prices).rolling(window=window // 2).mean().fillna(method="bfill").values
-        ma_long = pd.Series(close_prices).rolling(window=window).mean().fillna(method="bfill").values
+        ma_short = pd.Series(close_prices).rolling(window=window // 2).mean().bfill().values
+        ma_long = pd.Series(close_prices).rolling(window=window).mean().bfill().values
 
         # Generate signals: 1 for buy, -1 for sell, 0 for hold
         signals = np.zeros_like(close_prices)
@@ -66,8 +67,8 @@ def create_mean_reversion_agent(lookback: int = 20) -> Callable[[np.ndarray], np
         close_prices = features[:, 0]
 
         # Calculate rolling mean and standard deviation
-        rolling_mean = pd.Series(close_prices).rolling(lookback).mean().fillna(method="bfill").values
-        rolling_std = pd.Series(close_prices).rolling(lookback).std().fillna(method="bfill").values
+        rolling_mean = pd.Series(close_prices).rolling(lookback).mean().bfill().values
+        rolling_std = pd.Series(close_prices).rolling(lookback).std().bfill().values
 
         # Calculate z-score
         z_score = (close_prices - rolling_mean) / (rolling_std + 1e-8)
@@ -92,7 +93,7 @@ def create_volatility_breakout_agent(vol_window: int = 20) -> Callable[[np.ndarr
         volatility = features[:, 4]  # Assuming volatility is the 5th feature
 
         # Calculate rolling volatility
-        rolling_vol = pd.Series(volatility).rolling(vol_window).mean().fillna(method="bfill").values
+        rolling_vol = pd.Series(volatility).rolling(vol_window).mean().bfill().values
 
         # Calculate price changes
         price_changes = pd.Series(close_prices).pct_change().fillna(0).values
@@ -114,46 +115,67 @@ def create_volatility_breakout_agent(vol_window: int = 20) -> Callable[[np.ndarr
     return agent
 
 
-def create_custom_scenarios() -> list[dict[str, Any]]:
+def create_custom_scenarios() -> list[MarketScenario]:
     """Create custom market scenarios for evaluation."""
 
     return [
-        {
-            "name": "bull_market",
-            "duration_days": 60,
-            "regime_changes": [
+        MarketScenario(
+            name="bull_market",
+            description="Strong upward trending market with low volatility",
+            duration_days=60,
+            market_regime="regime_changes",
+            base_volatility=0.015,
+            drift=0.001,
+            regime_changes=[
                 {
-                    "day": 0,
-                    "volatility_multiplier": 0.8,
-                    "trend_strength": 0.3,
-                    "correlation_shift": 0.1,
+                    "start_day": 0,
+                    "regime": "trend_up",
+                    "duration": 60,
                 }
             ],
-        },
-        {
-            "name": "bear_market",
-            "duration_days": 60,
-            "regime_changes": [
+            min_sharpe_ratio=0.8,
+            max_drawdown=0.10,
+            min_win_rate=0.45,
+            min_profit_factor=1.3,
+        ),
+        MarketScenario(
+            name="bear_market",
+            description="Strong downward trending market with high volatility",
+            duration_days=60,
+            market_regime="regime_changes",
+            base_volatility=0.025,
+            drift=-0.002,
+            regime_changes=[
                 {
-                    "day": 0,
-                    "volatility_multiplier": 1.5,
-                    "trend_strength": -0.4,
-                    "correlation_shift": -0.2,
+                    "start_day": 0,
+                    "regime": "trend_down",
+                    "duration": 60,
                 }
             ],
-        },
-        {
-            "name": "high_volatility",
-            "duration_days": 60,
-            "regime_changes": [
+            min_sharpe_ratio=0.2,
+            max_drawdown=0.20,
+            min_win_rate=0.35,
+            min_profit_factor=1.0,
+        ),
+        MarketScenario(
+            name="high_volatility",
+            description="High volatility market with no clear trend",
+            duration_days=60,
+            market_regime="regime_changes",
+            base_volatility=0.030,
+            drift=0.0,
+            regime_changes=[
                 {
-                    "day": 0,
-                    "volatility_multiplier": 2.0,
-                    "trend_strength": 0.0,
-                    "correlation_shift": 0.0,
+                    "start_day": 0,
+                    "regime": "volatile",
+                    "duration": 60,
                 }
             ],
-        },
+            min_sharpe_ratio=0.4,
+            max_drawdown=0.25,
+            min_win_rate=0.30,
+            min_profit_factor=1.1,
+        ),
     ]
 
 

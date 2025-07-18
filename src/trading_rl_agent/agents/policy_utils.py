@@ -78,6 +78,9 @@ class WeightedEnsembleAgent:
     def select_action(self, obs: np.ndarray) -> np.ndarray:
         policy_id = self.mapping_fn("agent0", None, None, {})
         action, _, _ = self.policy_map[policy_id].compute_single_action(obs)
+        # Ensure consistent action shape - flatten to 1D if needed
+        if action.ndim > 1:
+            action = action.flatten()
         return action
 
 
@@ -147,13 +150,22 @@ class EnsembleAgent(WeightedEnsembleAgent):
 
         for name, policy in self.policy_map.items():
             action, _, _ = policy.compute_single_action(obs)
+            # Ensure consistent action shape - flatten to 1D if needed
+            if action.ndim > 1:
+                action = action.flatten()
             actions[name] = action
             total_weight += self._get_current_weight(name)
 
         # Weighted average of actions
-        weighted_action = np.zeros_like(next(iter(actions.values())))
+        # Get the expected action shape from the first action
+        first_action = next(iter(actions.values()))
+        weighted_action = np.zeros_like(first_action, dtype=np.float32)
+
         for name, action in actions.items():
             weight = self._get_current_weight(name) / total_weight
+            # Ensure action has the same shape as weighted_action
+            if action.shape != weighted_action.shape:
+                action = action.reshape(weighted_action.shape)
             weighted_action += weight * action
 
         return weighted_action
@@ -163,6 +175,9 @@ class EnsembleAgent(WeightedEnsembleAgent):
         actions = []
         for policy in self.policy_map.values():
             action, _, _ = policy.compute_single_action(obs)
+            # Ensure consistent action shape - flatten to 1D if needed
+            if action.ndim > 1:
+                action = action.flatten()
             actions.append(action)
 
         # Check for consensus
@@ -185,6 +200,9 @@ class EnsembleAgent(WeightedEnsembleAgent):
         actions = {}
         for name, policy in self.policy_map.items():
             action, _, _ = policy.compute_single_action(obs)
+            # Ensure consistent action shape - flatten to 1D if needed
+            if action.ndim > 1:
+                action = action.flatten()
             actions[name] = action
 
         # Calculate diversity penalty
@@ -204,9 +222,13 @@ class EnsembleAgent(WeightedEnsembleAgent):
             adjusted_weights = {k: v / total_weight for k, v in adjusted_weights.items()}
 
         # Weighted voting with adjusted weights
-        weighted_action = np.zeros_like(next(iter(actions.values())))
+        first_action = next(iter(actions.values()))
+        weighted_action = np.zeros_like(first_action, dtype=np.float32)
         for name, action in actions.items():
             weight = adjusted_weights[name]
+            # Ensure action has the same shape as weighted_action
+            if action.shape != weighted_action.shape:
+                action = action.reshape(weighted_action.shape)
             weighted_action += weight * action
 
         return weighted_action
@@ -218,6 +240,9 @@ class EnsembleAgent(WeightedEnsembleAgent):
 
         for name, policy in self.policy_map.items():
             action, _, info = policy.compute_single_action(obs)
+            # Ensure consistent action shape - flatten to 1D if needed
+            if action.ndim > 1:
+                action = action.flatten()
             actions[name] = action
 
             # Estimate uncertainty from policy info or action variance
@@ -243,9 +268,13 @@ class EnsembleAgent(WeightedEnsembleAgent):
                 risk_adjusted_weights = {k: v / total_weight for k, v in risk_adjusted_weights.items()}
 
             # Weighted voting with risk-adjusted weights
-            weighted_action = np.zeros_like(next(iter(actions.values())))
+            first_action = next(iter(actions.values()))
+            weighted_action = np.zeros_like(first_action, dtype=np.float32)
             for name, action in actions.items():
                 weight = risk_adjusted_weights[name]
+                # Ensure action has the same shape as weighted_action
+                if action.shape != weighted_action.shape:
+                    action = action.reshape(weighted_action.shape)
                 weighted_action += weight * action
 
             return weighted_action

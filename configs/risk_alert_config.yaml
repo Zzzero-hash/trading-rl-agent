@@ -1,0 +1,264 @@
+# Risk Alert System Configuration
+# This file contains default settings for the automated risk alerts and circuit breakers
+
+# Monitoring settings
+monitoring_interval_seconds: 60
+real_time_monitoring: true
+
+# Alert thresholds configuration
+alert_thresholds:
+  # Portfolio VaR alerts
+  - metric_name: "portfolio_var"
+    threshold_type: "max"
+    threshold_value: 0.03 # 3% VaR
+    severity: "warning"
+    escalation_level: "level_2"
+    cooldown_minutes: 30
+    enabled: true
+    description: "Portfolio Value at Risk exceeds 3%"
+
+  - metric_name: "portfolio_var"
+    threshold_type: "max"
+    threshold_value: 0.05 # 5% VaR
+    severity: "error"
+    escalation_level: "level_3"
+    cooldown_minutes: 15
+    enabled: true
+    description: "Portfolio Value at Risk exceeds 5%"
+
+  - metric_name: "portfolio_var"
+    threshold_type: "max"
+    threshold_value: 0.08 # 8% VaR
+    severity: "critical"
+    escalation_level: "level_5"
+    cooldown_minutes: 5
+    enabled: true
+    description: "Portfolio Value at Risk exceeds 8% - CRITICAL"
+
+  # Portfolio CVaR alerts
+  - metric_name: "portfolio_cvar"
+    threshold_type: "max"
+    threshold_value: 0.05 # 5% CVaR
+    severity: "warning"
+    escalation_level: "level_2"
+    cooldown_minutes: 30
+    enabled: true
+    description: "Portfolio Conditional Value at Risk exceeds 5%"
+
+  - metric_name: "portfolio_cvar"
+    threshold_type: "max"
+    threshold_value: 0.08 # 8% CVaR
+    severity: "error"
+    escalation_level: "level_3"
+    cooldown_minutes: 15
+    enabled: true
+    description: "Portfolio Conditional Value at Risk exceeds 8%"
+
+  # Drawdown alerts
+  - metric_name: "current_drawdown"
+    threshold_type: "max"
+    threshold_value: 0.10 # 10% drawdown
+    severity: "warning"
+    escalation_level: "level_2"
+    cooldown_minutes: 60
+    enabled: true
+    description: "Current drawdown exceeds 10%"
+
+  - metric_name: "current_drawdown"
+    threshold_type: "max"
+    threshold_value: 0.15 # 15% drawdown
+    severity: "error"
+    escalation_level: "level_3"
+    cooldown_minutes: 30
+    enabled: true
+    description: "Current drawdown exceeds 15%"
+
+  - metric_name: "current_drawdown"
+    threshold_type: "max"
+    threshold_value: 0.20 # 20% drawdown
+    severity: "critical"
+    escalation_level: "level_5"
+    cooldown_minutes: 10
+    enabled: true
+    description: "Current drawdown exceeds 20% - CRITICAL"
+
+  # Leverage alerts
+  - metric_name: "leverage"
+    threshold_type: "max"
+    threshold_value: 1.2 # 120% leverage
+    severity: "warning"
+    escalation_level: "level_2"
+    cooldown_minutes: 30
+    enabled: true
+    description: "Portfolio leverage exceeds 120%"
+
+  - metric_name: "leverage"
+    threshold_type: "max"
+    threshold_value: 1.5 # 150% leverage
+    severity: "error"
+    escalation_level: "level_3"
+    cooldown_minutes: 15
+    enabled: true
+    description: "Portfolio leverage exceeds 150%"
+
+  - metric_name: "leverage"
+    threshold_type: "max"
+    threshold_value: 2.0 # 200% leverage
+    severity: "critical"
+    escalation_level: "level_5"
+    cooldown_minutes: 5
+    enabled: true
+    description: "Portfolio leverage exceeds 200% - CRITICAL"
+
+  # Correlation risk alerts
+  - metric_name: "correlation_risk"
+    threshold_type: "max"
+    threshold_value: 0.7 # 70% correlation
+    severity: "warning"
+    escalation_level: "level_2"
+    cooldown_minutes: 60
+    enabled: true
+    description: "Portfolio correlation risk exceeds 70%"
+
+  - metric_name: "correlation_risk"
+    threshold_type: "max"
+    threshold_value: 0.85 # 85% correlation
+    severity: "error"
+    escalation_level: "level_3"
+    cooldown_minutes: 30
+    enabled: true
+    description: "Portfolio correlation risk exceeds 85%"
+
+  # Concentration risk alerts
+  - metric_name: "concentration_risk"
+    threshold_type: "max"
+    threshold_value: 0.3 # 30% concentration
+    severity: "warning"
+    escalation_level: "level_2"
+    cooldown_minutes: 60
+    enabled: true
+    description: "Portfolio concentration risk exceeds 30%"
+
+  - metric_name: "concentration_risk"
+    threshold_type: "max"
+    threshold_value: 0.5 # 50% concentration
+    severity: "error"
+    escalation_level: "level_3"
+    cooldown_minutes: 30
+    enabled: true
+    description: "Portfolio concentration risk exceeds 50%"
+
+  # Sharpe ratio alerts (performance)
+  - metric_name: "sharpe_ratio"
+    threshold_type: "min"
+    threshold_value: 0.5 # Minimum Sharpe ratio
+    severity: "warning"
+    escalation_level: "level_1"
+    cooldown_minutes: 120
+    enabled: true
+    description: "Portfolio Sharpe ratio below 0.5"
+
+  - metric_name: "sharpe_ratio"
+    threshold_type: "min"
+    threshold_value: 0.0 # Negative Sharpe ratio
+    severity: "error"
+    escalation_level: "level_2"
+    cooldown_minutes: 60
+    enabled: true
+    description: "Portfolio Sharpe ratio is negative"
+
+  # Beta alerts
+  - metric_name: "beta"
+    threshold_type: "max"
+    threshold_value: 1.5 # High beta
+    severity: "warning"
+    escalation_level: "level_2"
+    cooldown_minutes: 60
+    enabled: true
+    description: "Portfolio beta exceeds 1.5"
+
+  - metric_name: "beta"
+    threshold_type: "max"
+    threshold_value: 2.0 # Very high beta
+    severity: "error"
+    escalation_level: "level_3"
+    cooldown_minutes: 30
+    enabled: true
+    description: "Portfolio beta exceeds 2.0"
+
+# Circuit breaker rules
+circuit_breaker_rules:
+  # VaR circuit breaker
+  - name: "var_circuit_breaker"
+    trigger_condition: "var_exceeded"
+    threshold_value: 0.10 # 10% VaR
+    action: "stop_trading"
+    cooldown_minutes: 120
+    enabled: true
+    description: "Stop all trading when VaR exceeds 10%"
+
+  # Drawdown circuit breaker
+  - name: "drawdown_circuit_breaker"
+    trigger_condition: "drawdown_exceeded"
+    threshold_value: 0.25 # 25% drawdown
+    action: "liquidate"
+    cooldown_minutes: 60
+    enabled: true
+    description: "Liquidate positions when drawdown exceeds 25%"
+
+  # Leverage circuit breaker
+  - name: "leverage_circuit_breaker"
+    trigger_condition: "leverage_exceeded"
+    threshold_value: 2.5 # 250% leverage
+    action: "reduce_position"
+    cooldown_minutes: 30
+    enabled: true
+    description: "Reduce positions when leverage exceeds 250%"
+
+  # Correlation circuit breaker
+  - name: "correlation_circuit_breaker"
+    trigger_condition: "correlation_risk_exceeded"
+    threshold_value: 0.9 # 90% correlation
+    action: "stop_trading"
+    cooldown_minutes: 60
+    enabled: true
+    description: "Stop trading when correlation risk exceeds 90%"
+
+# Notification settings
+notifications:
+  email_enabled: true
+  email_recipients:
+    - "risk-manager@company.com"
+    - "trading-desk@company.com"
+    - "compliance@company.com"
+  email_smtp_server: "smtp.gmail.com"
+  email_smtp_port: 587
+  email_username: "risk-alerts@company.com"
+  email_password: "" # Set via environment variable
+
+  slack_enabled: true
+  slack_webhook_url: "" # Set via environment variable
+  slack_channel: "#risk-alerts"
+
+  sms_enabled: false
+  sms_provider: "twilio"
+  sms_api_key: "" # Set via environment variable
+  sms_api_secret: "" # Set via environment variable
+  sms_recipients:
+    - "+1234567890" # Emergency contact
+
+  webhook_enabled: false
+  webhook_url: "" # Set via environment variable
+  webhook_headers:
+    Content-Type: "application/json"
+    Authorization: "Bearer your-token"
+
+# Escalation settings
+escalation_enabled: true
+escalation_timeout_minutes: 30
+
+# Audit and reporting settings
+audit_log_enabled: true
+audit_log_path: "logs/risk_audit.log"
+report_generation_enabled: true
+report_schedule_hours: 24

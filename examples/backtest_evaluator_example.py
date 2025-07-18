@@ -21,10 +21,8 @@ import pandas as pd
 import yfinance as yf
 
 from src.trading_rl_agent.core.unified_config import BacktestConfig
-from src.trading_rl_agent.eval.backtest_evaluator import (
-    BacktestEvaluator,
-    TransactionCostModel,
-)
+from src.trading_rl_agent.eval.backtest_evaluator import BacktestEvaluator
+from src.trading_rl_agent.portfolio.transaction_costs import BrokerType, TransactionCostModel
 
 
 def load_sample_data(symbols: list[str], start_date: str, end_date: str) -> pd.DataFrame:
@@ -133,24 +131,9 @@ def main() -> None:
 
     # Create different transaction cost models for comparison
     cost_models = {
-        "low_cost": TransactionCostModel(
-            commission_rate=0.0005,  # 0.05% commission
-            slippage_rate=0.00005,  # 0.005% slippage
-            market_impact_rate=0.00002,  # 0.002% market impact
-            bid_ask_spread=0.0001,  # 1 bps spread
-        ),
-        "standard_cost": TransactionCostModel(
-            commission_rate=0.001,  # 0.1% commission
-            slippage_rate=0.0001,  # 0.01% slippage
-            market_impact_rate=0.00005,  # 0.005% market impact
-            bid_ask_spread=0.0002,  # 2 bps spread
-        ),
-        "high_cost": TransactionCostModel(
-            commission_rate=0.002,  # 0.2% commission
-            slippage_rate=0.0002,  # 0.02% slippage
-            market_impact_rate=0.0001,  # 0.01% market impact
-            bid_ask_spread=0.0005,  # 5 bps spread
-        ),
+        "low_cost": TransactionCostModel.create_broker_model(BrokerType.PREMIUM),
+        "standard_cost": TransactionCostModel.create_broker_model(BrokerType.RETAIL),
+        "high_cost": TransactionCostModel.create_broker_model(BrokerType.DISCOUNT),
     }
 
     print("\n" + "=" * 60)
