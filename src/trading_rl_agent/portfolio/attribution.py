@@ -75,8 +75,10 @@ class FactorModel:
             market_returns: Market returns series
         """
         # Standardize returns
-        returns_std = returns.sub(returns.mean(axis=1), axis=0).div(returns.std(axis=1), axis=0)
-        
+        std_values = returns.std(axis=1)
+        # Replace zero std with small value to avoid division by zero
+        std_values = std_values.replace(0, 1e-8)
+        returns_std = returns.sub(returns.mean(axis=1), axis=0).div(std_values, axis=0)
         # Extract factors using PCA
         from sklearn.decomposition import PCA
         
