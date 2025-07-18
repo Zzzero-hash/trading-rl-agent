@@ -657,15 +657,12 @@ class PerformanceAttributor:
                     
         return sector_results
         
-    def create_dashboard(self) -> Any:
+    def create_dashboard(
+        self, portfolio_returns: pd.Series, benchmark_returns: pd.Series
+    ) -> Any:
         """Create interactive attribution dashboard."""
         if not self.attribution_results:
             raise ValueError("No attribution results available. Run analyze_performance() first.")
-            
-        # Extract portfolio and benchmark returns from results
-        # This is a simplified approach - in practice, you'd pass these explicitly
-        portfolio_returns = pd.Series()  # You'd need to pass this from the calling code
-        benchmark_returns = pd.Series()  # You'd need to pass this from the calling code
         
         return self.visualizer.create_attribution_dashboard(
             self.attribution_results, portfolio_returns, benchmark_returns
