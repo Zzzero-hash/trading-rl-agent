@@ -612,7 +612,12 @@ class PerformanceAttributor:
             for date in portfolio_weights.index:
                 if date in factor_returns.index:
                     weights = portfolio_weights.loc[date]
-                    loadings = factor_loadings.loc[weights.index]
+                    # Only include assets that have factor loadings
+                    common_assets = weights.index.intersection(factor_loadings.index)
+                    if len(common_assets) == 0:
+                        continue
+                    weights_subset = weights[common_assets]
+                    loadings = factor_loadings.loc[common_assets]
                     factor_ret = factor_returns.loc[date, factor]
                     
                     # Factor contribution = weight * loading * factor_return
