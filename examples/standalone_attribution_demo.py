@@ -9,7 +9,7 @@ without depending on the full trading_rl_agent package structure.
 import warnings
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,9 +42,9 @@ class FactorModel:
 
     def __init__(self, config: AttributionConfig):
         self.config = config
-        self.pca: Optional[PCA] = None
-        self.factor_loadings: Optional[pd.DataFrame] = None
-        self.factor_returns: Optional[pd.DataFrame] = None
+        self.pca: PCA | None = None
+        self.factor_loadings: pd.DataFrame | None = None
+        self.factor_returns: pd.DataFrame | None = None
         self.fitted: bool = False
 
     def fit(self, returns: pd.DataFrame, market_returns: pd.Series) -> None:
@@ -89,7 +89,7 @@ class FactorModel:
         for asset in returns.columns:
             # Fit linear regression
             model = LinearRegression()
-            model.fit(market_returns.values.reshape(-1, 1), returns[asset].values)
+            model.fit(market_returns.values.reshape(-1, 1), returns[asset].values)  # type: ignore
 
             # Store beta (factor loading)
             self.factor_loadings.loc[asset, "market"] = model.coef_[0]
@@ -292,7 +292,7 @@ class RiskAdjustedAttributor:
 
         # Maximum drawdown
         cumulative_returns: pd.Series = (1 + returns_numeric).cumprod()
-        running_max = cumulative_returns.expanding().max()
+        running_max = cumulative_returns.expanding().max()  # type: ignore
         drawdown = (cumulative_returns - running_max) / running_max
         max_drawdown = drawdown.min()
 
