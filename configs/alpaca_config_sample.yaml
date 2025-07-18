@@ -1,0 +1,50 @@
+# Alpaca Markets Configuration Sample
+# Copy this file to alpaca_config.yaml and update with your credentials
+
+# API Credentials (REQUIRED)
+# Get these from https://app.alpaca.markets/
+api_key: "your_api_key_here"
+secret_key: "your_secret_key_here"
+
+# API URLs
+base_url: "https://paper-api.alpaca.markets"  # Use paper trading URL for testing
+data_url: "https://data.alpaca.markets"
+
+# API Version
+use_v2_api: true  # Use Alpaca V2 SDK if available
+
+# Trading Mode
+paper_trading: true  # Set to false for live trading (use with caution!)
+
+# Retry Configuration
+max_retries: 3
+retry_delay: 1.0
+
+# Timeout Configuration
+websocket_timeout: 30
+order_timeout: 60
+
+# Cache Configuration
+cache_dir: "data/alpaca_cache"
+cache_ttl: 3600  # 1 hour in seconds
+
+# Data Feed Configuration
+data_feed: "iex"  # Use "iex" for free data or "sip" for paid data
+extended_hours: false  # Whether to allow extended hours trading
+
+# Risk Management
+max_position_size: 10000.0  # Maximum position size in dollars
+max_daily_trades: 100  # Maximum number of trades per day
+
+# Logging
+log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_trades: true  # Whether to log all trades
+
+# Comments for reference
+_comment:
+  api_key: "Your Alpaca API key from https://app.alpaca.markets/"
+  secret_key: "Your Alpaca secret key from https://app.alpaca.markets/"
+  paper_trading: "Set to false for live trading (use with caution)"
+  data_feed: "Use 'iex' for free data or 'sip' for paid data"
+  max_position_size: "Maximum position size in dollars"
+  max_daily_trades: "Maximum number of trades per day"
