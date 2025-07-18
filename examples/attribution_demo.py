@@ -402,13 +402,15 @@ def demo_automation(data):
     
     # Add performance history
     for date in data['dates']:
-        portfolio_manager.performance_history.append({
-            'timestamp': date,
-            'total_value': 1000000 * (1 + data['portfolio_returns'][:date].sum()),
-            'total_return': 1000000 * (1 + data['portfolio_returns'][:date].sum()),
-            'cash': 100000,
-            'equity_value': 900000 * (1 + data['portfolio_returns'][:date].sum())
-        })
+        for date in data['dates']:
+            cumulative_return = data['portfolio_returns'][:date].sum()
+            portfolio_manager.performance_history.append({
+                'timestamp': date,
+                'total_value': 1000000 * (1 + cumulative_return),
+                'total_return': cumulative_return,  # or 1000000 * cumulative_return for absolute return
+                'cash': 100000,
+                'equity_value': 900000 * (1 + cumulative_return)
+            })
     
     # Create automated workflow
     attribution_config = AttributionConfig()
