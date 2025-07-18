@@ -507,14 +507,22 @@ class AutomatedAttributionWorkflow:
         
         # Generate report if enabled
         if self.auto_generate_reports:
-            report_filename = f"attribution_report_{end_date.strftime('%Y%m%d')}.txt"
-            report_path = f"{self.report_output_dir}/{report_filename}"
-            
-            self.integration.generate_attribution_report(
-                start_date=start_date,
-                end_date=end_date,
-                output_path=report_path
-            )
+            import os
+            try:
+                # Ensure directory exists
+                os.makedirs(self.report_output_dir, exist_ok=True)
+
+                report_filename = f"attribution_report_{end_date.strftime('%Y%m%d')}.txt"
+                report_path = f"{self.report_output_dir}/{report_filename}"
+
+                self.integration.generate_attribution_report(
+                    start_date=start_date,
+                    end_date=end_date,
+                    output_path=report_path
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to generate report: {e}")
+                # Continue without failing the analysis
             
         self.last_analysis = end_date
         
