@@ -320,7 +320,7 @@ def create_additional_plots(data, results, output_dir):
     print("Creating additional visualizations...")
     
     # Set style
-    plt.style.use('seaborn-v0_8')
+    plt.style.use('seaborn-v0_8-darkgrid')  # or simply 'seaborn'
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
     fig.suptitle('Performance Attribution Analysis', fontsize=16)
     
