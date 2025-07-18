@@ -81,8 +81,21 @@ def analyze(
             )
         
         # Initialize portfolio manager (simulated for demo)
-        progress.update(task, description="Initializing portfolio manager...")
-        portfolio_manager = _create_demo_portfolio_manager()
++@click.option('--portfolio-source', type=click.Choice(['demo', 'file', 'api']), default='demo', help='Portfolio data source')
++@click.option('--portfolio-file', type=click.Path(exists=True), help='Portfolio data file (if source is file)')
+ def analyze(
+     config_file: Optional[str],
+     output_dir: str,
+     start_date: Optional[datetime],
+     end_date: Optional[datetime],
+     symbols: tuple,
+     risk_free_rate: float,
+     confidence_level: float,
+-    use_plotly: bool
++    use_plotly: bool,
++    portfolio_source: str,
++    portfolio_file: Optional[str]
+ ):
         
         # Initialize attribution integration
         progress.update(task, description="Setting up attribution integration...")
