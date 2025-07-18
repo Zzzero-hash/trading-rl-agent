@@ -1,144 +1,132 @@
 """
-Configuration management for Trading RL Agent.
+Configuration system for Trading RL Agent.
 
-This module provides a centralized configuration system that:
-1. Loads default settings (embedded)
-2. Overlays configuration from YAML files
-3. Parses .env files for API keys and secrets
-4. Allows environment variable overrides with TRADING_RL_AGENT_ prefix
-5. Uses Pydantic for validation
-6. Caches settings globally
+This module provides a comprehensive configuration system using Pydantic models
+for type-safe configuration management with support for YAML files, environment
+variables, and .env files.
 """
 
+import os
+from functools import lru_cache
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
-from dotenv import load_dotenv
 from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class DataConfig(BaseModel):
-    """Data pipeline configuration."""
-
-    # Data sources
+    """Configuration for data sources and processing."""
+    
     primary_source: str = Field(default="yfinance", description="Primary data source")
     backup_source: str = Field(default="yfinance", description="Backup data source")
-    real_time_enabled: bool = Field(default=False, description="Enable real-time data")
-    update_frequency: int = Field(default=60, description="Update frequency in seconds")
-
-    # Data collection
-    symbols: list[str] = Field(default=["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"], description="Trading symbols")
-    start_date: str = Field(default="2023-01-01", description="Start date")
-    end_date: str = Field(default="2024-01-01", description="End date")
+    real_time_enabled: bool = Field(default=False, description="Enable real-time data feeds")
+    update_frequency: int = Field(default=60, description="Data update frequency in seconds")
+    symbols: List[str] = Field(default=["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"], description="Trading symbols")
+    start_date: str = Field(default="2023-01-01", description="Start date for historical data")
+    end_date: str = Field(default="2024-01-01", description="End date for historical data")
     timeframe: str = Field(default="1d", description="Data timeframe")
-
-    # Feature engineering
-    feature_window: int = Field(default=50, description="Feature window size")
+    feature_window: int = Field(default=50, description="Window size for feature calculation")
     technical_indicators: bool = Field(default=True, description="Enable technical indicators")
-    sentiment_features: bool = Field(default=True, description="Enable sentiment features")
-
-    # Storage
-    data_path: str = Field(default="data/", description="Data storage path")
+    sentiment_features: bool = Field(default=True, description="Enable sentiment analysis features")
+    data_path: str = Field(default="data/", description="Data storage directory")
     cache_dir: str = Field(default="data/cache", description="Cache directory")
-    cache_ttl_hours: int = Field(default=24, description="Cache TTL in hours")
+    cache_ttl_hours: int = Field(default=24, description="Cache time-to-live in hours")
 
 
 class ModelConfig(BaseModel):
-    """Model configuration."""
-
-    # Model type
+    """Configuration for model architecture and training."""
+    
     type: str = Field(default="cnn_lstm", description="Model type")
     algorithm: str = Field(default="sac", description="RL algorithm")
-
-    # Architecture
-    cnn_filters: list[int] = Field(default=[64, 128, 256], description="CNN filters")
-    cnn_kernel_sizes: list[int] = Field(default=[3, 3, 3], description="CNN kernel sizes")
+    cnn_filters: List[int] = Field(default=[64, 128, 256], description="CNN filter sizes")
+    cnn_kernel_sizes: List[int] = Field(default=[3, 3, 3], description="CNN kernel sizes")
     cnn_dropout: float = Field(default=0.2, description="CNN dropout rate")
-    lstm_units: int = Field(default=128, description="LSTM units")
-    lstm_layers: int = Field(default=2, description="LSTM layers")
+    lstm_units: int = Field(default=128, description="Number of LSTM units")
+    lstm_layers: int = Field(default=2, description="Number of LSTM layers")
     lstm_dropout: float = Field(default=0.2, description="LSTM dropout rate")
-    dense_units: list[int] = Field(default=[64, 32], description="Dense units")
-
-    # Training
-    batch_size: int = Field(default=32, description="Batch size")
+    dense_units: List[int] = Field(default=[64, 32], description="Dense layer units")
+    batch_size: int = Field(default=32, description="Training batch size")
     learning_rate: float = Field(default=0.001, description="Learning rate")
-    epochs: int = Field(default=100, description="Training epochs")
-    total_timesteps: int = Field(default=1000000, description="Total timesteps")
-
-    # Persistence
-    model_save_path: str = Field(default="models/", description="Model save path")
+    epochs: int = Field(default=100, description="Number of training epochs")
+    total_timesteps: int = Field(default=1000000, description="Total RL training timesteps")
+    model_save_path: str = Field(default="models/", description="Model save directory")
     checkpoint_dir: str = Field(default="models/checkpoints", description="Checkpoint directory")
-
-    # Device
-    device: str = Field(default="auto", description="Device: auto, cpu, cuda")
+    device: str = Field(default="auto", description="Device selection")
 
 
 class AgentConfig(BaseModel):
-    """RL agent configuration."""
-
+    """Configuration for RL agent settings."""
+    
     agent_type: str = Field(default="sac", description="Agent type")
-    ensemble_size: int = Field(default=1, description="Ensemble size")
-    eval_frequency: int = Field(default=10000, description="Evaluation frequency")
-    save_frequency: int = Field(default=50000, description="Save frequency")
+    ensemble_size: int = Field(default=1, description="Number of agents in ensemble")
+    eval_frequency: int = Field(default=10000, description="Evaluation frequency in timesteps")
+    save_frequency: int = Field(default=50000, description="Model save frequency in timesteps")
 
 
 class RiskConfig(BaseModel):
-    """Risk management configuration."""
-
-    max_position_size: float = Field(default=0.1, description="Max position size")
-    max_leverage: float = Field(default=1.0, description="Max leverage")
-    max_drawdown: float = Field(default=0.15, description="Max drawdown")
+    """Configuration for risk management."""
+    
+    max_position_size: float = Field(default=0.1, description="Maximum position size")
+    max_leverage: float = Field(default=1.0, description="Maximum leverage")
+    max_drawdown: float = Field(default=0.15, description="Maximum drawdown")
     var_confidence_level: float = Field(default=0.05, description="VaR confidence level")
     stop_loss_pct: float = Field(default=0.02, description="Stop loss percentage")
     take_profit_pct: float = Field(default=0.05, description="Take profit percentage")
 
 
 class ExecutionConfig(BaseModel):
-    """Execution configuration."""
-
+    """Configuration for trade execution."""
+    
     broker: str = Field(default="alpaca", description="Trading broker")
-    paper_trading: bool = Field(default=True, description="Paper trading mode")
+    paper_trading: bool = Field(default=True, description="Enable paper trading")
     order_timeout: int = Field(default=60, description="Order timeout in seconds")
-    max_slippage: float = Field(default=0.001, description="Max slippage")
+    max_slippage: float = Field(default=0.001, description="Maximum slippage")
     commission_rate: float = Field(default=0.001, description="Commission rate")
-    execution_frequency: int = Field(default=5, description="Execution frequency")
-    market_hours_only: bool = Field(default=True, description="Market hours only")
+    execution_frequency: int = Field(default=5, description="Execution frequency in seconds")
+    market_hours_only: bool = Field(default=True, description="Trade only during market hours")
 
 
 class MonitoringConfig(BaseModel):
-    """Monitoring configuration."""
-
+    """Configuration for monitoring and logging."""
+    
     log_level: str = Field(default="INFO", description="Log level")
-    log_file: str = Field(default="logs/trading_system.log", description="Log file")
-    structured_logging: bool = Field(default=True, description="Structured logging")
-    mlflow_enabled: bool = Field(default=True, description="MLflow tracking")
-    tensorboard_enabled: bool = Field(default=True, description="TensorBoard")
-    metrics_frequency: int = Field(default=300, description="Metrics frequency")
-    alerts_enabled: bool = Field(default=True, description="Enable alerts")
+    log_file: str = Field(default="logs/trading_system.log", description="Log file path")
+    structured_logging: bool = Field(default=True, description="Enable structured logging")
+    mlflow_enabled: bool = Field(default=True, description="Enable MLflow tracking")
+    tensorboard_enabled: bool = Field(default=True, description="Enable TensorBoard logging")
+    metrics_frequency: int = Field(default=300, description="Metrics collection frequency in seconds")
+    alerts_enabled: bool = Field(default=True, description="Enable system alerts")
 
 
 class InfrastructureConfig(BaseModel):
-    """Infrastructure configuration."""
-
-    distributed: bool = Field(default=False, description="Distributed computing")
-    num_workers: int = Field(default=4, description="Number of workers")
-    gpu_enabled: bool = Field(default=True, description="GPU support")
-    ray_address: str | None = Field(default=None, description="Ray cluster address")
-    use_gpu: bool = Field(default=False, description="Use GPU")
-    max_workers: int = Field(default=4, description="Max workers")
-    memory_limit: str = Field(default="8GB", description="Memory limit")
+    """Configuration for infrastructure settings."""
+    
+    distributed: bool = Field(default=False, description="Enable distributed computing")
+    num_workers: int = Field(default=4, description="Number of worker processes")
+    gpu_enabled: bool = Field(default=True, description="Enable GPU support")
+    ray_address: Optional[str] = Field(default=None, description="Ray cluster address")
+    use_gpu: bool = Field(default=False, description="Use GPU for training")
+    max_workers: int = Field(default=4, description="Maximum number of workers")
+    memory_limit: str = Field(default="8GB", description="Memory limit per worker")
 
 
 class Settings(BaseSettings):
-    """Main settings class with environment variable support."""
-
-    model_config = SettingsConfigDict(env_prefix="TRADING_RL_AGENT_", case_sensitive=False, extra="ignore")
-
+    """Main settings class for the Trading RL Agent."""
+    
+    model_config = SettingsConfigDict(
+        env_prefix="TRADING_RL_AGENT_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+    
     # Environment settings
     environment: str = Field(default="development", description="Environment")
     debug: bool = Field(default=False, description="Debug mode")
-
+    
     # Component configurations
     data: DataConfig = Field(default_factory=DataConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
@@ -147,117 +135,125 @@ class Settings(BaseSettings):
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
     infrastructure: InfrastructureConfig = Field(default_factory=InfrastructureConfig)
-
-    # API keys and secrets (loaded from environment variables)
-    alpaca_api_key: str | None = Field(default=None, description="Alpaca API key")
-    alpaca_secret_key: str | None = Field(default=None, description="Alpaca secret key")
-    alpaca_base_url: str | None = Field(default=None, description="Alpaca base URL")
-    alphavantage_api_key: str | None = Field(default=None, description="Alpha Vantage API key")
-    newsapi_key: str | None = Field(default=None, description="News API key")
-    social_api_key: str | None = Field(default=None, description="Social media API key")
-
-    @field_validator("alpaca_api_key", "alpaca_secret_key", "newsapi_key", "social_api_key")
+    
+    # API keys (loaded from environment variables)
+    alpaca_api_key: Optional[str] = Field(default=None, description="Alpaca API key")
+    alpaca_secret_key: Optional[str] = Field(default=None, description="Alpaca secret key")
+    alpaca_base_url: Optional[str] = Field(default=None, description="Alpaca base URL")
+    alphavantage_api_key: Optional[str] = Field(default=None, description="Alpha Vantage API key")
+    newsapi_key: Optional[str] = Field(default=None, description="News API key")
+    social_api_key: Optional[str] = Field(default=None, description="Social media API key")
+    
+    @field_validator("alpaca_api_key", "alpaca_secret_key", "alphavantage_api_key", "newsapi_key", "social_api_key")
     @classmethod
-    def validate_api_keys(cls, v: str | None) -> str | None:
-        """Validate API keys are not empty strings."""
+    def validate_api_keys(cls, v: Optional[str]) -> Optional[str]:
+        """Validate API keys - empty strings become None."""
         if v == "":
             return None
         return v
-
-    def get_api_credentials(self, exchange: str) -> dict[str, str]:
+    
+    def get_api_credentials(self, exchange: str) -> Dict[str, str]:
         """Get API credentials for a specific exchange."""
-        credentials = {}
-
         if exchange.lower() == "alpaca":
-            if self.alpaca_api_key:
-                credentials["api_key"] = self.alpaca_api_key
-            if self.alpaca_secret_key:
-                credentials["secret_key"] = self.alpaca_secret_key
-            if self.alpaca_base_url:
-                credentials["base_url"] = self.alpaca_base_url
+            return {
+                "api_key": self.alpaca_api_key,
+                "secret_key": self.alpaca_secret_key,
+                "base_url": self.alpaca_base_url
+            }
         elif exchange.lower() == "alphavantage":
-            if self.alphavantage_api_key:
-                credentials["api_key"] = self.alphavantage_api_key
-
-        return credentials
-
-
-# Global cache for settings
-_settings_cache: Settings | None = None
+            return {"api_key": self.alphavantage_api_key}
+        else:
+            raise ValueError(f"Unknown exchange: {exchange}")
 
 
-def load_settings(config_path: Path | None = None, env_file: Path | None = None) -> Settings:
+# Global settings cache
+_settings_cache: Optional[Settings] = None
+
+
+def load_settings(
+    config_path: Optional[Union[str, Path]] = None,
+    env_file: Optional[Union[str, Path]] = None
+) -> Settings:
     """
-    Load settings with the following precedence:
-    1. Default settings (embedded)
-    2. YAML config file (if provided)
-    3. .env file (if provided)
-    4. Environment variables (TRADING_RL_AGENT_ prefix)
-
+    Load settings from configuration file and environment variables.
+    
     Args:
         config_path: Path to YAML configuration file
         env_file: Path to .env file
-
+        
     Returns:
-        Settings object with all configuration loaded
-
-    Raises:
-        ValueError: If config file is invalid
-        FileNotFoundError: If config file doesn't exist
+        Settings object with loaded configuration
     """
     global _settings_cache
-
-    # Load .env file first if provided
-    if env_file:
-        if not env_file.exists():
-            raise FileNotFoundError(f"Environment file not found: {env_file}")
-        load_dotenv(env_file, override=True)
-
-    # Start with default settings
-    settings_dict = {}
-
-    # Overlay YAML config if provided
+    
+    # Load YAML configuration if provided
+    config_data = {}
     if config_path:
+        config_path = Path(config_path)
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
-
+        
         try:
-            with config_path.open("r", encoding="utf-8") as f:
-                yaml_config = yaml.safe_load(f)
-                if yaml_config:
-                    settings_dict.update(yaml_config)
+            with open(config_path, 'r') as f:
+                config_data = yaml.safe_load(f) or {}
         except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML configuration: {e}") from e
-        except Exception as e:
-            raise ValueError(f"Error reading configuration file: {e}") from e
+            raise ValueError(f"Invalid YAML configuration: {e}")
+    
+    # Load environment file if provided
+    env_file_path = None
+    if env_file:
+        env_file_path = Path(env_file)
+        if not env_file_path.exists():
+            raise FileNotFoundError(f"Environment file not found: {env_file_path}")
+    
+    # Create settings with environment file
+    settings_kwargs = {}
+    if env_file_path:
+        settings_kwargs["_env_file"] = str(env_file_path)
+    
+    # Create settings object
+    settings = Settings(**settings_kwargs)
+    
+    # Override with YAML config
+    if config_data:
+        # Update nested configurations
+        for key, value in config_data.items():
+            if hasattr(settings, key) and isinstance(value, dict):
+                current_config = getattr(settings, key)
+                if isinstance(current_config, BaseModel):
+                    # Update the nested config
+                    updated_config = current_config.model_copy(update=value)
+                    setattr(settings, key, updated_config)
+            elif hasattr(settings, key):
+                setattr(settings, key, value)
+    
+    # Cache the settings
+    _settings_cache = settings
+    return settings
 
-    # Create settings object (environment variables will override)
-    try:
-        settings = Settings(**settings_dict)
-        # Only cache if no specific files were provided
-        if config_path is None and env_file is None:
-            _settings_cache = settings
-        return settings
-    except Exception as e:
-        raise ValueError(f"Invalid configuration: {e}") from e
 
-
+@lru_cache()
 def get_settings() -> Settings:
     """
-    Get the cached settings or load default settings.
-
+    Get cached settings instance.
+    
     Returns:
-        Settings object
+        Cached Settings object
     """
     global _settings_cache
-
     if _settings_cache is None:
         _settings_cache = load_settings()
-
     return _settings_cache
 
 
 def clear_settings_cache() -> None:
-    """Clear the settings cache to force reload."""
+    """Clear the settings cache."""
     global _settings_cache
     _settings_cache = None
+    get_settings.cache_clear()
+
+
+# Convenience function for backward compatibility
+def load_config(config_path: Optional[Union[str, Path]] = None) -> Settings:
+    """Alias for load_settings for backward compatibility."""
+    return load_settings(config_path=config_path)
