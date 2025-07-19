@@ -1,303 +1,403 @@
-# Trading RL Agent - Kubernetes Job Templates
+# Trading System - Kubernetes Deployment Orchestration
 
-This directory contains Kubernetes YAML templates for running Trading RL Agent CLI commands as Jobs and CronJobs. These templates are **not production-ready** and should be customized for your specific environment.
+This directory contains a comprehensive Kubernetes deployment orchestration for the Trading RL Agent system, implementing a production-ready microservices architecture with horizontal scaling, monitoring, and automated deployment.
 
-## 📁 Files Overview
+## 🏗️ Architecture Overview
 
-### Job Templates
+The trading system is deployed as a collection of microservices:
 
-- `download-datasets-job.yaml` - Downloads nightly datasets
-- `scheduled-backtest-job.yaml` - Runs backtesting (one-time)
-- `training-job.yaml` - Runs ad-hoc training with GPU support
+- **API Service**: RESTful API gateway for external interactions
+- **Trading Engine**: Core trading logic and order execution
+- **ML Service**: Machine learning model inference and training (GPU-enabled)
+- **Data Pipeline**: Data collection, processing, and storage
+- **Infrastructure**: PostgreSQL, Redis, RabbitMQ
+- **Monitoring**: Prometheus, Grafana
 
-### CronJob Templates
+## 📁 File Structure
 
-- `scheduled-backtest-cronjob.yaml` - Scheduled daily backtesting
-
-### Supporting Resources
-
-- `secrets.yaml` - API keys and sensitive data
-- `configmap.yaml` - Non-sensitive configuration
-- `persistent-volumes.yaml` - Storage volumes for data, models, artifacts, etc.
+```
+k8s/
+├── namespace.yaml                    # Namespace and resource quotas
+├── configmap.yaml                    # Application configuration
+├── secrets.yaml                      # Sensitive data (API keys, passwords)
+├── persistent-volumes.yaml           # Storage volumes
+├── infrastructure-services.yaml      # Database, cache, message queue
+├── api-service-deployment.yaml       # API service deployment
+├── trading-engine-deployment.yaml    # Trading engine deployment
+├── ml-service-deployment.yaml        # ML service deployment (GPU)
+├── data-pipeline-deployment.yaml     # Data pipeline deployment
+├── monitoring-stack.yaml             # Prometheus and Grafana
+├── ingress.yaml                      # External access configuration
+├── autoscaling.yaml                  # HPA and VPA configurations
+├── ci-cd-pipeline.yaml               # CI/CD pipeline definitions
+├── deploy.sh                         # Deployment automation script
+├── training-job.yaml                 # Model training jobs
+├── download-datasets-job.yaml        # Data download jobs
+├── scheduled-backtest-cronjob.yaml   # Automated backtesting
+└── README.md                         # This file
+```
 
 ## 🚀 Quick Start
 
-### 1. Prerequisites
+### Prerequisites
 
-- Kubernetes cluster with GPU support (for training jobs)
-- Docker image `trading-rl-agent:latest` available in your registry
-- Storage class configured for PersistentVolumeClaims
+- Kubernetes cluster (1.20+)
+- kubectl configured
+- Docker registry access
+- GPU nodes (for ML service)
+- Ingress controller (nginx-ingress)
+- Cert-manager (for SSL certificates)
+- Metrics server (for HPA)
 
-### 2. Setup Secrets
+### 1. Prepare Secrets
 
-First, create your secrets with actual API keys:
+Create your secrets file with actual values:
 
 ```bash
-# Encode your API keys
+# Encode your secrets
 echo -n "your-alpaca-api-key" | base64
 echo -n "your-alpaca-secret-key" | base64
-echo -n "https://paper-api.alpaca.markets" | base64
+echo -n "your-postgres-password" | base64
+echo -n "your-redis-password" | base64
+echo -n "your-rabbitmq-password" | base64
+echo -n "your-jwt-secret" | base64
 
 # Edit secrets.yaml with the encoded values
-kubectl apply -f k8s/secrets.yaml
 ```
 
-### 3. Deploy Supporting Resources
+### 2. Deploy the System
 
 ```bash
-# Create ConfigMap and PersistentVolumeClaims
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/persistent-volumes.yaml
+# Make deploy script executable
+chmod +x deploy.sh
+
+# Deploy everything
+./deploy.sh deploy
+
+# Or deploy step by step
+./deploy.sh verify    # Check status
+./deploy.sh status    # Show all resources
+./deploy.sh logs      # View logs
 ```
 
-### 4. Run Jobs
+### 3. Access Services
 
-#### Download Datasets
+Add to your `/etc/hosts`:
 
-```bash
-kubectl apply -f k8s/download-datasets-job.yaml
+```
+127.0.0.1 api.trading-system.local
+127.0.0.1 dashboard.trading-system.local
+127.0.0.1 monitoring.trading-system.local
 ```
 
-#### Run Training
+Access URLs:
 
-```bash
-kubectl apply -f k8s/training-job.yaml
-```
+- **API**: http://api.trading-system.local
+- **Grafana**: http://dashboard.trading-system.local (admin/admin)
+- **Prometheus**: http://monitoring.trading-system.local
+- **RabbitMQ**: http://rabbitmq.internal:15672
 
-#### Run Backtesting
-
-```bash
-kubectl apply -f k8s/scheduled-backtest-job.yaml
-```
-
-#### Setup Scheduled Backtesting
-
-```bash
-kubectl apply -f k8s/scheduled-backtest-cronjob.yaml
-```
-
-## 📊 Job Types
-
-### 1. Download Datasets Job
-
-- **Purpose**: Downloads nightly market data
-- **Command**: `trading-rl-agent data all`
-- **Resources**: 2-4Gi memory, 0.5-1 CPU
-- **Timeout**: 1 hour
-- **Volumes**: Config (read-only), Data (read-write), Logs (read-write)
-
-### 2. Training Job
-
-- **Purpose**: Ad-hoc model training with GPU support
-- **Command**: `trading-rl-agent train cnn-lstm`
-- **Resources**: 8-16Gi memory, 2-4 CPU, 1 GPU
-- **Timeout**: 4 hours
-- **Volumes**: Config (read-only), Data (read-only), Models (read-write), Artifacts (read-write), Logs (read-write), MLRuns (read-write)
-
-### 3. Backtesting Job
-
-- **Purpose**: Strategy backtesting
-- **Command**: `trading-rl-agent backtest strategy`
-- **Resources**: 4-8Gi memory, 1-2 CPU
-- **Timeout**: 2 hours
-- **Volumes**: Config (read-only), Data (read-only), Models (read-only), Results (read-write), Logs (read-write)
-
-### 4. Scheduled Backtesting CronJob
-
-- **Purpose**: Daily automated backtesting
-- **Schedule**: Daily at 2 AM UTC
-- **Concurrency**: Forbid (prevents overlapping runs)
-- **History**: 7 successful, 3 failed jobs
-
-## 🔧 Customization
+## 🔧 Configuration
 
 ### Environment Variables
 
-All jobs use these environment variables from secrets:
+All services use these environment variables:
 
-- `TRADING_RL_AGENT_ALPACA_API_KEY`
-- `TRADING_RL_AGENT_ALPACA_SECRET_KEY`
-- `TRADING_RL_AGENT_ALPACA_BASE_URL`
-- `TRADING_RL_AGENT_ALPHAVANTAGE_API_KEY` (optional)
-- `TRADING_RL_AGENT_NEWSAPI_KEY` (optional)
+```yaml
+# Trading API
+TRADING_RL_AGENT_ALPACA_API_KEY
+TRADING_RL_AGENT_ALPACA_SECRET_KEY
+TRADING_RL_AGENT_ALPACA_BASE_URL
+
+# Database
+POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB
+POSTGRES_USER, POSTGRES_PASSWORD
+
+# Cache
+REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
+
+# Message Queue
+RABBITMQ_HOST, RABBITMQ_PORT
+RABBITMQ_USER, RABBITMQ_PASS
+
+# Security
+JWT_SECRET
+```
 
 ### Resource Requirements
 
-Adjust resource requests/limits based on your cluster:
+| Service        | CPU Request | CPU Limit | Memory Request | Memory Limit | GPU |
+| -------------- | ----------- | --------- | -------------- | ------------ | --- |
+| API Service    | 500m        | 1000m     | 1Gi            | 2Gi          | -   |
+| Trading Engine | 1000m       | 2000m     | 2Gi            | 4Gi          | -   |
+| ML Service     | 2000m       | 4000m     | 4Gi            | 8Gi          | 1   |
+| Data Pipeline  | 1000m       | 2000m     | 2Gi            | 4Gi          | -   |
+| PostgreSQL     | 500m        | 1000m     | 1Gi            | 2Gi          | -   |
+| Redis          | 250m        | 500m      | 512Mi          | 1Gi          | -   |
+| RabbitMQ       | 250m        | 500m      | 512Mi          | 1Gi          | -   |
 
-```yaml
-resources:
-  requests:
-    memory: "4Gi"
-    cpu: "1000m"
-    nvidia.com/gpu: 1 # For training jobs
-  limits:
-    memory: "8Gi"
-    cpu: "2000m"
-    nvidia.com/gpu: 1
-```
+### Storage Configuration
 
-### Storage
+| Volume    | Size  | Access Mode   | Purpose             |
+| --------- | ----- | ------------- | ------------------- |
+| Data      | 100Gi | ReadWriteMany | Market data storage |
+| Models    | 50Gi  | ReadWriteMany | ML models           |
+| Artifacts | 20Gi  | ReadWriteMany | Training artifacts  |
+| Results   | 10Gi  | ReadWriteMany | Backtest results    |
+| Logs      | 5Gi   | ReadWriteMany | Application logs    |
+| MLRuns    | 10Gi  | ReadWriteMany | MLflow tracking     |
 
-Modify PVC sizes and storage classes:
+## 📊 Monitoring & Observability
 
-```yaml
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 100Gi # Adjust based on needs
-  storageClassName: standard # Use your cluster's storage class
-```
+### Prometheus Metrics
 
-### Scheduling
+All services expose Prometheus metrics on port 9090:
 
-For CronJobs, modify the schedule using cron syntax:
+- **System metrics**: CPU, memory, disk usage
+- **Application metrics**: Request rate, latency, error rate
+- **Business metrics**: Trading volume, P&L, order success rate
 
-```yaml
-spec:
-  schedule: "0 2 * * *" # Daily at 2 AM UTC
-  # Other options:
-  # "0 */6 * * *"     # Every 6 hours
-  # "0 2 * * 1-5"     # Weekdays at 2 AM
-  # "0 2 1 * *"       # Monthly on 1st at 2 AM
-```
+### Grafana Dashboards
 
-## 📝 Monitoring and Logs
+Pre-configured dashboards:
 
-### View Job Status
+- System Overview
+- Trading Performance
+- ML Model Metrics
+- Infrastructure Health
+
+### Alerts
+
+Configured alerts for:
+
+- High resource usage (>80%)
+- Service downtime
+- High error rates
+- Trading engine issues
+- ML service latency
+
+## 🔄 Autoscaling
+
+### Horizontal Pod Autoscaler (HPA)
+
+| Service        | Min Replicas | Max Replicas | CPU Target | Memory Target |
+| -------------- | ------------ | ------------ | ---------- | ------------- |
+| API Service    | 3            | 10           | 70%        | 80%           |
+| Trading Engine | 2            | 5            | 70%        | 80%           |
+| ML Service     | 2            | 4            | 70%        | 80%           |
+| Data Pipeline  | 2            | 6            | 70%        | 80%           |
+
+### Vertical Pod Autoscaler (VPA)
+
+ML Service uses VPA for automatic resource optimization:
+
+- CPU: 1000m - 4000m
+- Memory: 2Gi - 8Gi
+
+## 🔒 Security
+
+### Network Policies
+
+- Pod-to-pod communication restricted
+- External access through ingress only
+- Database access limited to application pods
+
+### RBAC
+
+- Service accounts with minimal permissions
+- Role-based access control
+- Secrets management
+
+### Security Context
+
+- Non-root containers
+- Read-only root filesystem where possible
+- Dropped capabilities
+- Security scanning in CI/CD
+
+## 🚀 CI/CD Pipeline
+
+### GitHub Actions
+
+Automated pipeline with:
+
+- **Testing**: Unit tests, integration tests
+- **Security**: Vulnerability scanning
+- **Building**: Multi-platform Docker images
+- **Deployment**: Staging and production
+- **Performance**: Load testing
+
+### ArgoCD Integration
+
+GitOps deployment with:
+
+- Automated sync
+- Self-healing
+- Rollback capabilities
+- Multi-environment support
+
+## 📈 Performance Optimization
+
+### Resource Management
+
+- CPU and memory limits
+- GPU allocation for ML workloads
+- Storage optimization
+- Network policies
+
+### Caching Strategy
+
+- Redis for session data
+- Model prediction caching
+- Database query caching
+
+### Load Balancing
+
+- Service mesh ready
+- Health checks
+- Circuit breakers
+- Retry policies
+
+## 🛠️ Operations
+
+### Deployment Commands
 
 ```bash
-# List all jobs
-kubectl get jobs -l app=trading-rl-agent
+# Deploy everything
+./deploy.sh deploy
 
-# Get job details
-kubectl describe job download-datasets-job
+# Check status
+./deploy.sh status
 
-# View job logs
-kubectl logs job/download-datasets-job
+# View logs
+./deploy.sh logs trading-api-service
+
+# Port forward
+./deploy.sh port-forward grafana 3000
+
+# Rollback
+./deploy.sh rollback
 ```
 
-### View CronJob Status
+### Monitoring Commands
 
 ```bash
-# List cronjobs
-kubectl get cronjobs -l app=trading-rl-agent
+# Check pod status
+kubectl get pods -n trading-system
 
-# View cronjob details
-kubectl describe cronjob scheduled-backtest-cronjob
+# Check services
+kubectl get services -n trading-system
 
-# View recent job logs
-kubectl logs job/scheduled-backtest-cronjob-1234567890
+# Check HPA
+kubectl get hpa -n trading-system
+
+# Check ingress
+kubectl get ingress -n trading-system
+
+# View logs
+kubectl logs -f deployment/trading-api-service -n trading-system
 ```
 
-### Persistent Volume Status
+### Troubleshooting
 
 ```bash
-# Check PVC status
-kubectl get pvc -l app=trading-rl-agent
+# Check events
+kubectl get events -n trading-system --sort-by='.lastTimestamp'
 
-# View PVC details
-kubectl describe pvc trading-rl-agent-data
+# Describe resources
+kubectl describe pod <pod-name> -n trading-system
+
+# Exec into container
+kubectl exec -it <pod-name> -n trading-system -- /bin/bash
+
+# Check resource usage
+kubectl top pods -n trading-system
 ```
 
-## 🛠️ Troubleshooting
+## 🔄 Updates and Maintenance
+
+### Rolling Updates
+
+All deployments use rolling update strategy:
+
+- Zero downtime deployments
+- Health check validation
+- Automatic rollback on failure
+
+### Backup Strategy
+
+- Database backups to persistent storage
+- Model versioning with MLflow
+- Configuration version control
+- Disaster recovery procedures
+
+### Scaling Operations
+
+```bash
+# Scale API service
+kubectl scale deployment trading-api-service --replicas=5 -n trading-system
+
+# Update image
+kubectl set image deployment/trading-api-service api-service=new-image:tag -n trading-system
+
+# Check rollout status
+kubectl rollout status deployment/trading-api-service -n trading-system
+```
+
+## 📋 Best Practices
+
+### Resource Management
+
+- Set appropriate resource requests and limits
+- Use HPA for automatic scaling
+- Monitor resource usage
+- Optimize container images
+
+### Security
+
+- Use secrets for sensitive data
+- Implement network policies
+- Regular security updates
+- Access control and audit logging
+
+### Monitoring
+
+- Comprehensive metrics collection
+- Alerting on critical issues
+- Performance monitoring
+- Business metrics tracking
+
+### Deployment
+
+- Use rolling updates
+- Implement health checks
+- Test in staging environment
+- Automated rollback procedures
+
+## 🆘 Support
 
 ### Common Issues
 
-1. **Image Pull Errors**
+1. **Pod startup failures**: Check resource limits and health checks
+2. **Service connectivity**: Verify network policies and service configuration
+3. **Storage issues**: Check PVC status and storage class
+4. **Scaling problems**: Verify HPA configuration and metrics server
 
-   ```bash
-   # Check if image exists in registry
-   kubectl describe pod <pod-name>
-   # Look for "ImagePullBackOff" or "ErrImagePull"
-   ```
+### Getting Help
 
-2. **Resource Constraints**
-
-   ```bash
-   # Check if pods are pending due to resources
-   kubectl get pods -l app=trading-rl-agent
-   kubectl describe pod <pending-pod-name>
-   ```
-
-3. **Volume Mount Issues**
-
-   ```bash
-   # Check PVC status
-   kubectl get pvc
-   kubectl describe pvc trading-rl-agent-data
-   ```
-
-4. **Secret Issues**
-   ```bash
-   # Verify secrets exist
-   kubectl get secrets trading-rl-agent-secrets
-   kubectl describe secret trading-rl-agent-secrets
-   ```
-
-### Debug Commands
-
-```bash
-# Get job events
-kubectl get events --sort-by='.lastTimestamp' | grep trading-rl-agent
-
-# Check pod logs
-kubectl logs -f job/download-datasets-job
-
-# Exec into running pod
-kubectl exec -it <pod-name> -- /bin/bash
-
-# Check resource usage
-kubectl top pods -l app=trading-rl-agent
-```
-
-## 🔒 Security Considerations
-
-### Production Hardening
-
-1. **Network Policies**: Restrict pod-to-pod communication
-2. **RBAC**: Use service accounts with minimal permissions
-3. **Pod Security Standards**: Enable pod security admission
-4. **Image Scanning**: Scan container images for vulnerabilities
-5. **Secret Management**: Use external secret management (e.g., HashiCorp Vault)
-
-### Example Network Policy
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: trading-rl-agent-network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: trading-rl-agent
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              name: monitoring
-      ports:
-        - protocol: TCP
-          port: 8080
-  egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              name: kube-system
-      ports:
-        - protocol: TCP
-          port: 53
-```
+- Check logs: `kubectl logs -n trading-system`
+- Monitor events: `kubectl get events -n trading-system`
+- Verify configuration: `kubectl describe -n trading-system`
+- Check metrics: Access Grafana dashboard
 
 ## 📚 Additional Resources
 
-- [Kubernetes Jobs Documentation](https://kubernetes.io/docs/concepts/workloads/controllers/job/)
-- [Kubernetes CronJobs Documentation](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
-- [Persistent Volumes Documentation](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
-- [Trading RL Agent CLI Documentation](../README_CLI_USAGE.md)
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [Prometheus Monitoring](https://prometheus.io/docs/)
+- [Grafana Dashboards](https://grafana.com/docs/)
+- [Helm Charts](https://helm.sh/docs/)
+- [ArgoCD GitOps](https://argoproj.github.io/argo-cd/)
+
+---
+
+**Note**: This deployment is production-ready but should be customized for your specific environment, security requirements, and performance needs.
