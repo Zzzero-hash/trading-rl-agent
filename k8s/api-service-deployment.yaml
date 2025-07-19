@@ -1,0 +1,248 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trading-api-service
+  namespace: trading-system
+  labels:
+    app: trading-api-service
+    component: api
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: trading-api-service
+  template:
+    metadata:
+      labels:
+        app: trading-api-service
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: trading-api-service-account
+      containers:
+      - name: api-service
+        image: trading-rl-agent:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: TRADING_RL_AGENT_ALPACA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: alpaca-api-key
+        - name: TRADING_RL_AGENT_ALPACA_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: alpaca-secret-key
+        - name: TRADING_RL_AGENT_ALPACA_BASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: alpaca-base-url
+        - name: POSTGRES_HOST
+          value: "trading-db-service"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: postgres-database
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: postgres-username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: postgres-password
+        - name: REDIS_HOST
+          value: "trading-redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: redis-password
+        - name: RABBITMQ_HOST
+          value: "trading-rabbitmq-service"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: rabbitmq-username
+        - name: RABBITMQ_PASS
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: rabbitmq-password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: trading-rl-agent-secrets
+              key: jwt-secret
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: ENVIRONMENT
+          value: "production"
+        command: ["python", "-m", "uvicorn", "src.api.main:app"]
+        args:
+        - "--host"
+        - "0.0.0.0"
+        - "--port"
+        - "8000"
+        - "--workers"
+        - "4"
+        - "--timeout-keep-alive"
+        - "30"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: logs-volume
+          mountPath: /app/logs
+        - name: data-volume
+          mountPath: /app/data
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: config-volume
+        configMap:
+          name: trading-rl-agent-config
+      - name: logs-volume
+        persistentVolumeClaim:
+          claimName: trading-rl-agent-logs
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: trading-rl-agent-data
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - trading-api-service
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trading-api-service
+  namespace: trading-system
+  labels:
+    app: trading-api-service
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: metrics
+  selector:
+    app: trading-api-service
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trading-api-service-account
+  namespace: trading-system
+  labels:
+    app: trading-api-service
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: trading-api-service-role
+  namespace: trading-system
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: trading-api-service-role-binding
+  namespace: trading-system
+subjects:
+- kind: ServiceAccount
+  name: trading-api-service-account
+  namespace: trading-system
+roleRef:
+  kind: Role
+  name: trading-api-service-role
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trading-system
+  labels:
+    name: trading-system
+    app: trading-rl-agent
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: trading-system-quota
+  namespace: trading-system
+spec:
+  hard:
+    requests.cpu: "16"
+    requests.memory: 32Gi
+    limits.cpu: "32"
+    limits.memory: 64Gi
+    requests.nvidia.com/gpu: "4"
+    limits.nvidia.com/gpu: "8"
+    persistentvolumeclaims: "20"
+    services: "10"
+    services.loadbalancers: "2"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: trading-system-limits
+  namespace: trading-system
+spec:
+  limits:
+  - default:
+      cpu: "2"
+      memory: 4Gi
+    defaultRequest:
+      cpu: "500m"
+      memory: 1Gi
+    type: Container
+  - default:
+      cpu: "4"
+      memory: 8Gi
+    defaultRequest:
+      cpu: "1"
+      memory: 2Gi
+    type: Pod
