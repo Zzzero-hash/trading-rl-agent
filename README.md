@@ -1,255 +1,421 @@
-# Trading RL Agent
+# Test Fixing Prompts for Agentic AI
 
-A production-grade hybrid reinforcement learning trading system that combines CNN+LSTM supervised learning with deep RL optimization for algorithmic trading.
+A comprehensive set of prompts, scripts, and tools designed to help agentic AI systems systematically get all pytest, unit, and integration tests passing.
 
-## 🚀 Features
+## 📋 Overview
 
-### Core Components
+This collection provides a structured approach to test debugging and fixing, covering:
 
-- **CNN+LSTM Models**: Hybrid neural networks for market pattern recognition
-- **Reinforcement Learning**: SAC, TD3, PPO agents for trading decision optimization
-- **Feature Engineering**: 150+ technical indicators with robust implementation
-- **Data Pipeline**: Multi-source data ingestion with parallel processing
-- **Risk Management**: VaR, CVaR, position sizing, and portfolio optimization
-- **Real-time Processing**: Live data feeds and sentiment analysis
+- **9 Main Test Fixing Prompts** - Systematic approach to fixing different types of test failures
+- **Specialized Domain Prompts** - Specific prompts for database, API, async, frontend, and other testing scenarios
+- **Implementation Scripts** - Bash and Python scripts for automated test analysis and fixing
+- **Configuration Examples** - Pytest and CI/CD configurations
+- **Best Practices** - Guidelines for effective test maintenance
 
-### Infrastructure
+## 🚀 Quick Start
 
-- **Configuration Management**: YAML-based configuration with validation
-- **CLI Interface**: Unified command-line interface using Typer
-- **Logging & Monitoring**: Structured logging with MLflow/TensorBoard integration
-- **Testing**: Comprehensive test suite with pytest
-- **Code Quality**: Black, isort, ruff, mypy integration
-- **Docker Support**: Containerized deployment ready
+### 1. Initial Assessment
+```bash
+# Run the assessment script to understand current test state
+./initial_assessment.sh
+```
 
-### Performance Optimizations
+### 2. Environment Setup
+```bash
+# Set up testing environment and dependencies
+./setup_test_env.sh
+```
 
-- **Parallel Data Fetching**: Ray-based parallel processing
-- **Mixed Precision Training**: Faster training with memory reduction
-- **Memory-Mapped Datasets**: Memory reduction for large datasets
-- **Advanced LR Scheduling**: Faster convergence
-- **Gradient Checkpointing**: Train larger models with same memory
+### 3. Progressive Test Fixing
+```bash
+# Use systematic approach to fix tests
+./fix_tests_progressive.sh
+```
 
-## 📦 Installation
+### 4. Detailed Analysis
+```bash
+# Get comprehensive test analysis
+python test_analyzer.py
+```
 
-### Prerequisites
+## 📁 File Structure
 
-- Python 3.9+ (3.12 recommended)
-- Git
-- Docker (optional, for containerized deployment)
+```
+├── test_fixing_prompts.md          # Main test fixing prompts (9 categories)
+├── specialized_test_prompts.md     # Domain-specific prompts
+├── test_fixing_implementation_guide.md  # Scripts and implementation details
+├── README.md                       # This file
+├── initial_assessment.sh           # Test assessment script
+├── setup_test_env.sh              # Environment setup script
+├── fix_tests_progressive.sh       # Progressive fixing script
+├── test_analyzer.py               # Python test analysis tool
+└── test_fixer.py                  # Python test fixing helper
+```
 
-### Quick Setup
+## 🎯 Main Test Fixing Prompts
 
-1. **Clone the repository**
+### 1. Initial Assessment Prompt
+- Run all tests and capture output
+- Identify failing tests and error messages
+- Categorize failures by type
+- Analyze dependencies and execution order
 
+### 2. Environment Setup Prompt
+- Check required dependencies
+- Verify configuration files
+- Set up test databases and external services
+- Check file permissions and paths
+
+### 3. Syntax and Import Error Fixing Prompt
+- Fix Python syntax errors
+- Resolve import errors
+- Fix module structure issues
+- Address dependency issues
+
+### 4. Unit Test Fixing Prompt
+- Fix assertion failures
+- Resolve mock and stub issues
+- Fix test isolation problems
+- Address timing and async issues
+- Fix test data issues
+
+### 5. Integration Test Fixing Prompt
+- Fix database integration issues
+- Resolve API integration problems
+- Fix external service integration
+- Address file system integration
+- Fix environment-specific issues
+
+### 6. Performance and Flaky Test Fixing Prompt
+- Fix flaky tests
+- Resolve performance bottlenecks
+- Fix resource management
+- Address test isolation
+
+### 7. Test Configuration and Setup Prompt
+- Fix pytest configuration
+- Resolve fixture issues
+- Fix test environment setup
+- Address test execution issues
+
+### 8. Final Verification Prompt
+- Run all tests multiple times
+- Validate test coverage
+- Performance validation
+- Documentation and reporting
+
+### 9. Maintenance and Prevention Prompt
+- Set up continuous integration
+- Implement test quality checks
+- Create test maintenance procedures
+- Establish best practices
+
+## 🔧 Specialized Domain Prompts
+
+### Database Testing
+- PostgreSQL/MySQL integration test fixing
+- SQLite test environment setup
+- Database connection and authentication
+- Schema and migration issues
+- Transaction management
+
+### API Testing
+- REST API integration test fixing
+- GraphQL API test fixing
+- Authentication and authorization
+- Request/response handling
+- API mocking
+
+### Async/Concurrent Testing
+- Async test fixing
+- Threading and multiprocessing
+- Race conditions and timing
+- Resource management
+
+### Frontend Testing
+- Selenium/Playwright test fixing
+- React/Vue component testing
+- Browser automation
+- Cross-browser compatibility
+
+### Performance Testing
+- Load testing fixing
+- Memory and resource testing
+- Performance profiling
+- Resource cleanup
+
+### Security Testing
+- Authentication testing
+- Input validation testing
+- Authorization testing
+- Security scanning
+
+### Microservices Testing
+- Service integration test fixing
+- Service discovery
+- Inter-service communication
+- Distributed system testing
+
+### Data Pipeline Testing
+- ETL/Data pipeline test fixing
+- Data transformation testing
+- Pipeline orchestration
+- Data streaming testing
+
+## 🛠️ Implementation Tools
+
+### Bash Scripts
+
+#### `initial_assessment.sh`
+```bash
+# Comprehensive test assessment
+./initial_assessment.sh
+```
+- Runs all tests and captures output
+- Parses results and categorizes failures
+- Identifies common issues
+- Generates detailed report
+
+#### `setup_test_env.sh`
+```bash
+# Environment setup
+./setup_test_env.sh
+```
+- Installs dependencies
+- Configures pytest
+- Sets up test databases
+- Creates test directories
+
+#### `fix_tests_progressive.sh`
+```bash
+# Progressive test fixing
+./fix_tests_progressive.sh
+```
+- Fixes syntax errors first
+- Runs unit tests
+- Runs integration tests
+- Final verification
+
+### Python Tools
+
+#### `test_analyzer.py`
+```python
+# Detailed test analysis
+python test_analyzer.py
+```
+- Comprehensive test analysis
+- Failure categorization
+- Performance monitoring
+- Detailed reporting
+
+#### `test_fixer.py`
+```python
+# Automated test fixing
+python test_fixer.py
+```
+- Common issue resolution
+- Import error fixing
+- Syntax error detection
+- Database error handling
+
+## ⚙️ Configuration Examples
+
+### Basic pytest.ini
+```ini
+[tool:pytest]
+testpaths = tests
+python_files = test_*.py *_test.py
+python_classes = Test*
+python_functions = test_*
+addopts = -v --tb=short --strict-markers
+markers =
+    unit: Unit tests
+    integration: Integration tests
+    slow: Slow running tests
+```
+
+### Advanced pyproject.toml
+```toml
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--cov=src",
+    "--cov-report=html:htmlcov"
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests"
+]
+```
+
+## 🔄 CI/CD Integration
+
+### GitHub Actions
+```yaml
+name: Test Suite
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+    - name: Run tests
+      run: pytest --verbose --cov=src
+```
+
+### GitLab CI
+```yaml
+test:
+  stage: test
+  image: python:3.11
+  script:
+    - pip install -r requirements.txt
+    - pytest --verbose --cov=src
+```
+
+## 📊 Usage Workflow
+
+### For Agentic AI Systems
+
+1. **Start with Assessment**
    ```bash
-   git clone https://github.com/yourusername/trading-rl-agent.git
-   cd trading-rl-agent
+   ./initial_assessment.sh
    ```
 
-2. **Set up development environment**
+2. **Use Main Prompts Sequentially**
+   - Apply prompts 1-9 in order
+   - Wait for confirmation before moving to next
+   - Use specialized prompts as needed
 
+3. **Apply Specialized Prompts**
+   - Identify domain-specific issues
+   - Use appropriate specialized prompt
+   - Validate fixes with domain-specific tools
+
+4. **Verify and Document**
+   - Run final verification
+   - Document all changes
+   - Set up monitoring
+
+### For Human Developers
+
+1. **Quick Assessment**
    ```bash
-   # Core dependencies only (fast setup)
-   ./setup-env.sh core
-
-   # Add ML dependencies
-   ./setup-env.sh ml
-
-   # Full production setup
-   ./setup-env.sh full
+   python test_analyzer.py
    ```
 
-3. **Install pre-commit hooks**
+2. **Targeted Fixing**
+   - Use specific prompts for identified issues
+   - Run individual test files for isolation
+   - Apply fixes incrementally
 
-   ```bash
-   pre-commit install
-   ```
+3. **Continuous Integration**
+   - Set up automated testing
+   - Monitor test performance
+   - Maintain test quality
 
-4. **Verify installation**
-   ```bash
-   python -c "import trading_rl_agent; print('✅ Package imported successfully')"
-   ```
+## 🎯 Best Practices
 
-## 🎯 Quick Start
+### Test Organization
+- Organize tests by type (unit, integration, etc.)
+- Use descriptive test names
+- Group related tests in classes
+- Use appropriate test markers
 
-### 1. Use the Unified CLI
+### Test Isolation
+- Ensure tests don't share state
+- Use fresh data for each test
+- Clean up resources properly
+- Mock external dependencies
 
+### Performance
+- Keep tests fast
+- Use parallel execution where appropriate
+- Monitor test execution time
+- Optimize slow tests
+
+### Maintenance
+- Regular test review and cleanup
+- Update test dependencies
+- Refactor outdated patterns
+- Maintain test documentation
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### Import Errors
 ```bash
-# Show version and system info
-python main.py version
-python main.py info
+# Check Python path
+python -c "import sys; print(sys.path)"
 
-# Download market data
-python main.py data download --symbols "AAPL,GOOGL,MSFT" --start 2023-01-01
-
-# Process and build datasets
-python main.py data process --symbols "EURUSD=X,GBPUSD=X" --force
-
-# Train CNN+LSTM model
-python main.py train cnn-lstm --epochs 100 --gpu --output models/
-
-# Train RL agent
-python main.py train rl --epochs 50 --output models/
-
-# Evaluate models
-python main.py evaluate models/best_model.pth --data data/test_data.csv
-
-# Run backtesting
-python main.py backtest data/historical_data.csv --model models/agent.zip
-
-# Start live trading
-python main.py live start --paper --symbols "AAPL,GOOGL"
+# Install missing dependencies
+pip install -r requirements.txt
 ```
 
-### 2. Alternative Entry Points
-
+#### Database Connection Issues
 ```bash
-# Using the installed command
-trading-rl-agent version
-trading-rl-agent data download --symbols "AAPL,GOOGL"
+# Check database configuration
+python -c "from your_app import db; print(db.engine.url)"
 
-# Using Python module
-python -m trading_rl_agent.cli version
-python -m trading_rl_agent.cli train cnn-lstm
+# Test database connection
+python -c "from your_app import db; db.engine.connect()"
 ```
 
-## 📚 Documentation
-
-- **[Project Status](PROJECT_STATUS.md)**: Current development status and roadmap
-- **[Development Roadmap](TODO.md)**: Detailed task list and priorities
-- **[Contributing Guidelines](CONTRIBUTING.md)**: How to contribute to the project
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Data Sources  │    │  Feature Eng.   │    │  CNN+LSTM Model │
-│                 │    │                 │    │                 │
-│ • yfinance      │───▶│ • Technical     │───▶│ • Pattern       │
-│ • Alpha Vantage │    │   Indicators    │    │   Recognition   │
-│ • Professional  │    │ • Alternative   │    │ • Uncertainty   │
-│   Feeds         │    │   Data          │    │   Estimation    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │  RL Environment │    │  RL Agents      │
-                       │                 │    │                 │
-                       │ • State Space   │───▶│ • SAC           │
-                       │ • Action Space  │    │ • TD3           │
-                       │ • Reward Func   │    │ • PPO           │
-                       └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │ Risk Management │    │ Portfolio Mgmt  │
-                       │                 │    │                 │
-                       │ • VaR/CVaR      │───▶│ • Multi-asset   │
-                       │ • Position Size │    │ • Rebalancing   │
-                       │ • Monitoring    │    │ • Analytics     │
-                       └─────────────────┘    └─────────────────┘
-```
-
-## 🧪 Testing
-
+#### Test Timeout Issues
 ```bash
-# Run all tests
-python -m pytest
+# Increase timeout
+pytest --timeout=300
 
-# Run specific test categories
-python -m pytest tests/unit/
-python -m pytest tests/integration/
-python -m pytest tests/smoke/
-
-# Run with coverage
-python -m pytest --cov=trading_rl_agent
+# Run specific slow tests
+pytest -m slow --durations=10
 ```
 
-## 🔧 Development
-
-### Code Quality
-
+#### Memory Issues
 ```bash
-# Format code
-black src/ tests/
-isort src/ tests/
+# Monitor memory usage
+python -m memory_profiler test_file.py
 
-# Lint code
-ruff check src/ tests/
-mypy src/
-
-# Run all quality checks
-python run_comprehensive_tests.py --quality-only
+# Check for memory leaks
+pytest --memray
 ```
 
-### Adding Features
+## 📚 Additional Resources
 
-1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Implement your changes following the [contributing guidelines](CONTRIBUTING.md)
-3. Add tests for new functionality
-4. Run the test suite: `python -m pytest`
-5. Submit a pull request
-
-## 📊 Current Status
-
-- **Core Infrastructure**: ✅ Complete (63K+ lines of code)
-- **Data Pipeline**: ✅ Complete with parallel processing
-- **CNN+LSTM Training**: ✅ Complete with optimizations
-- **RL Agents**: ✅ Complete (SAC, TD3, PPO with advanced optimization)
-- **Risk Management**: ✅ Complete (VaR, CVaR, Monte Carlo)
-- **Portfolio Management**: ✅ Complete (attribution, transaction costs)
-- **Production Deployment**: ✅ Complete (Docker, Kubernetes ready)
-- **Monitoring & Logging**: ✅ Complete (system health, alerts)
-- **Testing**: 🔄 In Progress (comprehensive test suite)
-- **Documentation**: 🔄 Updated to reflect current state
-
-## 🚀 Performance Benchmarks
-
-| Component       | Before Optimization | After Optimization | Improvement            |
-| --------------- | ------------------- | ------------------ | ---------------------- |
-| Data Fetching   | Sequential          | Parallel (Ray)     | **10-50x faster**      |
-| Training Speed  | Standard            | Mixed Precision    | **2-3x faster**        |
-| Memory Usage    | Standard            | Optimized          | **30-50% less**        |
-| Dataset Loading | Standard            | Memory-mapped      | **60-80% less memory** |
-| Convergence     | Standard            | Advanced LR        | **1.5-2x faster**      |
-
-## 🧪 Testing Status
-
-### Current Test Suite: Comprehensive Coverage
-
-**Test Results:**
-
-- ✅ Core functionality tests passing
-- 🔄 Some integration tests need dependency fixes
-- 📊 Extensive test coverage across all major components
-
-**Well-Tested Components:**
-
-- ✅ Core Configuration System
-- ✅ Agent Configurations
-- ✅ Exception Handling
-- ✅ CLI Backtesting
-- ✅ Data Caching
-- ✅ Risk Management
-- ✅ Portfolio Attribution
-
-**Needs Attention:**
-
-- 🔄 Some dependency issues (structlog missing)
-- 🔄 Ray parallel processing compatibility
-- 🔄 Integration test environment setup
+- [Pytest Documentation](https://docs.pytest.org/)
+- [Python Testing Best Practices](https://realpython.com/python-testing/)
+- [Test-Driven Development](https://en.wikipedia.org/wiki/Test-driven_development)
+- [Continuous Integration Best Practices](https://martinfowler.com/articles/continuousIntegration.html)
 
 ## 🤝 Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+To contribute to this collection:
+
+1. Fork the repository
+2. Create a feature branch
+3. Add your improvements
+4. Test thoroughly
+5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+## 🆘 Support
 
-- PyTorch team for the excellent deep learning framework
-- Ray team for parallel processing capabilities
-- The open-source community for inspiration and contributions
+For questions or issues:
+
+1. Check the troubleshooting section
+2. Review the best practices
+3. Open an issue with detailed information
+4. Provide test output and error messages
+
+---
+
+**Remember**: The goal is not just to make tests pass, but to ensure they provide reliable, meaningful feedback about your code's correctness and quality.
