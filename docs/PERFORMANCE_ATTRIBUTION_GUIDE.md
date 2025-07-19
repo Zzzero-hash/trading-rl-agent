@@ -7,35 +7,41 @@ The Performance Attribution Analysis system provides comprehensive tools for ana
 ## Features
 
 ### 1. Systematic vs Idiosyncratic Return Decomposition
+
 - **Factor Model Analysis**: Uses Principal Component Analysis (PCA) to extract systematic factors
 - **Return Decomposition**: Separates returns into systematic (factor-driven) and idiosyncratic (asset-specific) components
 - **Model Quality Assessment**: Provides R-squared metrics to evaluate factor model fit
 
 ### 2. Factor Attribution Analysis
+
 - **Multi-Factor Models**: Supports multiple factor extraction and analysis
 - **Factor Loadings**: Calculates asset-specific factor exposures
 - **Factor Contributions**: Quantifies each factor's contribution to portfolio performance
 - **Market Factor Integration**: Includes market factor for comprehensive analysis
 
 ### 3. Brinson Attribution for Sector/Asset Allocation
+
 - **Sector Attribution**: Analyzes sector allocation effects using Brinson methodology
 - **Asset Allocation Effects**: Quantifies allocation, selection, and interaction effects
 - **Flexible Grouping**: Supports custom sector classifications and asset groupings
 - **Time-Series Analysis**: Provides attribution analysis over multiple periods
 
 ### 4. Risk-Adjusted Attribution Analysis
+
 - **Comprehensive Risk Metrics**: Volatility, VaR, CVaR, maximum drawdown, skewness, kurtosis
 - **Information Ratio**: Calculates risk-adjusted excess returns
 - **Factor Risk Contributions**: Analyzes factor contributions to portfolio risk
 - **Downside Risk Analysis**: Focuses on downside risk metrics
 
 ### 5. Interactive Attribution Dashboards
+
 - **Plotly Integration**: Interactive charts and dashboards
 - **Matplotlib Fallback**: Static visualizations when Plotly is unavailable
 - **Multi-Panel Dashboards**: Comprehensive view of all attribution components
 - **Export Capabilities**: Save dashboards as HTML files
 
 ### 6. Automated Attribution Reporting
+
 - **Comprehensive Reports**: Detailed attribution analysis reports
 - **Excel Export**: Export all attribution data to Excel format
 - **Automated Workflows**: Scheduled attribution analysis and reporting
@@ -44,6 +50,7 @@ The Performance Attribution Analysis system provides comprehensive tools for ana
 ## Installation and Setup
 
 ### Prerequisites
+
 ```bash
 pip install pandas numpy scipy scikit-learn matplotlib seaborn
 pip install plotly  # Optional, for interactive dashboards
@@ -53,6 +60,7 @@ pip install openpyxl  # For Excel export functionality
 ### Basic Usage
 
 #### 1. Simple Attribution Analysis
+
 ```python
 from trading_rl_agent.portfolio.attribution import PerformanceAttributor, AttributionConfig
 
@@ -82,6 +90,7 @@ dashboard = attributor.create_dashboard()
 ```
 
 #### 2. Integration with Portfolio Manager
+
 ```python
 from trading_rl_agent.portfolio.attribution_integration import AttributionIntegration
 
@@ -102,6 +111,7 @@ integration.export_attribution_data("attribution_data.xlsx")
 ```
 
 #### 3. Automated Workflow
+
 ```python
 from trading_rl_agent.portfolio.attribution_integration import AutomatedAttributionWorkflow
 
@@ -126,6 +136,7 @@ results = workflow.on_performance_milestone("quarterly")
 ### Basic Commands
 
 #### 1. Comprehensive Attribution Analysis
+
 ```bash
 python -m trading_rl_agent.portfolio.cli_attribution analyze \
     --start-date 2023-01-01 \
@@ -135,6 +146,7 @@ python -m trading_rl_agent.portfolio.cli_attribution analyze \
 ```
 
 #### 2. Factor Analysis
+
 ```bash
 python -m trading_rl_agent.portfolio.cli_attribution factor-analysis \
     --start-date 2023-01-01 \
@@ -142,6 +154,7 @@ python -m trading_rl_agent.portfolio.cli_attribution factor-analysis \
 ```
 
 #### 3. Sector Attribution
+
 ```bash
 python -m trading_rl_agent.portfolio.cli_attribution sector-attribution \
     --start-date 2023-01-01 \
@@ -149,6 +162,7 @@ python -m trading_rl_agent.portfolio.cli_attribution sector-attribution \
 ```
 
 #### 4. Risk Analysis
+
 ```bash
 python -m trading_rl_agent.portfolio.cli_attribution risk-analysis \
     --start-date 2023-01-01 \
@@ -156,6 +170,7 @@ python -m trading_rl_agent.portfolio.cli_attribution risk-analysis \
 ```
 
 #### 5. Automated Workflow Setup
+
 ```bash
 python -m trading_rl_agent.portfolio.cli_attribution setup-automation \
     --frequency monthly \
@@ -164,6 +179,7 @@ python -m trading_rl_agent.portfolio.cli_attribution setup-automation \
 ```
 
 #### 6. Export Data
+
 ```bash
 python -m trading_rl_agent.portfolio.cli_attribution export-data \
     --start-date 2023-01-01 \
@@ -189,6 +205,7 @@ max_factors: 10
 ```
 
 Use the configuration file:
+
 ```bash
 python -m trading_rl_agent.portfolio.cli_attribution analyze \
     --config-file attribution_config.yaml \
@@ -199,6 +216,7 @@ python -m trading_rl_agent.portfolio.cli_attribution analyze \
 ## Advanced Usage
 
 ### 1. Custom Factor Models
+
 ```python
 from trading_rl_agent.portfolio.attribution import FactorModel
 
@@ -220,6 +238,7 @@ idiosyncratic_returns = decomposition['idiosyncratic']
 ```
 
 ### 2. Brinson Attribution Analysis
+
 ```python
 from trading_rl_agent.portfolio.attribution import BrinsonAttributor
 
@@ -241,6 +260,7 @@ print(f"Total Attribution: {attribution['total']:.6f}")
 ```
 
 ### 3. Risk-Adjusted Analysis
+
 ```python
 from trading_rl_agent.portfolio.attribution import RiskAdjustedAttributor
 
@@ -265,6 +285,7 @@ print(f"Information Ratio: {risk_attribution['information_ratio']:.4f}")
 ```
 
 ### 4. Custom Visualizations
+
 ```python
 from trading_rl_agent.portfolio.attribution import AttributionVisualizer
 
@@ -286,6 +307,7 @@ if hasattr(dashboard, 'write_html'):
 ### Input Data Format
 
 #### 1. Portfolio and Benchmark Returns
+
 ```python
 # Time series of returns (daily frequency recommended)
 portfolio_returns = pd.Series(
@@ -300,6 +322,7 @@ benchmark_returns = pd.Series(
 ```
 
 #### 2. Asset Returns Matrix
+
 ```python
 # Assets x Time matrix
 asset_returns = pd.DataFrame(
@@ -312,6 +335,7 @@ asset_returns = pd.DataFrame(
 ```
 
 #### 3. Portfolio and Benchmark Weights
+
 ```python
 # Assets x Time matrices
 portfolio_weights = pd.DataFrame(
@@ -332,6 +356,7 @@ benchmark_weights = pd.DataFrame(
 ```
 
 #### 4. Sector Data
+
 ```python
 # Asset classification data
 sector_data = pd.DataFrame({
@@ -343,6 +368,7 @@ sector_data = pd.DataFrame({
 ## Output Interpretation
 
 ### 1. Factor Attribution Results
+
 ```python
 factor_attribution = results['factor_attribution']
 # Positive values indicate positive contribution
@@ -351,6 +377,7 @@ factor_attribution = results['factor_attribution']
 ```
 
 ### 2. Brinson Attribution Results
+
 ```python
 brinson_attribution = results['brinson_attribution']
 # Allocation: Effect of overweighting/underweighting sectors
@@ -359,6 +386,7 @@ brinson_attribution = results['brinson_attribution']
 ```
 
 ### 3. Risk Metrics
+
 ```python
 risk_metrics = results['risk_adjusted']['portfolio_risk']
 # Volatility: Annualized standard deviation of returns
@@ -370,24 +398,28 @@ risk_metrics = results['risk_adjusted']['portfolio_risk']
 ## Best Practices
 
 ### 1. Data Quality
+
 - Ensure data consistency across all inputs
 - Handle missing values appropriately
 - Use sufficient historical data (minimum 60 observations)
 - Align time periods across all datasets
 
 ### 2. Factor Model Selection
+
 - Start with default settings for initial analysis
 - Adjust `max_factors` based on asset universe size
 - Monitor R-squared values for model quality
 - Consider economic interpretation of factors
 
 ### 3. Attribution Analysis
+
 - Use consistent benchmark throughout analysis
 - Consider transaction costs in attribution
 - Analyze attribution over multiple time periods
 - Combine quantitative and qualitative analysis
 
 ### 4. Risk Management
+
 - Monitor factor risk contributions regularly
 - Set appropriate confidence levels for VaR
 - Consider tail risk measures beyond standard metrics
@@ -398,24 +430,28 @@ risk_metrics = results['risk_adjusted']['portfolio_risk']
 ### Common Issues
 
 #### 1. Insufficient Data
+
 ```
 Error: "Could not calculate loadings for asset"
 Solution: Ensure minimum 60 observations and sufficient data quality
 ```
 
 #### 2. Factor Model Convergence
+
 ```
 Error: "Could not calculate loadings for asset"
 Solution: Check for multicollinearity and reduce max_factors
 ```
 
 #### 3. Memory Issues
+
 ```
 Error: MemoryError during analysis
 Solution: Reduce data size or use chunked processing
 ```
 
 #### 4. Visualization Issues
+
 ```
 Error: Plotly not available
 Solution: Install plotly or set use_plotly=False
@@ -424,6 +460,7 @@ Solution: Install plotly or set use_plotly=False
 ### Performance Optimization
 
 #### 1. Large Datasets
+
 ```python
 # Use chunked processing for large datasets
 for chunk in data_chunks:
@@ -432,12 +469,14 @@ for chunk in data_chunks:
 ```
 
 #### 2. Caching
+
 ```python
 # Enable caching for repeated analysis
 integration.run_attribution_analysis(force_recompute=False)
 ```
 
 #### 3. Parallel Processing
+
 ```python
 # Use parallel processing for factor calculations
 from concurrent.futures import ProcessPoolExecutor
@@ -447,6 +486,7 @@ from concurrent.futures import ProcessPoolExecutor
 ## Integration Examples
 
 ### 1. Backtesting Integration
+
 ```python
 # Integrate with backtesting framework
 def attribution_analysis_callback(portfolio_state):
@@ -459,6 +499,7 @@ backtest.add_callback(attribution_analysis_callback)
 ```
 
 ### 2. Real-Time Monitoring
+
 ```python
 # Set up real-time attribution monitoring
 def monitor_attribution():
@@ -473,20 +514,21 @@ schedule.every().day.at("18:00").do(monitor_attribution)
 ```
 
 ### 3. Reporting Integration
+
 ```python
 # Integrate with reporting system
 def generate_monthly_report():
     integration = AttributionIntegration(portfolio_manager, config)
-    
+
     # Generate attribution report
     report = integration.generate_attribution_report()
-    
+
     # Create dashboard
     dashboard = integration.create_attribution_dashboard()
-    
+
     # Export data
     integration.export_attribution_data("monthly_attribution.xlsx")
-    
+
     # Send to stakeholders
     send_report_to_stakeholders(report, dashboard)
 ```

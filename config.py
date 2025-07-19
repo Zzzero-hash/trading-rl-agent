@@ -280,7 +280,57 @@ def load_settings(config_path: str | Path | None = None, env_file: str | Path | 
                     updated_config = current_config.model_copy(update=value)
                     setattr(settings, key, updated_config)
             elif hasattr(settings, key):
-                setattr(settings, key, value)
+                # Convert string values to appropriate types for non-config fields
+                if key in [
+                    "environment",
+                    "debug",
+                    "alpaca_api_key",
+                    "alpaca_secret_key",
+                    "alpaca_base_url",
+                    "alpaca_data_url",
+                    "alpaca_use_v2",
+                    "alpaca_paper_trading",
+                    "alpaca_max_retries",
+                    "alpaca_retry_delay",
+                    "alpaca_websocket_timeout",
+                    "alpaca_order_timeout",
+                    "alpaca_cache_dir",
+                    "alpaca_cache_ttl",
+                    "alpaca_data_feed",
+                    "alpaca_extended_hours",
+                    "alpaca_max_position_size",
+                    "alpaca_max_daily_trades",
+                    "alpaca_log_level",
+                    "alpaca_log_trades",
+                    "polygon_api_key",
+                    "alphavantage_api_key",
+                    "newsapi_key",
+                    "social_api_key",
+                ]:
+                    # Handle type conversion for known fields
+                    if key == "debug":
+                        setattr(settings, key, bool(value))
+                    elif key in [
+                        "alpaca_max_retries",
+                        "alpaca_websocket_timeout",
+                        "alpaca_order_timeout",
+                        "alpaca_cache_ttl",
+                        "alpaca_max_daily_trades",
+                    ]:
+                        setattr(settings, key, int(value))
+                    elif key in ["alpaca_retry_delay", "alpaca_max_position_size"]:
+                        setattr(settings, key, float(value))
+                    elif key in [
+                        "alpaca_use_v2",
+                        "alpaca_paper_trading",
+                        "alpaca_extended_hours",
+                        "alpaca_log_trades",
+                    ]:
+                        setattr(settings, key, bool(value))
+                    else:
+                        setattr(settings, key, str(value))
+                else:
+                    setattr(settings, key, value)
 
     # Cache the settings
     _settings_cache = settings
