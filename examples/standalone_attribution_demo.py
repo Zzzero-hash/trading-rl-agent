@@ -6,6 +6,7 @@ This script demonstrates the comprehensive performance attribution analysis syst
 without depending on the full trading_rl_agent package structure.
 """
 
+import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -16,8 +17,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy import stats
-from sklearn.decomposition import PCA  # type: ignore
-from sklearn.linear_model import LinearRegression  # type: ignore
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore")
@@ -26,15 +27,18 @@ warnings.filterwarnings("ignore")
 # ATTRIBUTION CLASSES (Copied from attribution.py)
 # =============================================================================
 
+
 @dataclass
 class AttributionConfig:
     """Configuration for performance attribution analysis."""
+
     factor_model_type: str = "pca"  # 'pca' or 'ols'
     n_factors: int = 3
     confidence_level: float = 0.95
     visualization_backend: str = "plotly"  # 'plotly' or 'matplotlib'
     risk_free_rate: float = 0.02  # Annual risk-free rate
     lookback_period: int = 252  # Days for rolling calculations
+
 
 class FactorModel:
     """Factor model for decomposing returns into systematic and idiosyncratic components."""
@@ -66,15 +70,13 @@ class FactorModel:
         self.factor_loadings = pd.DataFrame(
             self.pca.components_.T,
             index=returns.columns,
-            columns=[f"factor_{i+1}" for i in range(self.config.n_factors)]
+            columns=[f"factor_{i + 1}" for i in range(self.config.n_factors)],
         )
 
         # Transform to get factor returns
         factor_scores = self.pca.transform(returns_std)
         self.factor_returns = pd.DataFrame(
-            factor_scores,
-            index=returns.index,
-            columns=[f"factor_{i+1}" for i in range(self.config.n_factors)]
+            factor_scores, index=returns.index, columns=[f"factor_{i + 1}" for i in range(self.config.n_factors)]
         )
 
         self.fitted = True
@@ -88,7 +90,12 @@ class FactorModel:
         for asset in returns.columns:
             # Fit linear regression
             model = LinearRegression()
-            model.fit(market_returns.values.reshape(-1, 1), returns[asset].values)  # type: ignore
+            market_returns_array = market_returns.values
+            if hasattr(market_returns_array, "reshape"):
+                market_returns_reshaped = market_returns_array.reshape(-1, 1)
+            else:
+                market_returns_reshaped = np.array(market_returns_array).reshape(-1, 1)
+            model.fit(market_returns_reshaped, returns[asset].values)
 
             # Store beta (factor loading)
             self.factor_loadings.loc[asset, "market"] = model.coef_[0]
@@ -113,15 +120,11 @@ class FactorModel:
         # Calculate idiosyncratic returns
         idiosyncratic_returns = returns - systematic_returns
 
-        return {
-            "systematic": systematic_returns,
-            "idiosyncratic": idiosyncratic_returns,
-            "total": returns
-        }
+        return {"systematic": systematic_returns, "idiosyncratic": idiosyncratic_returns, "total": returns}
 
-    def analyze_factor_contributions(self, portfolio_returns: pd.Series,
-                                   benchmark_returns: pd.Series,
-                                   factor_returns: pd.DataFrame) -> dict[str, float]:
+    def analyze_factor_contributions(
+        self, portfolio_returns: pd.Series, benchmark_returns: pd.Series, factor_returns: pd.DataFrame
+    ) -> dict[str, float]:
         """Analyze factor contributions to portfolio performance."""
         if not self.fitted:
             raise ValueError("Factor model must be fitted before analysis")
@@ -144,8 +147,9 @@ class FactorModel:
         return {
             **factor_contributions,
             "total_factor_contribution": total_factor_contribution,
-            "idiosyncratic_contribution": idiosyncratic_contribution
+            "idiosyncratic_contribution": idiosyncratic_contribution,
         }
+
 
 class BrinsonAttributor:
     """Brinson attribution for sector/asset allocation analysis."""
@@ -153,10 +157,9 @@ class BrinsonAttributor:
     def __init__(self, config: AttributionConfig):
         self.config = config
 
-    def calculate_attribution(self, portfolio_weights: pd.Series,
-                            benchmark_weights: pd.Series,
-                            returns: pd.Series,
-                            grouping_column: str) -> dict[str, float]:
+    def calculate_attribution(
+        self, portfolio_weights: pd.Series, benchmark_weights: pd.Series, returns: pd.Series, grouping_column: str
+    ) -> dict[str, float]:
         """Calculate Brinson attribution for a single period."""
         # Group by sector/asset class
         portfolio_grouped = portfolio_weights.groupby(grouping_column).sum()
@@ -164,14 +167,11 @@ class BrinsonAttributor:
         returns_grouped = returns.groupby(grouping_column).mean()
 
         # Calculate effects
-        allocation_effect = ((portfolio_grouped - benchmark_grouped) *
-                           (returns_grouped - returns.mean())).sum()
+        allocation_effect = ((portfolio_grouped - benchmark_grouped) * (returns_grouped - returns.mean())).sum()
 
-        selection_effect = (benchmark_grouped *
-                          (returns_grouped - returns.mean())).sum()
+        selection_effect = (benchmark_grouped * (returns_grouped - returns.mean())).sum()
 
-        interaction_effect = ((portfolio_grouped - benchmark_grouped) *
-                            (returns_grouped - returns.mean())).sum()
+        interaction_effect = ((portfolio_grouped - benchmark_grouped) * (returns_grouped - returns.mean())).sum()
 
         total_attribution = allocation_effect + selection_effect + interaction_effect
 
@@ -179,13 +179,16 @@ class BrinsonAttributor:
             "allocation_effect": allocation_effect,
             "selection_effect": selection_effect,
             "interaction_effect": interaction_effect,
-            "total_attribution": total_attribution
+            "total_attribution": total_attribution,
         }
 
-    def calculate_sector_attribution(self, portfolio_weights: pd.DataFrame,
-                                   benchmark_weights: pd.DataFrame,
-                                   returns: pd.DataFrame,
-                                   sector_data: pd.DataFrame) -> dict[str, Any]:
+    def calculate_sector_attribution(
+        self,
+        portfolio_weights: pd.DataFrame,
+        benchmark_weights: pd.DataFrame,
+        returns: pd.DataFrame,
+        sector_data: pd.DataFrame,
+    ) -> dict[str, Any]:
         """Calculate sector attribution over time."""
         # Create sector mapping
         symbol_to_sector = sector_data["sector"].to_dict()
@@ -217,28 +220,37 @@ class BrinsonAttributor:
                         returns_with_sectors[symbol] = returns_series[symbol]
 
                 # Group by sector
-                portfolio_grouped = portfolio_with_sectors.groupby([symbol_to_sector.get(s, "Unknown") for s in portfolio_with_sectors.index]).sum()
-                benchmark_grouped = benchmark_with_sectors.groupby([symbol_to_sector.get(s, "Unknown") for s in benchmark_with_sectors.index]).sum()
-                returns_grouped = returns_with_sectors.groupby([symbol_to_sector.get(s, "Unknown") for s in returns_with_sectors.index]).mean()
+                portfolio_grouped = portfolio_with_sectors.groupby(
+                    [symbol_to_sector.get(s, "Unknown") for s in portfolio_with_sectors.index]
+                ).sum()
+                benchmark_grouped = benchmark_with_sectors.groupby(
+                    [symbol_to_sector.get(s, "Unknown") for s in benchmark_with_sectors.index]
+                ).sum()
+                returns_grouped = returns_with_sectors.groupby(
+                    [symbol_to_sector.get(s, "Unknown") for s in returns_with_sectors.index]
+                ).mean()
 
                 # Calculate effects
-                allocation_effect = ((portfolio_grouped - benchmark_grouped) *
-                                   (returns_grouped - returns_series.mean())).sum()
+                allocation_effect = (
+                    (portfolio_grouped - benchmark_grouped) * (returns_grouped - returns_series.mean())
+                ).sum()
 
-                selection_effect = (benchmark_grouped *
-                                  (returns_grouped - returns_series.mean())).sum()
+                selection_effect = (benchmark_grouped * (returns_grouped - returns_series.mean())).sum()
 
-                interaction_effect = ((portfolio_grouped - benchmark_grouped) *
-                                    (returns_grouped - returns_series.mean())).sum()
+                interaction_effect = (
+                    (portfolio_grouped - benchmark_grouped) * (returns_grouped - returns_series.mean())
+                ).sum()
 
                 total_attribution = allocation_effect + selection_effect + interaction_effect
 
-                attribution_results.append({
-                    "allocation_effect": allocation_effect,
-                    "selection_effect": selection_effect,
-                    "interaction_effect": interaction_effect,
-                    "total_attribution": total_attribution
-                })
+                attribution_results.append(
+                    {
+                        "allocation_effect": allocation_effect,
+                        "selection_effect": selection_effect,
+                        "interaction_effect": interaction_effect,
+                        "total_attribution": total_attribution,
+                    }
+                )
 
         # Aggregate results
         if attribution_results:
@@ -252,7 +264,7 @@ class BrinsonAttributor:
                 sector_effects[sector] = {
                     "allocation": total_allocation / len(sectors),
                     "selection": total_selection / len(sectors),
-                    "interaction": total_interaction / len(sectors)
+                    "interaction": total_interaction / len(sectors),
                 }
 
         return {
@@ -260,8 +272,9 @@ class BrinsonAttributor:
             "selection_effect": total_selection if attribution_results else 0.0,
             "interaction_effect": total_interaction if attribution_results else 0.0,
             "total_attribution": total_attribution if attribution_results else 0.0,
-            "sector_effects": sector_effects
+            "sector_effects": sector_effects,
         }
+
 
 class RiskAdjustedAttributor:
     """Risk-adjusted attribution analysis."""
@@ -291,7 +304,7 @@ class RiskAdjustedAttributor:
 
         # Maximum drawdown
         cumulative_returns: pd.Series = (1 + returns_numeric).cumprod()
-        running_max = cumulative_returns.expanding().max()  # type: ignore
+        running_max = cumulative_returns.expanding().max()
         drawdown = (cumulative_returns - running_max) / running_max
         max_drawdown = drawdown.min()
 
@@ -309,12 +322,12 @@ class RiskAdjustedAttributor:
             "max_drawdown": max_drawdown,
             "skewness": skewness,
             "kurtosis": kurtosis,
-            "sharpe_ratio": sharpe_ratio
+            "sharpe_ratio": sharpe_ratio,
         }
 
-    def calculate_risk_adjusted_attribution(self, portfolio_returns: pd.Series,
-                                          benchmark_returns: pd.Series,
-                                          factor_returns: pd.DataFrame) -> dict[str, Any]:
+    def calculate_risk_adjusted_attribution(
+        self, portfolio_returns: pd.Series, benchmark_returns: pd.Series, factor_returns: pd.DataFrame
+    ) -> dict[str, Any]:
         """Calculate risk-adjusted attribution metrics."""
         # Calculate excess returns
         excess_returns = portfolio_returns - benchmark_returns
@@ -328,10 +341,8 @@ class RiskAdjustedAttributor:
             factor_vol = factor_returns[factor].std()
             factor_risk_contributions[factor] = factor_vol
 
-        return {
-            "information_ratio": information_ratio,
-            "factor_risk_contributions": factor_risk_contributions
-        }
+        return {"information_ratio": information_ratio, "factor_risk_contributions": factor_risk_contributions}
+
 
 class AttributionVisualizer:
     """Visualization for attribution analysis."""
@@ -339,34 +350,46 @@ class AttributionVisualizer:
     def __init__(self, config: AttributionConfig):
         self.config = config
 
-    def create_attribution_dashboard(self, attribution_results: dict[str, Any],
-                                   portfolio_returns: pd.Series,
-                                   benchmark_returns: pd.Series) -> go.Figure:
+    def create_attribution_dashboard(
+        self, attribution_results: dict[str, Any], portfolio_returns: pd.Series, benchmark_returns: pd.Series
+    ) -> go.Figure:
         """Create interactive attribution dashboard."""
         # Create subplots
         fig = make_subplots(
-            rows=3, cols=2,
-            subplot_titles=("Cumulative Returns", "Factor Contributions",
-                          "Risk Metrics", "Sector Attribution",
-                          "Rolling Performance", "Drawdown"),
-            specs=[[{"secondary_y": False}, {"secondary_y": False}],
-                   [{"secondary_y": False}, {"secondary_y": False}],
-                   [{"secondary_y": False}, {"secondary_y": False}]]
+            rows=3,
+            cols=2,
+            subplot_titles=(
+                "Cumulative Returns",
+                "Factor Contributions",
+                "Risk Metrics",
+                "Sector Attribution",
+                "Rolling Performance",
+                "Drawdown",
+            ),
+            specs=[
+                [{"secondary_y": False}, {"secondary_y": False}],
+                [{"secondary_y": False}, {"secondary_y": False}],
+                [{"secondary_y": False}, {"secondary_y": False}],
+            ],
         )
 
         # Cumulative returns
         cumulative_portfolio: pd.Series = (1 + portfolio_returns).cumprod()
-        cumulative_benchmark = (1 + benchmark_returns).cumprod()  # type: ignore
+        cumulative_benchmark = (1 + benchmark_returns).cumprod()
 
         fig.add_trace(
-            go.Scatter(x=cumulative_portfolio.index, y=cumulative_portfolio.values,
-                      name="Portfolio", line=dict(color="blue")),
-            row=1, col=1
+            go.Scatter(
+                x=cumulative_portfolio.index, y=cumulative_portfolio.values, name="Portfolio", line=dict(color="blue")
+            ),
+            row=1,
+            col=1,
         )
         fig.add_trace(
-            go.Scatter(x=cumulative_benchmark.index, y=cumulative_benchmark.values,
-                      name="Benchmark", line=dict(color="red")),
-            row=1, col=1
+            go.Scatter(
+                x=cumulative_benchmark.index, y=cumulative_benchmark.values, name="Benchmark", line=dict(color="red")
+            ),
+            row=1,
+            col=1,
         )
 
         # Factor contributions
@@ -380,10 +403,7 @@ class AttributionVisualizer:
                 else:
                     contributions.append(0.0)
 
-            fig.add_trace(
-                go.Bar(x=factors, y=contributions, name="Factor Contributions"),
-                row=1, col=2
-            )
+            fig.add_trace(go.Bar(x=factors, y=contributions, name="Factor Contributions"), row=1, col=2)
 
         # Risk metrics comparison
         if "risk_analysis" in attribution_results:
@@ -394,14 +414,8 @@ class AttributionVisualizer:
             portfolio_values = [portfolio_risk.get(m, 0) for m in metrics]
             benchmark_values = [benchmark_risk.get(m, 0) for m in metrics]
 
-            fig.add_trace(
-                go.Bar(x=metrics, y=portfolio_values, name="Portfolio"),
-                row=2, col=1
-            )
-            fig.add_trace(
-                go.Bar(x=metrics, y=benchmark_values, name="Benchmark"),
-                row=2, col=1
-            )
+            fig.add_trace(go.Bar(x=metrics, y=portfolio_values, name="Portfolio"), row=2, col=1)
+            fig.add_trace(go.Bar(x=metrics, y=benchmark_values, name="Benchmark"), row=2, col=1)
 
         # Sector attribution
         if "brinson_attribution" in attribution_results:
@@ -409,10 +423,7 @@ class AttributionVisualizer:
             sectors = list(sector_effects.keys())
             allocation_effects = [sector_effects[s]["allocation"] for s in sectors]
 
-            fig.add_trace(
-                go.Bar(x=sectors, y=allocation_effects, name="Allocation Effect"),
-                row=2, col=2
-            )
+            fig.add_trace(go.Bar(x=sectors, y=allocation_effects, name="Allocation Effect"), row=2, col=2)
 
         # Rolling performance
         rolling_window = 30
@@ -420,14 +431,18 @@ class AttributionVisualizer:
         rolling_benchmark = benchmark_returns.rolling(rolling_window).mean()
 
         fig.add_trace(
-            go.Scatter(x=rolling_portfolio.index, y=rolling_portfolio.values,
-                      name="Portfolio (30d)", line=dict(color="blue")),
-            row=3, col=1
+            go.Scatter(
+                x=rolling_portfolio.index, y=rolling_portfolio.values, name="Portfolio (30d)", line=dict(color="blue")
+            ),
+            row=3,
+            col=1,
         )
         fig.add_trace(
-            go.Scatter(x=rolling_benchmark.index, y=rolling_benchmark.values,
-                      name="Benchmark (30d)", line=dict(color="red")),
-            row=3, col=1
+            go.Scatter(
+                x=rolling_benchmark.index, y=rolling_benchmark.values, name="Benchmark (30d)", line=dict(color="red")
+            ),
+            row=3,
+            col=1,
         )
 
         # Drawdown
@@ -436,19 +451,16 @@ class AttributionVisualizer:
         drawdown = (cumulative_returns - running_max) / running_max
 
         fig.add_trace(
-            go.Scatter(x=drawdown.index, y=drawdown.values,
-                      name="Drawdown", line=dict(color="red"), fill="tonexty"),
-            row=3, col=2
+            go.Scatter(x=drawdown.index, y=drawdown.values, name="Drawdown", line=dict(color="red"), fill="tonexty"),
+            row=3,
+            col=2,
         )
 
         # Update layout
-        fig.update_layout(
-            title="Performance Attribution Dashboard",
-            height=900,
-            showlegend=True
-        )
+        fig.update_layout(title="Performance Attribution Dashboard", height=900, showlegend=True)
 
         return fig
+
 
 class PerformanceAttributor:
     """Main performance attribution orchestrator."""
@@ -461,12 +473,15 @@ class PerformanceAttributor:
         self.visualizer = AttributionVisualizer(self.config)
         self.results: dict[str, Any] = {}
 
-    def analyze_performance(self, portfolio_returns: pd.Series,
-                          benchmark_returns: pd.Series,
-                          asset_returns: pd.DataFrame,
-                          portfolio_weights: pd.DataFrame,
-                          benchmark_weights: pd.DataFrame,
-                          sector_data: pd.DataFrame | None = None) -> dict[str, Any]:
+    def analyze_performance(
+        self,
+        portfolio_returns: pd.Series,
+        benchmark_returns: pd.Series,
+        asset_returns: pd.DataFrame,
+        portfolio_weights: pd.DataFrame,
+        benchmark_weights: pd.DataFrame,
+        sector_data: pd.DataFrame | None = None,
+    ) -> dict[str, Any]:
         """Run comprehensive performance attribution analysis."""
         # Fit factor model
         self.factor_model.fit(asset_returns, benchmark_returns)
@@ -498,8 +513,8 @@ class PerformanceAttributor:
             "risk_analysis": {
                 "portfolio_risk": portfolio_risk,
                 "benchmark_risk": benchmark_risk,
-                "risk_attribution": risk_attribution
-            }
+                "risk_attribution": risk_attribution,
+            },
         }
 
         return self.results
@@ -559,7 +574,9 @@ class PerformanceAttributor:
         # Factor contributions
         if "factor_analysis" in self.results:
             summary["total_factor_contribution"] = self.results["factor_analysis"].get("total_factor_contribution", 0.0)
-            summary["idiosyncratic_contribution"] = self.results["factor_analysis"].get("idiosyncratic_contribution", 0.0)
+            summary["idiosyncratic_contribution"] = self.results["factor_analysis"].get(
+                "idiosyncratic_contribution", 0.0
+            )
 
         # Brinson attribution
         if "brinson_attribution" in self.results:
@@ -573,9 +590,11 @@ class PerformanceAttributor:
 
         return summary
 
+
 # =============================================================================
 # DEMO FUNCTIONS
 # =============================================================================
+
 
 def create_sample_data() -> dict[str, Any]:
     """Create realistic sample data for attribution analysis."""
@@ -591,7 +610,16 @@ def create_sample_data() -> dict[str, Any]:
 
     # Create asset symbols
     symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "NFLX"]
-    sectors = ["Technology", "Technology", "Technology", "Consumer", "Technology", "Technology", "Technology", "Consumer"]
+    sectors = [
+        "Technology",
+        "Technology",
+        "Technology",
+        "Consumer",
+        "Technology",
+        "Technology",
+        "Technology",
+        "Consumer",
+    ]
 
     # Generate realistic asset returns with some correlation
     n_assets = len(symbols)
@@ -599,8 +627,8 @@ def create_sample_data() -> dict[str, Any]:
 
     # Create factor returns (market, size, value factors)
     market_factor = np.random.normal(0.0005, 0.015, n_days)  # Daily market returns
-    size_factor = np.random.normal(0.0002, 0.008, n_days)    # Size factor
-    value_factor = np.random.normal(0.0001, 0.006, n_days)   # Value factor
+    size_factor = np.random.normal(0.0002, 0.008, n_days)  # Size factor
+    value_factor = np.random.normal(0.0001, 0.006, n_days)  # Value factor
 
     # Create asset-specific factor loadings
     factor_loadings = np.random.uniform(0.5, 1.5, (n_assets, 3))
@@ -610,9 +638,11 @@ def create_sample_data() -> dict[str, Any]:
 
     for i, symbol in enumerate(symbols):
         # Systematic component
-        systematic = (factor_loadings[i, 0] * market_factor +
-                     factor_loadings[i, 1] * size_factor +
-                     factor_loadings[i, 2] * value_factor)
+        systematic = (
+            factor_loadings[i, 0] * market_factor
+            + factor_loadings[i, 1] * size_factor
+            + factor_loadings[i, 2] * value_factor
+        )
 
         # Idiosyncratic component
         idiosyncratic = np.random.normal(0.0001, 0.02, n_days)
@@ -625,24 +655,21 @@ def create_sample_data() -> dict[str, Any]:
     for date in dates:
         # Random weights that sum to 1
         weights = np.random.dirichlet(np.ones(n_assets))
-        portfolio_weights.loc[date] = weights  # type: ignore
+        portfolio_weights.loc[date] = pd.Series(weights, index=symbols)
 
     # Create benchmark weights (market cap weighted)
     benchmark_weights = pd.DataFrame(index=dates, columns=symbols)
     market_caps = [2.5, 1.8, 2.2, 1.5, 0.8, 1.2, 0.9, 0.3]  # Trillions
     market_caps_normalized = [cap / sum(market_caps) for cap in market_caps]
     for date in dates:
-        benchmark_weights.loc[date] = market_caps_normalized  # type: ignore
+        benchmark_weights.loc[date] = pd.Series(market_caps_normalized, index=symbols)
 
     # Calculate portfolio and benchmark returns
     portfolio_returns = (portfolio_weights * asset_returns).sum(axis=1)
     benchmark_returns = (benchmark_weights * asset_returns).sum(axis=1)
 
     # Create sector data
-    sector_data = pd.DataFrame({
-        "symbol": symbols,
-        "sector": sectors
-    }).set_index("symbol")
+    sector_data = pd.DataFrame({"symbol": symbols, "sector": sectors}).set_index("symbol")
 
     return {
         "asset_returns": asset_returns,
@@ -652,20 +679,19 @@ def create_sample_data() -> dict[str, Any]:
         "benchmark_returns": benchmark_returns,
         "sector_data": sector_data,
         "dates": dates,
-        "symbols": symbols
+        "symbols": symbols,
     }
+
 
 def demo_factor_analysis(attributor: PerformanceAttributor, data: dict[str, Any]) -> dict[str, Any]:
     """Demonstrate factor analysis capabilities."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("FACTOR ANALYSIS DEMONSTRATION")
-    print("="*60)
+    print("=" * 60)
 
     # Run factor analysis
     factor_results = attributor.factor_model.analyze_factor_contributions(
-        data["portfolio_returns"],
-        data["benchmark_returns"],
-        data["asset_returns"]
+        data["portfolio_returns"], data["benchmark_returns"], data["asset_returns"]
     )
 
     print("Factor Analysis Results:")
@@ -674,18 +700,16 @@ def demo_factor_analysis(attributor: PerformanceAttributor, data: dict[str, Any]
 
     return factor_results
 
+
 def demo_brinson_attribution(attributor: PerformanceAttributor, data: dict[str, Any]) -> dict[str, Any]:
     """Demonstrate Brinson attribution analysis."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("BRINSON ATTRIBUTION DEMONSTRATION")
-    print("="*60)
+    print("=" * 60)
 
     # Run Brinson attribution
     brinson_results = attributor.brinson_attributor.calculate_sector_attribution(
-        data["portfolio_weights"],
-        data["benchmark_weights"],
-        data["asset_returns"],
-        data["sector_data"]
+        data["portfolio_weights"], data["benchmark_weights"], data["asset_returns"], data["sector_data"]
     )
 
     print("Brinson Attribution Results:")
@@ -701,11 +725,12 @@ def demo_brinson_attribution(attributor: PerformanceAttributor, data: dict[str, 
 
     return brinson_results
 
+
 def demo_risk_analysis(attributor: PerformanceAttributor, data: dict[str, Any]) -> dict[str, Any]:
     """Demonstrate risk-adjusted analysis."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("RISK-ADJUSTED ANALYSIS DEMONSTRATION")
-    print("="*60)
+    print("=" * 60)
 
     # Calculate risk metrics
     portfolio_risk = attributor.risk_attributor.calculate_risk_metrics(data["portfolio_returns"])
@@ -721,9 +746,7 @@ def demo_risk_analysis(attributor: PerformanceAttributor, data: dict[str, Any]) 
 
     # Calculate risk-adjusted attribution
     risk_attribution = attributor.risk_attributor.calculate_risk_adjusted_attribution(
-        data["portfolio_returns"],
-        data["benchmark_returns"],
-        data["asset_returns"]
+        data["portfolio_returns"], data["benchmark_returns"], data["asset_returns"]
     )
 
     print("\nRisk-Adjusted Attribution:")
@@ -732,31 +755,26 @@ def demo_risk_analysis(attributor: PerformanceAttributor, data: dict[str, Any]) 
     for factor, contribution in risk_attribution["factor_risk_contributions"].items():
         print(f"  {factor}: {contribution:.4f}")
 
-    return {
-        "portfolio_risk": portfolio_risk,
-        "benchmark_risk": benchmark_risk,
-        "risk_attribution": risk_attribution
-    }
+    return {"portfolio_risk": portfolio_risk, "benchmark_risk": benchmark_risk, "risk_attribution": risk_attribution}
+
 
 def demo_visualization(attributor: PerformanceAttributor, data: dict[str, Any]) -> dict[str, Any]:
     """Demonstrate visualization capabilities."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("VISUALIZATION DEMONSTRATION")
-    print("="*60)
+    print("=" * 60)
 
     # Create comprehensive attribution results for visualization
     attribution_results = {
         "factor_analysis": demo_factor_analysis(attributor, data),
         "brinson_attribution": demo_brinson_attribution(attributor, data),
-        "risk_analysis": demo_risk_analysis(attributor, data)
+        "risk_analysis": demo_risk_analysis(attributor, data),
     }
 
     # Create dashboard
     print("Creating attribution dashboard...")
     dashboard = attributor.visualizer.create_attribution_dashboard(
-        attribution_results,
-        data["portfolio_returns"],
-        data["benchmark_returns"]
+        attribution_results, data["portfolio_returns"], data["benchmark_returns"]
     )
 
     # Save dashboard as HTML
@@ -803,11 +821,12 @@ def demo_visualization(attributor: PerformanceAttributor, data: dict[str, Any]) 
 
     return attribution_results
 
+
 def demo_reporting(attributor: PerformanceAttributor, data: dict[str, Any]) -> str:
     """Demonstrate automated reporting capabilities."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("AUTOMATED REPORTING DEMONSTRATION")
-    print("="*60)
+    print("=" * 60)
 
     # Generate comprehensive report
     print("Generating comprehensive attribution report...")
@@ -834,6 +853,7 @@ def demo_reporting(attributor: PerformanceAttributor, data: dict[str, Any]) -> s
 
     return report
 
+
 def main() -> int:
     """Run the complete attribution analysis demonstration."""
     print("PERFORMANCE ATTRIBUTION ANALYSIS DEMONSTRATION")
@@ -851,10 +871,7 @@ def main() -> int:
         # Initialize attribution system
         print("\nInitializing attribution system...")
         config = AttributionConfig(
-            factor_model_type="pca",
-            n_factors=3,
-            confidence_level=0.95,
-            visualization_backend="plotly"
+            factor_model_type="pca", n_factors=3, confidence_level=0.95, visualization_backend="plotly"
         )
 
         attributor = PerformanceAttributor(config)
@@ -868,7 +885,7 @@ def main() -> int:
             data["asset_returns"],
             data["portfolio_weights"],
             data["benchmark_weights"],
-            data["sector_data"]
+            data["sector_data"],
         )
         print("✓ Comprehensive analysis completed")
 
@@ -876,9 +893,9 @@ def main() -> int:
         demo_visualization(attributor, data)
         demo_reporting(attributor, data)
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("DEMONSTRATION COMPLETED SUCCESSFULLY!")
-        print("="*60)
+        print("=" * 60)
         print("The performance attribution system has been demonstrated with:")
         print("✓ Factor analysis and decomposition")
         print("✓ Brinson attribution for sector allocation")
@@ -895,11 +912,14 @@ def main() -> int:
     except Exception as e:
         print(f"\n❌ Error during demonstration: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
     return 0
 
+
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

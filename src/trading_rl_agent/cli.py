@@ -22,7 +22,7 @@ from rich.table import Table
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 try:
-    from config import Settings, get_settings, load_settings
+    from config import get_settings, load_settings
     from trading_rl_agent.logging_conf import get_logger, setup_logging_for_typer
 except ImportError:
     # Fallback for when running as module
@@ -37,7 +37,7 @@ except ImportError:
         spec.loader.exec_module(config_module)
         get_settings = config_module.get_settings
         load_settings = config_module.load_settings
-        Settings = config_module.Settings  # type: ignore[misc]
+        Settings = config_module.Settings
     else:
         # Final fallback
         def get_settings() -> Any:  # type: ignore[misc]
@@ -337,7 +337,7 @@ def download_all(
                 symbols=symbols,
                 start_date=resolved_start_date,
                 end_date=resolved_end_date,
-                interval=timeframe,
+                interval=timeframe or "1d",
                 cache_dir=str(output_dir / "cache"),
                 max_workers=settings.infrastructure.max_workers,
             )
@@ -347,7 +347,7 @@ def download_all(
                 symbols=symbols,
                 start_date=resolved_start_date,
                 end_date=resolved_end_date,
-                interval=timeframe,
+                interval=timeframe or "1d",
                 cache_dir=str(output_dir / "cache"),
                 max_retries=3,
             )
@@ -433,7 +433,7 @@ def symbols(
                 symbols=symbol_list,
                 start_date=start_date or settings.data.start_date,
                 end_date=end_date or settings.data.end_date,
-                interval=timeframe or settings.data.timeframe,
+                interval=timeframe or settings.data.timeframe or "1d",
                 cache_dir=str(output_dir / "cache"),
                 max_workers=settings.infrastructure.max_workers,
             )
@@ -443,7 +443,7 @@ def symbols(
                 symbols=symbol_list,
                 start_date=start_date or settings.data.start_date,
                 end_date=end_date or settings.data.end_date,
-                interval=timeframe or settings.data.timeframe,
+                interval=timeframe or settings.data.timeframe or "1d",
                 cache_dir=str(output_dir / "cache"),
                 max_retries=3,
             )
@@ -534,7 +534,7 @@ def refresh(
             symbols=symbol_list,
             start_date=start_date,
             end_date=end_date,
-            interval=timeframe,
+            interval=timeframe or "1d",
             show_progress=True,
         )
 
@@ -1226,7 +1226,7 @@ def custom(
 
         # Get custom scenarios
         custom_scenarios = create_custom_scenarios()
-        scenario_map = {s["name"].lower().replace(" ", "_"): s for s in custom_scenarios}
+        scenario_map = {s.name.lower().replace(" ", "_"): s for s in custom_scenarios}
 
         if scenario_name not in scenario_map:
             console.print(f"[red]Unknown scenario: {scenario_name}[/red]")
@@ -1238,7 +1238,7 @@ def custom(
         # Run evaluation
         results = evaluator.evaluate_agent(
             agent=agent,
-            agent_name=f"{agent_type.replace('_', ' ').title()} ({selected_scenario['name']})",
+            agent_name=f"{agent_type.replace('_', ' ').title()} ({selected_scenario.name})",
             custom_scenarios=[selected_scenario],
         )
 

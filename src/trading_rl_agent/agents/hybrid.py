@@ -8,6 +8,7 @@ This module provides a hybrid agent that combines:
 """
 
 import logging
+import random
 from typing import Any
 
 import numpy as np
@@ -36,7 +37,7 @@ class HybridAgent(nn.Module):
         hidden_dim: int = 128,
         learning_rate: float = 3e-4,
         device: str = "auto",
-    ):
+    ) -> None:
         super().__init__()
 
         self.logger = logging.getLogger(__name__)
@@ -52,19 +53,16 @@ class HybridAgent(nn.Module):
             self.device = torch.device(device)
 
         # CNN+LSTM model for feature extraction
-        self.cnn_lstm_model = cnn_lstm_model
-        if self.cnn_lstm_model is None:
+        if cnn_lstm_model is None:
             self.cnn_lstm_model = CNNLSTMModel(
                 input_dim=10,  # OHLCV + technical indicators
-                output_dim=hidden_dim,
+                output_size=hidden_dim,
             )
+        else:
+            self.cnn_lstm_model = cnn_lstm_model
 
         # Feature fusion layer
-        if self.cnn_lstm_model is not None:
-            self.feature_fusion = nn.Linear(self.cnn_lstm_model.output_dim + state_dim, hidden_dim)
-        else:
-            # Handle the case where cnn_lstm_model is None, maybe raise an error or use a default
-            raise ValueError("cnn_lstm_model cannot be None if not provided.")
+        self.feature_fusion = nn.Linear(self.cnn_lstm_model.output_dim + state_dim, hidden_dim)
 
         # Policy network (Actor)
         self.policy_net = nn.Sequential(
@@ -123,11 +121,8 @@ class HybridAgent(nn.Module):
         # Extract features from CNN+LSTM if market data provided
         if market_data is not None and self.cnn_lstm_model is not None:
             cnn_lstm_features = self.cnn_lstm_model(market_data)
-        elif self.cnn_lstm_model is not None:
-            # Use zero features if no market data but model exists
-            cnn_lstm_features = torch.zeros(batch_size, self.cnn_lstm_model.output_dim, device=self.device)
         else:
-            # Handle case where model is None
+            # Use zero features if no market data or no model
             cnn_lstm_features = torch.zeros(batch_size, self.hidden_dim, device=self.device)
 
         # Concatenate RL state with CNN+LSTM features
@@ -147,7 +142,7 @@ class HybridAgent(nn.Module):
         state: torch.Tensor,
         market_data: torch.Tensor | None = None,
         evaluate: bool = False,
-    ) -> np.ndarray:
+    ) -> np.ndarray[np.int64, np.dtype[np.int64]]:
         """
         Select action using the hybrid agent.
 
@@ -182,16 +177,16 @@ class HybridAgent(nn.Module):
 
             if not evaluate and self.training_mode:
                 # Add exploration noise
-                if np.random.random() < self.epsilon:
+                if random.random() < self.epsilon:
                     # Random action
-                    action = np.random.randint(0, self.action_dim)
+                    action: int = random.randint(0, self.action_dim - 1)
                 else:
                     # Greedy action with some noise
                     action_probs = f.softmax(actions, dim=1)
-                    action = torch.multinomial(action_probs, 1).item()
+                    action = int(torch.multinomial(action_probs, 1).item())
             else:
                 # Greedy action
-                action = torch.argmax(actions, dim=1).item()
+                action = int(torch.argmax(actions, dim=1).item())
 
         return np.array([action])
 
@@ -234,11 +229,13 @@ class HybridAgent(nn.Module):
 
         # Next Q-values
         with torch.no_grad():
-            next_actions, next_values = self.forward(next_states, next_market_data)
+            _, next_values = self.forward(next_states, next_market_data)
 
         # Compute losses
-        policy_loss = self._compute_policy_loss(current_actions, actions, rewards, current_values, next_values, dones)
-        value_loss = self._compute_value_loss(current_values, rewards, next_values, dones)
+        policy_loss: torch.Tensor = self._compute_policy_loss(
+            current_actions, actions, rewards, current_values, next_values, dones
+        )
+        value_loss: torch.Tensor = self._compute_value_loss(current_values, rewards, next_values, dones)
 
         # Update networks
         self.policy_optimizer.zero_grad()
@@ -280,7 +277,8 @@ class HybridAgent(nn.Module):
 
         # Add entropy regularization for exploration
         entropy = -(action_probs * torch.log(action_probs + 1e-8)).sum(dim=1).mean()
-        return policy_loss - 0.01 * entropy
+        total_loss: torch.Tensor = policy_loss - 0.01 * entropy
+        return total_loss
 
     def _compute_value_loss(
         self,
@@ -319,11 +317,6 @@ class HybridAgent(nn.Module):
         self.policy_optimizer.load_state_dict(checkpoint["policy_optimizer_state_dict"])
         self.value_optimizer.load_state_dict(checkpoint["value_optimizer_state_dict"])
 
-        if checkpoint["cnn_lstm_model_state_dict"] and self.cnn_lstm_model:
-            self.cnn_lstm_model.load_state_dict(checkpoint["cnn_lstm_model_state_dict"])
-
-        self.logger.info(f"Hybrid agent loaded from {path}")
-
     def set_training_mode(self, training: bool) -> None:
         """Set training mode."""
         self.training_mode = training
@@ -351,13 +344,13 @@ class EnsembleHybridAgent:
         state: torch.Tensor,
         market_data: torch.Tensor | None = None,
         evaluate: bool = False,
-    ) -> np.ndarray:
+    ) -> np.ndarray[np.int64, np.dtype[np.int64]]:
         """Select action using ensemble voting."""
-        actions = []
+        actions: list[int] = []
 
         for agent in self.agents:
             action = agent.select_action(state, market_data, evaluate)
-            actions.append(action[0])  # Extract scalar action
+            actions.append(int(action[0]))  # Extract scalar action
 
         # Majority voting
         action_counts = np.bincount(actions, minlength=3)  # Assuming 3 actions
