@@ -18,16 +18,17 @@ from torch import nn
 from .advanced_policy_optimization import (
     TRPO,
     AdvancedPPO,
-    AdvancedPPOConfig,
     MultiObjectiveOptimizer,
     NaturalPolicyGradient,
-    NaturalPolicyGradientConfig,
     PolicyOptimizationComparison,
+)
+from .configs import (
+    AdvancedPPOConfig,
+    NaturalPolicyGradientConfig,
     TRPOConfig,
 )
 
-if TYPE_CHECKING:
-    from .configs import MultiObjectiveConfig
+from .configs import MultiObjectiveConfig
 
 logger = logging.getLogger(__name__)
 

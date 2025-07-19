@@ -60,6 +60,7 @@ class FactorModel:
 
     def __init__(self, config: AttributionConfig):
         self.config = config
+        self.factors: pd.DataFrame | None = None
         self.factor_loadings: pd.DataFrame | None = None
         self.factor_returns: pd.DataFrame | None = None
         self.residuals: pd.DataFrame | None = None
@@ -91,6 +92,9 @@ class FactorModel:
 
         # Add market factor
         self.factors["Market"] = market_returns
+
+        # Set factor returns (same as factors for now)
+        self.factor_returns = self.factors
 
         # Calculate factor loadings
         self._calculate_loadings(returns)
@@ -140,7 +144,11 @@ class FactorModel:
         self.factor_loadings = pd.DataFrame(loadings).T
         if self.factors is None or not hasattr(self.factors, "columns"):
             raise ValueError("self.factors must be a DataFrame with valid columns before calculating factor loadings.")
-        self.factor_loadings.columns = self.factors.columns
+        
+        # Only set columns if factor_loadings is not empty
+        if not self.factor_loadings.empty:
+            self.factor_loadings.columns = self.factors.columns
+        
         self.residuals = pd.DataFrame(residuals).T
         self.r_squared = pd.Series(r_squared)
 
@@ -167,9 +175,9 @@ class FactorModel:
         if self.residuals is not None:
             for asset in returns.columns:
                 if asset in self.residuals.index:
-                    idiosyncratic.loc[asset] = self.residuals.loc[asset]
+                    idiosyncratic.loc[:, asset] = self.residuals.loc[asset]
                 else:
-                    idiosyncratic.loc[asset] = returns.loc[asset] - systematic.loc[asset]
+                    idiosyncratic.loc[:, asset] = returns.loc[:, asset] - systematic.loc[:, asset]
 
         return {"systematic": systematic, "idiosyncratic": idiosyncratic}
 
