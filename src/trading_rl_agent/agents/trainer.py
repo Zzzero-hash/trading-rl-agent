@@ -9,13 +9,13 @@ import pandas as pd
 import ray
 from ray import tune
 
-from trading_rl_agent.core.exceptions import ConfigurationError
-from trading_rl_agent.data.synthetic import fetch_synthetic_data
-from trading_rl_agent.envs.finrl_trading_env import TradingEnv, register_env
-from trading_rl_agent.risk.riskfolio import RiskfolioConfig, RiskfolioRiskManager
+from ..core.exceptions import ConfigurationError
+from ..data.synthetic import fetch_synthetic_data
+from ..envs.finrl_trading_env import TradingEnv, register_env
+from ..risk.riskfolio import RiskfolioConfig, RiskfolioRiskManager
 
 if TYPE_CHECKING:
-    from trading_rl_agent.core.config import SystemConfig
+    from ..core.config import SystemConfig
 
 
 class RiskAwareEnv(gym.Wrapper):
@@ -122,6 +122,9 @@ class Trainer:
         }
 
         self.risk_enabled = self.cfg.risk.max_position_size < 1.0  # Example condition
+        self.risk_manager: RiskfolioRiskManager | None = None
+        self.terminate_on_violation = False
+
         if self.risk_enabled:
             rc = RiskfolioConfig(
                 max_position=self.cfg.risk.max_position_size,
@@ -130,9 +133,6 @@ class Trainer:
             )
             self.risk_manager = RiskfolioRiskManager(rc)
             self.terminate_on_violation = True  # Or get from config
-        else:
-            self.risk_manager = None
-            self.terminate_on_violation = False
 
         register_env()
         self._register_risk_env()
@@ -178,10 +178,12 @@ class Trainer:
         print(f"Processed data saved to {processed_data_path}")
 
         # Update env_config with processed data info
-        self.ray_config["env_config"]["dataset_paths"] = [str(processed_data_path)]
-        self.ray_config["env_config"]["df"] = None  # Ensure df is not passed directly
-        self.ray_config["env_config"]["initial_capital"] = 100000
-        self.ray_config["env_config"]["max_leverage"] = self.cfg.risk.max_leverage
+        env_config = self.ray_config["env_config"]
+        if isinstance(env_config, dict):
+            env_config["dataset_paths"] = [str(processed_data_path)]
+            env_config["df"] = None  # Ensure df is not passed directly
+            env_config["initial_capital"] = 100000
+            env_config["max_leverage"] = self.cfg.risk.max_leverage
 
         print("Data preparation complete.")
         return df_processed
