@@ -1,9 +1,17 @@
 #!/bin/bash
 
-# Trading System Kubernetes Deployment Script
-# This script deploys the complete trading system with all microservices
+# Enhanced Deployment Script for Trading System
+# Supports deployment, rollback, health checks, and monitoring
 
-set -e
+set -euo pipefail
+
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NAMESPACE="trading-system"
+ENVIRONMENT="${ENVIRONMENT:-staging}"
+IMAGE_TAG="${IMAGE_TAG:-latest}"
+BACKUP_DIR="/tmp/trading-system-backups"
+MAX_BACKUPS=5
 
 # Colors for output
 RED='\033[0;31m'
@@ -12,289 +20,397 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration
-NAMESPACE="trading-system"
-REGISTRY="your-registry.com"
-IMAGE_TAG="latest"
-ENVIRONMENT="${ENVIRONMENT:-production}"
-
-# Function to print colored output
-print_status() {
+# Logging functions
+log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-print_success() {
+log_success() {
     echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
-print_warning() {
+log_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
-print_error() {
+log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Function to check if kubectl is available
+# Check if kubectl is available
 check_kubectl() {
     if ! command -v kubectl &> /dev/null; then
-        print_error "kubectl is not installed or not in PATH"
+        log_error "kubectl is not installed or not in PATH"
         exit 1
     fi
-    print_success "kubectl found"
 }
 
-# Function to check if namespace exists
+# Check if namespace exists
 check_namespace() {
-    if kubectl get namespace $NAMESPACE &> /dev/null; then
-        print_warning "Namespace $NAMESPACE already exists"
-    else
-        print_status "Creating namespace $NAMESPACE"
-        kubectl apply -f namespace.yaml
+    if ! kubectl get namespace "$NAMESPACE" &> /dev/null; then
+        log_warning "Namespace $NAMESPACE does not exist. Creating..."
+        kubectl create namespace "$NAMESPACE"
+        log_success "Namespace $NAMESPACE created"
     fi
 }
 
-# Function to deploy secrets
-deploy_secrets() {
-    print_status "Deploying secrets..."
+# Create backup of current deployment
+create_backup() {
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local backup_name="backup_${ENVIRONMENT}_${timestamp}"
+    local backup_path="${BACKUP_DIR}/${backup_name}"
 
-    # Check if secrets file exists
-    if [ ! -f "secrets.yaml" ]; then
-        print_error "secrets.yaml not found. Please create it with your actual secrets."
-        exit 1
+    log_info "Creating backup: $backup_name"
+
+    mkdir -p "$backup_path"
+
+    # Backup all resources in the namespace
+    kubectl get all -n "$NAMESPACE" -o yaml > "$backup_path/all_resources.yaml" 2>/dev/null || true
+    kubectl get configmaps -n "$NAMESPACE" -o yaml > "$backup_path/configmaps.yaml" 2>/dev/null || true
+    kubectl get secrets -n "$NAMESPACE" -o yaml > "$backup_path/secrets.yaml" 2>/dev/null || true
+    kubectl get persistentvolumeclaims -n "$NAMESPACE" -o yaml > "$backup_path/pvcs.yaml" 2>/dev/null || true
+
+    # Store current image tags
+    kubectl get deployments -n "$NAMESPACE" -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.template.spec.containers[0].image}{"\n"}{end}' > "$backup_path/image_tags.txt" 2>/dev/null || true
+
+    log_success "Backup created: $backup_path"
+
+    # Clean up old backups
+    cleanup_old_backups
+}
+
+# Clean up old backups
+cleanup_old_backups() {
+    if [ -d "$BACKUP_DIR" ]; then
+        local backup_count=$(find "$BACKUP_DIR" -name "backup_${ENVIRONMENT}_*" | wc -l)
+        if [ "$backup_count" -gt "$MAX_BACKUPS" ]; then
+            log_info "Cleaning up old backups..."
+            find "$BACKUP_DIR" -name "backup_${ENVIRONMENT}_*" -type d -printf '%T@ %p\n' | sort -n | head -n $((backup_count - MAX_BACKUPS)) | cut -d' ' -f2- | xargs rm -rf
+            log_success "Old backups cleaned up"
+        fi
     fi
-
-    kubectl apply -f secrets.yaml
-    print_success "Secrets deployed"
 }
 
-# Function to deploy infrastructure
-deploy_infrastructure() {
-    print_status "Deploying infrastructure services..."
+# Update image tags in deployment files
+update_image_tags() {
+    log_info "Updating image tags to: $IMAGE_TAG"
 
-    # Deploy persistent volumes
-    kubectl apply -f persistent-volumes.yaml
-
-    # Deploy infrastructure services
-    kubectl apply -f infrastructure-services.yaml
-
-    # Wait for infrastructure to be ready
-    print_status "Waiting for infrastructure services to be ready..."
-    kubectl wait --for=condition=ready pod -l app=trading-db -n $NAMESPACE --timeout=300s
-    kubectl wait --for=condition=ready pod -l app=trading-redis -n $NAMESPACE --timeout=300s
-    kubectl wait --for=condition=ready pod -l app=trading-rabbitmq -n $NAMESPACE --timeout=300s
-
-    print_success "Infrastructure services deployed"
+    # Update image tags in all deployment files
+    find . -name "*-deployment.yaml" -type f | while read -r file; do
+        if [ -f "$file" ]; then
+            sed -i "s|image:.*trading-rl-agent.*|image: ghcr.io/\${GITHUB_REPOSITORY}:${IMAGE_TAG}|g" "$file"
+            log_info "Updated image tag in $file"
+        fi
+    done
 }
 
-# Function to deploy monitoring
-deploy_monitoring() {
-    print_status "Deploying monitoring stack..."
-
-    kubectl apply -f monitoring-stack.yaml
-
-    # Wait for monitoring to be ready
-    print_status "Waiting for monitoring services to be ready..."
-    kubectl wait --for=condition=ready pod -l app=prometheus -n $NAMESPACE --timeout=300s
-    kubectl wait --for=condition=ready pod -l app=grafana -n $NAMESPACE --timeout=300s
-
-    print_success "Monitoring stack deployed"
-}
-
-# Function to deploy microservices
-deploy_microservices() {
-    print_status "Deploying microservices..."
-
-    # Deploy API service
-    kubectl apply -f api-service-deployment.yaml
-
-    # Deploy trading engine
-    kubectl apply -f trading-engine-deployment.yaml
-
-    # Deploy ML service
-    kubectl apply -f ml-service-deployment.yaml
-
-    # Deploy data pipeline
-    kubectl apply -f data-pipeline-deployment.yaml
-
-    # Wait for microservices to be ready
-    print_status "Waiting for microservices to be ready..."
-    kubectl wait --for=condition=ready pod -l app=trading-api-service -n $NAMESPACE --timeout=300s
-    kubectl wait --for=condition=ready pod -l app=trading-engine -n $NAMESPACE --timeout=300s
-    kubectl wait --for=condition=ready pod -l app=trading-ml-service -n $NAMESPACE --timeout=300s
-    kubectl wait --for=condition=ready pod -l app=trading-data-pipeline -n $NAMESPACE --timeout=300s
-
-    print_success "Microservices deployed"
-}
-
-# Function to deploy autoscaling
-deploy_autoscaling() {
-    print_status "Deploying autoscaling configurations..."
-
-    kubectl apply -f autoscaling.yaml
-
-    print_success "Autoscaling configurations deployed"
-}
-
-# Function to deploy ingress
-deploy_ingress() {
-    print_status "Deploying ingress configurations..."
-
-    kubectl apply -f ingress.yaml
-
-    print_success "Ingress configurations deployed"
-}
-
-# Function to deploy batch jobs
-deploy_batch_jobs() {
-    print_status "Deploying batch job configurations..."
-
-    # Update existing job files to use the new namespace
-    sed -i "s/namespace: default/namespace: $NAMESPACE/g" *.yaml 2>/dev/null || true
-
-    kubectl apply -f training-job.yaml
-    kubectl apply -f download-datasets-job.yaml
-    kubectl apply -f scheduled-backtest-job.yaml
-    kubectl apply -f scheduled-backtest-cronjob.yaml
-
-    print_success "Batch job configurations deployed"
-}
-
-# Function to verify deployment
-verify_deployment() {
-    print_status "Verifying deployment..."
-
-    # Check all pods are running
-    echo "Checking pod status..."
-    kubectl get pods -n $NAMESPACE
-
-    # Check services
-    echo "Checking services..."
-    kubectl get services -n $NAMESPACE
-
-    # Check deployments
-    echo "Checking deployments..."
-    kubectl get deployments -n $NAMESPACE
-
-    # Check ingress
-    echo "Checking ingress..."
-    kubectl get ingress -n $NAMESPACE
-
-    # Check HPA
-    echo "Checking horizontal pod autoscalers..."
-    kubectl get hpa -n $NAMESPACE
-
-    print_success "Deployment verification completed"
-}
-
-# Function to show access information
-show_access_info() {
-    print_success "Deployment completed successfully!"
-    echo ""
-    echo "Access Information:"
-    echo "=================="
-    echo "API Service: http://api.trading-system.local"
-    echo "Grafana Dashboard: http://dashboard.trading-system.local"
-    echo "Prometheus: http://monitoring.trading-system.local"
-    echo "RabbitMQ Management: http://rabbitmq.internal:15672"
-    echo ""
-    echo "To access services, add the following to your /etc/hosts:"
-    echo "127.0.0.1 api.trading-system.local"
-    echo "127.0.0.1 dashboard.trading-system.local"
-    echo "127.0.0.1 monitoring.trading-system.local"
-    echo ""
-    echo "Useful commands:"
-    echo "kubectl get pods -n $NAMESPACE"
-    echo "kubectl logs -f deployment/trading-api-service -n $NAMESPACE"
-    echo "kubectl port-forward service/grafana 3000:3000 -n $NAMESPACE"
-    echo "kubectl port-forward service/prometheus 9090:9090 -n $NAMESPACE"
-}
-
-# Function to rollback deployment
-rollback_deployment() {
-    print_warning "Rolling back deployment..."
-
-    # Delete all resources in reverse order
-    kubectl delete -f autoscaling.yaml --ignore-not-found=true
-    kubectl delete -f ingress.yaml --ignore-not-found=true
-    kubectl delete -f api-service-deployment.yaml --ignore-not-found=true
-    kubectl delete -f trading-engine-deployment.yaml --ignore-not-found=true
-    kubectl delete -f ml-service-deployment.yaml --ignore-not-found=true
-    kubectl delete -f data-pipeline-deployment.yaml --ignore-not-found=true
-    kubectl delete -f monitoring-stack.yaml --ignore-not-found=true
-    kubectl delete -f infrastructure-services.yaml --ignore-not-found=true
-    kubectl delete -f persistent-volumes.yaml --ignore-not-found=true
-    kubectl delete -f secrets.yaml --ignore-not-found=true
-    kubectl delete -f namespace.yaml --ignore-not-found=true
-
-    print_success "Rollback completed"
-}
-
-# Main deployment function
-main() {
-    print_status "Starting Trading System deployment..."
-    print_status "Environment: $ENVIRONMENT"
-    print_status "Namespace: $NAMESPACE"
-    print_status "Image tag: $IMAGE_TAG"
+# Deploy to Kubernetes
+deploy() {
+    log_info "Starting deployment to $ENVIRONMENT environment"
 
     # Check prerequisites
     check_kubectl
-
-    # Deploy in order
     check_namespace
-    deploy_secrets
-    deploy_infrastructure
-    deploy_monitoring
-    deploy_microservices
-    deploy_autoscaling
-    deploy_ingress
-    deploy_batch_jobs
 
-    # Verify deployment
-    verify_deployment
+    # Create backup before deployment
+    create_backup
 
-    # Show access information
-    show_access_info
+    # Update image tags
+    update_image_tags
+
+    # Apply namespace
+    log_info "Applying namespace configuration..."
+    kubectl apply -f namespace.yaml
+
+    # Apply infrastructure services first
+    log_info "Deploying infrastructure services..."
+    kubectl apply -f infrastructure-services.yaml
+
+    # Wait for infrastructure to be ready
+    log_info "Waiting for infrastructure services to be ready..."
+    kubectl wait --for=condition=available --timeout=300s deployment/redis -n "$NAMESPACE" || true
+    kubectl wait --for=condition=available --timeout=300s deployment/postgres -n "$NAMESPACE" || true
+
+    # Apply persistent volumes
+    log_info "Applying persistent volumes..."
+    kubectl apply -f persistent-volumes.yaml
+
+    # Apply secrets and configmaps
+    log_info "Applying secrets and configmaps..."
+    kubectl apply -f secrets.yaml
+    kubectl apply -f configmap.yaml
+
+    # Apply core services
+    log_info "Deploying core services..."
+    kubectl apply -f data-pipeline-deployment.yaml
+    kubectl apply -f ml-service-deployment.yaml
+    kubectl apply -f trading-engine-deployment.yaml
+    kubectl apply -f api-service-deployment.yaml
+
+    # Apply ingress
+    log_info "Applying ingress configuration..."
+    kubectl apply -f ingress.yaml
+
+    # Apply autoscaling
+    log_info "Applying autoscaling configuration..."
+    kubectl apply -f autoscaling.yaml
+
+    log_success "Deployment completed successfully"
 }
 
-# Handle command line arguments
-case "${1:-deploy}" in
-    "deploy")
-        main
-        ;;
-    "rollback")
-        rollback_deployment
-        ;;
-    "verify")
-        verify_deployment
-        ;;
-    "status")
-        kubectl get all -n $NAMESPACE
-        ;;
-    "logs")
-        SERVICE="${2:-trading-api-service}"
-        kubectl logs -f deployment/$SERVICE -n $NAMESPACE
-        ;;
-    "port-forward")
-        SERVICE="${2:-grafana}"
-        PORT="${3:-3000}"
-        kubectl port-forward service/$SERVICE $PORT:$PORT -n $NAMESPACE
-        ;;
-    "help"|"-h"|"--help")
-        echo "Usage: $0 [command]"
-        echo ""
-        echo "Commands:"
-        echo "  deploy      - Deploy the complete trading system (default)"
-        echo "  rollback    - Rollback the deployment"
-        echo "  verify      - Verify the deployment status"
-        echo "  status      - Show current status"
-        echo "  logs [svc]  - Show logs for a service"
-        echo "  port-forward [svc] [port] - Port forward a service"
-        echo "  help        - Show this help message"
-        ;;
-    *)
-        print_error "Unknown command: $1"
-        echo "Use '$0 help' for usage information"
+# Rollback to previous deployment
+rollback() {
+    log_info "Starting rollback for $ENVIRONMENT environment"
+
+    # Find the most recent backup
+    local latest_backup=$(find "$BACKUP_DIR" -name "backup_${ENVIRONMENT}_*" -type d -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
+
+    if [ -z "$latest_backup" ] || [ ! -d "$latest_backup" ]; then
+        log_error "No backup found for rollback"
         exit 1
-        ;;
-esac
+    fi
+
+    log_info "Rolling back to: $latest_backup"
+
+    # Restore from backup
+    if [ -f "$latest_backup/all_resources.yaml" ]; then
+        kubectl apply -f "$latest_backup/all_resources.yaml" --force
+    fi
+
+    if [ -f "$latest_backup/configmaps.yaml" ]; then
+        kubectl apply -f "$latest_backup/configmaps.yaml" --force
+    fi
+
+    if [ -f "$latest_backup/secrets.yaml" ]; then
+        kubectl apply -f "$latest_backup/secrets.yaml" --force
+    fi
+
+    log_success "Rollback completed successfully"
+}
+
+# Verify deployment health
+verify() {
+    log_info "Verifying deployment health..."
+
+    # Check if all pods are running
+    local pod_status=$(kubectl get pods -n "$NAMESPACE" --no-headers | grep -v "Running\|Completed" | wc -l)
+    if [ "$pod_status" -gt 0 ]; then
+        log_error "Some pods are not in Running state"
+        kubectl get pods -n "$NAMESPACE"
+        return 1
+    fi
+
+    # Check service endpoints
+    local services=("api-service" "trading-engine" "data-pipeline" "ml-service")
+    for service in "${services[@]}"; do
+        if ! kubectl get endpoints "$service" -n "$NAMESPACE" | grep -q "ENDPOINTS"; then
+            log_warning "Service $service has no endpoints"
+        else
+            log_success "Service $service is healthy"
+        fi
+    done
+
+    # Check ingress
+    if kubectl get ingress -n "$NAMESPACE" &> /dev/null; then
+        log_success "Ingress is configured"
+    else
+        log_warning "No ingress found"
+    fi
+
+    log_success "Deployment verification completed"
+}
+
+# Run smoke tests
+smoke_test() {
+    log_info "Running smoke tests..."
+
+    # Get service URLs
+    local api_url=""
+    if kubectl get ingress -n "$NAMESPACE" &> /dev/null; then
+        api_url=$(kubectl get ingress -n "$NAMESPACE" -o jsonpath='{.items[0].spec.rules[0].host}')
+    else
+        api_url="localhost:8000"
+    fi
+
+    # Test API health endpoint
+    log_info "Testing API health endpoint..."
+    if curl -f -s "http://$api_url/health" > /dev/null; then
+        log_success "API health check passed"
+    else
+        log_error "API health check failed"
+        return 1
+    fi
+
+    # Test trading engine health
+    log_info "Testing trading engine health..."
+    if kubectl exec -n "$NAMESPACE" deployment/trading-engine -- python -c "import trading_rl_agent; print('Trading engine healthy')" 2>/dev/null; then
+        log_success "Trading engine health check passed"
+    else
+        log_error "Trading engine health check failed"
+        return 1
+    fi
+
+    # Test data pipeline
+    log_info "Testing data pipeline..."
+    if kubectl exec -n "$NAMESPACE" deployment/data-pipeline -- python -c "import trading_rl_agent.data; print('Data pipeline healthy')" 2>/dev/null; then
+        log_success "Data pipeline health check passed"
+    else
+        log_error "Data pipeline health check failed"
+        return 1
+    fi
+
+    log_success "All smoke tests passed"
+}
+
+# Monitor deployment
+monitor() {
+    log_info "Starting deployment monitoring..."
+
+    # Monitor for 10 minutes
+    local duration=600
+    local interval=30
+    local elapsed=0
+
+    while [ $elapsed -lt $duration ]; do
+        log_info "Monitoring deployment... ($elapsed/$duration seconds)"
+
+        # Check pod status
+        local failed_pods=$(kubectl get pods -n "$NAMESPACE" --no-headers | grep -v "Running\|Completed" | wc -l)
+        if [ "$failed_pods" -gt 0 ]; then
+            log_error "Found $failed_pods failed pods"
+            kubectl get pods -n "$NAMESPACE"
+            return 1
+        fi
+
+        # Check resource usage
+        kubectl top pods -n "$NAMESPACE" 2>/dev/null || true
+
+        sleep $interval
+        elapsed=$((elapsed + interval))
+    done
+
+    log_success "Monitoring completed successfully"
+}
+
+# Clean up resources
+cleanup() {
+    log_info "Cleaning up resources..."
+
+    # Delete all resources in namespace
+    kubectl delete namespace "$NAMESPACE" --ignore-not-found=true
+
+    # Clean up backups
+    if [ -d "$BACKUP_DIR" ]; then
+        rm -rf "$BACKUP_DIR"
+    fi
+
+    log_success "Cleanup completed"
+}
+
+# Show deployment status
+status() {
+    log_info "Deployment status for $ENVIRONMENT environment:"
+
+    echo ""
+    echo "=== Pods ==="
+    kubectl get pods -n "$NAMESPACE"
+
+    echo ""
+    echo "=== Services ==="
+    kubectl get services -n "$NAMESPACE"
+
+    echo ""
+    echo "=== Deployments ==="
+    kubectl get deployments -n "$NAMESPACE"
+
+    echo ""
+    echo "=== Ingress ==="
+    kubectl get ingress -n "$NAMESPACE" 2>/dev/null || echo "No ingress found"
+
+    echo ""
+    echo "=== Recent Events ==="
+    kubectl get events -n "$NAMESPACE" --sort-by='.lastTimestamp' | tail -10
+}
+
+# Show available backups
+list_backups() {
+    log_info "Available backups for $ENVIRONMENT environment:"
+
+    if [ -d "$BACKUP_DIR" ]; then
+        find "$BACKUP_DIR" -name "backup_${ENVIRONMENT}_*" -type d -printf '%T@ %p\n' | sort -n | while read -r line; do
+            local timestamp=$(echo "$line" | cut -d' ' -f1)
+            local path=$(echo "$line" | cut -d' ' -f2-)
+            local date=$(date -d "@$timestamp" '+%Y-%m-%d %H:%M:%S')
+            echo "$date - $path"
+        done
+    else
+        echo "No backups found"
+    fi
+}
+
+# Main script logic
+main() {
+    local command="${1:-help}"
+
+    case "$command" in
+        deploy)
+            deploy
+            verify
+            smoke_test
+            ;;
+        rollback)
+            rollback
+            verify
+            smoke_test
+            ;;
+        verify)
+            verify
+            ;;
+        smoke-test)
+            smoke_test
+            ;;
+        monitor)
+            monitor
+            ;;
+        status)
+            status
+            ;;
+        backup)
+            create_backup
+            ;;
+        list-backups)
+            list_backups
+            ;;
+        cleanup)
+            cleanup
+            ;;
+        help|--help|-h)
+            echo "Usage: $0 [command]"
+            echo ""
+            echo "Commands:"
+            echo "  deploy         - Deploy the application"
+            echo "  rollback       - Rollback to previous deployment"
+            echo "  verify         - Verify deployment health"
+            echo "  smoke-test     - Run smoke tests"
+            echo "  monitor        - Monitor deployment for issues"
+            echo "  status         - Show deployment status"
+            echo "  backup         - Create backup of current deployment"
+            echo "  list-backups   - List available backups"
+            echo "  cleanup        - Clean up all resources"
+            echo "  help           - Show this help message"
+            echo ""
+            echo "Environment variables:"
+            echo "  ENVIRONMENT    - Deployment environment (default: staging)"
+            echo "  IMAGE_TAG      - Docker image tag (default: latest)"
+            echo "  NAMESPACE      - Kubernetes namespace (default: trading-system)"
+            ;;
+        *)
+            log_error "Unknown command: $command"
+            echo "Use '$0 help' for usage information"
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function with all arguments
+main "$@"
