@@ -11,7 +11,14 @@ from pathlib import Path
 # Ensure src is in Python path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from trading_rl_agent.cli import app
+# Import CLI directly to avoid heavy dependencies
+try:
+    from trading_rl_agent.cli import app
+except ImportError as e:
+    print(f"Error importing CLI: {e}")
+    print("This might be due to missing dependencies.")
+    print("Try installing the core dependencies first.")
+    sys.exit(1)
 
 if __name__ == "__main__":
     app()
