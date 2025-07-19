@@ -6,6 +6,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: trading-rl-agent-data
+  namespace: trading-system
   labels:
     app: trading-rl-agent
     volume-type: data
@@ -22,6 +23,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: trading-rl-agent-models
+  namespace: trading-system
   labels:
     app: trading-rl-agent
     volume-type: models
@@ -38,6 +40,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: trading-rl-agent-artifacts
+  namespace: trading-system
   labels:
     app: trading-rl-agent
     volume-type: artifacts
@@ -54,6 +57,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: trading-rl-agent-results
+  namespace: trading-system
   labels:
     app: trading-rl-agent
     volume-type: results
@@ -70,6 +74,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: trading-rl-agent-logs
+  namespace: trading-system
   labels:
     app: trading-rl-agent
     volume-type: logs
@@ -86,6 +91,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: trading-rl-agent-mlruns
+  namespace: trading-system
   labels:
     app: trading-rl-agent
     volume-type: mlruns
@@ -96,3 +102,71 @@ spec:
     requests:
       storage: 10Gi
   storageClassName: standard # Adjust based on your cluster
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trading-db-data
+  namespace: trading-system
+  labels:
+    app: trading-db
+    volume-type: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trading-redis-data
+  namespace: trading-system
+  labels:
+    app: trading-redis
+    volume-type: cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trading-rabbitmq-data
+  namespace: trading-system
+  labels:
+    app: trading-rabbitmq
+    volume-type: queue
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trading-monitoring-data
+  namespace: trading-system
+  labels:
+    app: trading-monitoring
+    volume-type: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
