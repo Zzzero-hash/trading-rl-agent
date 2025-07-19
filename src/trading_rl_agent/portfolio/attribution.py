@@ -26,13 +26,8 @@ except ImportError:
     SKLEARN_AVAILABLE = False
     PCA = None
 
-try:
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-
-    PLOTLY_AVAILABLE = True
-except ImportError:
-    PLOTLY_AVAILABLE = False
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from ..core.logging import get_logger
 
 logger = get_logger(__name__)
