@@ -1,0 +1,310 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: trading-system-alerts
+  namespace: monitoring
+  labels:
+    app: trading-system
+    component: monitoring
+spec:
+  groups:
+  - name: trading-system.rules
+    rules:
+    # =============================================================================
+    # DEPLOYMENT HEALTH ALERTS
+    # =============================================================================
+    
+    - alert: TradingEngineDown
+      expr: up{job="trading-engine"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: trading-engine
+      annotations:
+        summary: "Trading Engine is down"
+        description: "Trading Engine has been down for more than 1 minute"
+        runbook_url: "https://github.com/yourusername/trading-rl-agent/docs/runbooks/trading-engine-down.md"
+
+    - alert: APIServiceDown
+      expr: up{job="api-service"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: api-service
+      annotations:
+        summary: "API Service is down"
+        description: "API Service has been down for more than 1 minute"
+        runbook_url: "https://github.com/yourusername/trading-rl-agent/docs/runbooks/api-service-down.md"
+
+    - alert: DataPipelineDown
+      expr: up{job="data-pipeline"} == 0
+      for: 2m
+      labels:
+        severity: warning
+        component: data-pipeline
+      annotations:
+        summary: "Data Pipeline is down"
+        description: "Data Pipeline has been down for more than 2 minutes"
+
+    - alert: MLServiceDown
+      expr: up{job="ml-service"} == 0
+      for: 2m
+      labels:
+        severity: warning
+        component: ml-service
+      annotations:
+        summary: "ML Service is down"
+        description: "ML Service has been down for more than 2 minutes"
+
+    # =============================================================================
+    # PERFORMANCE ALERTS
+    # =============================================================================
+
+    - alert: HighResponseTime
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+      for: 5m
+      labels:
+        severity: warning
+        component: api-service
+      annotations:
+        summary: "High API response time"
+        description: "95th percentile of API response time is above 2 seconds"
+
+    - alert: HighErrorRate
+      expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        component: api-service
+      annotations:
+        summary: "High error rate detected"
+        description: "Error rate is above 5% for the last 5 minutes"
+
+    - alert: HighMemoryUsage
+      expr: (container_memory_usage_bytes{container!=""} / container_spec_memory_limit_bytes{container!=""}) > 0.85
+      for: 5m
+      labels:
+        severity: warning
+        component: resource-usage
+      annotations:
+        summary: "High memory usage"
+        description: "Container memory usage is above 85%"
+
+    - alert: HighCPUUsage
+      expr: (rate(container_cpu_usage_seconds_total{container!=""}[5m]) * 100) > 80
+      for: 5m
+      labels:
+        severity: warning
+        component: resource-usage
+      annotations:
+        summary: "High CPU usage"
+        description: "Container CPU usage is above 80%"
+
+    # =============================================================================
+    # TRADING SPECIFIC ALERTS
+    # =============================================================================
+
+    - alert: TradingStrategyFailure
+      expr: trading_strategy_errors_total > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: trading-engine
+      annotations:
+        summary: "Trading strategy failure detected"
+        description: "Trading strategy has encountered errors"
+
+    - alert: LowPortfolioValue
+      expr: portfolio_total_value < 10000
+      for: 10m
+      labels:
+        severity: warning
+        component: portfolio
+      annotations:
+        summary: "Low portfolio value"
+        description: "Portfolio value has dropped below $10,000"
+
+    - alert: HighDrawdown
+      expr: (portfolio_peak_value - portfolio_total_value) / portfolio_peak_value > 0.15
+      for: 5m
+      labels:
+        severity: critical
+        component: portfolio
+      annotations:
+        summary: "High portfolio drawdown"
+        description: "Portfolio drawdown is above 15%"
+
+    - alert: DataFeedFailure
+      expr: data_feed_errors_total > 0
+      for: 2m
+      labels:
+        severity: warning
+        component: data-pipeline
+      annotations:
+        summary: "Data feed failure"
+        description: "Data feed has encountered errors"
+
+    - alert: ModelPredictionFailure
+      expr: ml_model_prediction_errors_total > 0
+      for: 2m
+      labels:
+        severity: warning
+        component: ml-service
+      annotations:
+        summary: "ML model prediction failure"
+        description: "ML model has encountered prediction errors"
+
+    # =============================================================================
+    # INFRASTRUCTURE ALERTS
+    # =============================================================================
+
+    - alert: PodRestarting
+      expr: increase(kube_pod_container_status_restarts_total[15m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+        component: infrastructure
+      annotations:
+        summary: "Pod is restarting frequently"
+        description: "Pod has restarted more than once in the last 15 minutes"
+
+    - alert: NodeHighCPU
+      expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+      for: 5m
+      labels:
+        severity: warning
+        component: infrastructure
+      annotations:
+        summary: "Node CPU usage is high"
+        description: "Node CPU usage is above 80%"
+
+    - alert: NodeHighMemory
+      expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+      for: 5m
+      labels:
+        severity: warning
+        component: infrastructure
+      annotations:
+        summary: "Node memory usage is high"
+        description: "Node memory usage is above 85%"
+
+    - alert: DiskSpaceLow
+      expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+      for: 5m
+      labels:
+        severity: critical
+        component: infrastructure
+      annotations:
+        summary: "Disk space is low"
+        description: "Disk space usage is above 90%"
+
+    # =============================================================================
+    # SECURITY ALERTS
+    # =============================================================================
+
+    - alert: UnauthorizedAccess
+      expr: increase(http_requests_total{status="401"}[5m]) > 10
+      for: 1m
+      labels:
+        severity: critical
+        component: security
+      annotations:
+        summary: "Unauthorized access attempts detected"
+        description: "Multiple unauthorized access attempts detected"
+
+    - alert: HighRateLimit
+      expr: increase(http_requests_total{status="429"}[5m]) > 50
+      for: 2m
+      labels:
+        severity: warning
+        component: security
+      annotations:
+        summary: "High rate limiting detected"
+        description: "Many requests are being rate limited"
+
+    # =============================================================================
+    # BUSINESS LOGIC ALERTS
+    # =============================================================================
+
+    - alert: NoTradesExecuted
+      expr: increase(trades_executed_total[1h]) == 0
+      for: 1h
+      labels:
+        severity: warning
+        component: trading-engine
+      annotations:
+        summary: "No trades executed in the last hour"
+        description: "Trading engine has not executed any trades in the last hour"
+
+    - alert: HighSlippage
+      expr: avg_over_time(trade_slippage_percentage[5m]) > 0.5
+      for: 5m
+      labels:
+        severity: warning
+        component: trading-engine
+      annotations:
+        summary: "High slippage detected"
+        description: "Average trade slippage is above 0.5%"
+
+    - alert: LowLiquidity
+      expr: market_liquidity_score < 0.3
+      for: 10m
+      labels:
+        severity: warning
+        component: market-data
+      annotations:
+        summary: "Low market liquidity"
+        description: "Market liquidity score is below 0.3"
+
+---
+# Alertmanager configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+      slack_api_url: 'https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK'
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'alerts@trading-system.com'
+      smtp_auth_username: 'alerts@trading-system.com'
+      smtp_auth_password: 'YOUR_SMTP_PASSWORD'
+
+    route:
+      group_by: ['alertname', 'component']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'slack-notifications'
+      routes:
+      - match:
+          severity: critical
+        receiver: 'pager-duty-critical'
+        continue: true
+      - match:
+          severity: warning
+        receiver: 'slack-notifications'
+
+    receivers:
+    - name: 'slack-notifications'
+      slack_configs:
+      - channel: '#trading-alerts'
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+        send_resolved: true
+
+    - name: 'pager-duty-critical'
+      pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+        send_resolved: true
+
+    - name: 'email-notifications'
+      email_configs:
+      - to: 'ops@trading-system.com'
+        send_resolved: true
+
+    templates:
+    - '/etc/alertmanager/template/*.tmpl'
