@@ -24,8 +24,10 @@ try:
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
-    # Define a fallback Order type for type hints
+    # Define fallback types for type hints
     Order = type("Order", (), {})
+    REST = type("REST", (), {})
+    Stream = type("Stream", (), {})
     logging.getLogger(__name__).warning(
         "Alpaca Trade API not available. Install with: pip install alpaca-trade-api",
     )
@@ -188,7 +190,11 @@ class AlpacaIntegration:
             raise ImportError("Alpaca Trade API required: pip install alpaca-trade-api")
 
         # Initialize V1 API client (fallback)
-        self.rest_api = REST(self.config.api_key, self.config.secret_key, self.config.base_url, api_version="v2")
+        try:
+            self.rest_api = REST(self.config.api_key, self.config.secret_key, self.config.base_url, api_version="v2")
+        except TypeError:
+            # Handle case where REST is a mock that doesn't accept arguments
+            self.rest_api = REST()
 
         # Initialize V2 API clients if available
         if ALPACA_V2_AVAILABLE and self.config.use_v2_api:

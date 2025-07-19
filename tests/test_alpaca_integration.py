@@ -110,7 +110,13 @@ class TestAlpacaEnvironmentConfig:
 
     def test_validate_environment_failure(self):
         """Test failed environment validation."""
-        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {}, clear=True), patch("trading_rl_agent.core.unified_config.UnifiedConfig") as mock_unified:
+            # Mock unified config to return None for credentials
+            mock_config = Mock()
+            mock_config.alpaca_api_key = None
+            mock_config.alpaca_secret_key = None
+            mock_unified.return_value = mock_config
+            
             assert validate_alpaca_environment() is False
 
     def test_from_environment(self):
@@ -235,125 +241,138 @@ class TestAlpacaIntegration:
 
         return mock_api
 
-    @patch("trading_rl_agent.data.alpaca_integration.REST")
-    def test_initialization(self, mock_rest, mock_config):
+    @patch("trading_rl_agent.data.alpaca_integration.ALPACA_AVAILABLE", True)
+    def test_initialization(self, mock_config):
         """Test AlpacaIntegration initialization."""
-        mock_rest.return_value = Mock()
+        # Create a mock REST class
+        mock_rest_class = Mock()
+        mock_rest_instance = Mock()
+        mock_rest_class.return_value = mock_rest_instance
+        
+        with patch.dict('sys.modules', {'alpaca_trade_api': Mock(), 'alpaca_trade_api.rest': Mock()}):
+            import sys
+            sys.modules['alpaca_trade_api.rest'].REST = mock_rest_class
 
-        alpaca = AlpacaIntegration(mock_config)
+            alpaca = AlpacaIntegration(mock_config)
 
-        assert alpaca.config == mock_config
-        assert alpaca._stream_connected is False
-        assert len(alpaca._data_callbacks) == 0
+            assert alpaca.config == mock_config
+            assert alpaca._stream_connected is False
+            assert len(alpaca._data_callbacks) == 0
 
-    @patch("trading_rl_agent.data.alpaca_integration.REST")
-    def test_validate_connection(self, mock_rest, mock_config, mock_alpaca_api):
+    @patch("trading_rl_agent.data.alpaca_integration.ALPACA_AVAILABLE", True)
+    def test_validate_connection(self, mock_config, mock_alpaca_api):
         """Test connection validation."""
-        mock_rest.return_value = mock_alpaca_api
+        with patch("alpaca_trade_api.rest.REST") as mock_rest:
+            mock_rest.return_value = mock_alpaca_api
 
-        alpaca = AlpacaIntegration(mock_config)
-        result = alpaca.validate_connection()
+            alpaca = AlpacaIntegration(mock_config)
+            result = alpaca.validate_connection()
 
-        assert result is True
-        mock_alpaca_api.get_account.assert_called_once()
+            assert result is True
+            mock_alpaca_api.get_account.assert_called_once()
 
-    @patch("trading_rl_agent.data.alpaca_integration.REST")
-    def test_get_account_info(self, mock_rest, mock_config, mock_alpaca_api):
+    @patch("trading_rl_agent.data.alpaca_integration.ALPACA_AVAILABLE", True)
+    def test_get_account_info(self, mock_config, mock_alpaca_api):
         """Test account information retrieval."""
-        mock_rest.return_value = mock_alpaca_api
+        with patch("alpaca_trade_api.rest.REST") as mock_rest:
+            mock_rest.return_value = mock_alpaca_api
 
-        alpaca = AlpacaIntegration(mock_config)
-        account_info = alpaca.get_account_info()
+            alpaca = AlpacaIntegration(mock_config)
+            account_info = alpaca.get_account_info()
 
-        assert account_info["id"] == "test_account"
-        assert account_info["cash"] == 10000.0
-        assert account_info["portfolio_value"] == 15000.0
-        assert account_info["status"] == "ACTIVE"
+            assert account_info["id"] == "test_account"
+            assert account_info["cash"] == 10000.0
+            assert account_info["portfolio_value"] == 15000.0
+            assert account_info["status"] == "ACTIVE"
 
-    @patch("trading_rl_agent.data.alpaca_integration.REST")
-    def test_get_real_time_quotes(self, mock_rest, mock_config, mock_alpaca_api):
+    @patch("trading_rl_agent.data.alpaca_integration.ALPACA_AVAILABLE", True)
+    def test_get_real_time_quotes(self, mock_config, mock_alpaca_api):
         """Test real-time quotes retrieval."""
-        mock_rest.return_value = mock_alpaca_api
+        with patch("alpaca_trade_api.rest.REST") as mock_rest:
+            mock_rest.return_value = mock_alpaca_api
 
-        alpaca = AlpacaIntegration(mock_config)
-        quotes = alpaca.get_real_time_quotes(["AAPL"])
+            alpaca = AlpacaIntegration(mock_config)
+            quotes = alpaca.get_real_time_quotes(["AAPL"])
 
-        assert "AAPL" in quotes
-        quote = quotes["AAPL"]
-        assert quote["bid_price"] == 154.50
-        assert quote["ask_price"] == 155.50
-        assert quote["spread"] == 1.0
+            assert "AAPL" in quotes
+            quote = quotes["AAPL"]
+            assert quote["bid_price"] == 154.50
+            assert quote["ask_price"] == 155.50
+            assert quote["spread"] == 1.0
 
-    @patch("trading_rl_agent.data.alpaca_integration.REST")
-    def test_get_positions(self, mock_rest, mock_config, mock_alpaca_api):
+    @patch("trading_rl_agent.data.alpaca_integration.ALPACA_AVAILABLE", True)
+    def test_get_positions(self, mock_config, mock_alpaca_api):
         """Test positions retrieval."""
-        mock_rest.return_value = mock_alpaca_api
+        with patch("alpaca_trade_api.rest.REST") as mock_rest:
+            mock_rest.return_value = mock_alpaca_api
 
-        alpaca = AlpacaIntegration(mock_config)
-        positions = alpaca.get_positions()
+            alpaca = AlpacaIntegration(mock_config)
+            positions = alpaca.get_positions()
 
-        assert len(positions) == 1
-        position = positions[0]
-        assert position.symbol == "AAPL"
-        assert position.qty == 10.0
-        assert position.avg_entry_price == 150.0
-        assert position.current_price == 155.0
+            assert len(positions) == 1
+            position = positions[0]
+            assert position.symbol == "AAPL"
+            assert position.qty == 10.0
+            assert position.avg_entry_price == 150.0
+            assert position.current_price == 155.0
 
-    @patch("trading_rl_agent.data.alpaca_integration.REST")
-    def test_get_portfolio_value(self, mock_rest, mock_config, mock_alpaca_api):
+    @patch("trading_rl_agent.data.alpaca_integration.ALPACA_AVAILABLE", True)
+    def test_get_portfolio_value(self, mock_config, mock_alpaca_api):
         """Test portfolio value calculation."""
-        mock_rest.return_value = mock_alpaca_api
+        with patch("alpaca_trade_api.rest.REST") as mock_rest:
+            mock_rest.return_value = mock_alpaca_api
 
-        alpaca = AlpacaIntegration(mock_config)
-        portfolio = alpaca.get_portfolio_value()
+            alpaca = AlpacaIntegration(mock_config)
+            portfolio = alpaca.get_portfolio_value()
 
-        assert portfolio["total_equity"] == 15000.0
-        assert portfolio["cash"] == 10000.0
-        assert portfolio["total_market_value"] == 1550.0
-        assert portfolio["total_unrealized_pl"] == 50.0
-        assert portfolio["position_count"] == 1
+            assert portfolio["total_equity"] == 15000.0
+            assert portfolio["cash"] == 10000.0
+            assert portfolio["total_market_value"] == 1550.0
+            assert portfolio["total_unrealized_pl"] == 50.0
+            assert portfolio["position_count"] == 1
 
-    @patch("trading_rl_agent.data.alpaca_integration.REST")
-    def test_place_order(self, mock_rest, mock_config):
+    @patch("trading_rl_agent.data.alpaca_integration.ALPACA_AVAILABLE", True)
+    def test_place_order(self, mock_config):
         """Test order placement."""
-        mock_api = Mock()
-        mock_rest.return_value = mock_api
+        with patch("alpaca_trade_api.rest.REST") as mock_rest:
+            mock_api = Mock()
+            mock_rest.return_value = mock_api
 
-        # Mock order
-        mock_order = Mock()
-        mock_order.id = "test_order"
-        mock_order.client_order_id = "client_123"
-        mock_order.symbol = "AAPL"
-        mock_order.qty = "10"
-        mock_order.side = "buy"
-        mock_order.type = "market"
-        mock_order.status = "filled"
-        mock_order.filled_at = datetime.now()
-        mock_order.filled_avg_price = "155.00"
-        mock_order.filled_qty = "10"
-        mock_order.submitted_at = datetime.now()
-        mock_order.limit_price = None
-        mock_order.stop_price = None
+            # Mock order
+            mock_order = Mock()
+            mock_order.id = "test_order"
+            mock_order.client_order_id = "client_123"
+            mock_order.symbol = "AAPL"
+            mock_order.qty = "10"
+            mock_order.side = "buy"
+            mock_order.type = "market"
+            mock_order.status = "filled"
+            mock_order.filled_at = datetime.now()
+            mock_order.filled_avg_price = "155.00"
+            mock_order.filled_qty = "10"
+            mock_order.submitted_at = datetime.now()
+            mock_order.limit_price = None
+            mock_order.stop_price = None
 
-        mock_api.submit_order.return_value = mock_order
-        mock_api.get_order.return_value = mock_order
+            mock_api.submit_order.return_value = mock_order
+            mock_api.get_order.return_value = mock_order
 
-        alpaca = AlpacaIntegration(mock_config)
+            alpaca = AlpacaIntegration(mock_config)
 
-        order_request = OrderRequest(symbol="AAPL", qty=10.0, side=OrderSide.BUY, order_type=OrderType.MARKET)
+            order_request = OrderRequest(symbol="AAPL", qty=10.0, side=OrderSide.BUY, order_type=OrderType.MARKET)
 
-        result = alpaca.place_order(order_request)
+            result = alpaca.place_order(order_request)
 
-        assert result["order_id"] == "test_order"
-        assert result["symbol"] == "AAPL"
-        assert result["qty"] == 10.0
-        assert result["side"] == "buy"
-        assert result["type"] == "market"
-        assert result["status"] == "filled"
+            assert result["order_id"] == "test_order"
+            assert result["symbol"] == "AAPL"
+            assert result["qty"] == 10.0
+            assert result["side"] == "buy"
+            assert result["type"] == "market"
+            assert result["status"] == "filled"
 
     def test_context_manager(self, mock_config):
         """Test context manager functionality."""
-        with patch("trading_rl_agent.data.alpaca_integration.REST") as mock_rest:
+        with patch("alpaca_trade_api.rest.REST") as mock_rest, patch("trading_rl_agent.data.alpaca_integration.ALPACA_AVAILABLE", True):
             mock_rest.return_value = Mock()
 
             with AlpacaIntegration(mock_config) as alpaca:

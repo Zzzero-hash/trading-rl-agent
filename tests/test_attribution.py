@@ -185,7 +185,8 @@ class TestBrinsonAttributor:
         benchmark_weights = pd.Series({"Tech": 0.5, "Consumer": 0.5})
         returns = pd.Series({"Tech": 0.1, "Consumer": 0.05})
 
-        result = attributor.calculate_attribution(portfolio_weights, benchmark_weights, returns, "sector")
+        benchmark_returns = pd.Series({"Tech": 0.08, "Consumer": 0.06})
+        result = attributor.calculate_attribution(portfolio_weights, benchmark_weights, returns, benchmark_returns)
 
         assert "allocation" in result
         assert "selection" in result
@@ -204,8 +205,9 @@ class TestBrinsonAttributor:
         benchmark_weights = pd.Series({"Finance": 0.5, "Energy": 0.5})
         returns = pd.Series({"Tech": 0.1, "Consumer": 0.05})
 
+        benchmark_returns = pd.Series({"Finance": 0.08, "Energy": 0.06})
         with pytest.raises(ValueError, match="No common groups found"):
-            attributor.calculate_attribution(portfolio_weights, benchmark_weights, returns, "sector")
+            attributor.calculate_attribution(portfolio_weights, benchmark_weights, returns, benchmark_returns)
 
 
 class TestRiskAdjustedAttributor:
@@ -377,7 +379,7 @@ class TestAttributionIntegration:
         """Test integration initialization."""
         # Create mock portfolio manager
         portfolio_manager = Mock(spec=PortfolioManager)
-        portfolio_manager.performance_history = []
+        portfolio_manager.performance_history = pd.DataFrame()
 
         integration = AttributionIntegration(portfolio_manager, attribution_config)
 
@@ -388,7 +390,7 @@ class TestAttributionIntegration:
     def test_prepare_attribution_data_no_history(self, attribution_config):
         """Test data preparation with no performance history."""
         portfolio_manager = Mock(spec=PortfolioManager)
-        portfolio_manager.performance_history = []
+        portfolio_manager.performance_history = pd.DataFrame()
 
         integration = AttributionIntegration(portfolio_manager, attribution_config)
 
@@ -401,7 +403,7 @@ class TestAttributionIntegration:
 
         # Create mock performance history
         dates = pd.date_range("2023-01-01", periods=10)
-        portfolio_manager.performance_history = [
+        portfolio_manager.performance_history = pd.DataFrame([
             {
                 "timestamp": date,
                 "total_return": 1000000 + i * 1000,
@@ -410,7 +412,7 @@ class TestAttributionIntegration:
                 "equity_value": 900000 + i * 1000,
             }
             for i, date in enumerate(dates)
-        ]
+        ])
 
         integration = AttributionIntegration(portfolio_manager, attribution_config)
 
@@ -430,7 +432,7 @@ class TestAutomatedAttributionWorkflow:
     def test_workflow_initialization(self, attribution_config):
         """Test workflow initialization."""
         portfolio_manager = Mock(spec=PortfolioManager)
-        portfolio_manager.performance_history = []
+        portfolio_manager.performance_history = pd.DataFrame()
 
         workflow = AutomatedAttributionWorkflow(portfolio_manager, attribution_config)
 
@@ -441,7 +443,7 @@ class TestAutomatedAttributionWorkflow:
     def test_should_run_analysis(self, attribution_config):
         """Test analysis scheduling logic."""
         portfolio_manager = Mock(spec=PortfolioManager)
-        portfolio_manager.performance_history = []
+        portfolio_manager.performance_history = pd.DataFrame()
 
         workflow = AutomatedAttributionWorkflow(portfolio_manager, attribution_config)
 

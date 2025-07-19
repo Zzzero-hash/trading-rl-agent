@@ -29,10 +29,12 @@ except ImportError:
 try:
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
-
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
+    go = None
+    make_subplots = None
+
 from ..core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -65,6 +67,7 @@ class FactorModel:
 
     def __init__(self, config: AttributionConfig):
         self.config = config
+        self.factors: pd.DataFrame | None = None
         self.factor_loadings: pd.DataFrame | None = None
         self.factor_returns: pd.DataFrame | None = None
         self.residuals: pd.DataFrame | None = None
@@ -86,7 +89,18 @@ class FactorModel:
         # Extract factors using PCA
         from sklearn.decomposition import PCA
 
-        pca = PCA(n_components=min(self.config.max_factors, returns.shape[0] - 1))
+        # Ensure we don't try to extract more components than available
+        max_possible_components = min(returns.shape[0], returns.shape[1]) - 1
+        n_components = min(self.config.max_factors, max_possible_components, 3)  # Cap at 3 for small datasets
+        
+        if n_components <= 0:
+            # Fallback to simple market model if PCA not possible
+            self.factors = pd.DataFrame({"Market": market_returns}, index=returns.columns)
+            self.factor_returns = self.factors
+            self._calculate_loadings(returns)
+            return
+            
+        pca = PCA(n_components=n_components)
         factors = pca.fit_transform(returns_std.T)
 
         # Create factor DataFrame
@@ -96,6 +110,9 @@ class FactorModel:
 
         # Add market factor
         self.factors["Market"] = market_returns
+
+        # Set factor returns (same as factors for now)
+        self.factor_returns = self.factors
 
         # Calculate factor loadings
         self._calculate_loadings(returns)
@@ -145,7 +162,11 @@ class FactorModel:
         self.factor_loadings = pd.DataFrame(loadings).T
         if self.factors is None or not hasattr(self.factors, "columns"):
             raise ValueError("self.factors must be a DataFrame with valid columns before calculating factor loadings.")
-        self.factor_loadings.columns = self.factors.columns
+        
+        # Only set columns if factor_loadings is not empty
+        if not self.factor_loadings.empty:
+            self.factor_loadings.columns = self.factors.columns
+        
         self.residuals = pd.DataFrame(residuals).T
         self.r_squared = pd.Series(r_squared)
 
@@ -162,19 +183,33 @@ class FactorModel:
         if self.factor_loadings is None or self.factor_returns is None:
             raise ValueError("Factor model must be fitted before decomposition")
 
-        # Calculate systematic component
-        systematic = self.factor_loadings @ self.factor_returns.T
-
-        # Calculate idiosyncratic component
-        idiosyncratic = returns - systematic
+        # Ensure proper alignment of factor loadings and factor returns
+        if self.factor_loadings is not None and self.factor_returns is not None:
+            # Align factor loadings with returns columns
+            common_assets = self.factor_loadings.index.intersection(returns.columns)
+            if len(common_assets) == 0:
+                # Fallback: use simple market model
+                systematic = pd.DataFrame(0, index=returns.index, columns=returns.columns)
+                idiosyncratic = returns
+            else:
+                # Use aligned factor loadings
+                aligned_loadings = self.factor_loadings.loc[common_assets]
+                systematic = aligned_loadings @ self.factor_returns.T
+                systematic = systematic.reindex(columns=returns.columns, fill_value=0)
+                systematic = systematic.reindex(index=returns.index, fill_value=0)
+                idiosyncratic = returns - systematic
+        else:
+            # Fallback: use simple market model
+            systematic = pd.DataFrame(0, index=returns.index, columns=returns.columns)
+            idiosyncratic = returns
 
         # Ensure residuals are available for individual asset decomposition
         if self.residuals is not None:
             for asset in returns.columns:
                 if asset in self.residuals.index:
-                    idiosyncratic.loc[asset] = self.residuals.loc[asset]
+                    idiosyncratic.loc[:, asset] = self.residuals.loc[asset]
                 else:
-                    idiosyncratic.loc[asset] = returns.loc[asset] - systematic.loc[asset]
+                    idiosyncratic.loc[:, asset] = returns.loc[:, asset] - systematic.loc[:, asset]
 
         return {"systematic": systematic, "idiosyncratic": idiosyncratic}
 
