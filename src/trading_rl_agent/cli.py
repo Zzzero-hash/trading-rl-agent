@@ -121,14 +121,41 @@ logger = get_logger(__name__)
 
 # Global state
 verbose_count: int = 0
-_settings = None
+_settings: Any = None
 
 
 def get_config_manager() -> Any:
     """Get or create config manager instance."""
     global _settings
     if _settings is None:
-        _settings = get_settings()
+        try:
+            _settings = get_settings()
+        except Exception as e:
+            console.print(f"[yellow]Warning: Could not load configuration: {e}[/yellow]")
+            console.print("[yellow]Using default configuration for basic commands.[/yellow]")
+
+            # Create a minimal settings object for basic functionality
+            class MinimalSettings:
+                environment = "development"
+                debug = False
+                data = type(
+                    "Data",
+                    (),
+                    {
+                        "primary_source": "yfinance",
+                        "symbols": ["AAPL", "GOOGL", "MSFT"],
+                        "start_date": "2024-01-01",
+                        "end_date": "2024-12-31",
+                        "timeframe": "1d",
+                        "data_path": "data/",
+                    },
+                )()
+                agent = type("Agent", (), {"agent_type": "ppo"})()
+                risk = type("Risk", (), {"max_position_size": 0.1})()
+                execution = type("Execution", (), {"broker": "alpaca", "paper_trading": True})()
+                infrastructure = type("Infrastructure", (), {"max_workers": 4})()
+
+            _settings = MinimalSettings()
     return _settings
 
 
@@ -249,13 +276,18 @@ def main(
 @app.command()
 def version() -> None:
     """Show version information."""
-    from . import __version__
+    try:
+        from . import __version__
+
+        version_str = __version__
+    except ImportError:
+        version_str = "2.0.0"  # Fallback version
 
     table = Table(title="Trading RL Agent")
     table.add_column("Component", style="cyan")
     table.add_column("Version", style="green")
 
-    table.add_row("Trading RL Agent", __version__)
+    table.add_row("Trading RL Agent", version_str)
     table.add_row("Python", sys.version.split()[0])
 
     console.print(table)
