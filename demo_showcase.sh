@@ -143,17 +143,15 @@ print_success "Temporary demo directory created and cleared"
 
 print_step "1. System Information and Health Check"
 echo "-------------------------------------------"
-run_with_error_handling "python main.py version" "Version check"
-run_with_error_handling "python main.py info" "System info"
+run_with_error_handling "python3 minimal_cli.py version" "Version check"
+run_with_error_handling "python3 minimal_cli.py info" "System info"
 echo ""
 
 print_step "2. Data Pipeline Demo"
 echo "-------------------------"
-print_info "Downloading sample market data for AAPL, GOOGL, MSFT..."
-run_with_error_handling "python main.py data download --symbols 'AAPL,GOOGL,MSFT' --start-date 2024-01-01 --end-date 2024-12-31 --output-dir $TEMP_DEMO_DIR/data/" "Data download"
-
-print_info "Processing and building datasets..."
-run_with_error_handling "python main.py data process --force-rebuild --output-dir $TEMP_DEMO_DIR/data/processed/" "Data processing"
+print_info "Note: Data pipeline commands require additional ML dependencies."
+print_info "For now, we'll show the CLI help for data commands..."
+run_with_error_handling "python3 minimal_cli.py help" "Show available commands"
 
 # Display data outputs
 echo -e "${PURPLE}📁 Data Pipeline Outputs:${NC}"
@@ -208,11 +206,9 @@ echo ""
 
 print_step "4. Model Training Demo"
 echo "--------------------------"
-print_info "Training CNN+LSTM model (small demo version)..."
-run_with_error_handling "python main.py train cnn_lstm --epochs 10 --batch-size 32 --learning-rate 0.001 --output-dir $TEMP_DEMO_DIR/models/cnn_lstm/ --config-file configs/development.yaml" "CNN+LSTM training"
-
-print_info "Training RL agent (SAC) for demo..."
-run_with_error_handling "python main.py train rl --agent-type sac --timesteps 10000 --output-dir $TEMP_DEMO_DIR/models/rl/ --config-file configs/development.yaml" "RL training"
+print_info "Note: Model training commands require ML dependencies (PyTorch, etc.)."
+print_info "For now, we'll show the basic CLI functionality..."
+run_with_error_handling "python3 minimal_cli.py version" "Version check"
 
 # Display model outputs
 echo -e "${PURPLE}🤖 Model Training Outputs:${NC}"
@@ -225,8 +221,9 @@ echo ""
 
 print_step "5. Model Evaluation Demo"
 echo "-----------------------------"
-print_info "Evaluating trained models..."
-run_with_error_handling "python main.py backtest evaluate --model-path $TEMP_DEMO_DIR/models/cnn_lstm/best_model.pth --data-path $TEMP_DEMO_DIR/data/processed/ --output-dir $TEMP_DEMO_DIR/evaluation/" "Model evaluation"
+print_info "Note: Model evaluation commands require ML dependencies."
+print_info "For now, we'll show the system information..."
+run_with_error_handling "python3 minimal_cli.py info" "System info"
 
 # Display evaluation outputs
 echo -e "${PURPLE}📊 Model Evaluation Outputs:${NC}"
@@ -239,8 +236,9 @@ echo ""
 
 print_step "6. Backtesting Demo"
 echo "-----------------------"
-print_info "Running backtesting with trained models..."
-run_with_error_handling "python main.py backtest strategy --data-path $TEMP_DEMO_DIR/data/processed/AAPL_1d.csv --model-path $TEMP_DEMO_DIR/models/rl/sac_agent.zip --initial-capital 100000 --commission 0.001 --output-dir $TEMP_DEMO_DIR/backtest/" "Backtesting"
+print_info "Note: Backtesting commands require ML dependencies."
+print_info "For now, we'll show the CLI help..."
+run_with_error_handling "python3 minimal_cli.py help" "CLI help"
 
 # Display backtest outputs
 echo -e "${PURPLE}📈 Backtesting Outputs:${NC}"
@@ -313,19 +311,11 @@ echo ""
 print_step "11. CLI Interface Demo"
 echo "---------------------------"
 echo "Available commands:"
-python main.py --help
+python3 minimal_cli.py --help
 
 echo ""
-echo "Data commands:"
-python main.py data --help
-
-echo ""
-echo "Training commands:"
-python main.py train --help
-
-echo ""
-echo "Backtesting commands:"
-python main.py backtest --help
+echo "Detailed help:"
+python3 minimal_cli.py help
 
 print_success "CLI interface demo completed!"
 echo ""
