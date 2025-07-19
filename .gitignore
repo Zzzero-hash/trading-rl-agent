@@ -20,6 +20,7 @@ dist/
 .vscode/
 *.swp
 *.tmp
+*.temp
 
 # OS-specific
 .DS_Store
@@ -37,6 +38,7 @@ coverage.xml
 test-report.json
 test-report.md
 test-results.xml
+.coveragerc_temp
 
 # Mock directories (test artifacts)
 <Mock*/
@@ -49,6 +51,9 @@ node_modules/
 # Data
 /data/
 outputs/
+demo_outputs/
+backtest_results/
+test_data/
 
 # ML/AI Training Outputs
 models/
@@ -100,3 +105,91 @@ docs/_autosummary/
 *.json
 *_errors.json
 ruff_*.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Backup and temporary files
+*.bak
+*.orig
+*.rej
+*.tmp
+*.temp
+*~
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Cursor IDE
+.cursor/
+
+# Benchmark results
+.benchmarks/
+
+# Ruff cache
+.ruff_cache/
+
+# MyPy cache
+.mypy_cache/
+
+# Coverage reports
+htmlcov/
+
+# Generated reports and dashboards
+*_dashboard.html
+*_report.html
+*_report.txt
+attribution_*.html
+attribution_*.txt
+data_quality_*.html
+
+# Preserve important documentation
+!README*.md
+!TODO.md
+!PROJECT_STATUS.md
+!DOCUMENTATION_UPDATE_SUMMARY.md
+!ENV_VARIABLES_INTEGRATION_SUMMARY.md
+!DEPENDENCY_MANAGEMENT.md
+!ALPACA_INTEGRATION_SUMMARY.md
+!TRANSACTION_COST_MODELING_IMPLEMENTATION.md
+!CLI_COVERAGE_IMPROVEMENT_SUMMARY.md
+!DATA_STANDARDIZATION_GUIDE.md
+!CLEANUP_SUMMARY.md
+!DEMO_README.md
+!README_CLI_USAGE.md
+
+# Generated images and plots
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Version files (appear to be generated)
+=*.0
+=*.0.0
+
+# Samples directory (appears to be generated content)
+samples/
+
+# Runs directory (MLflow/training runs)
+runs/
+
+# Config cache (but keep important configs)
+config/
+!configs/
