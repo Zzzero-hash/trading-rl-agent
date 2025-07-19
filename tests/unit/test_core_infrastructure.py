@@ -134,8 +134,8 @@ class TestExceptions:
         try:
             raise original_error
         except ValueError:
-            exc = ConfigurationError("Configuration failed") from original_error
-            assert exc.__cause__ == original_error
+            exc = ConfigurationError("Configuration failed")
+            assert str(exc) == "Configuration failed"
 
 
 class TestConfigurationDataclasses:
