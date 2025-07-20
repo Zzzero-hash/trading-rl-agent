@@ -781,3 +781,95 @@ def add_market_regime_features(df: pd.DataFrame) -> pd.DataFrame:
     df["volume_change"] = df["volume_change"].fillna(0)
 
     return df
+
+
+class FeatureEngineer:
+    """Feature engineering class for financial time series data."""
+
+    def __init__(self, config: dict | None = None):
+        """Initialize the feature engineer.
+
+        Args:
+            config: Configuration dictionary for feature engineering
+        """
+        self.config = config or {}
+        self.ma_windows = self.config.get("ma_windows", [5, 10, 20, 50, 200])
+        self.rsi_window = self.config.get("rsi_window", 14)
+        self.vol_window = self.config.get("vol_window", 20)
+        self.advanced_candles = self.config.get("advanced_candles", True)
+
+    def calculate_all_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate all available features for the given dataframe.
+
+        Args:
+            df: Input dataframe with OHLCV data
+
+        Returns:
+            DataFrame with all calculated features
+        """
+        if df.empty:
+            return df
+
+        # Make a copy to avoid modifying the original
+        result_df = df.copy()
+
+        # Basic technical indicators
+        result_df = generate_features(
+            result_df,
+            ma_windows=self.ma_windows,
+            rsi_window=self.rsi_window,
+            vol_window=self.vol_window,
+            advanced_candles=self.advanced_candles,
+        )
+
+        # Add candlestick patterns
+        result_df = add_missing_candlestick_patterns(result_df)
+
+        # Add time features
+        result_df = add_time_features(result_df)
+
+        # Add market regime features
+        result_df = add_market_regime_features(result_df)
+
+        # Add rolling candlestick features
+        result_df = add_rolling_candlestick_features(result_df)
+
+        # Add candlestick characteristics
+        return add_candlestick_characteristics(result_df)
+
+    def calculate_basic_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate basic technical indicators only.
+
+        Args:
+            df: Input dataframe with OHLCV data
+
+        Returns:
+            DataFrame with basic features
+        """
+        if df.empty:
+            return df
+
+        return generate_features(
+            df.copy(),
+            ma_windows=self.ma_windows,
+            rsi_window=self.rsi_window,
+            vol_window=self.vol_window,
+            advanced_candles=False,
+        )
+
+    def calculate_candlestick_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate candlestick pattern features only.
+
+        Args:
+            df: Input dataframe with OHLCV data
+
+        Returns:
+            DataFrame with candlestick features
+        """
+        if df.empty:
+            return df
+
+        result_df = df.copy()
+        result_df = add_missing_candlestick_patterns(result_df)
+        result_df = add_candlestick_characteristics(result_df)
+        return add_rolling_candlestick_features(result_df)

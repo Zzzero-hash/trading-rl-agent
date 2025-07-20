@@ -377,18 +377,22 @@ class TestCLIBacktest:
         mock_evaluator_instance.run_backtest.return_value = mock_results
         mock_evaluator.return_value = mock_evaluator_instance
 
-        # Test the command with None dates
-        run(
-            strategy="momentum",
-            start_date=None,
-            end_date=None,
-            symbols=None,
-            export_csv=None,
-            config_file=None,
-            initial_capital=10000.0,
-            commission_rate=0.001,
-            slippage_rate=0.0001,
-        )
+        # Test the command with None dates - expect typer.Exit(0) on success
+        with pytest.raises(typer.Exit) as exc_info:
+            run(
+                strategy="momentum",
+                start_date=None,
+                end_date=None,
+                symbols=None,
+                export_csv=None,
+                config_file=None,
+                initial_capital=10000.0,
+                commission_rate=0.001,
+                slippage_rate=0.0001,
+            )
+
+        # Verify exit code is 0 (success)
+        assert exc_info.value.exit_code == 0
 
         # Verify that the settings dates were used (not "None" strings)
         mock_load_data.assert_called_once_with(["AAPL"], "2024-01-01", "2024-01-31")
@@ -450,15 +454,19 @@ class TestCLIBacktest:
         mock_evaluator_instance.compare_strategies.return_value = {"momentum": mock_results}
         mock_evaluator.return_value = mock_evaluator_instance
 
-        # Test the command with None dates
-        compare(
-            strategies="momentum,mean_reversion",
-            start_date=None,
-            end_date=None,
-            symbols=None,
-            config_file=None,
-            output_dir=self.temp_path,
-        )
+        # Test the command with None dates - expect typer.Exit(0) on success
+        with pytest.raises(typer.Exit) as exc_info:
+            compare(
+                strategies="momentum,mean_reversion",
+                start_date=None,
+                end_date=None,
+                symbols=None,
+                config_file=None,
+                output_dir=self.temp_path,
+            )
+
+        # Verify exit code is 0 (success)
+        assert exc_info.value.exit_code == 0
 
         # Verify that the settings dates were used (not "None" strings)
         mock_load_data.assert_called_once_with(["AAPL"], "2024-01-01", "2024-01-31")

@@ -56,7 +56,7 @@ class HybridAgent(nn.Module):
         if cnn_lstm_model is None:
             self.cnn_lstm_model = CNNLSTMModel(
                 input_dim=10,  # OHLCV + technical indicators
-                output_size=hidden_dim,
+                output_dim=hidden_dim,
             )
         else:
             self.cnn_lstm_model = cnn_lstm_model

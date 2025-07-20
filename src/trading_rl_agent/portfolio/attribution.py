@@ -369,7 +369,7 @@ class AttributionVisualizer:
 
     def _create_plotly_dashboard(
         self, attribution_results: dict[str, Any], portfolio_returns: pd.Series, benchmark_returns: pd.Series
-    ) -> go.Figure:
+    ) -> Any:
         """Create interactive Plotly dashboard."""
         # Create subplots
         fig = make_subplots(

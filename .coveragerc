@@ -48,9 +48,6 @@ parallel = True
 relative_files = True
 
 [report]
-# Show missing lines in reports
-show_missing = True
-
 # Include all source files
 include =
     src/trading_rl_agent/*.py
@@ -87,59 +84,24 @@ omit =
 # Precision for percentage display
 precision = 2
 
-# Sort files by coverage percentage
-sort = True
-
-# Show branch coverage in reports
-show_branches = True
-
 [html]
 # Directory for HTML reports
 directory = htmlcov
 
 # Extra CSS for better styling
-extra_css =
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .coverage-summary { background: #f8f9fa; padding: 20px; border-radius: 8px; }
-    .coverage-high { background-color: #d4edda; }
-    .coverage-medium { background-color: #fff3cd; }
-    .coverage-low { background-color: #f8d7da; }
+# extra_css = custom.css
 
 # Title for HTML reports
 title = Trading RL Agent Coverage Report
-
-# Show missing lines in HTML
-show_missing = True
-
-# Show branch coverage in HTML
-show_branches = True
 
 [xml]
 # Output file for XML reports
 output = coverage.xml
 
-# Include missing lines in XML
-show_missing = True
-
-# Include branch coverage in XML
-show_branches = True
-
 [json]
 # Output file for JSON reports
 output = coverage.json
 
-# Include missing lines in JSON
-show_missing = True
-
-# Include branch coverage in JSON
-show_branches = True
-
 [lcov]
 # Output file for LCOV reports
 output = coverage.lcov
-
-# Include missing lines in LCOV
-show_missing = True
-
-# Include branch coverage in LCOV
-show_branches = True
