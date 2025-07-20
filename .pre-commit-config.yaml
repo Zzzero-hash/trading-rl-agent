@@ -25,13 +25,17 @@ repos:
         exclude: ^(test-results\.xml)$
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.12.3
+    rev: v0.12.4
     hooks:
       # Run the linter.
       - id: ruff
-        args: [--fix]
+        args: [--fix, --exit-non-zero-on-fix]
       # Run the formatter.
       - id: ruff-format
+      # Run import sorting
+      - id: ruff
+        args: [--fix, --select=I]
+        name: ruff (import sorting)
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.17.0
@@ -72,15 +76,67 @@ repos:
     rev: v4.0.0-alpha.8
     hooks:
       - id: prettier
-        types_or: [yaml, markdown, json]
+        files: \.(yaml|yml|md|json|css|scss|html|js|ts|jsx|tsx)$
         exclude: ^(\.github/|docs/_build/|coverage\.json|test-results\.xml)
 
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.9.1
     hooks:
       - id: nbqa-ruff
-        additional_dependencies: [ruff==0.8.4]
+        additional_dependencies: [ruff==0.12.3]
         args: ["--fix"]
+      - id: nbqa-black
+        additional_dependencies: [black]
+        args: ["--line-length=88"]
+      - id: nbqa-isort
+        additional_dependencies: [isort]
+        args: ["--profile=black"]
+
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: ["--line-length=88", "--skip-string-normalization"]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 6.0.1
+    hooks:
+      - id: isort
+        args: ["--profile=black", "--line-length=88"]
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        args:
+          [
+            "--in-place",
+            "--remove-all-unused-imports",
+            "--remove-unused-variables",
+            "--remove-duplicate-keys",
+            "--expand-star-imports",
+          ]
+
+  - repo: https://github.com/pre-commit/mirrors-yapf
+    rev: v0.32.0
+    hooks:
+      - id: yapf
+        args: ["--style=google"]
+
+  - repo: https://github.com/pre-commit/mirrors-pylint
+    rev: v3.0.0a5
+    hooks:
+      - id: pylint
+        args: ["--disable=C0114,C0115,C0116,R0903,R0913,W0621,W0703"]
+        exclude: ^(tests/|docs/|scripts/)
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.3.0
+    hooks:
+      - id: flake8
+        args: ["--max-line-length=88", "--extend-ignore=E203,W503"]
+        exclude: ^(tests/|docs/|scripts/)
 
   - repo: local
     hooks:
@@ -105,6 +161,27 @@ repos:
         pass_filenames: false
         stages: [manual]
 
+      - id: check-docstring-coverage
+        name: Check docstring coverage
+        entry: interrogate --fail-under=80
+        language: system
+        pass_filenames: false
+        stages: [manual]
+
+      - id: check-complexity
+        name: Check code complexity
+        entry: radon cc . -a -nc
+        language: system
+        pass_filenames: false
+        stages: [manual]
+
+      - id: check-maintainability
+        name: Check maintainability index
+        entry: radon mi . -nc
+        language: system
+        pass_filenames: false
+        stages: [manual]
+
 # Configuration for pre-commit ci
 ci:
   autofix_prs: true
@@ -114,5 +191,11 @@ ci:
     for more information, see https://pre-commit.ci
   autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
   autoupdate_schedule: weekly
-  skip: [run-tests, pip-audit] # Skip only manual hooks
+  skip: [
+      run-tests,
+      pip-audit,
+      check-docstring-coverage,
+      check-complexity,
+      check-maintainability,
+    ] # Skip only manual hooks
   submodules: false
