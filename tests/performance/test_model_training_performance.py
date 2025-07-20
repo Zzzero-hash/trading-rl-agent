@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import torch
 
-from trading_rl_agent.agents.advanced_policy_optimization import AdvancedPolicyOptimizer
+from trading_rl_agent.agents.advanced_policy_optimization import AdvancedPPO, AdvancedPPOConfig
 from trading_rl_agent.agents.configs import EnsembleConfig, PPOConfig, SACConfig
 from trading_rl_agent.agents.ensemble_trainer import EnsembleTrainer
 
@@ -166,10 +166,48 @@ class TestModelTrainingPerformance:
     @pytest.mark.ml
     def test_policy_optimization_performance(self, training_data, performance_monitor):
         """Test policy optimization performance."""
+
+        # Create simple policy and value networks for testing
+        class SimplePolicy(torch.nn.Module):
+            def __init__(self, input_dim=20, output_dim=3):
+                super().__init__()
+                self.fc1 = torch.nn.Linear(input_dim, 64)
+                self.fc2 = torch.nn.Linear(64, 64)
+                self.fc3 = torch.nn.Linear(64, output_dim)
+
+            def forward(self, x):
+                x = torch.relu(self.fc1(x))
+                x = torch.relu(self.fc2(x))
+                return torch.softmax(self.fc3(x), dim=-1)
+
+        class SimpleValue(torch.nn.Module):
+            def __init__(self, input_dim=20):
+                super().__init__()
+                self.fc1 = torch.nn.Linear(input_dim, 64)
+                self.fc2 = torch.nn.Linear(64, 64)
+                self.fc3 = torch.nn.Linear(64, 1)
+
+            def forward(self, x):
+                x = torch.relu(self.fc1(x))
+                x = torch.relu(self.fc2(x))
+                return self.fc3(x)
+
         # Initialize policy optimizer
-        optimizer = AdvancedPolicyOptimizer(
-            learning_rate=3e-4, batch_size=64, buffer_size=100000, gamma=0.99, tau=0.005, device="cpu"
+        policy_net = SimplePolicy()
+        value_net = SimpleValue()
+        config = AdvancedPPOConfig(
+            learning_rate=3e-4,
+            batch_size=64,
+            buffer_size=100000,
+            gamma=0.99,
+            gae_lambda=0.95,
+            clip_range=0.2,
+            normalize_advantage=True,
+            ent_coef=0.0,
+            vf_coef=0.5,
+            max_grad_norm=0.5,
         )
+        optimizer = AdvancedPPO(policy_net, value_net, config, device="cpu")
 
         # Prepare training data
         states = []
@@ -197,7 +235,31 @@ class TestModelTrainingPerformance:
 
         # Benchmark policy optimization
         def optimize_policy():
-            return optimizer.optimize_policy(states=states, actions=actions, rewards=rewards, epochs=10, batch_size=64)
+            # Convert data to tensors
+            states_tensor = torch.FloatTensor(states)
+            actions_tensor = torch.FloatTensor(actions)
+            rewards_tensor = torch.FloatTensor(rewards)
+
+            # Create synthetic episode data
+            dones = torch.zeros(len(rewards))
+            dones[-1] = 1  # Mark end of episode
+
+            # Create old log probs (synthetic)
+            old_log_probs = torch.randn(len(actions))
+
+            # Run a few optimization steps
+            total_loss = 0
+            for _ in range(10):  # 10 epochs
+                loss_info = optimizer.update(
+                    states=states_tensor,
+                    actions=actions_tensor,
+                    rewards=rewards_tensor,
+                    dones=dones,
+                    old_log_probs=old_log_probs,
+                )
+                total_loss += loss_info.get("total_loss", 0)
+
+            return {"total_loss": total_loss}
 
         # Measure performance
         start_time = time.time()
