@@ -61,7 +61,7 @@ jobs:
         path: |
           ~/.cache/pip
           ~/.local/share/virtualenvs
-        key: pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+        key: pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
 
     - name: Install dependencies
       run: |

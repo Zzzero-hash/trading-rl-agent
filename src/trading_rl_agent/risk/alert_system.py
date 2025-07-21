@@ -12,6 +12,7 @@ Integrates with the existing RiskManager and AlertManager for seamless operation
 """
 
 import asyncio
+import contextlib
 import json
 import time
 from dataclasses import dataclass, field
@@ -25,8 +26,9 @@ from typing import Any
 import pandas as pd
 from pydantic import BaseModel, Field
 
-from ..core.logging import get_logger
-from ..monitoring.alert_manager import Alert, AlertManager, AlertSeverity, AlertStatus
+from src.trading_rl_agent.core.logging import get_logger
+from src.trading_rl_agent.monitoring.alert_manager import Alert, AlertManager, AlertSeverity, AlertStatus
+
 from .manager import RiskManager, RiskMetrics
 
 
@@ -246,10 +248,8 @@ class RiskAlertSystem:
         self.is_monitoring = False
         if self.monitoring_task:
             self.monitoring_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.monitoring_task
-            except asyncio.CancelledError:
-                pass
 
         self.logger.info("Risk monitoring stopped")
 
@@ -341,11 +341,15 @@ class RiskAlertSystem:
             return abs(change_rate) > threshold.threshold_value
         return False
 
-    async def _trigger_alert(self, threshold: AlertThreshold, value: float, metrics: RiskMetrics) -> None:
+    async def _trigger_alert(self, threshold: AlertThreshold, value: float, _metrics: RiskMetrics) -> None:
         """Trigger an alert for a threshold violation."""
+        message = (
+            f"{threshold.metric_name} = {value:.4f} violates "
+            f"{threshold.threshold_type} threshold of {threshold.threshold_value}"
+        )
         alert = self.alert_manager.create_alert(
             title=f"Risk Threshold Violation: {threshold.metric_name}",
-            message=f"{threshold.metric_name} = {value:.4f} violates {threshold.threshold_type} threshold of {threshold.threshold_value}",
+            message=message,
             severity=threshold.severity,
             source="risk_alert_system",
             alert_type=f"risk_threshold_{threshold.metric_name}",
@@ -391,11 +395,11 @@ class RiskAlertSystem:
             return metrics.correlation_risk > rule.threshold_value
         return False
 
-    async def _trigger_circuit_breaker(self, rule: CircuitBreakerRule, metrics: RiskMetrics) -> None:
+    async def _trigger_circuit_breaker(self, rule: CircuitBreakerRule, _metrics: RiskMetrics) -> None:
         """Trigger a circuit breaker."""
         alert = self.alert_manager.create_alert(
             title=f"Circuit Breaker Triggered: {rule.name}",
-            message=f"Circuit breaker '{rule.name}' triggered. Action: {rule.action}",
+            message=f"Risk threshold exceeded: {rule.description}",
             severity=AlertSeverity.CRITICAL,
             source="risk_alert_system",
             alert_type="circuit_breaker",
@@ -464,8 +468,8 @@ class RiskAlertSystem:
             await self._send_email_notification(alert, priority=True)
         elif escalation_level == EscalationLevel.LEVEL_3:
             # SMS/Slack notification
-            await self._send_slack_notification(alert, priority=True)
-            await self._send_sms_notification(alert, priority=True)
+            await self._send_slack_notification(alert, _priority=True)
+            await self._send_sms_notification(alert, _priority=True)
         elif escalation_level == EscalationLevel.LEVEL_4:
             # Phone call (would require external service)
             self.logger.warning("Level 4 escalation requires external phone service")
@@ -524,9 +528,15 @@ Please review and take appropriate action.
             msg.attach(MIMEText(body, "plain"))
 
             # Send email (would need proper SMTP configuration)
-            # server = smtplib.SMTP(self.config.notifications.email_smtp_server, self.config.notifications.email_smtp_port)
+            # server = smtplib.SMTP(
+            #     self.config.notifications.email_smtp_server,
+            #     self.config.notifications.email_smtp_port
+            # )
             # server.starttls()
-            # server.login(self.config.notifications.email_username, self.config.notifications.email_password)
+            # server.login(
+            #     self.config.notifications.email_username,
+            #     self.config.notifications.email_password
+            # )
             # server.send_message(msg)
             # server.quit()
 
@@ -535,37 +545,50 @@ Please review and take appropriate action.
         except Exception as e:
             self.logger.exception(f"Failed to send email notification: {e}")
 
-    async def _send_slack_notification(self, alert: Alert, priority: bool = False) -> None:
+    async def _send_slack_notification(self, alert: Alert, _priority: bool = False) -> None:
         """Send Slack notification."""
         if not self.config.notifications.slack_webhook_url:
             return
 
         try:
-            color = {
-                AlertSeverity.INFO: "#36a64f",
-                AlertSeverity.WARNING: "#ff9900",
-                AlertSeverity.ERROR: "#ff0000",
-                AlertSeverity.CRITICAL: "#8b0000",
-            }.get(alert.severity, "#36a64f")
+            # Color mapping for Slack notifications (commented out for now)
+            # color = {
+            #     AlertSeverity.INFO: "#36a64f",
+            #     AlertSeverity.WARNING: "#ff9900",
+            #     AlertSeverity.ERROR: "#ff0000",
+            #     AlertSeverity.CRITICAL: "#8b0000",
+            # }.get(alert.severity, "#36a64f")
 
-            payload = {
-                "channel": self.config.notifications.slack_channel,
-                "attachments": [
-                    {
-                        "color": color,
-                        "title": alert.title,
-                        "text": alert.message,
-                        "fields": [
-                            {"title": "Severity", "value": alert.severity.value, "short": True},
-                            {"title": "Source", "value": alert.source, "short": True},
-                            {"title": "Portfolio", "value": self.portfolio_id, "short": True},
-                            {"title": "Circuit Breaker", "value": self.circuit_breaker_status.value, "short": True},
-                        ],
-                        "footer": "Risk Alert System",
-                        "ts": int(alert.timestamp),
-                    },
-                ],
-            }
+            # payload = {
+            #     "channel": self.config.notifications.slack_channel,
+            #     "attachments": [
+            #         {
+            #             "color": color,
+            #             "title": alert.title,
+            #             "text": alert.message,
+            #             "fields": [
+            #                 {
+            #                     "title": "Severity",
+            #                     "value": alert.severity.value,
+            #                     "short": True,
+            #                 },
+            #                 {"title": "Source", "value": alert.source, "short": True},
+            #                 {
+            #                     "title": "Portfolio",
+            #                     "value": self.portfolio_id,
+            #                     "short": True,
+            #                 },
+            #                 {
+            #                     "title": "Circuit Breaker",
+            #                     "value": self.circuit_breaker_status.value,
+            #                     "short": True,
+            #                 },
+            #             ],
+            #             "footer": "Risk Alert System",
+            #             "ts": int(alert.timestamp),
+            #         },
+            #     ],
+            # }
 
             # Send to Slack webhook
             # response = requests.post(self.config.notifications.slack_webhook_url, json=payload)
@@ -576,7 +599,7 @@ Please review and take appropriate action.
         except Exception as e:
             self.logger.exception(f"Failed to send Slack notification: {e}")
 
-    async def _send_sms_notification(self, alert: Alert, priority: bool = False) -> None:
+    async def _send_sms_notification(self, alert: Alert, _priority: bool = False) -> None:
         """Send SMS notification."""
         if not self.config.notifications.sms_recipients:
             return
@@ -591,23 +614,23 @@ Please review and take appropriate action.
         except Exception as e:
             self.logger.exception(f"Failed to send SMS notification: {e}")
 
-    async def _send_webhook_notification(self, alert: Alert, priority: bool = False) -> None:
+    async def _send_webhook_notification(self, alert: Alert, _priority: bool = False) -> None:
         """Send webhook notification."""
         if not self.config.notifications.webhook_url:
             return
 
         try:
-            payload = {
-                "alert_id": alert.id,
-                "title": alert.title,
-                "message": alert.message,
-                "severity": alert.severity.value,
-                "source": alert.source,
-                "timestamp": alert.timestamp,
-                "portfolio_id": self.portfolio_id,
-                "circuit_breaker_status": self.circuit_breaker_status.value,
-                "priority": priority,
-            }
+            # payload = {
+            #     "alert_id": alert.id,
+            #     "title": alert.title,
+            #     "message": alert.message,
+            #     "severity": alert.severity.value,
+            #     "source": alert.source,
+            #     "timestamp": alert.timestamp,
+            #     "portfolio_id": self.portfolio_id,
+            #     "circuit_breaker_status": self.circuit_breaker_status.value,
+            #     "priority": _priority,
+            # }
 
             # Send webhook
             # response = requests.post(
@@ -647,7 +670,11 @@ Please review and take appropriate action.
         # Log emergency shutdown
         self._log_audit_entry(
             "emergency_shutdown",
-            {"trigger_alert_id": alert.id, "timestamp": time.time(), "portfolio_id": self.portfolio_id},
+            {
+                "trigger_alert_id": alert.id,
+                "timestamp": time.time(),
+                "portfolio_id": self.portfolio_id,
+            },
         )
 
     def _log_audit_entry(self, event_type: str, data: dict[str, Any]) -> None:
@@ -691,7 +718,7 @@ Please review and take appropriate action.
         return {
             "portfolio_id": self.portfolio_id,
             "circuit_breaker_status": self.circuit_breaker_status.value,
-            "current_metrics": self._metrics_to_dict(current_metrics) if current_metrics else None,
+            "current_metrics": (self._metrics_to_dict(current_metrics) if current_metrics else None),
             "active_alerts": len([a for a in self.alert_history if a.status == AlertStatus.ACTIVE]),
             "total_alerts": len(self.alert_history),
             "escalation_level": self._get_current_escalation_level(),
@@ -762,7 +789,10 @@ Please review and take appropriate action.
 
         return {
             "portfolio_id": self.portfolio_id,
-            "report_period": {"start": start_time.isoformat(), "end": end_time.isoformat()},
+            "report_period": {
+                "start": start_time.isoformat(),
+                "end": end_time.isoformat(),
+            },
             "alert_statistics": alert_stats,
             "risk_statistics": risk_stats,
             "circuit_breaker_status": self.circuit_breaker_status.value,

@@ -125,7 +125,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
-    def test_train_command_success(self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console):
+    def test_train_command_success(self, mock_get_trainer, mock_get_settings, _mock_load_settings, mock_console):
         """Test train command with successful training."""
         # Mock settings
         mock_settings = Mock()
@@ -142,7 +142,14 @@ class TestCLITrain:
         mock_get_trainer.return_value = mock_trainer_func
 
         # Test the command
-        train(config_file=None, epochs=50, lr=0.0005, devices="cuda", checkpoint_out=self.temp_path, log_interval=5)
+        train(
+            config_file=None,
+            epochs=50,
+            lr=0.0005,
+            devices="cuda",
+            checkpoint_out=self.temp_path,
+            log_interval=5,
+        )
 
         # Verify calls
         mock_console.print.assert_called()
@@ -161,7 +168,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
-    def test_train_command_failure(self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console):
+    def test_train_command_failure(self, mock_get_trainer, mock_get_settings, _mock_load_settings, mock_console):
         """Test train command with failed training."""
         # Mock settings
         mock_settings = Mock()
@@ -179,7 +186,14 @@ class TestCLITrain:
 
         # Test the command
         with pytest.raises(typer.Exit):
-            train(config_file=None, epochs=50, lr=0.0005, devices="cuda", checkpoint_out=self.temp_path, log_interval=5)
+            train(
+                config_file=None,
+                epochs=50,
+                lr=0.0005,
+                devices="cuda",
+                checkpoint_out=self.temp_path,
+                log_interval=5,
+            )
 
         # Verify error message was printed
         mock_console.print.assert_called()
@@ -190,7 +204,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
-    def test_train_command_exception(self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console):
+    def test_train_command_exception(self, mock_get_trainer, mock_get_settings, _mock_load_settings, mock_console):
         """Test train command when trainer raises exception."""
         # Mock settings
         mock_settings = Mock()
@@ -208,7 +222,14 @@ class TestCLITrain:
 
         # Test the command
         with pytest.raises(typer.Exit):
-            train(config_file=None, epochs=50, lr=0.0005, devices="cuda", checkpoint_out=self.temp_path, log_interval=5)
+            train(
+                config_file=None,
+                epochs=50,
+                lr=0.0005,
+                devices="cuda",
+                checkpoint_out=self.temp_path,
+                log_interval=5,
+            )
 
         # Verify error was handled
         mock_console.print.assert_called()
@@ -218,7 +239,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
     def test_train_command_with_config_file(
-        self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console
+        self, mock_get_trainer, _mock_get_settings, mock_load_settings, _mock_console
     ):
         """Test train command with config file."""
         # Create config file
@@ -240,7 +261,14 @@ class TestCLITrain:
         mock_get_trainer.return_value = mock_trainer_func
 
         # Test the command
-        train(config_file=config_file, epochs=None, lr=None, devices=None, checkpoint_out=None, log_interval=10)
+        train(
+            config_file=config_file,
+            epochs=None,
+            lr=None,
+            devices=None,
+            checkpoint_out=None,
+            log_interval=10,
+        )
 
         # Verify config was loaded
         mock_load_settings.assert_called_once_with(config_path=config_file)
@@ -256,7 +284,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
-    def test_resume_command_success(self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console):
+    def test_resume_command_success(self, mock_get_trainer, mock_get_settings, _mock_load_settings, mock_console):
         """Test resume command with successful resume."""
         # Mock settings
         mock_settings = Mock()
@@ -291,7 +319,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.console")
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
-    def test_resume_command_no_checkpoint(self, mock_get_settings, mock_load_settings, mock_console):
+    def test_resume_command_no_checkpoint(self, mock_get_settings, mock_console):
         """Test resume command when no checkpoint exists."""
         # Mock settings
         mock_settings = Mock()
@@ -309,7 +337,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
-    def test_resume_command_failure(self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console):
+    def test_resume_command_failure(self, mock_get_trainer, mock_get_settings, mock_console):
         """Test resume command with failed resume."""
         # Mock settings
         mock_settings = Mock()
@@ -340,7 +368,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
-    def test_resume_command_exception(self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console):
+    def test_resume_command_exception(self, mock_get_trainer, mock_get_settings, mock_console):
         """Test resume command when trainer raises exception."""
         # Mock settings
         mock_settings = Mock()
@@ -373,9 +401,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
-    def test_train_command_with_none_values(
-        self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console
-    ):
+    def test_train_command_with_none_values(self, mock_get_trainer, mock_get_settings):
         """Test train command with None values (should use defaults)."""
         # Mock settings
         mock_settings = Mock()
@@ -392,7 +418,14 @@ class TestCLITrain:
         mock_get_trainer.return_value = mock_trainer_func
 
         # Test the command with None values
-        train(config_file=None, epochs=None, lr=None, devices=None, checkpoint_out=None, log_interval=10)
+        train(
+            config_file=None,
+            epochs=None,
+            lr=None,
+            devices=None,
+            checkpoint_out=None,
+            log_interval=10,
+        )
 
         # Verify trainer was called with default values
         call_args = mock_trainer_func.call_args[1]
@@ -405,9 +438,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
-    def test_train_command_with_zero_values(
-        self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console
-    ):
+    def test_train_command_with_zero_values(self, mock_get_trainer, mock_get_settings):
         """Test train command with zero values."""
         # Mock settings
         mock_settings = Mock()
@@ -424,7 +455,14 @@ class TestCLITrain:
         mock_get_trainer.return_value = mock_trainer_func
 
         # Test the command with zero values
-        train(config_file=None, epochs=0, lr=0.0, devices="cpu", checkpoint_out=self.temp_path, log_interval=0)
+        train(
+            config_file=None,
+            epochs=0,
+            lr=0.0,
+            devices="cpu",
+            checkpoint_out=self.temp_path,
+            log_interval=0,
+        )
 
         # Verify trainer was called with zero values
         call_args = mock_trainer_func.call_args[1]
@@ -436,9 +474,7 @@ class TestCLITrain:
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
     @patch("trading_rl_agent.cli_train.get_trainer")
-    def test_train_command_with_negative_values(
-        self, mock_get_trainer, mock_get_settings, mock_load_settings, mock_console
-    ):
+    def test_train_command_with_negative_values(self, mock_get_trainer, mock_get_settings):
         """Test train command with negative values."""
         # Mock settings
         mock_settings = Mock()
@@ -455,7 +491,14 @@ class TestCLITrain:
         mock_get_trainer.return_value = mock_trainer_func
 
         # Test the command with negative values
-        train(config_file=None, epochs=-10, lr=-0.001, devices="cpu", checkpoint_out=self.temp_path, log_interval=-5)
+        train(
+            config_file=None,
+            epochs=-10,
+            lr=-0.001,
+            devices="cpu",
+            checkpoint_out=self.temp_path,
+            log_interval=-5,
+        )
 
         # Verify trainer was called with negative values
         call_args = mock_trainer_func.call_args[1]
@@ -468,7 +511,7 @@ class TestCLITrain:
     # ============================================================================
 
     @patch("trading_rl_agent.cli_train.console")
-    def test_train_command_invalid_config_file(self, mock_console):
+    def test_train_command_invalid_config_file(self):
         """Test train command with invalid config file."""
         with pytest.raises(typer.Exit):
             train(
@@ -481,15 +524,19 @@ class TestCLITrain:
             )
 
     @patch("trading_rl_agent.cli_train.console")
-    def test_resume_command_invalid_config_file(self, mock_console):
+    def test_resume_command_invalid_config_file(self):
         """Test resume command with invalid config file."""
         with pytest.raises(typer.Exit):
-            resume(config_file=Path("/nonexistent/config.yaml"), devices="cuda", log_interval=5)
+            resume(
+                config_file=Path("/nonexistent/config.yaml"),
+                devices="cuda",
+                log_interval=5,
+            )
 
     @patch("trading_rl_agent.cli_train.console")
     @patch("trading_rl_agent.cli_train.load_settings")
     @patch("trading_rl_agent.cli_train.get_settings")
-    def test_resume_command_invalid_checkpoint_dir(self, mock_get_settings, mock_load_settings, mock_console):
+    def test_resume_command_invalid_checkpoint_dir(self, mock_get_settings):
         """Test resume command with invalid checkpoint directory."""
         # Mock settings with non-existent checkpoint dir
         mock_settings = Mock()

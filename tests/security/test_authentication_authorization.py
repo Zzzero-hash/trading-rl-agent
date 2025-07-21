@@ -24,7 +24,7 @@ class TestAuthenticationSecurity:
         auth_manager.token_expiry = 3600  # 1 hour
         return auth_manager
 
-    def test_password_hashing_security(self, mock_auth_manager):
+    def test_password_hashing_security(self, _mock_auth_manager):
         """Test password hashing security."""
         passwords = [
             "simple_password",
@@ -50,30 +50,54 @@ class TestAuthenticationSecurity:
     def test_jwt_token_security(self, mock_auth_manager):
         """Test JWT token security."""
         # Test valid JWT creation
-        payload = {"user_id": "test_user", "role": "trader", "exp": datetime.utcnow() + timedelta(hours=1)}
+        payload = {
+            "user_id": "test_user",
+            "role": "trader",
+            "exp": datetime.utcnow() + timedelta(hours=1),
+        }
 
         token = jwt.encode(payload, mock_auth_manager.secret_key, algorithm=mock_auth_manager.algorithm)
         assert isinstance(token, str)
         assert len(token) > 0
 
         # Test JWT decoding
-        decoded = jwt.decode(token, mock_auth_manager.secret_key, algorithms=[mock_auth_manager.algorithm])
+        decoded = jwt.decode(
+            token,
+            mock_auth_manager.secret_key,
+            algorithms=[mock_auth_manager.algorithm],
+        )
         assert decoded["user_id"] == "test_user"
         assert decoded["role"] == "trader"
 
         # Test expired token
-        expired_payload = {"user_id": "test_user", "role": "trader", "exp": datetime.utcnow() - timedelta(hours=1)}
-        expired_token = jwt.encode(expired_payload, mock_auth_manager.secret_key, algorithm=mock_auth_manager.algorithm)
+        expired_payload = {
+            "user_id": "test_user",
+            "role": "trader",
+            "exp": datetime.utcnow() - timedelta(hours=1),
+        }
+        expired_token = jwt.encode(
+            expired_payload,
+            mock_auth_manager.secret_key,
+            algorithm=mock_auth_manager.algorithm,
+        )
 
         with pytest.raises(jwt.ExpiredSignatureError):
-            jwt.decode(expired_token, mock_auth_manager.secret_key, algorithms=[mock_auth_manager.algorithm])
+            jwt.decode(
+                expired_token,
+                mock_auth_manager.secret_key,
+                algorithms=[mock_auth_manager.algorithm],
+            )
 
         # Test invalid signature
         invalid_token = jwt.encode(payload, "wrong_secret", algorithm=mock_auth_manager.algorithm)
         with pytest.raises(jwt.InvalidSignatureError):
-            jwt.decode(invalid_token, mock_auth_manager.secret_key, algorithms=[mock_auth_manager.algorithm])
+            jwt.decode(
+                invalid_token,
+                mock_auth_manager.secret_key,
+                algorithms=[mock_auth_manager.algorithm],
+            )
 
-    def test_api_key_validation(self, mock_auth_manager):
+    def test_api_key_validation(self, _mock_auth_manager):
         """Test API key validation."""
         # Test valid API key format
         valid_api_keys = [
@@ -130,7 +154,7 @@ class TestAuthenticationSecurity:
                 if not all(c.isalnum() or c == "_" for c in api_key):
                     raise ValueError(f"Invalid API key characters: {api_key}")
 
-    def test_rate_limiting(self, mock_auth_manager):
+    def test_rate_limiting(self, _mock_auth_manager):
         """Test rate limiting functionality."""
         # Simulate rate limiting
         requests_per_minute = 60
@@ -151,7 +175,7 @@ class TestAuthenticationSecurity:
         # Verify rate limiting works
         assert len(requests) <= requests_per_minute
 
-    def test_session_management(self, mock_auth_manager):
+    def test_session_management(self, _mock_auth_manager):
         """Test session management security."""
         # Test session creation
         session_id = hashlib.sha256(f"user123_{time.time()}".encode()).hexdigest()
@@ -185,7 +209,7 @@ class TestAuthenticationSecurity:
             if original_ip != new_ip:
                 raise ValueError("IP address mismatch - possible session hijacking")
 
-    def test_multi_factor_authentication(self, mock_auth_manager):
+    def test_multi_factor_authentication(self, _mock_auth_manager):
         """Test multi-factor authentication."""
         import pyotp
 
@@ -210,7 +234,7 @@ class TestAuthenticationSecurity:
         new_code = totp.now()
         assert new_code != current_code
 
-    def test_password_policy_enforcement(self, mock_auth_manager):
+    def test_password_policy_enforcement(self, _mock_auth_manager):
         """Test password policy enforcement."""
         # Test valid passwords
         valid_passwords = [
@@ -262,7 +286,7 @@ class TestAuthenticationSecurity:
                 if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
                     raise ValueError("Password missing special character")
 
-    def test_brute_force_protection(self, mock_auth_manager):
+    def test_brute_force_protection(self, _mock_auth_manager):
         """Test brute force attack protection."""
         # Simulate failed login attempts
         failed_attempts = {}
@@ -307,7 +331,7 @@ class TestAuthenticationSecurity:
         with pytest.raises(ValueError):
             attempt_login("user2", "correct_password")
 
-    def test_secure_headers(self, mock_auth_manager):
+    def test_secure_headers(self, _mock_auth_manager):
         """Test secure HTTP headers."""
         # Test required security headers
         required_headers = {
@@ -351,7 +375,7 @@ class TestAuthenticationSecurity:
         assert not validate_csrf_token("", csrf_token)
         assert not validate_csrf_token(csrf_token, "")
 
-    def test_oauth_integration_security(self, mock_auth_manager):
+    def test_oauth_integration_security(self, _mock_auth_manager):
         """Test OAuth integration security."""
         # Test OAuth state parameter
         oauth_state = hashlib.sha256(f"oauth_state_{time.time()}".encode()).hexdigest()
@@ -371,16 +395,31 @@ class TestAuthenticationSecurity:
         assert not validate_oauth_callback("wrong_state", oauth_code, oauth_state)
         assert not validate_oauth_callback(oauth_state, "short", oauth_state)
 
-    def test_audit_logging(self, mock_auth_manager):
+    def test_audit_logging(self, _mock_auth_manager):
         """Test audit logging for authentication events."""
 
         # Test authentication event logging
         auth_events = [
-            {"event": "login", "user_id": "user123", "ip": "192.168.1.1", "success": True},
-            {"event": "login", "user_id": "user123", "ip": "192.168.1.1", "success": False},
+            {
+                "event": "login",
+                "user_id": "user123",
+                "ip": "192.168.1.1",
+                "success": True,
+            },
+            {
+                "event": "login",
+                "user_id": "user123",
+                "ip": "192.168.1.1",
+                "success": False,
+            },
             {"event": "logout", "user_id": "user123", "ip": "192.168.1.1"},
             {"event": "password_change", "user_id": "user123", "ip": "192.168.1.1"},
-            {"event": "failed_login", "user_id": "user123", "ip": "192.168.1.1", "reason": "wrong_password"},
+            {
+                "event": "failed_login",
+                "user_id": "user123",
+                "ip": "192.168.1.1",
+                "reason": "wrong_password",
+            },
         ]
 
         for event in auth_events:
@@ -390,7 +429,13 @@ class TestAuthenticationSecurity:
             assert "ip" in event
 
             # Verify event type is valid
-            valid_events = ["login", "logout", "password_change", "failed_login", "account_lockout"]
+            valid_events = [
+                "login",
+                "logout",
+                "password_change",
+                "failed_login",
+                "account_lockout",
+            ]
             assert event["event"] in valid_events
 
             # Verify IP address format
@@ -398,7 +443,7 @@ class TestAuthenticationSecurity:
             assert len(ip_parts) == 4
             assert all(0 <= int(part) <= 255 for part in ip_parts)
 
-    def test_privilege_escalation_prevention(self, mock_auth_manager):
+    def test_privilege_escalation_prevention(self, _mock_auth_manager):
         """Test privilege escalation prevention."""
         # Test role-based access control
         user_roles = {
@@ -411,7 +456,14 @@ class TestAuthenticationSecurity:
         role_permissions = {
             "viewer": ["read_data", "view_reports"],
             "trader": ["read_data", "view_reports", "place_trades", "modify_positions"],
-            "admin": ["read_data", "view_reports", "place_trades", "modify_positions", "manage_users", "system_config"],
+            "admin": [
+                "read_data",
+                "view_reports",
+                "place_trades",
+                "modify_positions",
+                "manage_users",
+                "system_config",
+            ],
         }
 
         # Test permission checking
@@ -433,16 +485,16 @@ class TestAuthenticationSecurity:
         assert not check_permission("viewer789", "place_trades")
         assert not check_permission("nonexistent", "read_data")
 
-    def test_session_fixation_prevention(self, mock_auth_manager):
+    def test_session_fixation_prevention(self, _mock_auth_manager):
         """Test session fixation prevention."""
 
         # Test session regeneration after login
         def create_session(user_id: str) -> str:
             return hashlib.sha256(f"session_{user_id}_{time.time()}".encode()).hexdigest()
 
-        def regenerate_session(old_session: str, user_id: str) -> str:
+        def regenerate_session(_old_session: str, user_id: str) -> str:
             # Invalidate old session
-            old_session = None
+            pass
             # Create new session
             return create_session(user_id)
 
@@ -453,7 +505,7 @@ class TestAuthenticationSecurity:
         assert old_session != new_session
         assert len(new_session) == 64
 
-    def test_secure_password_reset(self, mock_auth_manager):
+    def test_secure_password_reset(self, _mock_auth_manager):
         """Test secure password reset functionality."""
 
         # Test password reset token generation
@@ -474,7 +526,7 @@ class TestAuthenticationSecurity:
         assert not validate_reset_token("short_token", "user123")
         assert not validate_reset_token(reset_token, "")
 
-    def test_secure_logout(self, mock_auth_manager):
+    def test_secure_logout(self, _mock_auth_manager):
         """Test secure logout functionality."""
         # Test session invalidation
         active_sessions = {
@@ -499,7 +551,7 @@ class TestAuthenticationSecurity:
         # Test logout of already logged out session
         assert not logout_user("session1")
 
-    def test_secure_cookie_settings(self, mock_auth_manager):
+    def test_secure_cookie_settings(self, _mock_auth_manager):
         """Test secure cookie settings."""
         # Test secure cookie configuration
         secure_cookie_settings = {

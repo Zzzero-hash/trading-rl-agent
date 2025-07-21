@@ -83,7 +83,11 @@ class TestYAMLConfigLoading:
         config_data = {
             "environment": "production",
             "debug": True,
-            "data": {"primary_source": "alpaca", "symbols": ["AAPL", "GOOGL"], "feature_window": 30},
+            "data": {
+                "primary_source": "alpaca",
+                "symbols": ["AAPL", "GOOGL"],
+                "feature_window": 30,
+            },
             "model": {"type": "rl", "batch_size": 64, "learning_rate": 0.0001},
             "agent": {"agent_type": "ppo", "ensemble_size": 3},
         }
@@ -184,7 +188,11 @@ TRADING_RL_AGENT_NEWSAPI_KEY=news_key
 
     def test_env_file_overrides_yaml(self):
         """Test that environment variables override YAML config."""
-        config_data = {"environment": "development", "debug": False, "alpaca_api_key": "yaml_key"}
+        config_data = {
+            "environment": "development",
+            "debug": False,
+            "alpaca_api_key": "yaml_key",
+        }
 
         env_content = """
 TRADING_RL_AGENT_ENVIRONMENT=production
@@ -238,7 +246,13 @@ class TestEnvironmentVariableOverrides:
 
     def test_environment_variable_case_insensitive(self):
         """Test that environment variables are case insensitive."""
-        with patch.dict(os.environ, {"trading_rl_agent_environment": "production", "TRADING_RL_AGENT_DEBUG": "true"}):
+        with patch.dict(
+            os.environ,
+            {
+                "trading_rl_agent_environment": "production",
+                "TRADING_RL_AGENT_DEBUG": "true",
+            },
+        ):
             settings = load_settings()
 
             assert settings.environment == "production"
@@ -297,7 +311,9 @@ class TestAPIKeyHandling:
     def test_get_api_credentials_alpaca(self):
         """Test getting Alpaca API credentials."""
         settings = Settings(
-            alpaca_api_key="test_key", alpaca_secret_key="test_secret", alpaca_base_url="https://test.alpaca.markets"
+            alpaca_api_key="test_key",
+            alpaca_secret_key="test_secret",
+            alpaca_base_url="https://test.alpaca.markets",
         )
 
         credentials = settings.get_api_credentials("alpaca")

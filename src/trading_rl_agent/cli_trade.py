@@ -18,11 +18,12 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from config import get_settings, load_settings
+
 from .core.logging import get_logger, setup_logging
 
 # Add root directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_settings, load_settings
 
 # Initialize console for rich output
 console = Console()
@@ -88,24 +89,15 @@ def main(
 
     if config_file is not None:
         # Check if it's an OptionInfo object and extract the value
-        if hasattr(config_file, "default"):
-            resolved_config_file = None  # OptionInfo with None default
-        else:
-            resolved_config_file = config_file
+        resolved_config_file = None if hasattr(config_file, "default") else config_file
 
     if verbose is not None:
         # Check if it's an OptionInfo object and extract the value
-        if hasattr(verbose, "default"):
-            resolved_verbose = verbose.default  # OptionInfo with default value
-        else:
-            resolved_verbose = verbose
+        resolved_verbose = verbose.default if hasattr(verbose, "default") else verbose
 
     if env_file is not None:
         # Check if it's an OptionInfo object and extract the value
-        if hasattr(env_file, "default"):
-            resolved_env_file = None  # OptionInfo with None default
-        else:
-            resolved_env_file = env_file
+        resolved_env_file = None if hasattr(env_file, "default") else env_file
 
     global verbose_count, _settings
 
@@ -114,7 +106,7 @@ def main(
 
     # Setup logging
     log_level = get_log_level()
-    setup_logging(log_level=log_level)
+    setup_logging(_log_level=log_level)
 
     # Load environment file if provided
     if resolved_env_file:
@@ -200,7 +192,7 @@ def start(
     exchange: str | None = DEFAULT_EXCHANGE,
     symbol: str | None = DEFAULT_SYMBOL,
     symbols: str | None = DEFAULT_SYMBOLS,
-    size: float | None = DEFAULT_SIZE,
+    _size: float | None = DEFAULT_SIZE,
     strategy: str | None = DEFAULT_STRATEGY,
     model_path: Path | None = DEFAULT_MODEL_PATH,
     cnn_lstm_path: Path | None = DEFAULT_CNN_LSTM_PATH,
@@ -209,7 +201,7 @@ def start(
     take_profit: float | None = DEFAULT_TAKE_PROFIT,
     initial_capital: float | None = DEFAULT_INITIAL_CAPITAL,
     update_interval: int | None = DEFAULT_UPDATE_INTERVAL,
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
 ) -> None:
     """
     Start a live trading session.
@@ -347,7 +339,7 @@ def stop(
 
 @app.command()
 def status(
-    session_id: str | None = DEFAULT_SESSION_ID,
+    _session_id: str | None = DEFAULT_SESSION_ID,
     detailed: bool = DEFAULT_DETAILED,
 ) -> None:
     """
@@ -398,8 +390,8 @@ def status(
 
 @app.command()
 async def monitor(
-    session_id: str | None = DEFAULT_SESSION_ID,
-    metrics: str = DEFAULT_METRICS,
+    _session_id: str | None = DEFAULT_SESSION_ID,
+    _metrics: str = DEFAULT_METRICS,
     interval: int = DEFAULT_MONITOR_INTERVAL,
 ) -> None:
     """
@@ -466,7 +458,6 @@ def list_sessions() -> None:
 
         pnl = session.portfolio_value - session.config.initial_capital
         pnl_str = f"${pnl:+,.2f}"
-        pnl_color = "green" if pnl >= 0 else "red"
 
         table.add_row(session_id, symbols, initial_capital, current_value, pnl_str)
 

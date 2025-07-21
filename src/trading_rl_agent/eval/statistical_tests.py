@@ -347,8 +347,16 @@ class StatisticalTests:
         if len(residuals) == 0:
             return {
                 "normality": {"statistic": 0.0, "p_value": 1.0, "is_normal": False},
-                "autocorrelation": {"statistic": 0.0, "p_value": 1.0, "has_autocorrelation": False},
-                "heteroscedasticity": {"statistic": 0.0, "p_value": 1.0, "is_heteroscedastic": False},
+                "autocorrelation": {
+                    "statistic": 0.0,
+                    "p_value": 1.0,
+                    "has_autocorrelation": False,
+                },
+                "heteroscedasticity": {
+                    "statistic": 0.0,
+                    "p_value": 1.0,
+                    "is_heteroscedastic": False,
+                },
             }
 
         results = {}

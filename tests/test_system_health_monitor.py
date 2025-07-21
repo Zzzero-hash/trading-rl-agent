@@ -71,7 +71,12 @@ class TestSystemHealthMonitor:
         mock_cpu.return_value = 25.5
         mock_memory.return_value = Mock(percent=60.0, available=1024**3, total=2 * 1024**3)
         mock_disk.return_value = Mock(percent=45.0, free=500 * 1024**3, total=1000 * 1024**3)
-        mock_net.return_value = Mock(bytes_sent=1024**2, bytes_recv=2 * 1024**2, packets_sent=100, packets_recv=200)
+        mock_net.return_value = Mock(
+            bytes_sent=1024**2,
+            bytes_recv=2 * 1024**2,
+            packets_sent=100,
+            packets_recv=200,
+        )
         mock_load.return_value = (1.5, 1.2, 1.0)
         mock_pids.return_value = [1, 2, 3, 4, 5]
 
@@ -236,41 +241,43 @@ class TestSystemHealthMonitor:
 
     def test_run_health_checks(self):
         """Test running all health checks."""
-        with patch.object(self.health_monitor, "_check_system_resources") as mock_system:
-            with patch.object(self.health_monitor, "_check_trading_performance") as mock_trading:
-                with patch.object(self.health_monitor, "_check_network_connectivity") as mock_network:
-                    with patch.object(self.health_monitor, "_check_model_performance") as mock_model:
-                        # Mock health check results
-                        mock_system.return_value = HealthCheckResult(
-                            check_type=HealthCheckType.SYSTEM_RESOURCES,
-                            status=HealthStatus.HEALTHY,
-                            message="System healthy",
-                            timestamp=time.time(),
-                        )
-                        mock_trading.return_value = HealthCheckResult(
-                            check_type=HealthCheckType.TRADING_PERFORMANCE,
-                            status=HealthStatus.HEALTHY,
-                            message="Trading healthy",
-                            timestamp=time.time(),
-                        )
-                        mock_network.return_value = HealthCheckResult(
-                            check_type=HealthCheckType.NETWORK_CONNECTIVITY,
-                            status=HealthStatus.HEALTHY,
-                            message="Network healthy",
-                            timestamp=time.time(),
-                        )
-                        mock_model.return_value = HealthCheckResult(
-                            check_type=HealthCheckType.MODEL_PERFORMANCE,
-                            status=HealthStatus.HEALTHY,
-                            message="Model healthy",
-                            timestamp=time.time(),
-                        )
+        with (
+            patch.object(self.health_monitor, "_check_system_resources") as mock_system,
+            patch.object(self.health_monitor, "_check_trading_performance") as mock_trading,
+            patch.object(self.health_monitor, "_check_network_connectivity") as mock_network,
+            patch.object(self.health_monitor, "_check_model_performance") as mock_model,
+        ):
+            # Mock health check results
+            mock_system.return_value = HealthCheckResult(
+                check_type=HealthCheckType.SYSTEM_RESOURCES,
+                status=HealthStatus.HEALTHY,
+                message="System healthy",
+                timestamp=time.time(),
+            )
+            mock_trading.return_value = HealthCheckResult(
+                check_type=HealthCheckType.TRADING_PERFORMANCE,
+                status=HealthStatus.HEALTHY,
+                message="Trading healthy",
+                timestamp=time.time(),
+            )
+            mock_network.return_value = HealthCheckResult(
+                check_type=HealthCheckType.NETWORK_CONNECTIVITY,
+                status=HealthStatus.HEALTHY,
+                message="Network healthy",
+                timestamp=time.time(),
+            )
+            mock_model.return_value = HealthCheckResult(
+                check_type=HealthCheckType.MODEL_PERFORMANCE,
+                status=HealthStatus.HEALTHY,
+                message="Model healthy",
+                timestamp=time.time(),
+            )
 
-                        results = self.health_monitor.run_health_checks()
+            results = self.health_monitor.run_health_checks()
 
-                        assert len(results) == 4
-                        assert all(isinstance(r, HealthCheckResult) for r in results)
-                        assert len(self.health_monitor.health_history) == 4
+            assert len(results) == 4
+            assert all(isinstance(r, HealthCheckResult) for r in results)
+            assert len(self.health_monitor.health_history) == 4
 
     def test_add_custom_health_check(self):
         """Test adding custom health checks."""

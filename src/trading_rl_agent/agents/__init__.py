@@ -12,7 +12,11 @@ from .advanced_policy_optimization import (
     PolicyOptimizationComparison,
 )
 from .advanced_trainer import AdvancedTrainer, MultiObjectiveTrainer
-from .benchmark_framework import BenchmarkConfig, BenchmarkFramework, run_quick_benchmark
+from .benchmark_framework import (
+    BenchmarkConfig,
+    BenchmarkFramework,
+    run_quick_benchmark,
+)
 from .configs import (
     AdvancedPPOConfig,
     EnsembleConfig,

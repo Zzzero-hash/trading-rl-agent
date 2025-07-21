@@ -25,7 +25,11 @@ from src.trading_rl_agent.portfolio.attribution import (
     FactorModel,
     PerformanceAttributor,
 )
-from src.trading_rl_agent.portfolio.manager import PortfolioConfig, PortfolioManager, Position
+from src.trading_rl_agent.portfolio.manager import (
+    PortfolioConfig,
+    PortfolioManager,
+    Position,
+)
 from src.trading_rl_agent.portfolio.transaction_costs import (
     BrokerType,
     MarketCondition,
@@ -60,7 +64,12 @@ class TestPortfolioManager:
     def test_position_creation(self):
         """Test position creation and properties."""
         position = Position(
-            symbol="AAPL", quantity=100, entry_price=150.0, current_price=155.0, timestamp=datetime.now(), side="long"
+            symbol="AAPL",
+            quantity=100,
+            entry_price=150.0,
+            current_price=155.0,
+            timestamp=datetime.now(),
+            side="long",
         )
 
         assert position.symbol == "AAPL"
@@ -72,7 +81,12 @@ class TestPortfolioManager:
     def test_short_position(self):
         """Test short position calculations."""
         position = Position(
-            symbol="TSLA", quantity=50, entry_price=200.0, current_price=180.0, timestamp=datetime.now(), side="short"
+            symbol="TSLA",
+            quantity=50,
+            entry_price=200.0,
+            current_price=180.0,
+            timestamp=datetime.now(),
+            side="short",
         )
 
         assert position.market_value == 9000.0
@@ -83,11 +97,19 @@ class TestPortfolioManager:
         """Test portfolio weights calculation."""
         # Add some positions
         self.portfolio_manager.positions["AAPL"] = Position(
-            symbol="AAPL", quantity=100, entry_price=150.0, current_price=155.0, timestamp=datetime.now()
+            symbol="AAPL",
+            quantity=100,
+            entry_price=150.0,
+            current_price=155.0,
+            timestamp=datetime.now(),
         )
 
         self.portfolio_manager.positions["GOOGL"] = Position(
-            symbol="GOOGL", quantity=50, entry_price=2800.0, current_price=2850.0, timestamp=datetime.now()
+            symbol="GOOGL",
+            quantity=50,
+            entry_price=2800.0,
+            current_price=2850.0,
+            timestamp=datetime.now(),
         )
 
         weights = self.portfolio_manager.weights
@@ -115,7 +137,11 @@ class TestPortfolioManager:
         """Test price update functionality."""
         # Add a position
         self.portfolio_manager.positions["AAPL"] = Position(
-            symbol="AAPL", quantity=100, entry_price=150.0, current_price=150.0, timestamp=datetime.now()
+            symbol="AAPL",
+            quantity=100,
+            entry_price=150.0,
+            current_price=150.0,
+            timestamp=datetime.now(),
         )
 
         initial_value = self.portfolio_manager.total_value
@@ -132,7 +158,8 @@ class TestPortfolioManager:
         """Test trade execution."""
         # Mock the partial fill model to ensure full fills
         with patch.object(
-            self.portfolio_manager.transaction_cost_model.partial_fill_model, "simulate_fill"
+            self.portfolio_manager.transaction_cost_model.partial_fill_model,
+            "simulate_fill",
         ) as mock_fill:
             mock_fill.return_value = (50, [(50, 150.0, datetime.now())])  # Full fill
 
@@ -196,7 +223,7 @@ class TestPortfolioManager:
         assert "win_rate" in summary
         # Sharpe ratio may not be available if empyrical is not available
         if "sharpe_ratio" in summary:
-            assert isinstance(summary["sharpe_ratio"], (int, float))
+            assert isinstance(summary["sharpe_ratio"], int | float)
 
     def test_transaction_cost_analysis(self):
         """Test transaction cost analysis."""
@@ -231,7 +258,11 @@ class TestPortfolioOptimization:
             # Generate correlated price series
             base_prices = 100 + np.cumsum(np.random.normal(0.001, 0.02, 252))
             prices = pd.DataFrame(
-                {"close": base_prices, "volume": np.random.randint(1000000, 10000000, 252)}, index=dates
+                {
+                    "close": base_prices,
+                    "volume": np.random.randint(1000000, 10000000, 252),
+                },
+                index=dates,
             )
             price_data[symbol] = prices
 
@@ -573,14 +604,19 @@ class TestPerformanceAttribution:
 
         # Portfolio and benchmark weights
         portfolio_weights = pd.DataFrame(
-            {"AAPL": [0.4] * 252, "GOOGL": [0.35] * 252, "MSFT": [0.25] * 252}, index=dates
+            {"AAPL": [0.4] * 252, "GOOGL": [0.35] * 252, "MSFT": [0.25] * 252},
+            index=dates,
         )
 
-        benchmark_weights = pd.DataFrame({"AAPL": [0.3] * 252, "GOOGL": [0.4] * 252, "MSFT": [0.3] * 252}, index=dates)
+        benchmark_weights = pd.DataFrame(
+            {"AAPL": [0.3] * 252, "GOOGL": [0.4] * 252, "MSFT": [0.3] * 252},
+            index=dates,
+        )
 
         # Sector data
         sector_data = pd.DataFrame(
-            {"sector": ["Technology", "Technology", "Technology"]}, index=["AAPL", "GOOGL", "MSFT"]
+            {"sector": ["Technology", "Technology", "Technology"]},
+            index=["AAPL", "GOOGL", "MSFT"],
         )
 
         # Perform comprehensive analysis
@@ -620,10 +656,14 @@ class TestPerformanceAttribution:
 
         # Portfolio and benchmark weights
         portfolio_weights = pd.DataFrame(
-            {"AAPL": [0.4] * 252, "GOOGL": [0.35] * 252, "MSFT": [0.25] * 252}, index=dates
+            {"AAPL": [0.4] * 252, "GOOGL": [0.35] * 252, "MSFT": [0.25] * 252},
+            index=dates,
         )
 
-        benchmark_weights = pd.DataFrame({"AAPL": [0.3] * 252, "GOOGL": [0.4] * 252, "MSFT": [0.3] * 252}, index=dates)
+        benchmark_weights = pd.DataFrame(
+            {"AAPL": [0.3] * 252, "GOOGL": [0.4] * 252, "MSFT": [0.3] * 252},
+            index=dates,
+        )
 
         # Run analysis first
         self.attributor.analyze_performance(
@@ -660,10 +700,14 @@ class TestPerformanceAttribution:
 
         # Portfolio and benchmark weights
         portfolio_weights = pd.DataFrame(
-            {"AAPL": [0.4] * 252, "GOOGL": [0.35] * 252, "MSFT": [0.25] * 252}, index=dates
+            {"AAPL": [0.4] * 252, "GOOGL": [0.35] * 252, "MSFT": [0.25] * 252},
+            index=dates,
         )
 
-        benchmark_weights = pd.DataFrame({"AAPL": [0.3] * 252, "GOOGL": [0.4] * 252, "MSFT": [0.3] * 252}, index=dates)
+        benchmark_weights = pd.DataFrame(
+            {"AAPL": [0.3] * 252, "GOOGL": [0.4] * 252, "MSFT": [0.3] * 252},
+            index=dates,
+        )
 
         # Run analysis first
         self.attributor.analyze_performance(
@@ -686,7 +730,11 @@ class TestPortfolioRebalancing:
 
     def setup_method(self):
         """Setup test fixtures."""
-        self.config = PortfolioConfig(rebalance_frequency="monthly", rebalance_threshold=0.05, max_position_size=0.2)
+        self.config = PortfolioConfig(
+            rebalance_frequency="monthly",
+            rebalance_threshold=0.05,
+            max_position_size=0.2,
+        )
 
         self.portfolio_manager = PortfolioManager(initial_capital=100000, config=self.config)
 
@@ -694,11 +742,19 @@ class TestPortfolioRebalancing:
         """Test detection of rebalancing needs."""
         # Set up portfolio with drift
         self.portfolio_manager.positions["AAPL"] = Position(
-            symbol="AAPL", quantity=100, entry_price=150.0, current_price=150.0, timestamp=datetime.now()
+            symbol="AAPL",
+            quantity=100,
+            entry_price=150.0,
+            current_price=150.0,
+            timestamp=datetime.now(),
         )
 
         self.portfolio_manager.positions["GOOGL"] = Position(
-            symbol="GOOGL", quantity=50, entry_price=2800.0, current_price=2800.0, timestamp=datetime.now()
+            symbol="GOOGL",
+            quantity=50,
+            entry_price=2800.0,
+            current_price=2800.0,
+            timestamp=datetime.now(),
         )
 
         # Update prices to create drift
@@ -783,14 +839,14 @@ class TestPortfolioIntegration:
 
         # 4. Risk analysis
         weights = self.portfolio_manager.weights
-        portfolio_value = self.portfolio_manager.total_value
+        total_value = self.portfolio_manager.total_value
 
         # 5. Transaction cost analysis
         cost_analysis = self.portfolio_manager.get_transaction_cost_analysis()
 
         # Validate results
         assert len(self.portfolio_manager.positions) == 3
-        assert self.portfolio_manager.total_value > 1000000
+        assert total_value > 1000000
         assert isinstance(performance, dict)
         assert isinstance(weights, dict)
         assert isinstance(cost_analysis, dict)
@@ -821,7 +877,13 @@ class TestPortfolioIntegration:
                 target_value = target_weight * self.portfolio_manager.total_value
                 current_value = self.portfolio_manager.positions.get(
                     symbol,
-                    Position(symbol=symbol, quantity=0, entry_price=0, current_price=0, timestamp=datetime.now()),
+                    Position(
+                        symbol=symbol,
+                        quantity=0,
+                        entry_price=0,
+                        current_price=0,
+                        timestamp=datetime.now(),
+                    ),
                 ).market_value
 
                 if target_value > current_value:
@@ -829,7 +891,10 @@ class TestPortfolioIntegration:
                     quantity = int((target_value - current_value) / price_data[symbol]["close"].iloc[-1])
                     if quantity > 0:
                         self.portfolio_manager.execute_trade(
-                            symbol, quantity, price_data[symbol]["close"].iloc[-1], "long"
+                            symbol,
+                            quantity,
+                            price_data[symbol]["close"].iloc[-1],
+                            "long",
                         )
 
             # Verify weights are close to optimal
@@ -898,7 +963,10 @@ class TestPortfolioPerformanceBenchmarks:
         portfolio_returns = pd.Series(np.random.normal(0.001, 0.02, 252), index=dates)
         benchmark_returns = pd.Series(np.random.normal(0.0008, 0.018, 252), index=dates)
 
-        asset_returns = pd.DataFrame({f"ASSET_{i}": np.random.normal(0.001, 0.02, 252) for i in range(20)}, index=dates)
+        asset_returns = pd.DataFrame(
+            {f"ASSET_{i}": np.random.normal(0.001, 0.02, 252) for i in range(20)},
+            index=dates,
+        )
 
         portfolio_weights = pd.DataFrame({f"ASSET_{i}": [0.05] * 252 for i in range(20)}, index=dates)
 

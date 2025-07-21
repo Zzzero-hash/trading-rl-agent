@@ -12,8 +12,6 @@ This example showcases:
 """
 
 import os
-
-# Add the src directory to the path
 import sys
 from datetime import datetime
 
@@ -22,10 +20,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-
 from trading_rl_agent.risk.monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig
 from trading_rl_agent.risk.parallel_var import ParallelVaRCalculator, ParallelVaRConfig
+
+# Add the src directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 def generate_sample_data(n_days: int = 1000, n_assets: int = 10) -> pd.DataFrame:
@@ -89,7 +88,13 @@ def demonstrate_basic_var_calculations() -> None:
     print(f"Generated {len(returns_data)} days of data for {len(returns_data.columns)} assets")
 
     # Define portfolio weights
-    weights = {"ASSET_01": 0.3, "ASSET_02": 0.25, "ASSET_03": 0.2, "ASSET_04": 0.15, "ASSET_05": 0.1}
+    weights = {
+        "ASSET_01": 0.3,
+        "ASSET_02": 0.25,
+        "ASSET_03": 0.2,
+        "ASSET_04": 0.15,
+        "ASSET_05": 0.1,
+    }
 
     # Configure VaR calculator
     var_config = MonteCarloVaRConfig(
@@ -144,17 +149,37 @@ def demonstrate_stress_testing() -> None:
     returns_data = generate_sample_data(n_days=500, n_assets=5)
 
     # Define weights
-    weights = {"ASSET_01": 0.3, "ASSET_02": 0.25, "ASSET_03": 0.2, "ASSET_04": 0.15, "ASSET_05": 0.1}
+    weights = {
+        "ASSET_01": 0.3,
+        "ASSET_02": 0.25,
+        "ASSET_03": 0.2,
+        "ASSET_04": 0.15,
+        "ASSET_05": 0.1,
+    }
 
     # Configure VaR calculator with custom stress scenarios
     custom_stress_scenarios = {
-        "mild_correction": {"volatility_multiplier": 1.5, "correlation_increase": 0.1, "mean_shift": -0.005},
-        "severe_crash": {"volatility_multiplier": 4.0, "correlation_increase": 0.4, "mean_shift": -0.03},
-        "flash_crash": {"volatility_multiplier": 6.0, "correlation_increase": 0.6, "mean_shift": -0.08},
+        "mild_correction": {
+            "volatility_multiplier": 1.5,
+            "correlation_increase": 0.1,
+            "mean_shift": -0.005,
+        },
+        "severe_crash": {
+            "volatility_multiplier": 4.0,
+            "correlation_increase": 0.4,
+            "mean_shift": -0.03,
+        },
+        "flash_crash": {
+            "volatility_multiplier": 6.0,
+            "correlation_increase": 0.6,
+            "mean_shift": -0.08,
+        },
     }
 
     var_config = MonteCarloVaRConfig(
-        n_simulations=3000, confidence_level=0.05, stress_scenarios=custom_stress_scenarios
+        n_simulations=3000,
+        confidence_level=0.05,
+        stress_scenarios=custom_stress_scenarios,
     )
 
     var_calculator = MonteCarloVaR(var_config)
@@ -191,7 +216,11 @@ def demonstrate_parallel_processing() -> None:
 
     # Configure parallel processing
     parallel_config = ParallelVaRConfig(
-        use_multiprocessing=True, n_processes=4, n_threads=2, chunk_size=2000, memory_limit_gb=2.0
+        use_multiprocessing=True,
+        n_processes=4,
+        n_threads=2,
+        chunk_size=2000,
+        memory_limit_gb=2.0,
     )
 
     var_config = MonteCarloVaRConfig(
@@ -249,7 +278,13 @@ def demonstrate_backtesting() -> None:
     # Generate data
     returns_data = generate_sample_data(n_days=800, n_assets=5)
 
-    weights = {"ASSET_01": 0.3, "ASSET_02": 0.25, "ASSET_03": 0.2, "ASSET_04": 0.15, "ASSET_05": 0.1}
+    weights = {
+        "ASSET_01": 0.3,
+        "ASSET_02": 0.25,
+        "ASSET_03": 0.2,
+        "ASSET_04": 0.15,
+        "ASSET_05": 0.1,
+    }
 
     var_config = MonteCarloVaRConfig(n_simulations=2000, confidence_level=0.05, backtest_window=252)
 
@@ -293,7 +328,13 @@ def demonstrate_method_comparison() -> None:
     # Generate data
     returns_data = generate_sample_data(n_days=500, n_assets=5)
 
-    weights = {"ASSET_01": 0.3, "ASSET_02": 0.25, "ASSET_03": 0.2, "ASSET_04": 0.15, "ASSET_05": 0.1}
+    weights = {
+        "ASSET_01": 0.3,
+        "ASSET_02": 0.25,
+        "ASSET_03": 0.2,
+        "ASSET_04": 0.15,
+        "ASSET_05": 0.1,
+    }
 
     var_config = MonteCarloVaRConfig(n_simulations=5000, confidence_level=0.05)
 
@@ -345,7 +386,13 @@ def demonstrate_real_time_monitoring() -> None:
     var_config = MonteCarloVaRConfig(n_simulations=3000, confidence_level=0.05, time_horizon=1)
 
     # Sample portfolio weights
-    weights = {"ASSET_01": 0.3, "ASSET_02": 0.25, "ASSET_03": 0.2, "ASSET_04": 0.15, "ASSET_05": 0.1}
+    weights = {
+        "ASSET_01": 0.3,
+        "ASSET_02": 0.25,
+        "ASSET_03": 0.2,
+        "ASSET_04": 0.15,
+        "ASSET_05": 0.1,
+    }
 
     with ParallelVaRCalculator(parallel_config) as parallel_calc:
         # Set up real-time monitoring
@@ -378,7 +425,13 @@ def create_visualizations() -> None:
     # Generate data
     returns_data = generate_sample_data(n_days=500, n_assets=5)
 
-    weights = {"ASSET_01": 0.3, "ASSET_02": 0.25, "ASSET_03": 0.2, "ASSET_04": 0.15, "ASSET_05": 0.1}
+    weights = {
+        "ASSET_01": 0.3,
+        "ASSET_02": 0.25,
+        "ASSET_03": 0.2,
+        "ASSET_04": 0.15,
+        "ASSET_05": 0.1,
+    }
 
     var_config = MonteCarloVaRConfig(n_simulations=5000, confidence_level=0.05)
 
@@ -403,7 +456,13 @@ def create_visualizations() -> None:
 
     # 2. Asset correlation heatmap
     if var_calculator._correlation_matrix is not None:
-        sns.heatmap(var_calculator._correlation_matrix, annot=True, cmap="coolwarm", center=0, ax=axes[0, 1])
+        sns.heatmap(
+            var_calculator._correlation_matrix,
+            annot=True,
+            cmap="coolwarm",
+            center=0,
+            ax=axes[0, 1],
+        )
         axes[0, 1].set_title("Asset Correlation Matrix")
 
     # 3. VaR comparison by method
@@ -413,21 +472,21 @@ def create_visualizations() -> None:
     try:
         hist_var = var_calculator.historical_simulation_var(weights)
         var_values.append(hist_var.var_value)
-    except Exception as e:
+    except Exception:
         # Optionally log or print(e)
         var_values.append(0)
 
     try:
         param_var = var_calculator.parametric_var(weights)
         var_values.append(param_var.var_value)
-    except Exception as e:
+    except Exception:
         # Optionally log or print(e)
         var_values.append(0)
 
     try:
         mc_var = var_calculator.monte_carlo_var(weights)
         var_values.append(mc_var.var_value)
-    except Exception as e:
+    except Exception:
         # Optionally log or print(e)
         var_values.append(0)
 
@@ -443,7 +502,12 @@ def create_visualizations() -> None:
     # Add VaR bands (simplified)
     if var_values[2] > 0:  # Monte Carlo VaR
         var_band = 1 - var_values[2]
-        axes[1, 1].axhline(y=var_band, color="red", linestyle="--", label=f"VaR Band ({var_values[2]:.2%})")
+        axes[1, 1].axhline(
+            y=var_band,
+            color="red",
+            linestyle="--",
+            label=f"VaR Band ({var_values[2]:.2%})",
+        )
 
     axes[1, 1].set_title("Portfolio Cumulative Returns")
     axes[1, 1].set_xlabel("Date")

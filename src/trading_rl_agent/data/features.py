@@ -173,8 +173,8 @@ def detect_shooting_star(df: pd.DataFrame) -> pd.DataFrame:
     shooting_star = (
         (upper_shadow >= 2 * body)  # Long upper shadow
         & (lower_shadow <= body * 0.1)  # Very small lower shadow
-        & (body <= (df_copy["high"] - df_copy["low"]) * 0.3)  # Small body relative to range
-    )
+        & (body <= (df_copy["high"] - df_copy["low"]) * 0.3)
+    )  # Small body relative to range
 
     df_copy["shooting_star"] = shooting_star.fillna(False).astype(int)
     return df_copy
@@ -244,13 +244,12 @@ def detect_evening_star(df: pd.DataFrame) -> pd.DataFrame:
     return df_copy
 
 
-def compute_candle_features(df: pd.DataFrame, advanced: bool = True) -> pd.DataFrame:
+def compute_candle_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     Compute all candlestick pattern features.
 
     Args:
         df: DataFrame with OHLC data
-        advanced: If True, use advanced patterns from candle_patterns.py
 
     Returns:
         DataFrame with candlestick pattern columns
@@ -310,10 +309,12 @@ def generate_features(
     if len(df) < min_required_length:
         import warnings
 
-        warnings.warn(
-            f"Insufficient data for full feature engineering (need at least {min_required_length} rows, got {len(df)}). Some features may be NaN.",
-            stacklevel=2,
+        warning_msg = (
+            f"Insufficient data for full feature engineering "
+            f"(need at least {min_required_length} rows, got {len(df)}). "
+            f"Some features may be NaN."
         )
+        warnings.warn(warning_msg, stacklevel=2)
         if len(df) < 26:
             ma_windows = [w for w in ma_windows if w <= len(df) // 2]
             if not ma_windows:
@@ -405,7 +406,7 @@ def generate_features(
 
     # Enhanced candlestick patterns - add missing patterns
     try:
-        df = compute_candle_features(df, advanced=advanced_candles)
+        df = compute_candle_features(df)
         # Add missing candlestick patterns that standardizer expects
         df = add_missing_candlestick_patterns(df)
     except Exception as e:
@@ -525,17 +526,17 @@ def detect_hanging_man(df: pd.DataFrame) -> pd.Series:
 
 def detect_inside_bar(df: pd.DataFrame) -> pd.Series:
     """Detect Inside Bar pattern: current bar completely inside previous bar."""
-    inside_bar = (df["high"] <= df["high"].shift(1)) & (  # Current high <= previous high
+    inside_bar = (df["high"] <= df["high"].shift(1)) & (
         df["low"] >= df["low"].shift(1)
-    )  # Current low >= previous low
+    )  # Current high <= previous high  # Current low >= previous low
     return inside_bar.fillna(False).astype(int)
 
 
 def detect_outside_bar(df: pd.DataFrame) -> pd.Series:
     """Detect Outside Bar pattern: current bar completely engulfs previous bar."""
-    outside_bar = (df["high"] > df["high"].shift(1)) & (  # Current high > previous high
+    outside_bar = (df["high"] > df["high"].shift(1)) & (
         df["low"] < df["low"].shift(1)
-    )  # Current low < previous low
+    )  # Current high > previous high  # Current low < previous low
     return outside_bar.fillna(False).astype(int)
 
 
@@ -700,7 +701,13 @@ def add_rolling_candlestick_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     # Ensure required columns exist
-    required_cols = ["rel_body_size", "upper_shadow", "lower_shadow", "body_position", "body_size"]
+    required_cols = [
+        "rel_body_size",
+        "upper_shadow",
+        "lower_shadow",
+        "body_position",
+        "body_size",
+    ]
     for col in required_cols:
         if col not in df.columns:
             df[col] = 0.0

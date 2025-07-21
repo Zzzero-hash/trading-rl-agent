@@ -2,105 +2,115 @@
 
 /* Improve code block appearance */
 .highlight {
-    border-radius: 4px;
-    padding: 10px;
-    margin: 10px 0;
+  border-radius: 4px;
+  padding: 10px;
+  margin: 10px 0;
 }
 
 /* Better table styling */
 .wy-table-responsive table td,
 .wy-table-responsive table th {
-    white-space: normal;
+  white-space: normal;
 }
 
 /* Improve admonition styling */
 .admonition {
-    border-radius: 4px;
-    padding: 12px;
-    margin: 12px 0;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 12px 0;
 }
 
 .admonition-title {
-    font-weight: bold;
-    margin-bottom: 8px;
+  font-weight: bold;
+  margin-bottom: 8px;
 }
 
 /* Better API documentation styling */
 .py.class > dt,
 .py.function > dt,
 .py.method > dt {
-    background-color: #f8f8f8;
-    border-left: 3px solid #2980B9;
-    padding: 6px 12px;
-    margin: 10px 0 5px 0;
+  background-color: #f8f8f8;
+  border-left: 3px solid #2980b9;
+  padding: 6px 12px;
+  margin: 10px 0 5px 0;
 }
 
 /* Improve navigation */
 .wy-nav-side {
-    width: 280px;
+  width: 280px;
 }
 
 .wy-nav-content {
-    margin-left: 280px;
+  margin-left: 280px;
 }
 
 /* Better mobile responsiveness */
 @media screen and (max-width: 768px) {
-    .wy-nav-side {
-        width: 100%;
-    }
+  .wy-nav-side {
+    width: 100%;
+  }
 
-    .wy-nav-content {
-        margin-left: 0;
-    }
+  .wy-nav-content {
+    margin-left: 0;
+  }
 }
 
 /* Code syntax highlighting improvements */
-.highlight .k { color: #0000ff; } /* Keywords */
-.highlight .s { color: #008000; } /* Strings */
-.highlight .c { color: #808080; } /* Comments */
-.highlight .n { color: #000000; } /* Names */
-.highlight .o { color: #666666; } /* Operators */
+.highlight .k {
+  color: #0000ff;
+} /* Keywords */
+.highlight .s {
+  color: #008000;
+} /* Strings */
+.highlight .c {
+  color: #808080;
+} /* Comments */
+.highlight .n {
+  color: #000000;
+} /* Names */
+.highlight .o {
+  color: #666666;
+} /* Operators */
 
 /* Type hint styling */
 .sig-prename {
-    color: #666666;
-    font-size: 0.9em;
+  color: #666666;
+  font-size: 0.9em;
 }
 
 /* Parameter list styling */
 .sig-param {
-    font-style: italic;
-    color: #333333;
+  font-style: italic;
+  color: #333333;
 }
 
 /* Return type styling */
 .sig-return-typehint {
-    color: #0066cc;
-    font-weight: bold;
+  color: #0066cc;
+  font-weight: bold;
 }
 
 /* Version info styling */
 .versionadded,
 .versionchanged,
 .deprecated {
-    border-radius: 4px;
-    padding: 8px;
-    margin: 8px 0;
-    border-left: 4px solid;
+  border-radius: 4px;
+  padding: 8px;
+  margin: 8px 0;
+  border-left: 4px solid;
 }
 
 .versionadded {
-    background-color: #e8f5e8;
-    border-left-color: #28a745;
+  background-color: #e8f5e8;
+  border-left-color: #28a745;
 }
 
 .versionchanged {
-    background-color: #fff3cd;
-    border-left-color: #ffc107;
+  background-color: #fff3cd;
+  border-left-color: #ffc107;
 }
 
 .deprecated {
-    background-color: #f8d7da;
-    border-left-color: #dc3545;
+  background-color: #f8d7da;
+  border-left-color: #dc3545;
 }

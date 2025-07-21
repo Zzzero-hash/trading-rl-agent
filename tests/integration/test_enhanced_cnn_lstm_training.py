@@ -397,10 +397,10 @@ class TestHyperparameterOptimization:
                     return 16
                 return choices[0]
 
-            def suggest_int(self, name, low, high):
+            def suggest_int(self, _name, low, _high):
                 return low
 
-            def suggest_float(self, name, low, high, log=False):
+            def suggest_float(self, _name, low, _high, _log=False):
                 return low
 
         trial = MockTrial()
@@ -451,10 +451,10 @@ class TestHyperparameterOptimization:
                     return 16
                 return choices[0]
 
-            def suggest_int(self, name, low, high):
+            def suggest_int(self, _name, low, _high):
                 return low
 
-            def suggest_float(self, name, low, high, log=False):
+            def suggest_float(self, _name, low, _high, _log=False):
                 return low
 
         trial = MockTrial()
@@ -482,10 +482,10 @@ class TestHyperparameterOptimization:
                     return 16
                 return choices[0]
 
-            def suggest_int(self, name, low, high):
+            def suggest_int(self, _name, low, _high):
                 return low
 
-            def suggest_float(self, name, low, high, log=False):
+            def suggest_float(self, _name, low, _high, _log=False):
                 return low
 
         trial = MockTrial()

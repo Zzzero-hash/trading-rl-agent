@@ -20,7 +20,11 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from .attribution import AttributionConfig
-from .attribution_integration import AttributionIntegration, AutomatedAttributionWorkflow, PortfolioManager
+from .attribution_integration import (
+    AttributionIntegration,
+    AutomatedAttributionWorkflow,
+    PortfolioManager,
+)
 
 console = Console()
 
@@ -32,7 +36,13 @@ def attribution() -> None:
 
 @attribution.command()
 @click.option("--config-file", "-c", type=click.Path(exists=True), help="Configuration file path")
-@click.option("--output-dir", "-o", type=click.Path(), default="attribution_output", help="Output directory")
+@click.option(
+    "--output-dir",
+    "-o",
+    type=click.Path(),
+    default="attribution_output",
+    help="Output directory",
+)
 @click.option("--start-date", "-s", type=click.DateTime(), help="Analysis start date (YYYY-MM-DD)")
 @click.option("--end-date", "-e", type=click.DateTime(), help="Analysis end date (YYYY-MM-DD)")
 @click.option("--symbols", "-t", multiple=True, help="Symbols to include in analysis")
@@ -51,7 +61,11 @@ def analyze(
 ) -> None:
     """Run comprehensive performance attribution analysis."""
 
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
         task = progress.add_task("Initializing attribution analysis...", total=None)
 
         # Create output directory
@@ -64,7 +78,9 @@ def analyze(
             config = _load_config(config_file)
         else:
             config = AttributionConfig(
-                risk_free_rate=risk_free_rate, confidence_level=confidence_level, use_plotly=use_plotly
+                risk_free_rate=risk_free_rate,
+                confidence_level=confidence_level,
+                use_plotly=use_plotly,
             )
 
             # Initialize portfolio manager (simulated for demo)
@@ -84,15 +100,21 @@ def analyze(
         # Generate report
         progress.update(task, description="Generating attribution report...")
         report_path = output_path / "attribution_report.txt"
-        report_content = integration.generate_attribution_report(
-            start_date=start_date, end_date=end_date, symbols=symbols_list, output_path=str(report_path)
+        integration.generate_attribution_report(
+            start_date=start_date,
+            end_date=end_date,
+            symbols=symbols_list,
+            output_path=str(report_path),
         )
 
         # Export data
         progress.update(task, description="Exporting attribution data...")
         data_path = output_path / "attribution_data.xlsx"
         integration.export_attribution_data(
-            start_date=start_date, end_date=end_date, symbols=symbols_list, output_path=str(data_path)
+            start_date=start_date,
+            end_date=end_date,
+            symbols=symbols_list,
+            output_path=str(data_path),
         )
 
         # Create dashboard
@@ -118,7 +140,10 @@ def analyze(
 @click.option("--end-date", "-e", type=click.DateTime(), help="Analysis end date (YYYY-MM-DD)")
 @click.option("--symbols", "-t", multiple=True, help="Symbols to include in analysis")
 def factor_analysis(
-    config_file: str | None, start_date: datetime | None, end_date: datetime | None, symbols: tuple
+    config_file: str | None,
+    start_date: datetime | None,
+    end_date: datetime | None,
+    symbols: tuple,
 ) -> None:
     """Analyze factor contributions to portfolio performance."""
 
@@ -143,7 +168,10 @@ def factor_analysis(
 @click.option("--end-date", "-e", type=click.DateTime(), help="Analysis end date (YYYY-MM-DD)")
 @click.option("--symbols", "-t", multiple=True, help="Symbols to include in analysis")
 def sector_attribution(
-    config_file: str | None, start_date: datetime | None, end_date: datetime | None, symbols: tuple
+    config_file: str | None,
+    start_date: datetime | None,
+    end_date: datetime | None,
+    symbols: tuple,
 ) -> None:
     """Analyze sector-level attribution using Brinson methodology."""
 
@@ -168,7 +196,10 @@ def sector_attribution(
 @click.option("--end-date", "-e", type=click.DateTime(), help="Analysis end date (YYYY-MM-DD)")
 @click.option("--symbols", "-t", multiple=True, help="Symbols to include in analysis")
 def risk_analysis(
-    config_file: str | None, start_date: datetime | None, end_date: datetime | None, symbols: tuple
+    config_file: str | None,
+    start_date: datetime | None,
+    end_date: datetime | None,
+    symbols: tuple,
 ) -> None:
     """Analyze risk-adjusted performance metrics."""
 
@@ -190,10 +221,20 @@ def risk_analysis(
 @attribution.command()
 @click.option("--config-file", "-c", type=click.Path(exists=True), help="Configuration file path")
 @click.option(
-    "--frequency", "-f", type=click.Choice(["daily", "weekly", "monthly"]), default="monthly", help="Analysis frequency"
+    "--frequency",
+    "-f",
+    type=click.Choice(["daily", "weekly", "monthly"]),
+    default="monthly",
+    help="Analysis frequency",
 )
 @click.option("--auto-reports/--no-auto-reports", default=True, help="Auto-generate reports")
-@click.option("--output-dir", "-o", type=click.Path(), default="attribution_reports", help="Report output directory")
+@click.option(
+    "--output-dir",
+    "-o",
+    type=click.Path(),
+    default="attribution_reports",
+    help="Report output directory",
+)
 def setup_automation(config_file: str | None, frequency: str, auto_reports: bool, output_dir: str) -> None:
     """Set up automated attribution analysis workflow."""
 
@@ -231,7 +272,13 @@ def setup_automation(config_file: str | None, frequency: str, auto_reports: bool
 
 @attribution.command()
 @click.option("--config-file", "-c", type=click.Path(exists=True), help="Configuration file path")
-@click.option("--output-dir", "-o", type=click.Path(), default="attribution_reports", help="Output directory")
+@click.option(
+    "--output-dir",
+    "-o",
+    type=click.Path(),
+    default="attribution_reports",
+    help="Output directory",
+)
 def run_automated(config_file: str | None, output_dir: str) -> None:
     """Run automated attribution analysis workflow."""
 
@@ -279,7 +326,10 @@ def export_data(
     output_file = output_path or "attribution_data.xlsx"
 
     integration.export_attribution_data(
-        start_date=start_date, end_date=end_date, symbols=symbols_list, output_path=output_file
+        start_date=start_date,
+        end_date=end_date,
+        symbols=symbols_list,
+        output_path=output_file,
     )
 
     console.print(f"[green]✓[/green] Data exported to: {output_file}")

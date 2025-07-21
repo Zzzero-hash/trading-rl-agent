@@ -108,7 +108,12 @@ class WalkForwardAnalyzer:
         self.training_config = type(
             "TrainingConfig",
             (),
-            {"batch_size": 32, "learning_rate": 0.001, "epochs": 100, "early_stopping_patience": 10},
+            {
+                "batch_size": 32,
+                "learning_rate": 0.001,
+                "epochs": 100,
+                "early_stopping_patience": 10,
+            },
         )()
 
         # Initialize components
@@ -163,7 +168,10 @@ class WalkForwardAnalyzer:
             task = progress.add_task("Processing windows...", total=len(windows))
 
             for window_id, (train_idx, val_idx, test_idx) in enumerate(windows):
-                progress.update(task, description=f"Processing window {window_id + 1}/{len(windows)}")
+                progress.update(
+                    task,
+                    description=f"Processing window {window_id + 1}/{len(windows)}",
+                )
 
                 # Extract window data
                 train_data = data.iloc[train_idx]
@@ -366,10 +374,10 @@ class WalkForwardAnalyzer:
 
     def _train_rl_agent(
         self,
-        X_train: np.ndarray,
-        y_train: np.ndarray,
-        X_val: np.ndarray,
-        y_val: np.ndarray,
+        _X_train: np.ndarray,
+        _y_train: np.ndarray,
+        _X_val: np.ndarray,
+        _y_val: np.ndarray,
     ) -> tuple[Any, dict[str, float], dict[str, float]]:
         """Train RL agent."""
 
@@ -621,7 +629,14 @@ class WalkForwardAnalyzer:
 
         ax.plot(window_ids, sharpe_ratios, "o-", label="Sharpe Ratio", alpha=0.7)
         ax_twin = ax.twinx()
-        ax_twin.plot(window_ids, total_returns, "s-", color="orange", label="Total Return", alpha=0.7)
+        ax_twin.plot(
+            window_ids,
+            total_returns,
+            "s-",
+            color="orange",
+            label="Total Return",
+            alpha=0.7,
+        )
 
         ax.set_xlabel("Window ID")
         ax.set_ylabel("Sharpe Ratio", color="blue")
@@ -668,7 +683,10 @@ class WalkForwardAnalyzer:
         ax.errorbar(
             x_pos,
             means,
-            yerr=[np.array(means) - np.array(lower_bounds), np.array(upper_bounds) - np.array(means)],
+            yerr=[
+                np.array(means) - np.array(lower_bounds),
+                np.array(upper_bounds) - np.array(means),
+            ],
             fmt="o",
             capsize=5,
             capthick=2,
@@ -739,7 +757,13 @@ class WalkForwardAnalyzer:
         # Add value labels on bars
         for bar, value in zip(bars, values, strict=False):
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width() / 2.0, height, f"{value:.3f}", ha="center", va="bottom")
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height,
+                f"{value:.3f}",
+                ha="center",
+                va="bottom",
+            )
 
     def _plot_returns_distribution(self, ax: plt.Axes) -> None:
         """Plot returns distribution."""

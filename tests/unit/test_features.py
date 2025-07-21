@@ -1,5 +1,4 @@
 import importlib.util
-import logging
 import sys
 import types
 from pathlib import Path
@@ -10,31 +9,6 @@ import pandas_ta as pta
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-
-if "structlog" not in sys.modules:
-    stub = types.SimpleNamespace(
-        BoundLogger=object,
-        stdlib=types.SimpleNamespace(
-            ProcessorFormatter=object,
-            BoundLogger=object,
-            LoggerFactory=lambda: None,
-            filter_by_level=lambda *a, **k: None,
-            add_logger_name=lambda *a, **k: None,
-            add_log_level=lambda *a, **k: None,
-            PositionalArgumentsFormatter=lambda: None,
-            wrap_for_formatter=lambda f: f,
-        ),
-        processors=types.SimpleNamespace(
-            TimeStamper=lambda **_: None,
-            StackInfoRenderer=lambda **_: None,
-            format_exc_info=lambda **_: None,
-            UnicodeDecoder=lambda **_: None,
-        ),
-        dev=types.SimpleNamespace(ConsoleRenderer=lambda **_: None),
-        configure=lambda **_: None,
-        get_logger=lambda name=None: logging.getLogger(name),
-    )
-    sys.modules["structlog"] = stub
 
 base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
 if "trading_rl_agent" not in sys.modules:

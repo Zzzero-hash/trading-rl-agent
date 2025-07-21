@@ -11,6 +11,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from trading_rl_agent.portfolio.transaction_costs import (
+    BrokerType,
+    FlatRateCommission,
+    MarketCondition,
+    MarketData,
+    OrderType,
+    PerShareCommission,
+    TieredCommission,
+    TransactionCostModel,
+)
+
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
@@ -77,7 +88,7 @@ class MockDataFrame:
     def pivot(self, index: str, columns: str, values: str) -> "MockPivotTable":
         return MockPivotTable(self.data, index, columns, values)
 
-    def to_string(self, index: bool = False, float_format: str = "%.2f") -> str:
+    def to_string(self, index: bool = False, _float_format: str = "%.2f") -> str:
         if not self.data:
             return "Empty DataFrame"
 
@@ -88,10 +99,7 @@ class MockDataFrame:
             lines.append("-" * (len(lines[0]) + 10))
 
         for i, row in enumerate(self.data):
-            if index:
-                line = f"{i:5d} | "
-            else:
-                line = ""
+            line = f"{i:5d} | " if index else ""
             line += " | ".join(f"{row.get(col, ''):.2f}" for col in self.columns)
             lines.append(line)
 
@@ -145,7 +153,7 @@ class MockPivotTable:
         self.columns = columns
         self.values = values
 
-    def to_string(self, float_format: str = "%.2f") -> str:
+    def to_string(self, _float_format: str = "%.2f") -> str:
         if not self.data:
             return "Empty PivotTable"
 
@@ -188,18 +196,6 @@ class MockStats:
 sys.modules["numpy"] = MockNumpy()  # type: ignore[assignment]
 sys.modules["pandas"] = MockPandas()  # type: ignore[assignment]
 sys.modules["scipy"] = MockScipy()  # type: ignore[assignment]
-
-# Now import our transaction cost classes
-from trading_rl_agent.portfolio.transaction_costs import (
-    BrokerType,
-    FlatRateCommission,
-    MarketCondition,
-    MarketData,
-    OrderType,
-    PerShareCommission,
-    TieredCommission,
-    TransactionCostModel,
-)
 
 
 def create_sample_market_data(
@@ -274,7 +270,7 @@ def demonstrate_broker_types() -> None:
 
     # Display results
     df = MockPandas.DataFrame(results)
-    print(df.to_string(index=False, float_format="%.2f"))
+    print(df.to_string(index=False, _float_format="%.2f"))
     print()
 
 
@@ -321,7 +317,7 @@ def demonstrate_market_conditions() -> None:
 
     # Display results
     df = MockPandas.DataFrame(results)
-    print(df.to_string(index=False, float_format="%.4f"))
+    print(df.to_string(index=False, _float_format="%.4f"))
     print()
 
 
@@ -359,7 +355,7 @@ def demonstrate_commission_structures() -> None:
     # Display results
     df = MockPandas.DataFrame(results)
     pivot_df = df.pivot(index="trade_value", columns="structure", values="commission_pct")
-    print(pivot_df.to_string(float_format="%.4f"))
+    print(pivot_df.to_string(_float_format="%.4f"))
     print()
 
 
@@ -379,8 +375,18 @@ def demonstrate_cost_optimization() -> None:
     trade_scenarios = [
         (1000, 100.0, OrderType.MARKET, MarketCondition.NORMAL),  # Small trade
         (5000, 100.0, OrderType.MARKET, MarketCondition.NORMAL),  # Medium trade
-        (10000, 100.0, OrderType.MARKET, MarketCondition.VOLATILE),  # Large trade, volatile
-        (20000, 100.0, OrderType.LIMIT, MarketCondition.ILLIQUID),  # Very large trade, illiquid
+        (
+            10000,
+            100.0,
+            OrderType.MARKET,
+            MarketCondition.VOLATILE,
+        ),  # Large trade, volatile
+        (
+            20000,
+            100.0,
+            OrderType.LIMIT,
+            MarketCondition.ILLIQUID,
+        ),  # Very large trade, illiquid
         (5000, 100.0, OrderType.MARKET, MarketCondition.CRISIS),  # Medium trade, crisis
     ]
 
@@ -401,9 +407,8 @@ def demonstrate_cost_optimization() -> None:
 
         print(f"  Trade: {quantity} shares at ${price:.2f} ({order_type.value}, {market_condition.value})")
         print(f"    Executed: {execution_result.executed_quantity} shares at ${execution_result.executed_price:.2f}")
-        print(
-            f"    Cost: ${execution_result.total_cost:.2f} ({(execution_result.total_cost / (quantity * price) * 100):.3f}%)"
-        )
+        cost_percentage = execution_result.total_cost / (quantity * price) * 100
+        print(f"    Cost: ${execution_result.total_cost:.2f} ({cost_percentage:.3f}%)")
         print(f"    Delay: {execution_result.delay_seconds:.2f}s")
         print()
 

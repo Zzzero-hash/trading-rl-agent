@@ -132,7 +132,11 @@ class Settings(BaseSettings):
     """Main settings class for the Trading RL Agent."""
 
     model_config = SettingsConfigDict(
-        env_prefix="TRADING_RL_AGENT_", env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+        env_prefix="TRADING_RL_AGENT_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
     )
 
     # Environment settings

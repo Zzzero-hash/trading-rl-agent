@@ -77,7 +77,10 @@ class TestRiskAlertSystem:
                 }
             ],
             notifications=NotificationConfig(
-                email_enabled=False, slack_enabled=False, sms_enabled=False, webhook_enabled=False
+                email_enabled=False,
+                slack_enabled=False,
+                sms_enabled=False,
+                webhook_enabled=False,
             ),
             escalation_enabled=True,
             escalation_timeout_minutes=30,
@@ -331,7 +334,9 @@ class TestRealTimeMonitoring:
         self.config = RiskAlertConfig(monitoring_interval_seconds=1, real_time_monitoring=True)
 
         self.alert_system = RiskAlertSystem(
-            risk_manager=self.risk_manager, alert_manager=self.alert_manager, config=self.config
+            risk_manager=self.risk_manager,
+            alert_manager=self.alert_manager,
+            config=self.config,
         )
 
     @pytest.mark.asyncio
@@ -384,14 +389,18 @@ class TestRealTimeMonitoring:
             timestamp=datetime.now(),
         )
 
-        with patch.object(
-            self.risk_manager, "generate_risk_report", return_value={"portfolio_var": 0.04, "max_drawdown": 0.08}
+        with (
+            patch.object(
+                self.risk_manager,
+                "generate_risk_report",
+                return_value={"portfolio_var": 0.04, "max_drawdown": 0.08},
+            ),
+            patch.object(self.alert_system, "_check_alert_thresholds", new_callable=AsyncMock) as mock_check,
         ):
-            with patch.object(self.alert_system, "_check_alert_thresholds", new_callable=AsyncMock) as mock_check:
-                await self.alert_system._check_risk_metrics()
+            await self.alert_system._check_risk_metrics()
 
-                # Verify that alert thresholds were checked
-                mock_check.assert_called_once()
+            # Verify that alert thresholds were checked
+            mock_check.assert_called_once()
 
 
 class TestCircuitBreakers:
@@ -422,7 +431,9 @@ class TestCircuitBreakers:
         )
 
         self.alert_system = RiskAlertSystem(
-            risk_manager=self.risk_manager, alert_manager=self.alert_manager, config=self.config
+            risk_manager=self.risk_manager,
+            alert_manager=self.alert_manager,
+            config=self.config,
         )
 
     def test_circuit_breaker_trigger_conditions(self):
@@ -517,7 +528,9 @@ class TestNotificationSystems:
         )
 
         self.alert_system = RiskAlertSystem(
-            risk_manager=self.risk_manager, alert_manager=self.alert_manager, config=self.config
+            risk_manager=self.risk_manager,
+            alert_manager=self.alert_manager,
+            config=self.config,
         )
 
     @pytest.mark.asyncio
@@ -617,7 +630,9 @@ class TestRegulatoryCompliance:
         )
 
         self.alert_system = RiskAlertSystem(
-            risk_manager=self.risk_manager, alert_manager=self.alert_manager, config=self.config
+            risk_manager=self.risk_manager,
+            alert_manager=self.alert_manager,
+            config=self.config,
         )
 
     def test_leverage_compliance_check(self):
@@ -735,7 +750,9 @@ class TestRiskAlertPerformance:
         self.config = RiskAlertConfig(monitoring_interval_seconds=1, real_time_monitoring=True)
 
         self.alert_system = RiskAlertSystem(
-            risk_manager=self.risk_manager, alert_manager=self.alert_manager, config=self.config
+            risk_manager=self.risk_manager,
+            alert_manager=self.alert_manager,
+            config=self.config,
         )
 
     def test_alert_processing_performance(self):
@@ -781,7 +798,8 @@ class TestRiskAlertPerformance:
         for i in range(1000):
             for threshold in self.alert_system.alert_thresholds.values():
                 self.alert_system._is_threshold_violated(
-                    self.alert_system._get_metric_value(metrics, threshold.metric_name), threshold
+                    self.alert_system._get_metric_value(metrics, threshold.metric_name),
+                    threshold,
                 )
 
         end_time = time.time()
@@ -793,28 +811,32 @@ class TestRiskAlertPerformance:
     async def test_monitoring_performance(self):
         """Test monitoring loop performance."""
         # Mock risk manager to return quickly
-        with patch.object(
-            self.risk_manager, "generate_risk_report", return_value={"portfolio_var": 0.025, "max_drawdown": 0.08}
+        with (
+            patch.object(
+                self.risk_manager,
+                "generate_risk_report",
+                return_value={"portfolio_var": 0.025, "max_drawdown": 0.08},
+            ),
+            patch.object(self.alert_system, "_check_alert_thresholds", new_callable=AsyncMock),
         ):
-            with patch.object(self.alert_system, "_check_alert_thresholds", new_callable=AsyncMock):
-                start_time = time.time()
+            start_time = time.time()
 
-                # Run monitoring for a short duration
-                monitoring_task = asyncio.create_task(self.alert_system.start_monitoring())
-                await asyncio.sleep(0.1)
-                await self.alert_system.stop_monitoring()
+            # Run monitoring for a short duration
+            monitoring_task = asyncio.create_task(self.alert_system.start_monitoring())
+            await asyncio.sleep(0.1)
+            await self.alert_system.stop_monitoring()
 
-                end_time = time.time()
-                monitoring_time = end_time - start_time
+            end_time = time.time()
+            monitoring_time = end_time - start_time
 
-                # Clean up
-                try:
-                    await asyncio.wait_for(monitoring_task, timeout=1.0)
-                except TimeoutError:
-                    monitoring_task.cancel()
-                    await monitoring_task
+            # Clean up
+            try:
+                await asyncio.wait_for(monitoring_task, timeout=1.0)
+            except TimeoutError:
+                monitoring_task.cancel()
+                await monitoring_task
 
-                assert monitoring_time < 2.0  # Should complete monitoring cycle within 2 seconds
+            assert monitoring_time < 2.0  # Should complete monitoring cycle within 2 seconds
 
 
 class TestRiskAlertErrorHandling:
@@ -828,7 +850,9 @@ class TestRiskAlertErrorHandling:
         self.config = RiskAlertConfig(monitoring_interval_seconds=1, real_time_monitoring=True)
 
         self.alert_system = RiskAlertSystem(
-            risk_manager=self.risk_manager, alert_manager=self.alert_manager, config=self.config
+            risk_manager=self.risk_manager,
+            alert_manager=self.alert_manager,
+            config=self.config,
         )
 
     def test_invalid_threshold_configuration(self):
@@ -876,7 +900,11 @@ class TestRiskAlertErrorHandling:
         alert.timestamp = datetime.now()
 
         # Mock notification failure
-        with patch.object(self.alert_system, "_send_email_notification", side_effect=Exception("Email failed")):
+        with patch.object(
+            self.alert_system,
+            "_send_email_notification",
+            side_effect=Exception("Email failed"),
+        ):
             # Should handle notification failure gracefully
             await self.alert_system._send_notifications(alert, priority=True)
 

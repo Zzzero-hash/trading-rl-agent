@@ -12,7 +12,7 @@ from typing import Any
 import pandas as pd
 from tqdm import tqdm
 
-from ..core.logging import get_logger
+from src.trading_rl_agent.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -70,7 +70,12 @@ def save_csv_chunked(
     # Process chunks
     iterator = range(0, n_rows, chunk_size)
     if show_progress:
-        iterator = tqdm(iterator, total=(n_rows + chunk_size - 1) // chunk_size, desc="Saving CSV", unit="chunk")
+        iterator = tqdm(
+            iterator,
+            total=(n_rows + chunk_size - 1) // chunk_size,
+            desc="Saving CSV",
+            unit="chunk",
+        )
 
     for start in iterator:
         end = min(start + chunk_size, n_rows)
@@ -166,7 +171,12 @@ def save_csv_chunked_parallel(
         if show_progress:
             futures = {executor.submit(save_chunk, chunk): chunk[0] for chunk in chunks}
 
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Processing chunks", unit="chunk"):
+            for future in tqdm(
+                as_completed(futures),
+                total=len(futures),
+                desc="Processing chunks",
+                unit="chunk",
+            ):
                 temp_file = future.result()
                 temp_files.append(temp_file)
         else:
@@ -284,11 +294,7 @@ def get_csv_info(filepath: str | Path) -> dict[str, Any]:
 
     # Estimate total rows
     sample_size = len(sample_df)
-    if sample_size > 0:
-        # Rough estimation based on file size and sample
-        estimated_rows = int((file_size / filepath.stat().st_size) * sample_size)
-    else:
-        estimated_rows = 0
+    estimated_rows = int(file_size / filepath.stat().st_size * sample_size) if sample_size > 0 else 0
 
     return {
         "filepath": str(filepath),
@@ -423,7 +429,10 @@ def create_standardized_dataset_streaming(
     tuple[Optional[pd.DataFrame], Any]
         Standardized DataFrame (None if saved to file) and fitted standardizer
     """
-    from src.trading_rl_agent.data.data_standardizer import DataStandardizer, FeatureConfig
+    from src.trading_rl_agent.data.data_standardizer import (
+        DataStandardizer,
+        FeatureConfig,
+    )
 
     filepath = Path(filepath)
 

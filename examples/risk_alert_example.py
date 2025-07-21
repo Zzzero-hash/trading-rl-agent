@@ -231,7 +231,10 @@ async def demo_basic_monitoring() -> None:
 
     # Create risk alert system
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id="demo_portfolio"
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id="demo_portfolio",
     )
 
     print("Risk Alert System initialized for portfolio: demo_portfolio")
@@ -283,7 +286,10 @@ async def demo_alert_thresholds() -> None:
     config = create_demo_config()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id="threshold_demo"
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id="threshold_demo",
     )
 
     # Test different threshold scenarios
@@ -368,7 +374,10 @@ async def demo_circuit_breakers() -> None:
     config = create_demo_config()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id="circuit_breaker_demo"
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id="circuit_breaker_demo",
     )
 
     # Test circuit breaker scenarios
@@ -455,7 +464,10 @@ async def demo_escalation() -> None:
     config = create_demo_config()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id="escalation_demo"
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id="escalation_demo",
     )
 
     # Test different escalation levels
@@ -538,7 +550,10 @@ async def demo_reporting() -> None:
     config = create_demo_config()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id="reporting_demo"
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id="reporting_demo",
     )
 
     # Generate some sample data
@@ -608,7 +623,10 @@ async def demo_configuration_management() -> None:
     config = create_demo_config()
 
     risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id="config_demo"
+        risk_manager=risk_manager,
+        alert_manager=alert_manager,
+        config=config,
+        portfolio_id="config_demo",
     )
 
     # Show current configuration

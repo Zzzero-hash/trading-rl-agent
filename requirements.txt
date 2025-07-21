@@ -13,7 +13,7 @@ torch>=2.0.0
 # Reinforcement Learning
 gymnasium>=0.29.0
 stable-baselines3>=2.0.0
-ray[rllib,tune]>=2.6.0
+ray[rllib,tune]>=2.6.0,<3.0.0
 
 # Data and APIs
 yfinance>=0.2.0
@@ -45,6 +45,10 @@ mlflow>=2.6.0
 tensorboard>=2.13.0
 wandb>=0.15.0
 loguru>=0.7.0
+
+# Security
+PyJWT>=2.8.0
+cryptography>=41.0.0
 
 # Testing
 pytest>=7.4.0

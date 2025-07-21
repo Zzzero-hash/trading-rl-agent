@@ -124,12 +124,12 @@ class TestCLIBacktest:
     def test_run_command(
         self,
         mock_evaluator,
-        mock_cost_model,
-        mock_config,
+        _mock_cost_model,
+        _mock_config,
         mock_generate_signals,
         mock_load_data,
         mock_get_settings,
-        mock_load_settings,
+        _mock_load_settings,
         mock_console,
     ):
         """Test run command."""
@@ -201,12 +201,12 @@ class TestCLIBacktest:
     def test_batch_command(
         self,
         mock_evaluator,
-        mock_cost_model,
-        mock_config,
+        _mock_cost_model,
+        _mock_config,
         mock_generate_signals,
         mock_load_data,
         mock_get_settings,
-        mock_load_settings,
+        _mock_load_settings,
         mock_console,
     ):
         """Test batch command."""
@@ -266,12 +266,12 @@ class TestCLIBacktest:
     def test_compare_command(
         self,
         mock_evaluator,
-        mock_cost_model,
-        mock_config,
+        _mock_cost_model,
+        _mock_config,
         mock_generate_signals,
         mock_load_data,
         mock_get_settings,
-        mock_load_settings,
+        _mock_load_settings,
         mock_console,
     ):
         """Test compare command."""
@@ -334,13 +334,13 @@ class TestCLIBacktest:
     def test_run_command_none_dates_use_settings(
         self,
         mock_evaluator,
-        mock_cost_model,
-        mock_config,
+        _mock_cost_model,
+        _mock_config,
         mock_generate_signals,
         mock_load_data,
         mock_get_settings,
-        mock_load_settings,
-        mock_console,
+        _mock_load_settings,
+        _mock_console,
     ):
         """Test run command with None dates uses settings values."""
         # Mock settings
@@ -409,13 +409,13 @@ class TestCLIBacktest:
     def test_compare_command_none_dates_use_settings(
         self,
         mock_evaluator,
-        mock_cost_model,
-        mock_config,
+        _mock_cost_model,
+        _mock_config,
         mock_generate_signals,
         mock_load_data,
         mock_get_settings,
-        mock_load_settings,
-        mock_console,
+        _mock_load_settings,
+        _mock_console,
     ):
         """Test compare command with None dates uses settings values."""
         # Mock settings
@@ -477,31 +477,46 @@ class TestCLIBacktest:
     # ============================================================================
 
     @patch("trading_rl_agent.cli_backtest.console")
-    def test_run_command_invalid_strategy(self, mock_console):
+    def test_run_command_invalid_strategy(self, _mock_console):
         """Test run command with invalid strategy."""
         with pytest.raises(typer.Exit):
-            run(strategy="invalid_strategy", start_date="2024-01-01", end_date="2024-01-31", symbols="AAPL")
+            run(
+                strategy="invalid_strategy",
+                start_date="2024-01-01",
+                end_date="2024-01-31",
+                symbols="AAPL",
+            )
 
     @patch("trading_rl_agent.cli_backtest.console")
     @patch("trading_rl_agent.cli_backtest._load_historical_data")
-    def test_run_command_data_load_failure(self, mock_load_data, mock_console):
+    def test_run_command_data_load_failure(self, mock_load_data, _mock_console):
         """Test run command when data loading fails."""
         mock_load_data.side_effect = Exception("Data load failed")
 
         with pytest.raises(typer.Exit):
-            run(strategy="momentum", start_date="2024-01-01", end_date="2024-01-31", symbols="AAPL")
+            run(
+                strategy="momentum",
+                start_date="2024-01-01",
+                end_date="2024-01-31",
+                symbols="AAPL",
+            )
 
     @patch("trading_rl_agent.cli_backtest.console")
-    def test_batch_command_invalid_periods(self, mock_console):
+    def test_batch_command_invalid_periods(self, _mock_console):
         """Test batch command with invalid periods format."""
         with pytest.raises(typer.Exit):
             batch(strategies="momentum", periods="invalid_period_format", symbols="AAPL")
 
     @patch("trading_rl_agent.cli_backtest.console")
-    def test_compare_command_empty_strategies(self, mock_console):
+    def test_compare_command_empty_strategies(self, _mock_console):
         """Test compare command with empty strategies."""
         with pytest.raises(typer.Exit):
-            compare(strategies="", start_date="2024-01-01", end_date="2024-01-31", symbols="AAPL")
+            compare(
+                strategies="",
+                start_date="2024-01-01",
+                end_date="2024-01-31",
+                symbols="AAPL",
+            )
 
     # ============================================================================
     # EDGE CASES
@@ -526,7 +541,7 @@ class TestCLIBacktest:
     @patch("trading_rl_agent.cli_backtest.console")
     @patch("trading_rl_agent.cli_backtest.load_settings")
     @patch("trading_rl_agent.cli_backtest.get_settings")
-    def test_run_command_with_config_file(self, mock_get_settings, mock_load_settings, mock_console):
+    def test_run_command_with_config_file(self, _mock_get_settings, mock_load_settings, _mock_console):
         """Test run command with config file."""
         # Mock config file
         config_file = self.temp_path / "config.yaml"
@@ -595,7 +610,7 @@ class TestCLIBacktest:
             mock_load_settings.assert_called_once_with(config_path=config_file)
 
     @patch("trading_rl_agent.cli_backtest.console")
-    def test_run_command_export_csv(self, mock_console):
+    def test_run_command_export_csv(self, _mock_console):
         """Test run command with CSV export."""
         export_csv = self.temp_path / "results.csv"
 

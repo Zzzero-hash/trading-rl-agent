@@ -11,14 +11,9 @@ This example demonstrates the new transaction cost modeling system with:
 - Cost optimization recommendations
 """
 
-import sys
 from datetime import datetime
-from pathlib import Path
 
 import pandas as pd
-
-# Add the src directory to the path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from trading_rl_agent.portfolio.transaction_costs import (
     AdaptiveImpactModel,
@@ -173,7 +168,6 @@ def demonstrate_order_types() -> None:
 
     # Create sample market data
     market_data = create_sample_market_data(price=100.0)
-    trade_value = 75000  # $75k trade
     quantity = 750  # 750 shares
 
     # Use institutional broker model
@@ -205,7 +199,7 @@ def demonstrate_order_types() -> None:
                 "total_cost": execution_result.total_cost,
                 "delay_seconds": execution_result.delay_seconds,
                 "success": execution_result.success,
-                "fill_rate": execution_result.executed_quantity / quantity if quantity > 0 else 0,
+                "fill_rate": (execution_result.executed_quantity / quantity if quantity > 0 else 0),
             }
         )
 
@@ -353,8 +347,18 @@ def demonstrate_cost_optimization() -> None:
     trade_scenarios = [
         (1000, 100.0, OrderType.MARKET, MarketCondition.NORMAL),  # Small trade
         (5000, 100.0, OrderType.MARKET, MarketCondition.NORMAL),  # Medium trade
-        (10000, 100.0, OrderType.MARKET, MarketCondition.VOLATILE),  # Large trade, volatile
-        (20000, 100.0, OrderType.LIMIT, MarketCondition.ILLIQUID),  # Very large trade, illiquid
+        (
+            10000,
+            100.0,
+            OrderType.MARKET,
+            MarketCondition.VOLATILE,
+        ),  # Large trade, volatile
+        (
+            20000,
+            100.0,
+            OrderType.LIMIT,
+            MarketCondition.ILLIQUID,
+        ),  # Very large trade, illiquid
         (5000, 100.0, OrderType.MARKET, MarketCondition.CRISIS),  # Medium trade, crisis
     ]
 
@@ -375,9 +379,8 @@ def demonstrate_cost_optimization() -> None:
 
         print(f"  Trade: {quantity} shares at ${price:.2f} ({order_type.value}, {market_condition.value})")
         print(f"    Executed: {execution_result.executed_quantity} shares at ${execution_result.executed_price:.2f}")
-        print(
-            f"    Cost: ${execution_result.total_cost:.2f} ({(execution_result.total_cost / (quantity * price) * 100):.3f}%)"
-        )
+        cost_pct = execution_result.total_cost / (quantity * price) * 100
+        print(f"    Cost: ${execution_result.total_cost:.2f} ({cost_pct:.3f}%)")
         print(f"    Delay: {execution_result.delay_seconds:.2f}s")
         print()
 

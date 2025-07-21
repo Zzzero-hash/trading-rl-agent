@@ -9,13 +9,13 @@ import pandas as pd
 import ray
 from ray import tune
 
-from ..core.exceptions import ConfigurationError
-from ..data.synthetic import fetch_synthetic_data
-from ..envs.finrl_trading_env import TradingEnv, register_env
-from ..risk.riskfolio import RiskfolioConfig, RiskfolioRiskManager
+from src.trading_rl_agent.core.exceptions import ConfigurationError
+from src.trading_rl_agent.data.synthetic import fetch_synthetic_data
+from src.trading_rl_agent.envs.finrl_trading_env import TradingEnv, register_env
+from src.trading_rl_agent.risk.riskfolio import RiskfolioConfig, RiskfolioRiskManager
 
 if TYPE_CHECKING:
-    from ..core.config import SystemConfig
+    from src.trading_rl_agent.core.config import SystemConfig
 
 
 class RiskAwareEnv(gym.Wrapper):
@@ -36,7 +36,7 @@ class RiskAwareEnv(gym.Wrapper):
         self._returns = np.array([])
         return cast("tuple[Any, dict[str, Any]]", super().reset(**kwargs))
 
-    def step(self, action: np.ndarray, **kwargs: Any) -> tuple[Any, float, bool, bool, dict[str, Any]]:
+    def step(self, action: np.ndarray, **_kwargs: Any) -> tuple[Any, float, bool, bool, dict[str, Any]]:
         # Handle array-like actions
         act_arr = np.asarray(action)
         scalar_action = float(act_arr.mean())
@@ -194,10 +194,7 @@ class Trainer:
         )
         self._load_and_prepare_data()
 
-        if self.algorithm == "ppo":
-            algo_cls = PPOTrainer
-        else:
-            algo_cls = SACTrainer
+        algo_cls = PPOTrainer if self.algorithm == "ppo" else SACTrainer
 
         # Use RunConfig from ray.air.config for Ray >=2.0
         from ray.air.config import RunConfig

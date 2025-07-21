@@ -78,7 +78,7 @@ DEFAULT_LOG_CONFIG = {
 
 def setup_logging(
     config: dict[str, Any] | None = None,
-    log_level: str = "INFO",
+    _log_level: str = "INFO",
     log_dir: Path | None = None,
     structured: bool = True,
 ) -> None:

@@ -67,7 +67,12 @@ class TestMaintenance:
 
     def _count_tests_by_category(self) -> dict:
         """Count tests by category and type."""
-        counts = {"total_tests": 0, "by_category": {}, "by_marker": {}, "recent_additions": 0}
+        counts = {
+            "total_tests": 0,
+            "by_category": {},
+            "by_marker": {},
+            "recent_additions": 0,
+        }
 
         # Count by directory category
         for category_dir in ["unit", "integration", "performance", "smoke"]:
@@ -155,7 +160,11 @@ class TestMaintenance:
 
     def _check_module_has_tests(self, module_path: Path) -> bool:
         """Check if a module has corresponding tests."""
-        test_patterns = [f"test_{module_path.stem}.py", f"test_{module_path.stem}_*.py", f"*{module_path.stem}*.py"]
+        test_patterns = [
+            f"test_{module_path.stem}.py",
+            f"test_{module_path.stem}_*.py",
+            f"*{module_path.stem}*.py",
+        ]
 
         return any(list(self.tests_dir.rglob(pattern)) for pattern in test_patterns)
 
@@ -200,7 +209,15 @@ class TestMaintenance:
                     content = f.read()
 
                     # Check for potential flaky tests
-                    if any(pattern in content for pattern in ["time.sleep", "random", "datetime.now", "time.time"]):
+                    if any(
+                        pattern in content
+                        for pattern in [
+                            "time.sleep",
+                            "random",
+                            "datetime.now",
+                            "time.time",
+                        ]
+                    ):
                         reliability_metrics["flaky_tests"].append(str(test_file.relative_to(self.project_root)))
 
                     # Check for test dependencies
@@ -348,9 +365,9 @@ class TestMaintenance:
         data_management["storage_usage"] = {
             "total_size_mb": total_size,
             "file_count": len(data_management["test_data_files"]),
-            "average_file_size_mb": total_size / len(data_management["test_data_files"])
-            if data_management["test_data_files"]
-            else 0,
+            "average_file_size_mb": (
+                total_size / len(data_management["test_data_files"]) if data_management["test_data_files"] else 0
+            ),
         }
 
         # Generate cleanup recommendations
@@ -383,7 +400,11 @@ class TestMaintenance:
         }
 
         # Check requirements files
-        requirements_files = ["requirements.txt", "requirements-dev.txt", "requirements-test.txt"]
+        requirements_files = [
+            "requirements.txt",
+            "requirements-dev.txt",
+            "requirements-test.txt",
+        ]
 
         for req_file in requirements_files:
             req_path = self.project_root / req_file

@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import random
 from collections import deque
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -30,7 +29,7 @@ class CallablePolicy(Policy):
             raise ValueError("func must be a callable")
         self.func = func
 
-    def compute_actions(self, obs_batch: list[np.ndarray], **kwargs: Any) -> tuple[np.ndarray, list, dict[str, Any]]:
+    def compute_actions(self, obs_batch: list[np.ndarray], **_kwargs: Any) -> tuple[np.ndarray, list, dict[str, Any]]:
         actions = [self.func(obs) for obs in obs_batch]
         # Ensure consistent 2D array shape: (batch_size, action_dim)
         actions_array = np.array(actions)
@@ -42,7 +41,9 @@ class CallablePolicy(Policy):
         return actions_array, [], {}
 
 
-def weighted_policy_mapping(weights: dict[str, float]) -> Callable[[str, Any | None, Any | None, dict[str, Any]], str]:
+def weighted_policy_mapping(
+    weights: dict[str, float],
+) -> Callable[[str, Any | None, Any | None, dict[str, Any]], str]:
     """Create a policy mapping function using normalized weights."""
     total = sum(weights.values()) or 1.0
     norm_weights = {k: v / total for k, v in weights.items()}
@@ -53,7 +54,12 @@ def weighted_policy_mapping(weights: dict[str, float]) -> Callable[[str, Any | N
     # Pre-compute the choices and weights for efficiency
     choices, wts = zip(*norm_weights.items(), strict=False)
 
-    def mapping_fn(agent_id: str, episode: Any | None = None, worker: Any | None = None, **kwargs: Any) -> str:
+    def mapping_fn(
+        _agent_id: str,
+        _episode: Any | None = None,
+        _worker: Any | None = None,
+        **_kwargs: Any,
+    ) -> str:
         return str(random.choices(choices, weights=wts, k=1)[0])
 
     return mapping_fn  # type: ignore[return-value]

@@ -76,7 +76,9 @@ class FactorModel:
         # Transform to get factor returns
         factor_scores = self.pca.transform(returns_std)
         self.factor_returns = pd.DataFrame(
-            factor_scores, index=returns.index, columns=[f"factor_{i + 1}" for i in range(self.config.n_factors)]
+            factor_scores,
+            index=returns.index,
+            columns=[f"factor_{i + 1}" for i in range(self.config.n_factors)],
         )
 
         self.fitted = True
@@ -113,17 +115,22 @@ class FactorModel:
         # Calculate systematic returns
         systematic_returns = pd.DataFrame(index=returns.index, columns=returns.columns)
         for asset in returns.columns:
-            systematic_returns[asset] = (
-                self.factor_loadings.loc[asset] * self.factor_returns  # type: ignore
-            ).sum(axis=1)
+            systematic_returns[asset] = (self.factor_loadings.loc[asset] * self.factor_returns).sum(axis=1)  # type: ignore
 
         # Calculate idiosyncratic returns
         idiosyncratic_returns = returns - systematic_returns
 
-        return {"systematic": systematic_returns, "idiosyncratic": idiosyncratic_returns, "total": returns}
+        return {
+            "systematic": systematic_returns,
+            "idiosyncratic": idiosyncratic_returns,
+            "total": returns,
+        }
 
     def analyze_factor_contributions(
-        self, portfolio_returns: pd.Series, benchmark_returns: pd.Series, factor_returns: pd.DataFrame
+        self,
+        portfolio_returns: pd.Series,
+        _benchmark_returns: pd.Series,
+        factor_returns: pd.DataFrame,
     ) -> dict[str, float]:
         """Analyze factor contributions to portfolio performance."""
         if not self.fitted:
@@ -158,20 +165,27 @@ class BrinsonAttributor:
         self.config = config
 
     def calculate_attribution(
-        self, portfolio_weights: pd.Series, benchmark_weights: pd.Series, returns: pd.Series, grouping_column: str
+        self,
+        portfolio_returns: pd.Series,
+        _benchmark_returns: pd.Series,
+        factor_returns: pd.DataFrame,
     ) -> dict[str, float]:
         """Calculate Brinson attribution for a single period."""
         # Group by sector/asset class
-        portfolio_grouped = portfolio_weights.groupby(grouping_column).sum()
-        benchmark_grouped = benchmark_weights.groupby(grouping_column).sum()
-        returns_grouped = returns.groupby(grouping_column).mean()
+        portfolio_grouped = portfolio_returns.groupby(factor_returns.index).sum()
+        benchmark_grouped = _benchmark_returns.groupby(factor_returns.index).sum()
+        returns_grouped = factor_returns.groupby(factor_returns.index).mean()
 
         # Calculate effects
-        allocation_effect = ((portfolio_grouped - benchmark_grouped) * (returns_grouped - returns.mean())).sum()
+        allocation_effect = (
+            (portfolio_grouped - benchmark_grouped) * (returns_grouped - portfolio_returns.mean())
+        ).sum()
 
-        selection_effect = (benchmark_grouped * (returns_grouped - returns.mean())).sum()
+        selection_effect = (benchmark_grouped * (returns_grouped - portfolio_returns.mean())).sum()
 
-        interaction_effect = ((portfolio_grouped - benchmark_grouped) * (returns_grouped - returns.mean())).sum()
+        interaction_effect = (
+            (portfolio_grouped - benchmark_grouped) * (returns_grouped - portfolio_returns.mean())
+        ).sum()
 
         total_attribution = allocation_effect + selection_effect + interaction_effect
 
@@ -326,7 +340,10 @@ class RiskAdjustedAttributor:
         }
 
     def calculate_risk_adjusted_attribution(
-        self, portfolio_returns: pd.Series, benchmark_returns: pd.Series, factor_returns: pd.DataFrame
+        self,
+        portfolio_returns: pd.Series,
+        benchmark_returns: pd.Series,
+        factor_returns: pd.DataFrame,
     ) -> dict[str, Any]:
         """Calculate risk-adjusted attribution metrics."""
         # Calculate excess returns
@@ -341,7 +358,10 @@ class RiskAdjustedAttributor:
             factor_vol = factor_returns[factor].std()
             factor_risk_contributions[factor] = factor_vol
 
-        return {"information_ratio": information_ratio, "factor_risk_contributions": factor_risk_contributions}
+        return {
+            "information_ratio": information_ratio,
+            "factor_risk_contributions": factor_risk_contributions,
+        }
 
 
 class AttributionVisualizer:
@@ -351,7 +371,10 @@ class AttributionVisualizer:
         self.config = config
 
     def create_attribution_dashboard(
-        self, attribution_results: dict[str, Any], portfolio_returns: pd.Series, benchmark_returns: pd.Series
+        self,
+        attribution_results: dict[str, Any],
+        portfolio_returns: pd.Series,
+        benchmark_returns: pd.Series,
     ) -> go.Figure:
         """Create interactive attribution dashboard."""
         # Create subplots
@@ -379,14 +402,20 @@ class AttributionVisualizer:
 
         fig.add_trace(
             go.Scatter(
-                x=cumulative_portfolio.index, y=cumulative_portfolio.values, name="Portfolio", line=dict(color="blue")
+                x=cumulative_portfolio.index,
+                y=cumulative_portfolio.values,
+                name="Portfolio",
+                line={"color": "blue"},
             ),
             row=1,
             col=1,
         )
         fig.add_trace(
             go.Scatter(
-                x=cumulative_benchmark.index, y=cumulative_benchmark.values, name="Benchmark", line=dict(color="red")
+                x=cumulative_benchmark.index,
+                y=cumulative_benchmark.values,
+                name="Benchmark",
+                line={"color": "red"},
             ),
             row=1,
             col=1,
@@ -403,7 +432,11 @@ class AttributionVisualizer:
                 else:
                     contributions.append(0.0)
 
-            fig.add_trace(go.Bar(x=factors, y=contributions, name="Factor Contributions"), row=1, col=2)
+            fig.add_trace(
+                go.Bar(x=factors, y=contributions, name="Factor Contributions"),
+                row=1,
+                col=2,
+            )
 
         # Risk metrics comparison
         if "risk_analysis" in attribution_results:
@@ -423,7 +456,11 @@ class AttributionVisualizer:
             sectors = list(sector_effects.keys())
             allocation_effects = [sector_effects[s]["allocation"] for s in sectors]
 
-            fig.add_trace(go.Bar(x=sectors, y=allocation_effects, name="Allocation Effect"), row=2, col=2)
+            fig.add_trace(
+                go.Bar(x=sectors, y=allocation_effects, name="Allocation Effect"),
+                row=2,
+                col=2,
+            )
 
         # Rolling performance
         rolling_window = 30
@@ -432,14 +469,20 @@ class AttributionVisualizer:
 
         fig.add_trace(
             go.Scatter(
-                x=rolling_portfolio.index, y=rolling_portfolio.values, name="Portfolio (30d)", line=dict(color="blue")
+                x=rolling_portfolio.index,
+                y=rolling_portfolio.values,
+                name="Portfolio (30d)",
+                line={"color": "blue"},
             ),
             row=3,
             col=1,
         )
         fig.add_trace(
             go.Scatter(
-                x=rolling_benchmark.index, y=rolling_benchmark.values, name="Benchmark (30d)", line=dict(color="red")
+                x=rolling_benchmark.index,
+                y=rolling_benchmark.values,
+                name="Benchmark (30d)",
+                line={"color": "red"},
             ),
             row=3,
             col=1,
@@ -451,7 +494,13 @@ class AttributionVisualizer:
         drawdown = (cumulative_returns - running_max) / running_max
 
         fig.add_trace(
-            go.Scatter(x=drawdown.index, y=drawdown.values, name="Drawdown", line=dict(color="red"), fill="tonexty"),
+            go.Scatter(
+                x=drawdown.index,
+                y=drawdown.values,
+                name="Drawdown",
+                line={"color": "red"},
+                fill="tonexty",
+            ),
             row=3,
             col=2,
         )
@@ -519,7 +568,7 @@ class PerformanceAttributor:
 
         return self.results
 
-    def generate_report(self, output_path: str | None = None) -> str:
+    def generate_report(self, _output_path: str | None = None) -> str:
         """Generate comprehensive attribution report."""
         if not self.results:
             return "No analysis results available. Run analyze_performance() first."
@@ -709,7 +758,10 @@ def demo_brinson_attribution(attributor: PerformanceAttributor, data: dict[str, 
 
     # Run Brinson attribution
     brinson_results = attributor.brinson_attributor.calculate_sector_attribution(
-        data["portfolio_weights"], data["benchmark_weights"], data["asset_returns"], data["sector_data"]
+        data["portfolio_weights"],
+        data["benchmark_weights"],
+        data["asset_returns"],
+        data["sector_data"],
     )
 
     print("Brinson Attribution Results:")
@@ -755,7 +807,11 @@ def demo_risk_analysis(attributor: PerformanceAttributor, data: dict[str, Any]) 
     for factor, contribution in risk_attribution["factor_risk_contributions"].items():
         print(f"  {factor}: {contribution:.4f}")
 
-    return {"portfolio_risk": portfolio_risk, "benchmark_risk": benchmark_risk, "risk_attribution": risk_attribution}
+    return {
+        "portfolio_risk": portfolio_risk,
+        "benchmark_risk": benchmark_risk,
+        "risk_attribution": risk_attribution,
+    }
 
 
 def demo_visualization(attributor: PerformanceAttributor, data: dict[str, Any]) -> dict[str, Any]:
@@ -790,8 +846,18 @@ def demo_visualization(attributor: PerformanceAttributor, data: dict[str, Any]) 
     cumulative_portfolio = (1 + data["portfolio_returns"]).cumprod()
     cumulative_benchmark = (1 + data["benchmark_returns"]).cumprod()
 
-    plt.plot(cumulative_portfolio.index, cumulative_portfolio.values, label="Portfolio", linewidth=2)
-    plt.plot(cumulative_benchmark.index, cumulative_benchmark.values, label="Benchmark", linewidth=2)
+    plt.plot(
+        cumulative_portfolio.index,
+        cumulative_portfolio.values,
+        label="Portfolio",
+        linewidth=2,
+    )
+    plt.plot(
+        cumulative_benchmark.index,
+        cumulative_benchmark.values,
+        label="Benchmark",
+        linewidth=2,
+    )
     plt.title("Cumulative Returns: Portfolio vs Benchmark")
     plt.xlabel("Date")
     plt.ylabel("Cumulative Return")
@@ -822,7 +888,7 @@ def demo_visualization(attributor: PerformanceAttributor, data: dict[str, Any]) 
     return attribution_results
 
 
-def demo_reporting(attributor: PerformanceAttributor, data: dict[str, Any]) -> str:
+def demo_reporting(attributor: PerformanceAttributor, _data: dict[str, Any]) -> str:
     """Demonstrate automated reporting capabilities."""
     print("\n" + "=" * 60)
     print("AUTOMATED REPORTING DEMONSTRATION")
@@ -871,7 +937,10 @@ def main() -> int:
         # Initialize attribution system
         print("\nInitializing attribution system...")
         config = AttributionConfig(
-            factor_model_type="pca", n_factors=3, confidence_level=0.95, visualization_backend="plotly"
+            factor_model_type="pca",
+            n_factors=3,
+            confidence_level=0.95,
+            visualization_backend="plotly",
         )
 
         attributor = PerformanceAttributor(config)
@@ -879,7 +948,7 @@ def main() -> int:
 
         # Run comprehensive analysis
         print("\nRunning comprehensive attribution analysis...")
-        results = attributor.analyze_performance(
+        attributor.analyze_performance(
             data["portfolio_returns"],
             data["benchmark_returns"],
             data["asset_returns"],

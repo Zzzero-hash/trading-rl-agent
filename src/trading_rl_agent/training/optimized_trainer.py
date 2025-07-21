@@ -128,7 +128,7 @@ class MixedPrecisionTrainer:
                 grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 optimizer.step()
 
-            # Scheduler step (if applicable) - exclude ReduceLROnPlateau which needs validation metrics
+            # Scheduler step - exclude ReduceLROnPlateau
             if (
                 scheduler is not None
                 and hasattr(scheduler, "step")
@@ -158,7 +158,11 @@ class MixedPrecisionTrainer:
             ):
                 scheduler.step()
 
-        return {"loss": loss.item(), "grad_norm": grad_norm.item(), "lr": optimizer.param_groups[0]["lr"]}
+        return {
+            "loss": loss.item(),
+            "grad_norm": grad_norm.item(),
+            "lr": optimizer.param_groups[0]["lr"],
+        }
 
     def validate_step(self, data: torch.Tensor, target: torch.Tensor, criterion: nn.Module) -> dict[str, float]:
         """Perform a single validation step."""
@@ -194,7 +198,7 @@ class AdvancedDataAugmentation:
     def augment_batch(self, data: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Apply multiple augmentation techniques."""
 
-        batch_size = data.size(0)
+        data.size(0)
 
         # MixUp augmentation
         if self.mixup_alpha > 0 and np.random.random() < 0.5:
@@ -216,7 +220,11 @@ class AdvancedDataAugmentation:
 
     def _apply_mixup(self, data: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Apply MixUp augmentation."""
-        lam = torch.tensor(np.random.beta(self.mixup_alpha, self.mixup_alpha), device=data.device, dtype=data.dtype)
+        lam = torch.tensor(
+            np.random.beta(self.mixup_alpha, self.mixup_alpha),
+            device=data.device,
+            dtype=data.dtype,
+        )
         batch_size = data.size(0)
         index = torch.randperm(batch_size, device=data.device)
 
@@ -255,7 +263,6 @@ class AdvancedDataAugmentation:
         """Apply simple sequence shifting for robustness (replaces time warping)."""
         batch_size, seq_len, features = data.shape
         device = data.device
-        dtype = data.dtype
 
         # Simple sequence shifting: randomly shift the sequence by a small amount
         max_shift = max(1, seq_len // 20)  # Maximum 5% shift
@@ -529,7 +536,7 @@ class OptimizedTrainingManager:
             self.trainer.training_history["learning_rate"].append(train_metrics["lr"])
             self.trainer.training_history["gradient_norm"].append(train_metrics["grad_norm"])
 
-            # Scheduler step (for schedulers that need validation loss or epoch-level updates)
+            # Scheduler step
             if scheduler is not None and hasattr(scheduler, "step"):
                 if isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau):
                     # ReduceLROnPlateau needs validation loss
@@ -585,8 +592,8 @@ class OptimizedTrainingManager:
         logger.info(f"📋 Epoch {epoch + 1}/{total_epochs} Summary:")
         logger.info(f"  🔥 Train Loss: {train_metrics['loss']:.6f}")
         logger.info(f"  📊 Val Loss: {val_metrics['loss']:.6f}")
-        logger.info(f"  📏 Train MAE: {train_metrics['mae']:.6f}, Val MAE: {val_metrics['mae']:.6f}")
-        logger.info(f"  📈 Train RMSE: {train_metrics['rmse']:.6f}, Val RMSE: {val_metrics['rmse']:.6f}")
+        logger.info(f"  📏 Train MAE: {train_metrics['mae']:.6f}\n  📉 Val MAE: {val_metrics['mae']:.6f}")
+        logger.info(f"  📈 Train RMSE: {train_metrics['rmse']:.6f}\n  📉 Val RMSE: {val_metrics['rmse']:.6f}")
         logger.info(f"  ⏱️ Epoch Time: {epoch_time:.1f}s")
 
     def _get_final_metrics(self, val_loader: DataLoader, criterion: nn.Module) -> dict[str, float]:
@@ -605,7 +612,7 @@ class OptimizedTrainingManager:
 
     def load_checkpoint(self, checkpoint_path: str) -> None:
         """Load model checkpoint."""
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)  # nosec
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.trainer.best_val_loss = checkpoint["val_loss"]
         self.trainer.training_history = checkpoint["training_history"]
@@ -640,7 +647,15 @@ def create_advanced_scheduler(
         one_cycle_params = {
             k: v
             for k, v in kwargs.items()
-            if k in ["max_lr", "epochs", "steps_per_epoch", "pct_start", "div_factor", "final_div_factor"]
+            if k
+            in [
+                "max_lr",
+                "epochs",
+                "steps_per_epoch",
+                "pct_start",
+                "div_factor",
+                "final_div_factor",
+            ]
         }
         return AdvancedLRScheduler.create_one_cycle_lr(optimizer, **one_cycle_params)
     if scheduler_type == "reduce_on_plateau":

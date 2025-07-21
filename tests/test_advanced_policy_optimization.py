@@ -15,7 +15,12 @@ from trading_rl_agent.agents.advanced_policy_optimization import (
     MultiObjectiveOptimizer,
     NaturalPolicyGradient,
 )
-from trading_rl_agent.agents.advanced_trainer import AdvancedTrainer, MultiObjectiveTrainer, PolicyNetwork, ValueNetwork
+from trading_rl_agent.agents.advanced_trainer import (
+    AdvancedTrainer,
+    MultiObjectiveTrainer,
+    PolicyNetwork,
+    ValueNetwork,
+)
 from trading_rl_agent.agents.configs import (
     AdvancedPPOConfig,
     MultiObjectiveConfig,

@@ -10,8 +10,8 @@ from dataclasses import dataclass
 import pandas as pd
 import pandas_ta as ta
 
-from ..core.logging import get_logger
-from ..data.features import (
+from src.trading_rl_agent.core.logging import get_logger
+from src.trading_rl_agent.data.features import (
     detect_doji,
     detect_engulfing,
     detect_evening_star,
@@ -63,7 +63,7 @@ class TechnicalIndicators:
         self.logger = get_logger(self.__class__.__name__)
 
         try:
-            import pandas_ta  # noqa: F401
+            pass
         except Exception as exc:  # pragma: no cover - import guard
             raise ImportError(
                 "pandas-ta is required for TechnicalIndicators. Please install it with `pip install pandas-ta`.",

@@ -196,7 +196,11 @@ class TestDataStandardizer:
         """Test fitting with missing features."""
         # Create data with only some features
         df = pd.DataFrame(
-            {"open": [100.0, 101.0, 102.0], "close": [101.0, 102.0, 103.0], "volume": [1000000, 1100000, 1200000]}
+            {
+                "open": [100.0, 101.0, 102.0],
+                "close": [101.0, 102.0, 103.0],
+                "volume": [1000000, 1100000, 1200000],
+            }
         )
 
         standardizer = DataStandardizer()
@@ -422,7 +426,13 @@ class TestLiveDataProcessor:
         processor = LiveDataProcessor(standardizer)
 
         # Process single row
-        live_data = {"open": 105.0, "high": 107.0, "low": 104.0, "close": 106.0, "volume": 1500000}
+        live_data = {
+            "open": 105.0,
+            "high": 107.0,
+            "low": 104.0,
+            "close": 106.0,
+            "volume": 1500000,
+        }
 
         result = processor.process_single_row(live_data)
 
@@ -450,8 +460,20 @@ class TestLiveDataProcessor:
 
         # Process batch
         live_data_batch = [
-            {"open": 105.0, "high": 107.0, "low": 104.0, "close": 106.0, "volume": 1500000},
-            {"open": 106.0, "high": 108.0, "low": 105.0, "close": 107.0, "volume": 1600000},
+            {
+                "open": 105.0,
+                "high": 107.0,
+                "low": 104.0,
+                "close": 106.0,
+                "volume": 1500000,
+            },
+            {
+                "open": 106.0,
+                "high": 108.0,
+                "low": 105.0,
+                "close": 107.0,
+                "volume": 1600000,
+            },
         ]
 
         result = processor.process_batch(live_data_batch)
@@ -577,7 +599,13 @@ class TestUtilityFunctions:
         standardizer.save(str(standardizer_path))
 
         # Process live data
-        live_data = {"open": 105.0, "high": 107.0, "low": 104.0, "close": 106.0, "volume": 1500000}
+        live_data = {
+            "open": 105.0,
+            "high": 107.0,
+            "low": 104.0,
+            "close": 106.0,
+            "volume": 1500000,
+        }
 
         result = process_live_data(live_data, str(standardizer_path))
 
@@ -604,7 +632,15 @@ class TestDataStandardizerEdgeCases:
 
     def test_single_row_dataframe(self):
         """Test handling of single row dataframe."""
-        df = pd.DataFrame({"open": [100.0], "high": [102.0], "low": [99.0], "close": [101.0], "volume": [1000000]})
+        df = pd.DataFrame(
+            {
+                "open": [100.0],
+                "high": [102.0],
+                "low": [99.0],
+                "close": [101.0],
+                "volume": [1000000],
+            }
+        )
 
         standardizer = DataStandardizer()
         standardizer.fit(df)
@@ -803,7 +839,13 @@ class TestDataStandardizerIntegration:
         processor = LiveDataProcessor(standardizer)
 
         # Process live data
-        live_data = {"open": 105.0, "high": 107.0, "low": 104.0, "close": 106.0, "volume": 1500000}
+        live_data = {
+            "open": 105.0,
+            "high": 107.0,
+            "low": 104.0,
+            "close": 106.0,
+            "volume": 1500000,
+        }
 
         result = processor.process_single_row(live_data)
 

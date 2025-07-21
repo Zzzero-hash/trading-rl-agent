@@ -58,7 +58,12 @@ class TestAlpacaConfig:
     def test_create_alpaca_config_from_env(self):
         """Test creating config from environment variables."""
         with patch.dict(
-            os.environ, {"ALPACA_API_KEY": "env_key", "ALPACA_SECRET_KEY": "env_secret", "ALPACA_PAPER_TRADING": "true"}
+            os.environ,
+            {
+                "ALPACA_API_KEY": "env_key",
+                "ALPACA_SECRET_KEY": "env_secret",
+                "ALPACA_PAPER_TRADING": "true",
+            },
         ):
             config = create_alpaca_config_from_env()
             assert config.api_key == "env_key"
@@ -105,7 +110,10 @@ class TestAlpacaEnvironmentConfig:
 
     def test_validate_environment_success(self):
         """Test successful environment validation."""
-        with patch.dict(os.environ, {"ALPACA_API_KEY": "test_key", "ALPACA_SECRET_KEY": "test_secret"}):
+        with patch.dict(
+            os.environ,
+            {"ALPACA_API_KEY": "test_key", "ALPACA_SECRET_KEY": "test_secret"},
+        ):
             assert validate_alpaca_environment() is True
 
     def test_validate_environment_failure(self):
@@ -155,7 +163,11 @@ class TestAlpacaConfigManager:
         """Test loading config from file."""
         import yaml
 
-        config_data = {"api_key": "file_key", "secret_key": "file_secret", "paper_trading": True}
+        config_data = {
+            "api_key": "file_key",
+            "secret_key": "file_secret",
+            "paper_trading": True,
+        }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(config_data, f)

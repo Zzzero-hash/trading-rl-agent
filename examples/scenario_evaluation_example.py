@@ -5,8 +5,8 @@ This example demonstrates how to use the AgentScenarioEvaluator to test
 agent performance across different market regimes and scenarios.
 """
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,9 @@ from trading_rl_agent.eval import AgentScenarioEvaluator
 from trading_rl_agent.eval.scenario_evaluator import MarketScenario
 
 
-def create_simple_moving_average_agent(window: int = 20) -> Callable[[np.ndarray], np.ndarray]:
+def create_simple_moving_average_agent(
+    window: int = 20,
+) -> Callable[[np.ndarray], np.ndarray]:
     """Create a simple moving average crossover agent."""
 
     def agent(features: np.ndarray) -> np.ndarray:
@@ -61,7 +63,9 @@ def create_momentum_agent(lookback: int = 10) -> Callable[[np.ndarray], np.ndarr
     return agent
 
 
-def create_mean_reversion_agent(lookback: int = 20) -> Callable[[np.ndarray], np.ndarray]:
+def create_mean_reversion_agent(
+    lookback: int = 20,
+) -> Callable[[np.ndarray], np.ndarray]:
     """Create a mean reversion agent."""
 
     def agent(features: np.ndarray) -> np.ndarray:
@@ -88,7 +92,9 @@ def create_mean_reversion_agent(lookback: int = 20) -> Callable[[np.ndarray], np
     return agent
 
 
-def create_volatility_breakout_agent(vol_window: int = 20) -> Callable[[np.ndarray], np.ndarray]:
+def create_volatility_breakout_agent(
+    vol_window: int = 20,
+) -> Callable[[np.ndarray], np.ndarray]:
     """Create a volatility breakout agent."""
 
     def agent(features: np.ndarray) -> np.ndarray:
@@ -226,13 +232,15 @@ def main() -> None:
         evaluator.print_evaluation_summary(results)
 
         # Generate detailed report
-        report = evaluator.generate_evaluation_report(
-            results, output_path=output_dir / f"{agent_name.lower().replace(' ', '_')}_report.md"
+        evaluator.generate_evaluation_report(
+            results,
+            output_path=output_dir / f"{agent_name.lower().replace(' ', '_')}_report.md",
         )
 
         # Create visualization
         evaluator.create_visualization(
-            results, output_path=output_dir / f"{agent_name.lower().replace(' ', '_')}_evaluation.png"
+            results,
+            output_path=output_dir / f"{agent_name.lower().replace(' ', '_')}_evaluation.png",
         )
 
     # Compare agents

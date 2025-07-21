@@ -139,7 +139,17 @@ class OptimizedTestRunner:
         """Run smoke tests for CI/CD."""
         print("💨 Running smoke tests...")
 
-        cmd = ["python3", "-m", "pytest", "tests/smoke/", "-m", "smoke", "--tb=short", "--durations=5", "--maxfail=1"]
+        cmd = [
+            "python3",
+            "-m",
+            "pytest",
+            "tests/smoke/",
+            "-m",
+            "smoke",
+            "--tb=short",
+            "--durations=5",
+            "--maxfail=1",
+        ]
 
         start_time = time.time()
         result = self._run_command(cmd, "smoke_tests")
@@ -287,7 +297,11 @@ class OptimizedTestRunner:
             test_paths.extend([str(t.relative_to(self.project_root)) for t in module_tests])
 
         if not test_paths:
-            return {"test_type": "selective", "success": False, "error": f"No tests found for modules: {modules}"}
+            return {
+                "test_type": "selective",
+                "success": False,
+                "error": f"No tests found for modules: {modules}",
+            }
 
         cmd = [
             "python3",
@@ -320,7 +334,7 @@ class OptimizedTestRunner:
             "coverage": result.get("coverage", 0),
         }
 
-    def _run_command(self, cmd: list[str], test_name: str) -> dict:
+    def _run_command(self, cmd: list[str], _test_name: str) -> dict:
         """Run a command and capture results."""
         print(f"Running: {' '.join(cmd)}")
 
@@ -382,11 +396,20 @@ class OptimizedTestRunner:
                 "error_output": "Timeout after 1 hour",
             }
         except Exception as e:
-            return {"success": False, "error": str(e), "output": "", "error_output": str(e)}
+            return {
+                "success": False,
+                "error": str(e),
+                "output": "",
+                "error_output": str(e),
+            }
 
     def _parse_coverage_data(self) -> dict:
         """Parse coverage data from generated reports."""
-        coverage_data = {"overall_coverage": 0, "module_coverage": {}, "missing_lines": []}
+        coverage_data = {
+            "overall_coverage": 0,
+            "module_coverage": {},
+            "missing_lines": [],
+        }
 
         # Parse JSON coverage
         coverage_file = self.project_root / "coverage.json"
@@ -429,7 +452,11 @@ class OptimizedTestRunner:
                 "overall_success": all(r.get("success", False) for r in results),
             },
             "test_results": results,
-            "performance_metrics": {"average_test_time": 0, "slowest_test_type": None, "fastest_test_type": None},
+            "performance_metrics": {
+                "average_test_time": 0,
+                "slowest_test_type": None,
+                "fastest_test_type": None,
+            },
             "recommendations": [],
         }
 
@@ -526,7 +553,16 @@ def main():
     parser = argparse.ArgumentParser(description="Trading RL Agent Optimized Test Runner")
     parser.add_argument(
         "--mode",
-        choices=["fast", "integration", "performance", "smoke", "full", "coverage", "parallel", "selective"],
+        choices=[
+            "fast",
+            "integration",
+            "performance",
+            "smoke",
+            "full",
+            "coverage",
+            "parallel",
+            "selective",
+        ],
         default="fast",
         help="Test execution mode",
     )

@@ -139,7 +139,13 @@ class QualityChecker:
 
         # Run custom documentation tests
         doc_tests_success, doc_tests_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/quality/test_documentation_accuracy.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/quality/test_documentation_accuracy.py",
+                "-v",
+            ],
             "Documentation accuracy tests",
         )
 
@@ -153,7 +159,13 @@ class QualityChecker:
 
         # Run custom type hints tests
         type_hints_success, type_hints_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/quality/test_type_hints_validation.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/quality/test_type_hints_validation.py",
+                "-v",
+            ],
             "Type hints validation tests",
         )
 
@@ -166,28 +178,60 @@ class QualityChecker:
 
         # Run input validation tests
         input_validation_success, input_validation_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/security/test_input_validation.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/security/test_input_validation.py",
+                "-v",
+            ],
             "Input validation security tests",
         )
 
         # Run authentication tests
         auth_success, auth_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/security/test_authentication_authorization.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/security/test_authentication_authorization.py",
+                "-v",
+            ],
             "Authentication and authorization tests",
         )
 
         # Run data sanitization tests
         sanitization_success, sanitization_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/security/test_data_sanitization.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/security/test_data_sanitization.py",
+                "-v",
+            ],
             "Data sanitization tests",
         )
 
         # Run API security tests
         api_security_success, api_security_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/security/test_api_security.py", "-v"], "API security tests"
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/security/test_api_security.py",
+                "-v",
+            ],
+            "API security tests",
         )
 
-        success = all([input_validation_success, auth_success, sanitization_success, api_security_success])
+        success = all(
+            [
+                input_validation_success,
+                auth_success,
+                sanitization_success,
+                api_security_success,
+            ]
+        )
         self.results["security_validation"] = success
         return success
 
@@ -197,12 +241,14 @@ class QualityChecker:
 
         # Run pytest with profiling
         perf_success, perf_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/performance/", "-v"], "Performance tests"
+            [sys.executable, "-m", "pytest", "tests/performance/", "-v"],
+            "Performance tests",
         )
 
         # Run memory profiling
         memory_success, memory_output = self.run_command(
-            [sys.executable, "-m", "memory_profiler", "src/trading_rl_agent/main.py"], "Memory profiling"
+            [sys.executable, "-m", "memory_profiler", "src/trading_rl_agent/main.py"],
+            "Memory profiling",
         )
 
         success = perf_success
@@ -215,7 +261,13 @@ class QualityChecker:
 
         # Run custom error message tests
         error_tests_success, error_tests_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/quality/test_error_messages.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/quality/test_error_messages.py",
+                "-v",
+            ],
             "Error message accuracy tests",
         )
 
@@ -228,7 +280,14 @@ class QualityChecker:
 
         # Run custom logging security tests
         logging_tests_success, logging_tests_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/quality/test_logging_security.py", "-v"], "Logging security tests"
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/quality/test_logging_security.py",
+                "-v",
+            ],
+            "Logging security tests",
         )
 
         self.results["logging_security"] = logging_tests_success
@@ -240,7 +299,13 @@ class QualityChecker:
 
         # Run custom configuration validation tests
         config_tests_success, config_tests_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/quality/test_configuration_validation.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/quality/test_configuration_validation.py",
+                "-v",
+            ],
             "Configuration validation tests",
         )
 
@@ -253,7 +318,13 @@ class QualityChecker:
 
         # Run custom environment variable tests
         env_tests_success, env_tests_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/quality/test_environment_variables.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/quality/test_environment_variables.py",
+                "-v",
+            ],
             "Environment variable handling tests",
         )
 
@@ -272,7 +343,13 @@ class QualityChecker:
 
         # Run custom dependency tests
         dep_tests_success, dep_tests_output = self.run_command(
-            [sys.executable, "-m", "pytest", "tests/quality/test_dependency_security.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/quality/test_dependency_security.py",
+                "-v",
+            ],
             "Dependency security tests",
         )
 

@@ -11,6 +11,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+# Import the transaction costs module
+import transaction_costs
+
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
@@ -67,9 +70,6 @@ sys.modules["numpy"] = MockNumpy()  # type: ignore
 
 # Now import the transaction costs module directly
 sys.path.insert(0, str(Path(__file__).parent / "src" / "trading_rl_agent" / "portfolio"))
-
-# Import the transaction costs module
-import transaction_costs
 
 
 # Test the classes
@@ -274,7 +274,7 @@ def test_transaction_cost_model() -> None:
 
     # Test broker model creation
     for broker_type in transaction_costs.BrokerType:
-        broker_model = transaction_costs.TransactionCostModel.create_broker_model(broker_type)
+        transaction_costs.TransactionCostModel.create_broker_model(broker_type)
         print(f"  Created {broker_type.value} broker model")
 
     print("  ✅ TransactionCostModel test passed")

@@ -4,7 +4,13 @@ Tests for the monitoring module.
 
 import time
 
-from trading_rl_agent.monitoring import AlertManager, AlertSeverity, AlertStatus, Dashboard, MetricsCollector
+from trading_rl_agent.monitoring import (
+    AlertManager,
+    AlertSeverity,
+    AlertStatus,
+    Dashboard,
+    MetricsCollector,
+)
 
 
 class TestMetricsCollector:
@@ -175,7 +181,10 @@ class TestAlertManager:
         manager = AlertManager()
 
         alert = manager.create_alert(
-            title="Test Alert", message="Test message", severity=AlertSeverity.ERROR, source="test"
+            title="Test Alert",
+            message="Test message",
+            severity=AlertSeverity.ERROR,
+            source="test",
         )
 
         success = manager.acknowledge_alert(alert.id, "test_user")
@@ -188,7 +197,10 @@ class TestAlertManager:
         manager = AlertManager()
 
         alert = manager.create_alert(
-            title="Test Alert", message="Test message", severity=AlertSeverity.ERROR, source="test"
+            title="Test Alert",
+            message="Test message",
+            severity=AlertSeverity.ERROR,
+            source="test",
         )
 
         success = manager.resolve_alert(alert.id)
@@ -201,11 +213,17 @@ class TestAlertManager:
 
         # Create alerts with different statuses
         alert1 = manager.create_alert(
-            title="Active Alert", message="Active message", severity=AlertSeverity.WARNING, source="test"
+            title="Active Alert",
+            message="Active message",
+            severity=AlertSeverity.WARNING,
+            source="test",
         )
 
         alert2 = manager.create_alert(
-            title="Another Alert", message="Another message", severity=AlertSeverity.ERROR, source="test"
+            title="Another Alert",
+            message="Another message",
+            severity=AlertSeverity.ERROR,
+            source="test",
         )
 
         # Verify both alerts are initially active
@@ -226,13 +244,26 @@ class TestAlertManager:
         manager = AlertManager()
 
         # Create alerts with different severities
-        manager.create_alert(title="Info Alert", message="Info message", severity=AlertSeverity.INFO, source="test1")
-
         manager.create_alert(
-            title="Warning Alert", message="Warning message", severity=AlertSeverity.WARNING, source="test2"
+            title="Info Alert",
+            message="Info message",
+            severity=AlertSeverity.INFO,
+            source="test1",
         )
 
-        manager.create_alert(title="Error Alert", message="Error message", severity=AlertSeverity.ERROR, source="test1")
+        manager.create_alert(
+            title="Warning Alert",
+            message="Warning message",
+            severity=AlertSeverity.WARNING,
+            source="test2",
+        )
+
+        manager.create_alert(
+            title="Error Alert",
+            message="Error message",
+            severity=AlertSeverity.ERROR,
+            source="test1",
+        )
 
         summary = manager.get_alert_summary()
 
@@ -333,11 +364,17 @@ class TestDashboard:
 
         # Create some alerts
         alert_manager.create_alert(
-            title="Test Alert 1", message="First alert", severity=AlertSeverity.WARNING, source="test"
+            title="Test Alert 1",
+            message="First alert",
+            severity=AlertSeverity.WARNING,
+            source="test",
         )
 
         alert_manager.create_alert(
-            title="Test Alert 2", message="Second alert", severity=AlertSeverity.ERROR, source="test"
+            title="Test Alert 2",
+            message="Second alert",
+            severity=AlertSeverity.ERROR,
+            source="test",
         )
 
         recent_alerts = dashboard.get_recent_alerts(limit=1)

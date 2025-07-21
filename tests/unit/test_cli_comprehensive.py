@@ -176,7 +176,17 @@ class TestDataCLICommands:
         mock_refresh.return_value = None
 
         result = self.runner.invoke(
-            main_app, ["data", "refresh", "--days", "7", "--symbols", "AAPL,GOOGL", "--output-dir", self.temp_dir]
+            main_app,
+            [
+                "data",
+                "refresh",
+                "--days",
+                "7",
+                "--symbols",
+                "AAPL,GOOGL",
+                "--output-dir",
+                self.temp_dir,
+            ],
         )
 
         assert result.exit_code == 0
@@ -212,7 +222,15 @@ class TestDataCLICommands:
         mock_process.return_value = None
 
         result = self.runner.invoke(
-            main_app, ["data", "process", "--output-dir", self.temp_dir, "--force-rebuild", "--parallel"]
+            main_app,
+            [
+                "data",
+                "process",
+                "--output-dir",
+                self.temp_dir,
+                "--force-rebuild",
+                "--parallel",
+            ],
         )
 
         assert result.exit_code == 0
@@ -246,7 +264,15 @@ class TestDataCLICommands:
         mock_pipeline.return_value = None
 
         result = self.runner.invoke(
-            main_app, ["data", "pipeline", "--config-path", self.temp_dir, "--output-dir", f"{self.temp_dir}/pipeline"]
+            main_app,
+            [
+                "data",
+                "pipeline",
+                "--config-path",
+                self.temp_dir,
+                "--output-dir",
+                f"{self.temp_dir}/pipeline",
+            ],
         )
 
         assert result.exit_code == 0
@@ -346,7 +372,10 @@ class TestTrainingCLICommands:
         """Test hyperparameter optimization command."""
         mock_hyperopt.return_value = None
 
-        result = self.runner.invoke(main_app, ["train", "hyperopt", "--n-trials", "50", "--output-dir", self.temp_dir])
+        result = self.runner.invoke(
+            main_app,
+            ["train", "hyperopt", "--n-trials", "50", "--output-dir", self.temp_dir],
+        )
 
         assert result.exit_code == 0
         mock_hyperopt.assert_called_once()
@@ -541,7 +570,10 @@ class TestTradeCLICommands:
         """Test stop trading command."""
         mock_stop.return_value = None
 
-        result = self.runner.invoke(main_app, ["trade", "stop", "--session-id", "test_session", "--all-sessions"])
+        result = self.runner.invoke(
+            main_app,
+            ["trade", "stop", "--session-id", "test_session", "--all-sessions"],
+        )
 
         assert result.exit_code == 0
         mock_stop.assert_called_once()
@@ -562,7 +594,17 @@ class TestTradeCLICommands:
         mock_monitor.return_value = None
 
         result = self.runner.invoke(
-            main_app, ["trade", "monitor", "--session-id", "test_session", "--metrics", "all", "--interval", "60"]
+            main_app,
+            [
+                "trade",
+                "monitor",
+                "--session-id",
+                "test_session",
+                "--metrics",
+                "all",
+                "--interval",
+                "60",
+            ],
         )
 
         assert result.exit_code == 0
@@ -573,7 +615,10 @@ class TestTradeCLICommands:
         """Test paper trading command."""
         mock_paper.return_value = None
 
-        result = self.runner.invoke(main_app, ["trade", "paper", "--symbols", "AAPL,GOOGL,MSFT", "--duration", "1d"])
+        result = self.runner.invoke(
+            main_app,
+            ["trade", "paper", "--symbols", "AAPL,GOOGL,MSFT", "--duration", "1d"],
+        )
 
         assert result.exit_code == 0
         mock_paper.assert_called_once()
@@ -705,21 +750,43 @@ class TestCLIErrorHandling:
         """Test handling of network errors."""
         with patch("trading_rl_agent.cli.download_all", side_effect=Exception("Network error")):
             result = self.runner.invoke(
-                main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-12-31"]
+                main_app,
+                [
+                    "data",
+                    "download-all",
+                    "--start-date",
+                    "2023-01-01",
+                    "--end-date",
+                    "2023-12-31",
+                ],
             )
             assert result.exit_code != 0
 
     def test_permission_errors(self):
         """Test handling of permission errors."""
-        with patch("trading_rl_agent.cli.download_all", side_effect=PermissionError("Permission denied")):
+        with patch(
+            "trading_rl_agent.cli.download_all",
+            side_effect=PermissionError("Permission denied"),
+        ):
             result = self.runner.invoke(
-                main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-12-31"]
+                main_app,
+                [
+                    "data",
+                    "download-all",
+                    "--start-date",
+                    "2023-01-01",
+                    "--end-date",
+                    "2023-12-31",
+                ],
             )
             assert result.exit_code != 0
 
     def test_memory_errors(self):
         """Test handling of memory errors."""
-        with patch("trading_rl_agent.cli.train_cnn_lstm", side_effect=MemoryError("Out of memory")):
+        with patch(
+            "trading_rl_agent.cli.train_cnn_lstm",
+            side_effect=MemoryError("Out of memory"),
+        ):
             result = self.runner.invoke(main_app, ["train", "cnn-lstm", "--epochs", "10"])
             assert result.exit_code != 0
 
@@ -772,7 +839,15 @@ class TestCLIPerformance:
 
         start_time = time.time()
         result = self.runner.invoke(
-            main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-01-31"]
+            main_app,
+            [
+                "data",
+                "download-all",
+                "--start-date",
+                "2023-01-01",
+                "--end-date",
+                "2023-01-31",
+            ],
         )
         end_time = time.time()
 
@@ -846,7 +921,15 @@ class TestCLIMemoryUsage:
         initial_memory = process.memory_info().rss
 
         result = self.runner.invoke(
-            main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-01-31"]
+            main_app,
+            [
+                "data",
+                "download-all",
+                "--start-date",
+                "2023-01-01",
+                "--end-date",
+                "2023-01-31",
+            ],
         )
 
         final_memory = process.memory_info().rss
@@ -883,9 +966,20 @@ class TestCLIErrorRecovery:
 
     def test_recovery_from_network_failure(self):
         """Test recovery from network failure."""
-        with patch("trading_rl_agent.cli.download_all", side_effect=ConnectionError("Network failure")):
+        with patch(
+            "trading_rl_agent.cli.download_all",
+            side_effect=ConnectionError("Network failure"),
+        ):
             result = self.runner.invoke(
-                main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-12-31"]
+                main_app,
+                [
+                    "data",
+                    "download-all",
+                    "--start-date",
+                    "2023-01-01",
+                    "--end-date",
+                    "2023-12-31",
+                ],
             )
 
             assert result.exit_code != 0
@@ -894,18 +988,40 @@ class TestCLIErrorRecovery:
 
     def test_recovery_from_disk_full(self):
         """Test recovery from disk full error."""
-        with patch("trading_rl_agent.cli.download_all", side_effect=OSError("No space left on device")):
+        with patch(
+            "trading_rl_agent.cli.download_all",
+            side_effect=OSError("No space left on device"),
+        ):
             result = self.runner.invoke(
-                main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-12-31"]
+                main_app,
+                [
+                    "data",
+                    "download-all",
+                    "--start-date",
+                    "2023-01-01",
+                    "--end-date",
+                    "2023-12-31",
+                ],
             )
 
             assert result.exit_code != 0
 
     def test_recovery_from_timeout(self):
         """Test recovery from timeout error."""
-        with patch("trading_rl_agent.cli.download_all", side_effect=TimeoutError("Operation timed out")):
+        with patch(
+            "trading_rl_agent.cli.download_all",
+            side_effect=TimeoutError("Operation timed out"),
+        ):
             result = self.runner.invoke(
-                main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-12-31"]
+                main_app,
+                [
+                    "data",
+                    "download-all",
+                    "--start-date",
+                    "2023-01-01",
+                    "--end-date",
+                    "2023-12-31",
+                ],
             )
 
             assert result.exit_code != 0
@@ -969,7 +1085,15 @@ class TestCLIUserExperience:
             mock_download.return_value = None
 
             result = self.runner.invoke(
-                main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-12-31"]
+                main_app,
+                [
+                    "data",
+                    "download-all",
+                    "--start-date",
+                    "2023-01-01",
+                    "--end-date",
+                    "2023-12-31",
+                ],
             )
 
             assert result.exit_code == 0
@@ -1019,7 +1143,15 @@ class TestCLIIntegration:
 
         # Test data download
         result = self.runner.invoke(
-            main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-12-31"]
+            main_app,
+            [
+                "data",
+                "download-all",
+                "--start-date",
+                "2023-01-01",
+                "--end-date",
+                "2023-12-31",
+            ],
         )
         assert result.exit_code == 0
         mock_download.assert_called_once()
@@ -1030,7 +1162,10 @@ class TestCLIIntegration:
         mock_process.assert_called_once()
 
         # Test model training
-        result = self.runner.invoke(main_app, ["train", "cnn-lstm", "--epochs", "1", "--output-dir", self.temp_dir])
+        result = self.runner.invoke(
+            main_app,
+            ["train", "cnn-lstm", "--epochs", "1", "--output-dir", self.temp_dir],
+        )
         assert result.exit_code == 0
         mock_train.assert_called_once()
 

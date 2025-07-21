@@ -28,7 +28,7 @@ import requests
 from bs4 import BeautifulSoup
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-from ..core.logging import get_logger
+from src.trading_rl_agent.core.logging import get_logger
 
 # Global sentiment cache for backward compatibility
 sentiment: dict[str, dict[str, Any]] = {}
@@ -64,7 +64,7 @@ class SentimentConfig:
         if self.news_api_key is None:
             # Try unified config first
             try:
-                from ..core.unified_config import UnifiedConfig
+                from src.trading_rl_agent.core.unified_config import UnifiedConfig
 
                 config = UnifiedConfig()
                 self.news_api_key = config.newsapi_key
@@ -78,7 +78,7 @@ class SentimentConfig:
         if self.social_api_key is None:
             # Try unified config first
             try:
-                from ..core.unified_config import UnifiedConfig
+                from src.trading_rl_agent.core.unified_config import UnifiedConfig
 
                 config = UnifiedConfig()
                 self.social_api_key = config.social_api_key
@@ -134,7 +134,7 @@ class SentimentProvider(ABC):
 class NewsSentimentProvider(SentimentProvider):
     """Provider for news sentiment data."""
 
-    def __init__(self, api_key: str | None = None, cache_dir: str | None = "data/cache"):
+    def __init__(self, api_key: str | None = None, _cache_dir: str | None = "data/cache"):
         super().__init__(api_key)
         self.api_key = api_key
         self.request_timeout = 30  # 30 seconds timeout
@@ -262,7 +262,7 @@ class NewsSentimentProvider(SentimentProvider):
 
         # Try web scraping as fallback
         try:
-            return self._fetch_scraped_sentiment(symbol, days_back)
+            return self._fetch_scraped_sentiment(symbol)
         except Exception as e:
             self.logger.warning(f"Web scraping failed for {symbol}: {e}")
 
@@ -327,7 +327,7 @@ class NewsSentimentProvider(SentimentProvider):
 
         return sentiment_data
 
-    def _fetch_scraped_sentiment(self, symbol: str, days_back: int) -> list[SentimentData]:
+    def _fetch_scraped_sentiment(self, symbol: str) -> list[SentimentData]:
         """Fetch sentiment by scraping financial news sites."""
         sentiment_data = []
 
@@ -350,7 +350,15 @@ class NewsSentimentProvider(SentimentProvider):
                 headlines = []
 
                 # Common headline selectors
-                selectors = ["h1", "h2", "h3", "h4", ".headline", ".title", ".article-title"]
+                selectors = [
+                    "h1",
+                    "h2",
+                    "h3",
+                    "h4",
+                    ".headline",
+                    ".title",
+                    ".article-title",
+                ]
                 for selector in selectors:
                     elements = soup.find_all(selector)
                     for element in elements:
@@ -386,7 +394,7 @@ class NewsSentimentProvider(SentimentProvider):
 
         return sentiment_data
 
-    def _generate_mock_sentiment(self, symbol: str, days_back: int) -> list[SentimentData]:
+    def _generate_mock_sentiment(self, symbol: str, _days_back: int) -> list[SentimentData]:
         """Generate mock sentiment data for testing/fallback."""
         num_articles = random.randint(1, 5)
         sentiment_data = []
@@ -397,7 +405,7 @@ class NewsSentimentProvider(SentimentProvider):
             magnitude = random.uniform(0.3, 0.9)
 
             # Add some time variation
-            timestamp = datetime.datetime.now() - datetime.timedelta(hours=random.randint(0, days_back * 24))
+            timestamp = datetime.datetime.now() - datetime.timedelta(hours=random.randint(0, _days_back * 24))
 
             sentiment_data.append(
                 SentimentData(

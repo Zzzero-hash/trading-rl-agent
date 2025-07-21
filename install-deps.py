@@ -97,7 +97,7 @@ class DependencyInstaller:
     def install_with_pip_install(self, profile: str) -> bool:
         """Install using pip install with extras"""
         if profile == "core":
-            # Core is already in pyproject.toml dependencies
+            # Core dependencies
             return self.install_dependencies("core")
 
         try:
@@ -105,7 +105,15 @@ class DependencyInstaller:
 
             if profile == "full":
                 # Install with all extras
-                cmd = [sys.executable, "-m", "pip", "install", "-e", ".", "[dev,ml,production]"]
+                cmd = [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "-e",
+                    ".",
+                    "[dev,ml,production]",
+                ]
             else:
                 # Install with specific extras
                 cmd = [sys.executable, "-m", "pip", "install", "-e", f".[{profile}]"]

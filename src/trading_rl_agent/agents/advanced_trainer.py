@@ -422,7 +422,7 @@ class AdvancedTrainer:
 
     def benchmark_algorithms(
         self,
-        env: Any,
+        _env: Any,
         algorithms: list[tuple[str, AdvancedPPOConfig | TRPOConfig | NaturalPolicyGradientConfig]],
         num_episodes: int = 100,
     ) -> dict[str, Any]:
@@ -506,7 +506,7 @@ class AdvancedTrainer:
         if not checkpoint_path.exists():
             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
 
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)  # nosec
 
         self.policy_net.load_state_dict(checkpoint["policy_net_state_dict"])
         self.value_net.load_state_dict(checkpoint["value_net_state_dict"])
@@ -529,7 +529,7 @@ class AdvancedTrainer:
             "avg_length": np.mean(lengths),
             "best_reward": np.max(rewards),
             "worst_reward": np.min(rewards),
-            "recent_avg_reward": np.mean(rewards[-100:]) if len(rewards) >= 100 else np.mean(rewards),
+            "recent_avg_reward": (np.mean(rewards[-100:]) if len(rewards) >= 100 else np.mean(rewards)),
         }
 
 

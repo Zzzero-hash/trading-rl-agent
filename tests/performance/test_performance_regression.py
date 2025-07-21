@@ -98,8 +98,14 @@ class PerformanceRegressionDetector:
         # Regression detection thresholds
         self.thresholds = {
             "execution_time": {"warning": 1.2, "critical": 1.5},  # 20% and 50% increase
-            "memory_peak_mb": {"warning": 1.15, "critical": 1.3},  # 15% and 30% increase
-            "cpu_usage_percent": {"warning": 1.1, "critical": 1.25},  # 10% and 25% increase
+            "memory_peak_mb": {
+                "warning": 1.15,
+                "critical": 1.3,
+            },  # 15% and 30% increase
+            "cpu_usage_percent": {
+                "warning": 1.1,
+                "critical": 1.25,
+            },  # 10% and 25% increase
             "throughput": {"warning": 0.9, "critical": 0.8},  # 10% and 20% decrease
             "success_rate": {"warning": 0.95, "critical": 0.9},  # 5% and 10% decrease
         }
@@ -119,7 +125,12 @@ class PerformanceRegressionDetector:
         """Save performance metrics to storage."""
         try:
             with open(self.metrics_file, "w") as f:
-                json.dump([asdict(metric) for metric in self.metrics], f, indent=2, default=str)
+                json.dump(
+                    [asdict(metric) for metric in self.metrics],
+                    f,
+                    indent=2,
+                    default=str,
+                )
         except Exception as e:
             logger.exception(f"Failed to save metrics: {e}")
 
@@ -139,7 +150,10 @@ class PerformanceRegressionDetector:
         try:
             with open(self.baselines_file, "w") as f:
                 json.dump(
-                    {name: asdict(baseline) for name, baseline in self.baselines.items()}, f, indent=2, default=str
+                    {name: asdict(baseline) for name, baseline in self.baselines.items()},
+                    f,
+                    indent=2,
+                    default=str,
                 )
         except Exception as e:
             logger.exception(f"Failed to save baselines: {e}")
@@ -409,7 +423,7 @@ class PerformanceRegressionDetector:
                 "current": execution_times[-1],
                 "mean": np.mean(execution_times),
                 "trend": execution_trend,
-                "trend_direction": "increasing" if execution_trend > 0 else "decreasing",
+                "trend_direction": ("increasing" if execution_trend > 0 else "decreasing"),
             },
             "memory_peak_mb": {
                 "current": memory_peaks[-1],
@@ -450,9 +464,18 @@ class PerformanceRegressionDetector:
             report["baselines"][test_name] = {
                 "sample_count": baseline.sample_count,
                 "last_updated": baseline.last_updated.isoformat(),
-                "execution_time": {"mean": baseline.mean_execution_time, "std": baseline.std_execution_time},
-                "memory_peak_mb": {"mean": baseline.mean_memory_peak_mb, "std": baseline.std_memory_peak_mb},
-                "cpu_usage_percent": {"mean": baseline.mean_cpu_usage_percent, "std": baseline.std_cpu_usage_percent},
+                "execution_time": {
+                    "mean": baseline.mean_execution_time,
+                    "std": baseline.std_execution_time,
+                },
+                "memory_peak_mb": {
+                    "mean": baseline.mean_memory_peak_mb,
+                    "std": baseline.std_memory_peak_mb,
+                },
+                "cpu_usage_percent": {
+                    "mean": baseline.mean_cpu_usage_percent,
+                    "std": baseline.std_cpu_usage_percent,
+                },
             }
 
         # Add recent trends for each test
@@ -688,7 +711,10 @@ class TestPerformanceRegression:
         # Establish baseline
         for i in range(3):
             metric = PerformanceMetric(
-                test_name="test_threshold", execution_time=10.0, memory_peak_mb=1000, cpu_usage_percent=40.0
+                test_name="test_threshold",
+                execution_time=10.0,
+                memory_peak_mb=1000,
+                cpu_usage_percent=40.0,
             )
             regression_detector.record_metric(metric)
 
@@ -697,7 +723,10 @@ class TestPerformanceRegression:
         # Test with different performance levels
         # 15% increase - should trigger warning but not critical
         warning_metric = PerformanceMetric(
-            test_name="test_threshold", execution_time=11.5, memory_peak_mb=1000, cpu_usage_percent=40.0
+            test_name="test_threshold",
+            execution_time=11.5,
+            memory_peak_mb=1000,
+            cpu_usage_percent=40.0,
         )
 
         regression_detector.record_metric(warning_metric)
@@ -708,7 +737,10 @@ class TestPerformanceRegression:
 
         # 25% increase - should trigger critical
         critical_metric = PerformanceMetric(
-            test_name="test_threshold", execution_time=12.5, memory_peak_mb=1000, cpu_usage_percent=40.0
+            test_name="test_threshold",
+            execution_time=12.5,
+            memory_peak_mb=1000,
+            cpu_usage_percent=40.0,
         )
 
         regression_detector.record_metric(critical_metric)

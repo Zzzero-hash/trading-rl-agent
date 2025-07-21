@@ -397,10 +397,7 @@ class AdvancedPPO:
         last_advantage = 0
 
         for t in reversed(range(len(rewards))):
-            if t == len(rewards) - 1:
-                next_value = 0
-            else:
-                next_value = values[t + 1]
+            next_value = 0 if t == len(rewards) - 1 else values[t + 1]
 
             delta = rewards[t] + gamma * next_value * (1 - dones[t]) - values[t]
             advantages[t] = delta + gamma * gae_lambda * (1 - dones[t]) * last_advantage
@@ -415,7 +412,7 @@ class AdvancedPPO:
         actions: torch.Tensor,
         old_log_probs: torch.Tensor,
         advantages: torch.Tensor,
-        returns: torch.Tensor,
+        _returns: torch.Tensor,
     ) -> tuple[torch.Tensor, dict[str, float]]:
         """Compute policy loss with advanced clipping."""
         # Get current policy distribution
@@ -431,9 +428,15 @@ class AdvancedPPO:
             # Adaptive clipping based on performance
             recent_performance = np.mean(self.performance_history[-10:])
             if recent_performance > 0:
-                self.clip_ratio = max(self.config.min_clip_ratio, self.clip_ratio * self.config.clip_ratio_decay)
+                self.clip_ratio = max(
+                    self.config.min_clip_ratio,
+                    self.clip_ratio * self.config.clip_ratio_decay,
+                )
             else:
-                self.clip_ratio = min(self.config.max_clip_ratio, self.clip_ratio / self.config.clip_ratio_decay)
+                self.clip_ratio = min(
+                    self.config.max_clip_ratio,
+                    self.clip_ratio / self.config.clip_ratio_decay,
+                )
 
         # Clipped surrogate loss
         surr1 = ratio * advantages
@@ -478,7 +481,12 @@ class AdvancedPPO:
             old_values = values.detach()
             value_loss_unclipped = functional.mse_loss(values, returns)
             value_loss_clipped = functional.mse_loss(
-                old_values + torch.clamp(values - old_values, -self.config.clip_vf_ratio, self.config.clip_vf_ratio),
+                old_values
+                + torch.clamp(
+                    values - old_values,
+                    -self.config.clip_vf_ratio,
+                    self.config.clip_vf_ratio,
+                ),
                 returns,
             )
             value_loss = torch.max(value_loss_unclipped, value_loss_clipped)
@@ -633,7 +641,7 @@ class TRPO:
 
     def compute_fisher_vector_product(
         self,
-        states: torch.Tensor,
+        _states: torch.Tensor,
         v: torch.Tensor,
     ) -> torch.Tensor:
         """Compute Fisher-vector product Hv."""
@@ -703,7 +711,7 @@ class TRPO:
                 param_idx += param_size
 
             # Temporarily update policy
-            old_params = [param.clone() for param in self.policy_net.parameters()]
+            [param.clone() for param in self.policy_net.parameters()]
             for param, new_param in zip(self.policy_net.parameters(), new_params, strict=False):
                 param.data = new_param.data
 
@@ -744,10 +752,7 @@ class TRPO:
         last_advantage = 0
 
         for t in reversed(range(len(rewards))):
-            if t == len(rewards) - 1:
-                next_value = 0
-            else:
-                next_value = values[t + 1]
+            next_value = 0 if t == len(rewards) - 1 else values[t + 1]
 
             delta = rewards[t] + gamma * next_value * (1 - dones[t]) - values[t]
             advantages[t] = delta + gamma * gae_lambda * (1 - dones[t]) * last_advantage
@@ -892,10 +897,7 @@ class NaturalPolicyGradient:
         last_advantage = 0
 
         for t in reversed(range(len(rewards))):
-            if t == len(rewards) - 1:
-                next_value = 0
-            else:
-                next_value = values[t + 1]
+            next_value = 0 if t == len(rewards) - 1 else values[t + 1]
 
             delta = rewards[t] + gamma * next_value * (1 - dones[t]) - values[t]
             advantages[t] = delta + gamma * gae_lambda * (1 - dones[t]) * last_advantage

@@ -16,7 +16,10 @@ import numpy as np
 import pytest
 import torch
 
-from trading_rl_agent.agents.advanced_policy_optimization import AdvancedPPO, AdvancedPPOConfig
+from trading_rl_agent.agents.advanced_policy_optimization import (
+    AdvancedPPO,
+    AdvancedPPOConfig,
+)
 from trading_rl_agent.agents.configs import EnsembleConfig, PPOConfig, SACConfig
 from trading_rl_agent.agents.ensemble_trainer import EnsembleTrainer
 
@@ -52,7 +55,7 @@ class TestModelTrainingPerformance:
     @pytest.mark.performance
     @pytest.mark.benchmark
     @pytest.mark.ml
-    def test_ensemble_training_performance(self, training_data, performance_monitor):
+    def test_ensemble_training_performance(self, _training_data, performance_monitor):
         """Test ensemble training performance."""
         # Prepare training configuration
         config = EnsembleConfig(
@@ -117,7 +120,7 @@ class TestModelTrainingPerformance:
                 def reset(self):
                     return np.random.random(20)
 
-                def step(self, action):
+                def step(self, _action):
                     return np.random.random(20), np.random.random(), False, {}
 
             return TestEnv()
@@ -313,7 +316,11 @@ class TestModelTrainingPerformance:
         # Benchmark training pipeline
         def run_training_pipeline():
             return trainer.train(
-                train_data=train_data, val_data=val_data, epochs=5, batch_size=32, early_stopping_patience=3
+                train_data=train_data,
+                val_data=val_data,
+                epochs=5,
+                batch_size=32,
+                early_stopping_patience=3,
             )
 
         # Measure performance
@@ -408,7 +415,11 @@ class TestModelTrainingPerformance:
         # Benchmark GPU training
         def train_on_gpu():
             return trainer.train(
-                train_data=train_data, val_data=train_data[:1], epochs=3, batch_size=32, early_stopping_patience=2
+                train_data=train_data,
+                val_data=train_data[:1],
+                epochs=3,
+                batch_size=32,
+                early_stopping_patience=2,
             )
 
         # Measure performance
@@ -549,7 +560,7 @@ class TestModelTrainingPerformance:
 
             # Measure performance
             start_time = time.time()
-            result = train_with_batch_size()
+            train_with_batch_size()
             end_time = time.time()
 
             batch_time = end_time - start_time
@@ -603,7 +614,11 @@ class TestModelTrainingPerformance:
         def train_with_checkpointing():
             # Train for a few epochs
             trainer.train(
-                train_data=train_data, val_data=train_data[:1], epochs=2, batch_size=32, early_stopping_patience=1
+                train_data=train_data,
+                val_data=train_data[:1],
+                epochs=2,
+                batch_size=32,
+                early_stopping_patience=1,
             )
 
             # Save checkpoint

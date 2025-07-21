@@ -53,7 +53,7 @@ class MockSupervisedModel(BaseSupervisedModel):
         """Get feature importance."""
         if not self.is_trained:
             return None
-        return dict(zip(self.feature_names or [], self.model.feature_importances_))
+        return dict(zip(self.feature_names or [], self.model.feature_importances_, strict=False))
 
     def save_model(self, filepath: str):
         """Save model."""
@@ -96,7 +96,7 @@ class MockClassifierModel(BaseSupervisedModel):
         """Get feature importance."""
         if not self.is_trained:
             return None
-        return dict(zip(self.feature_names or [], self.model.feature_importances_))
+        return dict(zip(self.feature_names or [], self.model.feature_importances_, strict=False))
 
 
 class TestBaseSupervisedModel:
@@ -124,7 +124,13 @@ class TestBaseSupervisedModel:
 
         assert fitted_model is model
         assert model.is_trained
-        assert model.feature_names == ["feature_0", "feature_1", "feature_2", "feature_3", "feature_4"]
+        assert model.feature_names == [
+            "feature_0",
+            "feature_1",
+            "feature_2",
+            "feature_3",
+            "feature_4",
+        ]
 
     def test_model_prediction(self):
         """Test model prediction functionality."""
@@ -717,7 +723,11 @@ class TestModelPerformance:
     def test_model_comparison_performance(self):
         """Test model comparison performance."""
         # Create multiple models
-        models = [MockSupervisedModel("model1"), MockSupervisedModel("model2"), MockSupervisedModel("model3")]
+        models = [
+            MockSupervisedModel("model1"),
+            MockSupervisedModel("model2"),
+            MockSupervisedModel("model3"),
+        ]
 
         X = np.random.randn(300, 20)
         y = np.random.randn(300)

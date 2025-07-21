@@ -73,10 +73,21 @@ class TestCLIBasic:
                     {
                         "environment": "test",
                         "debug": False,
-                        "data": type("MockData", (), {"primary_source": "yfinance", "symbols": ["AAPL", "GOOGL"]})(),
+                        "data": type(
+                            "MockData",
+                            (),
+                            {
+                                "primary_source": "yfinance",
+                                "symbols": ["AAPL", "GOOGL"],
+                            },
+                        )(),
                         "agent": type("MockAgent", (), {"agent_type": "ppo"})(),
                         "risk": type("MockRisk", (), {"max_position_size": 1000})(),
-                        "execution": type("MockExecution", (), {"broker": "paper", "paper_trading": True})(),
+                        "execution": type(
+                            "MockExecution",
+                            (),
+                            {"broker": "paper", "paper_trading": True},
+                        )(),
                     },
                 )()
                 mock_config.return_value = mock_settings
@@ -91,7 +102,13 @@ class TestCLIBasic:
     def test_subcommand_structure(self):
         """Test subcommand structure without using CliRunner."""
         try:
-            from trading_rl_agent.cli import backtest_app, data_app, scenario_app, trade_app, train_app
+            from trading_rl_agent.cli import (
+                backtest_app,
+                data_app,
+                scenario_app,
+                trade_app,
+                train_app,
+            )
 
             # Verify all sub-apps exist and have commands
             assert data_app is not None
@@ -127,7 +144,14 @@ class TestCLIStructure:
     def test_cli_structure(self):
         """Test that CLI has the expected structure."""
         try:
-            from trading_rl_agent.cli import app, backtest_app, data_app, scenario_app, trade_app, train_app
+            from trading_rl_agent.cli import (
+                app,
+                backtest_app,
+                data_app,
+                scenario_app,
+                trade_app,
+                train_app,
+            )
 
             # Check that all sub-apps exist
             assert app is not None

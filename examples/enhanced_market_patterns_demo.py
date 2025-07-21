@@ -8,8 +8,6 @@ and multi-asset correlated scenarios.
 """
 
 import os
-
-# Add the src directory to the path
 import sys
 
 import matplotlib.pyplot as plt
@@ -17,9 +15,13 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+from trading_rl_agent.data.market_patterns import (
+    STATSMODELS_AVAILABLE,
+    MarketPatternGenerator,
+)
 
-from trading_rl_agent.data.market_patterns import STATSMODELS_AVAILABLE, MarketPatternGenerator
+# Add the src directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 def plot_pattern_comparison(generator: MarketPatternGenerator, n_periods: int = 100) -> None:
@@ -45,19 +47,35 @@ def plot_pattern_comparison(generator: MarketPatternGenerator, n_periods: int = 
 
         if pattern_type in ["uptrend", "downtrend", "sideways"]:
             df = generator.generate_trend_pattern(
-                n_periods=n_periods, trend_type=pattern_type, trend_strength=0.002, volatility=0.02
+                n_periods=n_periods,
+                trend_type=pattern_type,
+                trend_strength=0.002,
+                volatility=0.02,
             )
         elif pattern_type in ["head_and_shoulders", "double_top"]:
             df = generator.generate_reversal_pattern(
-                pattern_type=pattern_type, n_periods=n_periods, pattern_intensity=0.8, base_volatility=0.02
+                pattern_type=pattern_type,
+                n_periods=n_periods,
+                pattern_intensity=0.8,
+                base_volatility=0.02,
             )
-        elif pattern_type in ["ascending_triangle", "descending_triangle", "symmetrical_triangle"]:
+        elif pattern_type in [
+            "ascending_triangle",
+            "descending_triangle",
+            "symmetrical_triangle",
+        ]:
             df = generator.generate_triangle_pattern(
-                pattern_type=pattern_type, n_periods=n_periods, pattern_intensity=0.8, base_volatility=0.02
+                pattern_type=pattern_type,
+                n_periods=n_periods,
+                pattern_intensity=0.8,
+                base_volatility=0.02,
             )
         else:
             df = generator.generate_continuation_pattern(
-                pattern_type=pattern_type, n_periods=n_periods, pattern_intensity=0.8, base_volatility=0.02
+                pattern_type=pattern_type,
+                n_periods=n_periods,
+                pattern_intensity=0.8,
+                base_volatility=0.02,
             )
 
         ax.plot(df.index, df["close"], linewidth=2)
@@ -84,7 +102,7 @@ def demonstrate_arima_trends(generator: MarketPatternGenerator) -> None:
     orders = [(1, 1, 1), (2, 1, 2), (1, 1, 0), (0, 1, 1)]
     titles = ["ARIMA(1,1,1)", "ARIMA(2,1,2)", "ARIMA(1,1,0)", "ARIMA(0,1,1)"]
 
-    for idx, (order, title) in enumerate(zip(orders, titles)):
+    for idx, (order, title) in enumerate(zip(orders, titles, strict=False)):
         row, col = idx // 2, idx % 2
         ax = axes[row, col]
 
@@ -117,7 +135,10 @@ def demonstrate_volatility_clustering(generator: MarketPatternGenerator) -> None
 
     # Generate data with volatility clustering
     df = generator.generate_volatility_clustering(
-        n_periods=90, volatility_regimes=volatility_regimes, regime_durations=regime_durations, base_price=100.0
+        n_periods=90,
+        volatility_regimes=volatility_regimes,
+        regime_durations=regime_durations,
+        base_price=100.0,
     )
 
     # Plot price series
@@ -130,7 +151,12 @@ def demonstrate_volatility_clustering(generator: MarketPatternGenerator) -> None
     for regime in volatility_regimes:
         regime_data = df[df["volatility_regime"] == regime["label"]]
         if len(regime_data) > 0:
-            axes[1].scatter(regime_data.index, regime_data["close"], label=regime["label"], alpha=0.7)
+            axes[1].scatter(
+                regime_data.index,
+                regime_data["close"],
+                label=regime["label"],
+                alpha=0.7,
+            )
 
     axes[1].set_title("Volatility Regimes")
     axes[1].legend()
@@ -273,7 +299,11 @@ def demonstrate_regime_detection(generator: MarketPatternGenerator) -> None:
     ]
 
     df = generator.generate_trend_pattern(
-        n_periods=100, trend_type="uptrend", trend_strength=0.001, volatility=0.02, regime_changes=regime_changes
+        n_periods=100,
+        trend_type="uptrend",
+        trend_strength=0.001,
+        volatility=0.02,
+        regime_changes=regime_changes,
     )
 
     fig, axes = plt.subplots(4, 1, figsize=(12, 12))
@@ -289,7 +319,7 @@ def demonstrate_regime_detection(generator: MarketPatternGenerator) -> None:
     methods = ["rolling_stats", "markov_switching", "volatility_regime"]
     method_names = ["Rolling Statistics", "Markov Switching", "Volatility Regime"]
 
-    for idx, (method, name) in enumerate(zip(methods, method_names)):
+    for idx, (method, name) in enumerate(zip(methods, method_names, strict=False)):
         df_regime = generator.detect_enhanced_regime(df, window=10, method=method)
 
         # Plot regime classification
@@ -308,7 +338,13 @@ def demonstrate_regime_detection(generator: MarketPatternGenerator) -> None:
             if pd.notna(regime):
                 regime_data = df_regime[df_regime["regime"] == regime]
                 color = regime_colors.get(regime, "black")
-                axes[idx + 1].scatter(regime_data.index, regime_data["close"], label=regime, color=color, alpha=0.7)
+                axes[idx + 1].scatter(
+                    regime_data.index,
+                    regime_data["close"],
+                    label=regime,
+                    color=color,
+                    alpha=0.7,
+                )
 
         axes[idx + 1].set_title(f"Regime Detection: {name}")
         axes[idx + 1].legend()
@@ -325,8 +361,14 @@ def demonstrate_validation(generator: MarketPatternGenerator) -> None:
     # Generate different patterns and validate them
     patterns_to_test = [
         ("uptrend", generator.generate_trend_pattern(50, "uptrend", 0.002, 0.02)),
-        ("head_and_shoulders", generator.generate_reversal_pattern("head_and_shoulders", 50, 0.8, 0.02)),
-        ("ascending_triangle", generator.generate_triangle_pattern("ascending_triangle", 50, 0.8, 0.02)),
+        (
+            "head_and_shoulders",
+            generator.generate_reversal_pattern("head_and_shoulders", 50, 0.8, 0.02),
+        ),
+        (
+            "ascending_triangle",
+            generator.generate_triangle_pattern("ascending_triangle", 50, 0.8, 0.02),
+        ),
         ("flag", generator.generate_continuation_pattern("flag", 50, 0.8, 0.02)),
     ]
 

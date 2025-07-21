@@ -51,7 +51,11 @@ class TestEnhancedMarketPatternGenerator:
             pytest.skip("statsmodels not available")
 
         df = generator.generate_arima_trend(
-            n_periods=100, order=(1, 1, 1), seasonal_order=(1, 1, 1, 12), trend_strength=0.001, volatility=0.02
+            n_periods=100,
+            order=(1, 1, 1),
+            seasonal_order=(1, 1, 1, 12),
+            trend_strength=0.001,
+            volatility=0.02,
         )
 
         assert len(df) == 100
@@ -67,7 +71,10 @@ class TestEnhancedMarketPatternGenerator:
 
         for pattern_type in triangle_types:
             df = generator.generate_triangle_pattern(
-                pattern_type=pattern_type, n_periods=50, pattern_intensity=0.8, base_volatility=0.02
+                pattern_type=pattern_type,
+                n_periods=50,
+                pattern_intensity=0.8,
+                base_volatility=0.02,
             )
 
             assert isinstance(df, pd.DataFrame)
@@ -85,7 +92,10 @@ class TestEnhancedMarketPatternGenerator:
 
         for pattern_type in continuation_types:
             df = generator.generate_continuation_pattern(
-                pattern_type=pattern_type, n_periods=50, pattern_intensity=0.8, base_volatility=0.02
+                pattern_type=pattern_type,
+                n_periods=50,
+                pattern_intensity=0.8,
+                base_volatility=0.02,
             )
 
             assert isinstance(df, pd.DataFrame)
@@ -137,7 +147,10 @@ class TestEnhancedMarketPatternGenerator:
 
         for profile in profiles:
             df = generator.generate_enhanced_microstructure(
-                base_data=sample_data, bid_ask_spread=0.002, order_book_depth=3, liquidity_profile=profile
+                base_data=sample_data,
+                bid_ask_spread=0.002,
+                order_book_depth=3,
+                liquidity_profile=profile,
             )
 
             assert df["liquidity_profile"].iloc[0] == profile
@@ -187,7 +200,10 @@ class TestEnhancedMarketPatternGenerator:
     def test_validate_triangle_pattern(self, generator):
         """Test triangle pattern validation."""
         df = generator.generate_triangle_pattern(
-            pattern_type=PatternType.ASCENDING_TRIANGLE.value, n_periods=50, pattern_intensity=0.8, base_volatility=0.02
+            pattern_type=PatternType.ASCENDING_TRIANGLE.value,
+            n_periods=50,
+            pattern_intensity=0.8,
+            base_volatility=0.02,
         )
 
         validation = generator.validate_pattern_quality(df, PatternType.ASCENDING_TRIANGLE.value)
@@ -203,7 +219,10 @@ class TestEnhancedMarketPatternGenerator:
     def test_validate_continuation_pattern(self, generator):
         """Test continuation pattern validation."""
         df = generator.generate_continuation_pattern(
-            pattern_type=PatternType.FLAG.value, n_periods=50, pattern_intensity=0.8, base_volatility=0.02
+            pattern_type=PatternType.FLAG.value,
+            n_periods=50,
+            pattern_intensity=0.8,
+            base_volatility=0.02,
         )
 
         validation = generator.validate_pattern_quality(df, PatternType.FLAG.value)
@@ -388,7 +407,7 @@ class TestEnhancedMarketPatternGenerator:
         validation = generator.validate_pattern_quality(short_df, "uptrend")
         assert "statistical_tests" in validation
 
-    def test_reproducibility_enhanced(self, generator):
+    def test_reproducibility_enhanced(self, _generator):
         """Test reproducibility of enhanced features."""
         # Test ARIMA reproducibility
         if STATSMODELS_AVAILABLE:

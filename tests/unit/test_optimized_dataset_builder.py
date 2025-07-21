@@ -78,7 +78,10 @@ class TestOptimizedDatasetBuilder:
         builder = OptimizedDatasetBuilder()
 
         # Test valid cache
-        cache_data = {"timestamp": pd.Timestamp.now(), "data": pd.DataFrame({"close": [100, 101, 102]})}
+        cache_data = {
+            "timestamp": pd.Timestamp.now(),
+            "data": pd.DataFrame({"close": [100, 101, 102]}),
+        }
 
         assert builder.is_cache_valid(cache_data) is True
 
@@ -114,7 +117,7 @@ class TestOptimizedDatasetBuilder:
 
         symbols = ["AAPL", "INVALID_SYMBOL"]
 
-        def mock_fetch(symbol, start_date, end_date):
+        def mock_fetch(symbol, _, __):
             if symbol == "AAPL":
                 return pd.DataFrame({"symbol": ["AAPL"], "close": [100], "volume": [1000]})
             raise Exception(f"Failed to fetch {symbol}")
@@ -131,7 +134,12 @@ class TestOptimizedDatasetBuilder:
         builder = OptimizedDatasetBuilder()
 
         # Create sample data
-        data = pd.DataFrame({"close": [100, 101, 102, 103, 104], "volume": [1000, 1100, 1200, 1300, 1400]})
+        data = pd.DataFrame(
+            {
+                "close": [100, 101, 102, 103, 104],
+                "volume": [1000, 1100, 1200, 1300, 1400],
+            }
+        )
 
         processed_data = builder.process_features(data)
 
@@ -144,7 +152,12 @@ class TestOptimizedDatasetBuilder:
         builder = OptimizedDatasetBuilder()
 
         # Create sample data
-        data = pd.DataFrame({"close": [100, 101, 102, 103, 104], "volume": [1000, 1100, 1200, 1300, 1400]})
+        data = pd.DataFrame(
+            {
+                "close": [100, 101, 102, 103, 104],
+                "volume": [1000, 1100, 1200, 1300, 1400],
+            }
+        )
 
         normalized_data = builder.normalize_data(data)
 
@@ -268,16 +281,18 @@ class TestOptimizedDatasetBuilder:
         # Mock data fetching
         mock_data = pd.DataFrame({"close": list(range(100, 110)), "volume": list(range(1000, 1010))})
 
-        with patch.object(builder, "_fetch_symbol_data", return_value=mock_data):
-            with tempfile.TemporaryDirectory() as temp_dir:
-                output_path = Path(temp_dir) / "dataset"
+        with (
+            patch.object(builder, "_fetch_symbol_data", return_value=mock_data),
+            tempfile.TemporaryDirectory() as temp_dir,
+        ):
+            output_path = Path(temp_dir) / "dataset"
 
-                dataset = builder.build_dataset(config, output_path)
+            dataset = builder.build_dataset(config, output_path)
 
-                assert "train" in dataset
-                assert "val" in dataset
-                assert "test" in dataset
-                assert output_path.exists()
+            assert "train" in dataset
+            assert "val" in dataset
+            assert "test" in dataset
+            assert output_path.exists()
 
     def test_memory_usage_monitoring(self):
         """Test memory usage monitoring."""
@@ -318,13 +333,21 @@ class TestOptimizedDatasetBuilder:
         builder = OptimizedDatasetBuilder()
 
         # Valid data
-        valid_data = pd.DataFrame({"close": [100, 101, 102, 103, 104], "volume": [1000, 1100, 1200, 1300, 1400]})
+        valid_data = pd.DataFrame(
+            {
+                "close": [100, 101, 102, 103, 104],
+                "volume": [1000, 1100, 1200, 1300, 1400],
+            }
+        )
 
         assert builder.validate_data_quality(valid_data) is True
 
         # Invalid data - too many NaN values
         invalid_data = pd.DataFrame(
-            {"close": [100, np.nan, np.nan, np.nan, 104], "volume": [1000, 1100, 1200, 1300, 1400]}
+            {
+                "close": [100, np.nan, np.nan, np.nan, 104],
+                "volume": [1000, 1100, 1200, 1300, 1400],
+            }
         )
 
         with pytest.raises(ValueError):
@@ -364,7 +387,12 @@ class TestOptimizedDatasetBuilder:
         builder = OptimizedDatasetBuilder()
 
         # Create sample raw data
-        raw_data = pd.DataFrame({"close": [100, 101, 102, 103, 104], "volume": [1000, 1100, 1200, 1300, 1400]})
+        raw_data = pd.DataFrame(
+            {
+                "close": [100, 101, 102, 103, 104],
+                "volume": [1000, 1100, 1200, 1300, 1400],
+            }
+        )
 
         # Test transformation pipeline
         transformed_data = builder.transform_data(raw_data)
@@ -378,7 +406,12 @@ class TestOptimizedDatasetBuilder:
         builder = OptimizedDatasetBuilder()
 
         # Create sample data
-        data = pd.DataFrame({"close": [100, 101, 102, 103, 104], "volume": [1000, 1100, 1200, 1300, 1400]})
+        data = pd.DataFrame(
+            {
+                "close": [100, 101, 102, 103, 104],
+                "volume": [1000, 1100, 1200, 1300, 1400],
+            }
+        )
 
         # Test feature engineering
         features = builder.engineer_features(data)
@@ -468,7 +501,11 @@ class TestErrorHandling:
         builder = OptimizedDatasetBuilder()
 
         # Test invalid date format
-        invalid_config = {"symbols": ["AAPL"], "start_date": "invalid_date", "end_date": "2023-12-31"}
+        invalid_config = {
+            "symbols": ["AAPL"],
+            "start_date": "invalid_date",
+            "end_date": "2023-12-31",
+        }
 
         with pytest.raises(ValueError):
             builder.validate_config(invalid_config)
@@ -477,9 +514,11 @@ class TestErrorHandling:
         """Test handling of network failures."""
         builder = OptimizedDatasetBuilder()
 
-        with patch.object(builder, "_fetch_symbol_data", side_effect=Exception("Network error")):
-            with pytest.raises(RuntimeError):
-                builder.fetch_data_parallel(["AAPL"], "2023-01-01", "2023-01-02")
+        with (
+            patch.object(builder, "_fetch_symbol_data", side_effect=Exception("Network error")),
+            pytest.raises(RuntimeError),
+        ):
+            builder.fetch_data_parallel(["AAPL"], "2023-01-01", "2023-01-02")
 
     def test_memory_overflow(self):
         """Test handling of memory overflow."""
@@ -489,11 +528,10 @@ class TestErrorHandling:
         large_data = pd.DataFrame({"close": np.random.randn(1000000), "volume": np.random.randn(1000000)})
 
         # Should handle gracefully
-        try:
+        from contextlib import suppress
+
+        with suppress(MemoryError):
             builder.process_features(large_data)
-        except MemoryError:
-            # This is expected for very large datasets
-            pass
 
     def test_data_corruption(self):
         """Test handling of corrupted data."""
@@ -501,7 +539,10 @@ class TestErrorHandling:
 
         # Create corrupted data
         corrupted_data = pd.DataFrame(
-            {"close": [100, np.inf, 102, -np.inf, 104], "volume": [1000, 1100, 1200, 1300, 1400]}
+            {
+                "close": [100, np.inf, 102, -np.inf, 104],
+                "volume": [1000, 1100, 1200, 1300, 1400],
+            }
         )
 
         with pytest.raises(ValueError):
@@ -538,24 +579,26 @@ class TestIntegration:
         # Mock data fetching for both symbols
         mock_data = pd.DataFrame({"close": list(range(100, 110)), "volume": list(range(1000, 1010))})
 
-        with patch.object(builder, "_fetch_symbol_data", return_value=mock_data):
-            with tempfile.TemporaryDirectory() as temp_dir:
-                output_path = Path(temp_dir) / "dataset"
+        with (
+            patch.object(builder, "_fetch_symbol_data", return_value=mock_data),
+            tempfile.TemporaryDirectory() as temp_dir,
+        ):
+            output_path = Path(temp_dir) / "dataset"
 
-                # Build dataset
-                dataset = builder.build_dataset(config, output_path)
+            # Build dataset
+            dataset = builder.build_dataset(config, output_path)
 
-                # Verify results
-                assert "train" in dataset
-                assert "val" in dataset
-                assert "test" in dataset
-                assert output_path.exists()
+            # Verify results
+            assert "train" in dataset
+            assert "val" in dataset
+            assert "test" in dataset
+            assert output_path.exists()
 
-                # Test loading the built dataset
-                loaded_dataset = builder.load_dataset(output_path)
-                assert "train" in loaded_dataset
-                assert "val" in loaded_dataset
-                assert "test" in loaded_dataset
+            # Test loading the built dataset
+            loaded_dataset = builder.load_dataset(output_path)
+            assert "train" in loaded_dataset
+            assert "val" in loaded_dataset
+            assert "test" in loaded_dataset
 
     def test_large_scale_processing(self):
         """Test large-scale data processing."""
@@ -617,7 +660,7 @@ class TestIntegration:
         initial_memory = builder.get_memory_usage()
 
         # Process data
-        processed_data = builder.process_features(large_data)
+        builder.process_features(large_data)
 
         final_memory = builder.get_memory_usage()
 

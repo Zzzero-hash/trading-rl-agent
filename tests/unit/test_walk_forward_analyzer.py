@@ -212,31 +212,45 @@ class TestWalkForwardAnalyzer:
 
     @patch("trading_rl_agent.eval.walk_forward_analyzer.plt")
     @patch("trading_rl_agent.eval.walk_forward_analyzer.sns")
-    def test_generate_visualizations(self, mock_sns, mock_plt, analyzer, sample_data):
+    def test_generate_visualizations(self, mock_plt, analyzer, sample_data):
         """Test visualization generation."""
-        # Create mock window results
-        analyzer.window_results = [
-            WindowResult(
-                window_id=0,
-                train_start=pd.Timestamp("2020-01-01"),
-                train_end=pd.Timestamp("2020-05-01"),
-                validation_start=pd.Timestamp("2020-05-02"),
-                validation_end=pd.Timestamp("2020-06-01"),
-                test_start=pd.Timestamp("2020-06-02"),
-                test_end=pd.Timestamp("2020-07-01"),
-                train_metrics={"mae": 0.1},
-                validation_metrics={"mae": 0.15},
-                test_metrics={"sharpe_ratio": 1.2, "total_return": 0.1, "max_drawdown": -0.05},
-                test_predictions=np.array([0.1, 0.2, 0.3]),
-                test_actuals=np.array([0.1, 0.2, 0.3]),
-                test_returns=np.array([0.01, 0.02, 0.03]),
-            )
-        ]
+
+        if sample_data is None:
+            # Create mock window results
+            analyzer.window_results = [
+                WindowResult(
+                    window_id=0,
+                    train_start=pd.Timestamp("2020-01-01"),
+                    train_end=pd.Timestamp("2020-05-01"),
+                    validation_start=pd.Timestamp("2020-05-02"),
+                    validation_end=pd.Timestamp("2020-06-01"),
+                    test_start=pd.Timestamp("2020-06-02"),
+                    test_end=pd.Timestamp("2020-07-01"),
+                    train_metrics={"mae": 0.1},
+                    validation_metrics={"mae": 0.15},
+                    test_metrics={
+                        "sharpe_ratio": 1.2,
+                        "total_return": 0.1,
+                        "max_drawdown": -0.05,
+                    },
+                    test_predictions=np.array([0.1, 0.2, 0.3]),
+                    test_actuals=np.array([0.1, 0.2, 0.3]),
+                    test_returns=np.array([0.01, 0.02, 0.03]),
+                )
+            ]
 
         # Mock overall metrics
         analyzer.overall_metrics = {
-            "avg_metrics": {"sharpe_ratio": 1.2, "total_return": 0.1, "max_drawdown": -0.05},
-            "std_metrics": {"sharpe_ratio": 0.1, "total_return": 0.02, "max_drawdown": 0.01},
+            "avg_metrics": {
+                "sharpe_ratio": 1.2,
+                "total_return": 0.1,
+                "max_drawdown": -0.05,
+            },
+            "std_metrics": {
+                "sharpe_ratio": 0.1,
+                "total_return": 0.02,
+                "max_drawdown": 0.01,
+            },
             "confidence_intervals": {
                 "sharpe_ratio": (1.1, 1.3),
                 "total_return": (0.08, 0.12),

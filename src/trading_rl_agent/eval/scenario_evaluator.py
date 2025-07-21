@@ -19,7 +19,8 @@ import pandas as pd
 from rich.console import Console
 from rich.table import Table
 
-from ..data.synthetic import generate_gbm_prices
+from src.trading_rl_agent.data.synthetic import generate_gbm_prices
+
 from .metrics_calculator import MetricsCalculator
 from .model_evaluator import ModelEvaluator
 
@@ -215,7 +216,7 @@ class MarketScenarioGenerator:
         duration_days: int = 252,
         crisis_start: int = 126,  # Middle of the period
         crisis_duration: int = 30,
-        crisis_severity: float = 0.3,
+        _crisis_severity: float = 0.3,
     ) -> pd.DataFrame:
         """Generate market crisis scenario."""
 
@@ -320,7 +321,11 @@ class MarketScenarioGenerator:
     ) -> pd.DataFrame:
         """Create OHLCV data from price series."""
 
-        dates = pd.date_range(start=datetime.now() - timedelta(days=len(prices)), periods=len(prices), freq="D")
+        dates = pd.date_range(
+            start=datetime.now() - timedelta(days=len(prices)),
+            periods=len(prices),
+            freq="D",
+        )
 
         # Generate OHLC from close prices
         opens = []
@@ -889,7 +894,10 @@ class AgentScenarioEvaluator:
 
         # Create figure with subplots
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-        fig.suptitle(f"Agent Scenario Evaluation: {evaluation_results['agent_name']}", fontsize=16)
+        fig.suptitle(
+            f"Agent Scenario Evaluation: {evaluation_results['agent_name']}",
+            fontsize=16,
+        )
 
         # 1. Sharpe Ratio by Scenario
         scenario_names = [r["scenario"].name for r in scenario_results]
@@ -916,7 +924,13 @@ class AgentScenarioEvaluator:
         axes[0, 2].tick_params(axis="x", rotation=45)
 
         # 4. Performance Radar Chart
-        metrics = ["Sharpe Ratio", "Total Return", "Win Rate", "Profit Factor", "Robustness"]
+        metrics = [
+            "Sharpe Ratio",
+            "Total Return",
+            "Win Rate",
+            "Profit Factor",
+            "Robustness",
+        ]
         values = [
             aggregate_metrics["avg_sharpe_ratio"] / 2.0,  # Normalize to 0-1
             min(1.0, (aggregate_metrics["avg_total_return"] + 0.5) / 1.0),
@@ -939,7 +953,12 @@ class AgentScenarioEvaluator:
         # 5. Pass/Fail Summary
         passed = aggregate_metrics["scenarios_passed"]
         failed = aggregate_metrics["total_scenarios"] - passed
-        axes[1, 1].pie([passed, failed], labels=["Passed", "Failed"], colors=["green", "red"], autopct="%1.1f%%")
+        axes[1, 1].pie(
+            [passed, failed],
+            labels=["Passed", "Failed"],
+            colors=["green", "red"],
+            autopct="%1.1f%%",
+        )
         axes[1, 1].set_title("Scenario Pass/Fail Summary")
 
         # 6. Score Comparison

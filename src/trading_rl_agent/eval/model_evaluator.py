@@ -183,7 +183,7 @@ class ModelEvaluator:
     def _calculate_confidence_intervals(
         self,
         metrics: dict[str, float],
-        confidence_level: float = 0.95,
+        _confidence_level: float = 0.95,
     ) -> dict[str, tuple[float, float]]:
         """Calculate confidence intervals for metrics."""
 
@@ -192,7 +192,7 @@ class ModelEvaluator:
         confidence_intervals = {}
 
         for metric, value in metrics.items():
-            if isinstance(value, (int, float)) and not np.isnan(value):
+            if isinstance(value, int | float) and not np.isnan(value):
                 # Simple approximation - in practice, use proper statistical methods
                 std_error = abs(value) * 0.1  # 10% of value as approximation
                 lower_bound = value - 1.96 * std_error
@@ -213,7 +213,13 @@ class ModelEvaluator:
 
         # Default comparison metrics
         if comparison_metrics is None:
-            comparison_metrics = ["mae", "rmse", "r2_score", "sharpe_ratio", "max_drawdown"]
+            comparison_metrics = [
+                "mae",
+                "rmse",
+                "r2_score",
+                "sharpe_ratio",
+                "max_drawdown",
+            ]
 
         comparison_results = {}
 
@@ -258,7 +264,13 @@ class ModelEvaluator:
 
         # Default ranking metrics
         if comparison_metrics is None:
-            comparison_metrics = ["mae", "rmse", "r2_score", "sharpe_ratio", "max_drawdown"]
+            comparison_metrics = [
+                "mae",
+                "rmse",
+                "r2_score",
+                "sharpe_ratio",
+                "max_drawdown",
+            ]
 
         # Calculate scores for each model
         model_scores = {}
@@ -348,7 +360,7 @@ class ModelEvaluator:
                         "model1_value": metric1,
                         "model2_value": metric2,
                         "difference": metric1 - metric2,
-                        "model1_better": metric1 < metric2 if metric in ["mae", "rmse"] else metric1 > metric2,
+                        "model1_better": (metric1 < metric2 if metric in ["mae", "rmse"] else metric1 > metric2),
                     }
 
                 significance_tests[pair_name] = tests

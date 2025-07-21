@@ -1,34 +1,12 @@
-import logging
 import sys
 import types
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+import pytest
 
-if "structlog" not in sys.modules:
-    stub = types.SimpleNamespace(
-        BoundLogger=object,
-        stdlib=types.SimpleNamespace(
-            ProcessorFormatter=object,
-            BoundLogger=object,
-            LoggerFactory=lambda: None,
-            filter_by_level=lambda *a, **k: None,
-            add_logger_name=lambda *a, **k: None,
-            add_log_level=lambda *a, **k: None,
-            PositionalArgumentsFormatter=lambda: None,
-            wrap_for_formatter=lambda f: f,
-        ),
-        processors=types.SimpleNamespace(
-            TimeStamper=lambda **_: None,
-            StackInfoRenderer=lambda **_: None,
-            format_exc_info=lambda **_: None,
-            UnicodeDecoder=lambda **_: None,
-        ),
-        dev=types.SimpleNamespace(ConsoleRenderer=lambda **_: None),
-        configure=lambda **_: None,
-        get_logger=lambda name=None: logging.getLogger(name),
-    )
-    sys.modules["structlog"] = stub
+from trading_rl_agent.portfolio.manager import PortfolioConfig, PortfolioManager
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 if "src.envs.finrl_trading_env" not in sys.modules:
     sys.modules["src.envs.finrl_trading_env"] = types.SimpleNamespace(
@@ -46,7 +24,7 @@ if "nltk.sentiment.vader" not in sys.modules:
     dummy = types.ModuleType("nltk.sentiment.vader")
 
     class DummySIA:
-        def polarity_scores(self, text):
+        def polarity_scores(self, _):
             """
             Return a neutral sentiment score for the given text.
 
@@ -60,6 +38,7 @@ if "nltk.sentiment.vader" not in sys.modules:
 
     dummy.SentimentIntensityAnalyzer = DummySIA
     sys.modules["nltk.sentiment.vader"] = dummy
+
 base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
 for pkg in ["features", "portfolio", "risk"]:
     key = f"trading_rl_agent.{pkg}"
@@ -67,9 +46,6 @@ for pkg in ["features", "portfolio", "risk"]:
         mod = types.ModuleType(key)
         mod.__path__ = [str(base / pkg)]
         sys.modules[key] = mod
-import pytest
-
-from trading_rl_agent.portfolio.manager import PortfolioConfig, PortfolioManager
 
 pytestmark = pytest.mark.unit
 

@@ -18,7 +18,11 @@ import pandas as pd
 import pytest
 
 from src.trading_rl_agent.risk.manager import RiskLimits, RiskManager, RiskMetrics
-from src.trading_rl_agent.risk.monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig, VaRResult
+from src.trading_rl_agent.risk.monte_carlo_var import (
+    MonteCarloVaR,
+    MonteCarloVaRConfig,
+    VaRResult,
+)
 from src.trading_rl_agent.risk.parallel_var import ParallelVaRCalculator
 from src.trading_rl_agent.risk.position_sizer import kelly_position_size
 
@@ -134,7 +138,11 @@ class TestRiskMetricsCalculation:
     def test_kelly_position_sizing(self):
         """Test Kelly criterion position sizing."""
         position_size = self.risk_manager.calculate_kelly_position_size(
-            expected_return=0.15, win_rate=0.6, avg_win=0.1, avg_loss=0.05, max_kelly_fraction=0.25
+            expected_return=0.15,
+            win_rate=0.6,
+            avg_win=0.1,
+            avg_loss=0.05,
+            max_kelly_fraction=0.25,
         )
 
         assert position_size >= 0
@@ -338,7 +346,11 @@ class TestPositionSizer:
     def test_kelly_criterion(self):
         """Test Kelly criterion position sizing."""
         position_size = kelly_position_size(
-            expected_return=0.15, win_rate=0.6, avg_win=0.1, avg_loss=0.05, max_kelly_fraction=0.25
+            expected_return=0.15,
+            win_rate=0.6,
+            avg_win=0.1,
+            avg_loss=0.05,
+            max_kelly_fraction=0.25,
         )
 
         assert position_size >= 0
@@ -373,7 +385,12 @@ class TestRiskLimits:
 
     def test_custom_risk_limits(self):
         """Test custom risk limits."""
-        limits = RiskLimits(max_portfolio_var=0.03, max_drawdown=0.15, max_leverage=1.5, max_position_size=0.15)
+        limits = RiskLimits(
+            max_portfolio_var=0.03,
+            max_drawdown=0.15,
+            max_leverage=1.5,
+            max_position_size=0.15,
+        )
 
         assert limits.max_portfolio_var == 0.03
         assert limits.max_drawdown == 0.15
@@ -434,7 +451,6 @@ class TestRiskManagerIntegration:
     def test_risk_metrics_persistence(self):
         """Test risk metrics persistence and history."""
         weights = {"AAPL": 0.4, "GOOGL": 0.35, "MSFT": 0.25}
-        portfolio_value = 100000
 
         # Calculate metrics multiple times and store them manually
         for i in range(5):

@@ -9,7 +9,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, validator
 
@@ -24,7 +24,10 @@ class AlpacaConfigModel(BaseModel):
     secret_key: str = Field(..., description="Alpaca secret key")
 
     # URLs
-    base_url: str = Field(default="https://paper-api.alpaca.markets", description="Alpaca trading API base URL")
+    base_url: str = Field(
+        default="https://paper-api.alpaca.markets",
+        description="Alpaca trading API base URL",
+    )
     data_url: str = Field(default="https://data.alpaca.markets", description="Alpaca data API base URL")
 
     # API Version
@@ -35,7 +38,12 @@ class AlpacaConfigModel(BaseModel):
 
     # Retry Configuration
     max_retries: int = Field(default=3, ge=1, le=10, description="Maximum number of retry attempts")
-    retry_delay: float = Field(default=1.0, ge=0.1, le=10.0, description="Delay between retry attempts in seconds")
+    retry_delay: float = Field(
+        default=1.0,
+        ge=0.1,
+        le=10.0,
+        description="Delay between retry attempts in seconds",
+    )
 
     # Timeout Configuration
     websocket_timeout: int = Field(default=30, ge=10, le=300, description="WebSocket connection timeout in seconds")
@@ -58,21 +66,21 @@ class AlpacaConfigModel(BaseModel):
     log_trades: bool = Field(default=True, description="Whether to log all trades")
 
     @validator("api_key", "secret_key")
-    def validate_credentials(cls, v: str) -> str:  # noqa: N805
+    def validate_credentials(cls, v: str) -> str:
         """Validate that credentials are not empty."""
         if not v or v.strip() == "":
             raise ValueError("API credentials cannot be empty")
         return v.strip()
 
     @validator("base_url", "data_url")
-    def validate_urls(cls, v: str) -> str:  # noqa: N805
+    def validate_urls(cls, v: str) -> str:
         """Validate URL format."""
         if not v.startswith(("http://", "https://")):
             raise ValueError("URL must start with http:// or https://")
         return v
 
     @validator("data_feed")
-    def validate_data_feed(cls, v: str) -> str:  # noqa: N805
+    def validate_data_feed(cls, v: str) -> str:
         """Validate data feed selection."""
         valid_feeds = ["iex", "sip"]
         if v not in valid_feeds:
@@ -80,7 +88,7 @@ class AlpacaConfigModel(BaseModel):
         return v
 
     @validator("log_level")
-    def validate_log_level(cls, v: str) -> str:  # noqa: N805
+    def validate_log_level(cls, v: str) -> str:
         """Validate logging level."""
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:
@@ -99,7 +107,7 @@ class AlpacaEnvironmentConfig:
     """Environment-based configuration for Alpaca Markets."""
 
     # Environment variable mappings
-    ENV_MAPPINGS = {
+    ENV_MAPPINGS: ClassVar[dict[str, str]] = {
         "api_key": "ALPACA_API_KEY",
         "secret_key": "ALPACA_SECRET_KEY",
         "base_url": "ALPACA_BASE_URL",
@@ -130,7 +138,7 @@ class AlpacaEnvironmentConfig:
         """
         # First try to get from unified configuration system
         try:
-            from ..core.unified_config import UnifiedConfig
+            from trading_rl_agent.core.unified_config import UnifiedConfig
 
             config = UnifiedConfig()
             if config.alpaca_api_key and config.alpaca_secret_key:
@@ -167,8 +175,18 @@ class AlpacaEnvironmentConfig:
             env_value = os.getenv(env_var)
             if env_value is not None:
                 # Convert string values to appropriate types
-                if field_name in ["use_v2_api", "paper_trading", "extended_hours", "log_trades"]:
-                    config_data[field_name] = env_value.lower() in ["true", "1", "yes", "on"]
+                if field_name in [
+                    "use_v2_api",
+                    "paper_trading",
+                    "extended_hours",
+                    "log_trades",
+                ]:
+                    config_data[field_name] = env_value.lower() in [
+                        "true",
+                        "1",
+                        "yes",
+                        "on",
+                    ]
                 elif field_name in [
                     "max_retries",
                     "websocket_timeout",
@@ -198,7 +216,7 @@ class AlpacaEnvironmentConfig:
         """
         # First try to get from unified configuration system
         try:
-            from ..core.unified_config import UnifiedConfig
+            from trading_rl_agent.core.unified_config import UnifiedConfig
 
             config = UnifiedConfig()
             if config.alpaca_api_key and config.alpaca_secret_key:

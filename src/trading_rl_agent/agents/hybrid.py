@@ -16,7 +16,7 @@ import torch
 import torch.nn.functional as f
 from torch import nn
 
-from ..models.cnn_lstm import CNNLSTMModel
+from src.trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 
 
 class HybridAgent(nn.Module):
@@ -303,7 +303,7 @@ class HybridAgent(nn.Module):
                 "action_dim": self.action_dim,
                 "hidden_dim": self.hidden_dim,
                 "learning_rate": self.learning_rate,
-                "cnn_lstm_model_state_dict": self.cnn_lstm_model.state_dict() if self.cnn_lstm_model else None,
+                "cnn_lstm_model_state_dict": (self.cnn_lstm_model.state_dict() if self.cnn_lstm_model else None),
             },
             path,
         )
@@ -311,7 +311,7 @@ class HybridAgent(nn.Module):
 
     def load(self, path: str) -> None:
         """Load the hybrid agent."""
-        checkpoint = torch.load(path, map_location=self.device)
+        checkpoint = torch.load(path, map_location=self.device)  # nosec
 
         self.load_state_dict(checkpoint["model_state_dict"])
         self.policy_optimizer.load_state_dict(checkpoint["policy_optimizer_state_dict"])

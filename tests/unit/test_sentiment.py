@@ -288,7 +288,7 @@ class TestSentimentIntegration:
         from trading_rl_agent.data.sentiment import SentimentProvider
 
         class FailingProvider(SentimentProvider):
-            def fetch_sentiment(self, symbol, days_back=1):
+            def fetch_sentiment(self, _symbol, _days_back=1):
                 raise Exception("Test error")
 
         analyzer = SentimentAnalyzer()
@@ -386,7 +386,7 @@ class TestRealAPISentiment:
         "trading_rl_agent.data.sentiment.requests.get",
         side_effect=Exception("API fail"),
     )
-    def test_news_provider_scrape_fallback(self, mock_get):
+    def test_news_provider_scrape_fallback(self, _mock_get):
         """Test scraping fallback when API fails."""
         provider = NewsSentimentProvider(api_key="fake_key")
         data = provider.fetch_sentiment("AAPL", days_back=1)
@@ -402,7 +402,7 @@ class TestRealAPISentiment:
         "trading_rl_agent.data.sentiment.BeautifulSoup",
         side_effect=Exception("Scrape fail"),
     )
-    def test_news_provider_mock_fallback(self, mock_bs, mock_get):
+    def test_news_provider_mock_fallback(self, _mock_bs, _mock_get):
         """Test mock fallback when both API and scraping fail."""
         provider = NewsSentimentProvider(api_key="fake_key")
         data = provider.fetch_sentiment("AAPL", days_back=1)

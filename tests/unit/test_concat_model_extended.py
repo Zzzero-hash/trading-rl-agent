@@ -13,7 +13,15 @@ class TestConcatModelExtended:
 
     def test_concat_model_initialization(self):
         """Test model initialization with different parameters."""
-        model = ConcatModel(dim1=10, dim2=5, hidden_dim=32, output_dim=1, num_layers=3, dropout=0.3, activation="relu")
+        model = ConcatModel(
+            dim1=10,
+            dim2=5,
+            hidden_dim=32,
+            output_dim=1,
+            num_layers=3,
+            dropout=0.3,
+            activation="relu",
+        )
 
         assert model.dim1 == 10
         assert model.dim2 == 5

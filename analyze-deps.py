@@ -132,7 +132,8 @@ class DependencyAnalyzer:
         for analysis in all_analyses:
             status = "✅" if analysis["exists"] else "❌"
             print(
-                f"{status} {analysis['profile']:<12} - {analysis['package_count']:2d} packages, ~{analysis['estimated_size_mb']:4d} MB"
+                f"{status} {analysis['profile']:<12} - "
+                f"{analysis['package_count']:2d} packages, ~{analysis['estimated_size_mb']:4d} MB"
             )
 
         print("\n💡 Recommendations:")
@@ -162,7 +163,10 @@ class DependencyAnalyzer:
         try:
             # Get list of installed packages
             result = subprocess.run(
-                [sys.executable, "-m", "pip", "list", "--format=json"], capture_output=True, text=True, check=True
+                [sys.executable, "-m", "pip", "list", "--format=json"],
+                capture_output=True,
+                text=True,
+                check=True,
             )
 
             installed_packages = json.loads(result.stdout)

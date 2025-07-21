@@ -25,7 +25,7 @@ class TestAPISecurity:
         security_manager.max_request_size = 1024 * 1024  # 1MB
         return security_manager
 
-    def test_api_authentication(self, mock_api_security_manager):
+    def test_api_authentication(self, _mock_api_security_manager):
         """Test API authentication mechanisms."""
         # Test API key authentication
         valid_api_keys = [
@@ -90,7 +90,7 @@ class TestAPISecurity:
                 if size > max_size:
                     raise ValueError(f"Request too large: {size} bytes")
 
-    def test_input_validation(self, mock_api_security_manager):
+    def test_input_validation(self, _mock_api_security_manager):
         """Test API input validation."""
         # Test valid inputs
         valid_inputs = [
@@ -129,7 +129,7 @@ class TestAPISecurity:
                     if len(str(value)) > 10000:
                         raise ValueError("Value too long")
 
-    def test_sql_injection_prevention(self, mock_api_security_manager):
+    def test_sql_injection_prevention(self, _mock_api_security_manager):
         """Test SQL injection prevention in API."""
         malicious_inputs = [
             "'; DROP TABLE users; --",
@@ -171,7 +171,7 @@ class TestAPISecurity:
                 if detected_keywords:
                     raise ValueError(f"SQL injection detected: {detected_keywords}")
 
-    def test_xss_prevention(self, mock_api_security_manager):
+    def test_xss_prevention(self, _mock_api_security_manager):
         """Test XSS prevention in API."""
         malicious_scripts = [
             "<script>alert('xss')</script>",
@@ -228,7 +228,7 @@ class TestAPISecurity:
         assert not validate_csrf_token("", csrf_token)
         assert not validate_csrf_token(csrf_token, "")
 
-    def test_secure_headers(self, mock_api_security_manager):
+    def test_secure_headers(self, _mock_api_security_manager):
         """Test secure HTTP headers in API responses."""
         # Test required security headers
         required_headers = {
@@ -251,10 +251,14 @@ class TestAPISecurity:
                 if header not in required_headers:
                     raise ValueError(f"Missing security header: {header}")
 
-    def test_authentication_tokens(self, mock_api_security_manager):
+    def test_authentication_tokens(self, _mock_api_security_manager):
         """Test authentication token security."""
         # Test JWT token creation
-        payload = {"user_id": "test_user", "role": "trader", "exp": datetime.utcnow() + timedelta(hours=1)}
+        payload = {
+            "user_id": "test_user",
+            "role": "trader",
+            "exp": datetime.utcnow() + timedelta(hours=1),
+        }
 
         # Simulate JWT encoding (in real implementation, use jwt library)
         token = base64.b64encode(json.dumps(payload).encode()).decode()
@@ -270,13 +274,17 @@ class TestAPISecurity:
             pytest.fail("Valid token was rejected")
 
         # Test expired token
-        expired_payload = {"user_id": "test_user", "role": "trader", "exp": datetime.utcnow() - timedelta(hours=1)}
+        expired_payload = {
+            "user_id": "test_user",
+            "role": "trader",
+            "exp": datetime.utcnow() - timedelta(hours=1),
+        }
 
         with pytest.raises(ValueError):
             if expired_payload["exp"] < datetime.utcnow():
                 raise ValueError("Token expired")
 
-    def test_request_logging(self, mock_api_security_manager):
+    def test_request_logging(self, _mock_api_security_manager):
         """Test API request logging security."""
         # Test request logging
         request_data = {
@@ -307,7 +315,7 @@ class TestAPISecurity:
             assert key not in log_message
             assert value not in log_message
 
-    def test_error_handling(self, mock_api_security_manager):
+    def test_error_handling(self, _mock_api_security_manager):
         """Test secure error handling in API."""
         # Test that sensitive information is not exposed in errors
         try:
@@ -331,7 +339,7 @@ class TestAPISecurity:
             assert len(error) > 0
             assert len(error) <= 100  # Reasonable error message length
 
-    def test_input_sanitization(self, mock_api_security_manager):
+    def test_input_sanitization(self, _mock_api_security_manager):
         """Test input sanitization in API."""
         # Test string sanitization
         test_inputs = [
@@ -360,7 +368,7 @@ class TestAPISecurity:
             assert "<script>" not in sanitized
             assert "javascript:" not in sanitized
 
-    def test_output_encoding(self, mock_api_security_manager):
+    def test_output_encoding(self, _mock_api_security_manager):
         """Test output encoding security."""
         import html
 
@@ -378,7 +386,7 @@ class TestAPISecurity:
             assert "&lt;" in encoded or "&gt;" in encoded or "&amp;" in encoded
             assert "<script>" not in encoded.lower()
 
-    def test_session_management(self, mock_api_security_manager):
+    def test_session_management(self, _mock_api_security_manager):
         """Test session management security."""
         # Test session creation
         session_id = hashlib.sha256(f"session_{time.time()}".encode()).hexdigest()
@@ -403,7 +411,7 @@ class TestAPISecurity:
             if time.time() > expired_session["expires_at"]:
                 raise ValueError("Session expired")
 
-    def test_authorization_checks(self, mock_api_security_manager):
+    def test_authorization_checks(self, _mock_api_security_manager):
         """Test authorization checks in API."""
         # Test role-based access control
         user_roles = {
@@ -416,7 +424,14 @@ class TestAPISecurity:
         role_permissions = {
             "viewer": ["read_data", "view_reports"],
             "trader": ["read_data", "view_reports", "place_trades", "modify_positions"],
-            "admin": ["read_data", "view_reports", "place_trades", "modify_positions", "manage_users", "system_config"],
+            "admin": [
+                "read_data",
+                "view_reports",
+                "place_trades",
+                "modify_positions",
+                "manage_users",
+                "system_config",
+            ],
         }
 
         # Test permission checking
@@ -438,13 +453,25 @@ class TestAPISecurity:
         assert not check_permission("viewer789", "place_trades")
         assert not check_permission("nonexistent", "read_data")
 
-    def test_request_validation(self, mock_api_security_manager):
+    def test_request_validation(self, _mock_api_security_manager):
         """Test request validation security."""
         # Test valid requests
         valid_requests = [
-            {"method": "GET", "path": "/api/data", "headers": {"Authorization": "Bearer token"}},
-            {"method": "POST", "path": "/api/trade", "headers": {"Content-Type": "application/json"}},
-            {"method": "PUT", "path": "/api/portfolio", "headers": {"X-CSRF-Token": "token"}},
+            {
+                "method": "GET",
+                "path": "/api/data",
+                "headers": {"Authorization": "Bearer token"},
+            },
+            {
+                "method": "POST",
+                "path": "/api/trade",
+                "headers": {"Content-Type": "application/json"},
+            },
+            {
+                "method": "PUT",
+                "path": "/api/portfolio",
+                "headers": {"X-CSRF-Token": "token"},
+            },
         ]
 
         for request in valid_requests:
@@ -469,7 +496,7 @@ class TestAPISecurity:
                 if not isinstance(request["headers"], dict):
                     raise ValueError("Headers must be a dictionary")
 
-    def test_response_validation(self, mock_api_security_manager):
+    def test_response_validation(self, _mock_api_security_manager):
         """Test response validation security."""
         # Test valid responses
         valid_responses = [
@@ -497,7 +524,7 @@ class TestAPISecurity:
                 if not isinstance(response["status_code"], int):
                     raise ValueError("Status code must be an integer")
 
-    def test_secure_communication(self, mock_api_security_manager):
+    def test_secure_communication(self, _mock_api_security_manager):
         """Test secure communication protocols."""
         # Test HTTPS requirement
         valid_urls = [
@@ -520,7 +547,7 @@ class TestAPISecurity:
                 if not url.startswith("https://"):
                     raise ValueError(f"Insecure protocol: {url}")
 
-    def test_data_encryption(self, mock_api_security_manager):
+    def test_data_encryption(self, _mock_api_security_manager):
         """Test data encryption security."""
         # Test encryption key validation
         encryption_key = "test_encryption_key_12345"
@@ -537,14 +564,18 @@ class TestAPISecurity:
         decrypted = base64.b64decode(encrypted).decode()
         assert decrypted == test_data
 
-    def test_audit_logging(self, mock_api_security_manager):
+    def test_audit_logging(self, _mock_api_security_manager):
         """Test audit logging security."""
         # Test audit event logging
         audit_events = [
             {"event": "api_request", "user_id": "user123", "action": "GET /api/data"},
             {"event": "api_request", "user_id": "user123", "action": "POST /api/trade"},
             {"event": "authentication", "user_id": "user123", "result": "success"},
-            {"event": "authorization", "user_id": "user123", "permission": "place_trades"},
+            {
+                "event": "authorization",
+                "user_id": "user123",
+                "permission": "place_trades",
+            },
         ]
 
         for event in audit_events:

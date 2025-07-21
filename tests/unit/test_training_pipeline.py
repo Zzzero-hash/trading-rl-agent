@@ -154,7 +154,7 @@ class TestEnhancedCNNLSTMTrainer:
             assert isinstance(loaded_model, CNNLSTMModel)
             assert epoch == 5
             # Mock model might return different loss, so just check it's a number
-            assert isinstance(loss, (int, float))
+            assert isinstance(loss, int | float)
 
     def test_training_from_dataset(self):
         """Test complete training workflow with dataset."""
@@ -230,7 +230,7 @@ class TestEnhancedCNNLSTMTrainer:
             X = torch.randn(batch_size, 1)  # batch_size x input_size=1 (for mock model)
             y = torch.randn(batch_size, 1)
 
-            loss = self.trainer.train_step(model, optimizer, X, y)
+            self.trainer.train_step(model, optimizer, X, y)
 
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
@@ -415,7 +415,10 @@ class TestOptimizedTrainer:
     def test_dynamic_batch_sizer(self):
         """Test dynamic batch size adjustment."""
         batch_sizer = DynamicBatchSizer(
-            initial_batch_size=32, memory_threshold=0.8, min_batch_size=1, max_batch_size=128
+            initial_batch_size=32,
+            memory_threshold=0.8,
+            min_batch_size=1,
+            max_batch_size=128,
         )
 
         # Test batch size adjustment
@@ -595,7 +598,7 @@ class TestTrainingPerformance:
 
     def test_convergence_benchmark(self):
         """Benchmark training convergence."""
-        model = CNNLSTMModel()
+        CNNLSTMModel()
         trainer = EnhancedCNNLSTMTrainer(create_enhanced_model_config(), create_enhanced_training_config(epochs=10))
 
         # Create a simple dataset that should converge quickly

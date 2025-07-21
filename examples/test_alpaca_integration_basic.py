@@ -98,7 +98,11 @@ def test_data_structures() -> bool:
 
         # Test OrderRequest
         order_request = OrderRequest(
-            symbol="AAPL", qty=10.0, side=OrderSide.BUY, order_type=OrderType.MARKET, time_in_force="day"
+            symbol="AAPL",
+            qty=10.0,
+            side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
+            time_in_force="day",
         )
         print("✓ OrderRequest creation successful")
         print(f"  - Symbol: {order_request.symbol}")
@@ -107,7 +111,13 @@ def test_data_structures() -> bool:
 
         # Test MarketData
         market_data = MarketData(
-            symbol="AAPL", timestamp=datetime.now(), open=150.00, high=155.00, low=149.00, close=154.00, volume=1000000
+            symbol="AAPL",
+            timestamp=datetime.now(),
+            open=150.00,
+            high=155.00,
+            low=149.00,
+            close=154.00,
+            volume=1000000,
         )
         print("✓ MarketData creation successful")
         print(f"  - Symbol: {market_data.symbol}")
@@ -145,12 +155,12 @@ def test_config_validation() -> bool:
         from trading_rl_agent.configs.alpaca_config import AlpacaConfigModel
 
         # Test valid config
-        config = AlpacaConfigModel(api_key="test_key", secret_key="test_secret")
+        _ = AlpacaConfigModel(api_key="test_key", secret_key="test_secret")
         print("✓ Valid configuration creation successful")
 
         # Test invalid config (should raise error)
         try:
-            invalid_config = AlpacaConfigModel(api_key="", secret_key="test_secret")
+            _ = AlpacaConfigModel(api_key="", secret_key="test_secret")
             print("✗ Invalid config should have raised error")
             return False
         except ValueError:

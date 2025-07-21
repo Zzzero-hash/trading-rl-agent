@@ -135,7 +135,15 @@ class HealthDashboard:
         ax.plot(x_cpu, y_cpu, color=color, linewidth=8)
 
         # Add text
-        ax.text(0, 0, f"{cpu_percent:.1f}%", ha="center", va="center", fontsize=16, fontweight="bold")
+        ax.text(
+            0,
+            0,
+            f"{cpu_percent:.1f}%",
+            ha="center",
+            va="center",
+            fontsize=16,
+            fontweight="bold",
+        )
         ax.text(0, -1.5, "CPU Usage", ha="center", va="center", fontsize=12)
 
         ax.set_xlim(-1.2, 1.2)
@@ -165,7 +173,14 @@ class HealthDashboard:
         ax.grid(True, alpha=0.3)
 
         # Add value label
-        ax.text(0, memory_percent + 2, f"{memory_percent:.1f}%", ha="center", va="bottom", fontweight="bold")
+        ax.text(
+            0,
+            memory_percent + 2,
+            f"{memory_percent:.1f}%",
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+        )
 
     def _plot_disk_usage(self, ax: Any, dashboard_data: dict[str, Any]) -> None:
         """Plot disk usage."""
@@ -200,7 +215,11 @@ class HealthDashboard:
 
         y_pos = np.arange(len(metrics_data))
         values = [
-            float(metric[1].replace("$", "").replace("%", "").replace("ms", "")) if metric[1] not in ["N/A", "0"] else 0
+            (
+                float(metric[1].replace("$", "").replace("%", "").replace("ms", ""))
+                if metric[1] not in ["N/A", "0"]
+                else 0
+            )
             for metric in metrics_data
         ]
 
@@ -221,7 +240,13 @@ class HealthDashboard:
 
         # Add value labels
         for i, (metric_name, metric_value) in enumerate(metrics_data):
-            ax.text(values[i] + max(values) * 0.01, i, metric_value, va="center", fontweight="bold")
+            ax.text(
+                values[i] + max(values) * 0.01,
+                i,
+                metric_value,
+                va="center",
+                fontweight="bold",
+            )
 
     def _plot_health_status(self, ax: Any, dashboard_data: dict[str, Any]) -> None:
         """Plot health status summary."""
@@ -237,12 +262,22 @@ class HealthDashboard:
 
         if sizes:
             wedges, texts, autotexts = ax.pie(
-                sizes, labels=labels, colors=colors[: len(sizes)], autopct="%1.0f", startangle=90
+                sizes,
+                labels=labels,
+                colors=colors[: len(sizes)],
+                autopct="%1.0f",
+                startangle=90,
             )
             ax.set_title("Health Status Distribution")
         else:
             ax.text(
-                0.5, 0.5, "No health checks\nperformed", ha="center", va="center", transform=ax.transAxes, fontsize=12
+                0.5,
+                0.5,
+                "No health checks\nperformed",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+                fontsize=12,
             )
             ax.set_title("Health Status")
 
@@ -253,7 +288,15 @@ class HealthDashboard:
         ax.clear()
 
         if not recent_checks:
-            ax.text(0.5, 0.5, "No recent health checks", ha="center", va="center", transform=ax.transAxes, fontsize=12)
+            ax.text(
+                0.5,
+                0.5,
+                "No recent health checks",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+                fontsize=12,
+            )
             ax.set_title("Recent Health Checks")
             return
 
@@ -267,7 +310,7 @@ class HealthDashboard:
 
         # Create scatter plot
         colors = ["green", "orange", "red", "gray"]
-        for i, (timestamp, status_value) in enumerate(zip(timestamps, status_values)):
+        for i, (timestamp, status_value) in enumerate(zip(timestamps, status_values, strict=False)):
             ax.scatter(timestamp, status_value, c=colors[status_value], s=100, alpha=0.7)
 
         ax.set_ylim(-0.5, 3.5)

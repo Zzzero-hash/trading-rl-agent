@@ -64,7 +64,12 @@ class TestEnhancedCNNLSTMTrainer:
         assert isinstance(model, CNNLSTMModel)
 
         # Test with custom config
-        custom_config = {"input_dim": 20, "lstm_units": 64, "lstm_num_layers": 1, "output_dim": 1}
+        custom_config = {
+            "input_dim": 20,
+            "lstm_units": 64,
+            "lstm_num_layers": 1,
+            "output_dim": 1,
+        }
         model = trainer.create_model(model_config=custom_config)
         assert isinstance(model, CNNLSTMModel)
         assert model.lstm_units == 64
@@ -126,7 +131,7 @@ class TestEnhancedCNNLSTMTrainer:
         # Create model and train
         model = trainer.create_model()
         optimizer = trainer.create_optimizer(model)
-        scheduler = trainer.create_scheduler(optimizer)
+        trainer.create_scheduler(optimizer)
 
         # Test training step
         loss = trainer.train_step(model, optimizer, X, y)
@@ -159,7 +164,10 @@ class TestEnhancedCNNLSTMTrainer:
         training_config = create_enhanced_training_config()
         trainer = EnhancedCNNLSTMTrainer(model_config, training_config)
 
-        with patch("mlflow.set_tracking_uri"), patch("mlflow.start_run") as mock_start_run:
+        with (
+            patch("mlflow.set_tracking_uri"),
+            patch("mlflow.start_run") as mock_start_run,
+        ):
             trainer.setup_mlflow(experiment_name="test_experiment")
             mock_start_run.assert_called_once()
 
@@ -192,7 +200,10 @@ class TestEnhancedCNNLSTMTrainer:
         training_config = create_enhanced_training_config()
         trainer = EnhancedCNNLSTMTrainer(model_config, training_config)
 
-        with patch("torch.utils.tensorboard.SummaryWriter", side_effect=Exception("TensorBoard failed")):
+        with patch(
+            "torch.utils.tensorboard.SummaryWriter",
+            side_effect=Exception("TensorBoard failed"),
+        ):
             # Should not raise exception, just log warning
             trainer.setup_tensorboard("invalid_path")
 
@@ -203,7 +214,12 @@ class TestEnhancedCNNLSTMTrainer:
         trainer = EnhancedCNNLSTMTrainer(model_config, training_config)
 
         # Test with larger model
-        large_config = {"input_dim": 50, "lstm_units": 256, "lstm_num_layers": 3, "output_dim": 1}
+        large_config = {
+            "input_dim": 50,
+            "lstm_units": 256,
+            "lstm_num_layers": 3,
+            "output_dim": 1,
+        }
 
         model = trainer.create_model(model_config=large_config)
         assert isinstance(model, CNNLSTMModel)
@@ -287,7 +303,14 @@ class TestHyperparameterOptimization:
         """Test that model config contains all required parameters."""
         config = create_enhanced_model_config()
 
-        required_keys = ["input_dim", "lstm_units", "lstm_num_layers", "output_dim", "cnn_architecture", "dropout_rate"]
+        required_keys = [
+            "input_dim",
+            "lstm_units",
+            "lstm_num_layers",
+            "output_dim",
+            "cnn_architecture",
+            "dropout_rate",
+        ]
 
         for key in required_keys:
             assert key in config

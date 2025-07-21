@@ -19,7 +19,11 @@ from .advanced_policy_optimization import (
     TRPOConfig,
 )
 from .advanced_trainer import AdvancedTrainer, MultiObjectiveTrainer
-from .benchmark_framework import BenchmarkConfig, BenchmarkFramework, run_quick_benchmark
+from .benchmark_framework import (
+    BenchmarkConfig,
+    BenchmarkFramework,
+    run_quick_benchmark,
+)
 from .configs import MultiObjectiveConfig
 
 logger = logging.getLogger(__name__)
@@ -157,7 +161,7 @@ def run_benchmark(args: argparse.Namespace) -> None:
         return create_simple_env(config.state_dim, config.action_dim)
 
     # Run benchmark
-    results = framework.run_benchmark(env_creator, list(config.algorithms.keys()))
+    framework.run_benchmark(env_creator, list(config.algorithms.keys()))
 
     # Print summary
     framework.print_summary()
@@ -252,13 +256,16 @@ Examples:
   python -m trading_rl_agent.agents.cli_advanced_optimization train --algorithm advanced_ppo --num-episodes 1000
 
   # Run benchmark comparison
-  python -m trading_rl_agent.agents.cli_advanced_optimization benchmark --algorithms advanced_ppo trpo --num-episodes 500
+  python -m trading_rl_agent.agents.cli_advanced_optimization benchmark \
+    --algorithms advanced_ppo trpo --num-episodes 500
 
   # Multi-objective training
-  python -m trading_rl_agent.agents.cli_advanced_optimization multi-objective --algorithm advanced_ppo --return-weight 0.8 --risk-weight 0.2
+  python -m trading_rl_agent.agents.cli_advanced_optimization multi-objective \
+    --algorithm advanced_ppo --return-weight 0.8 --risk-weight 0.2
 
   # Quick benchmark
-  python -m trading_rl_agent.agents.cli_advanced_optimization quick-benchmark --num-episodes 100
+  python -m trading_rl_agent.agents.cli_advanced_optimization quick-benchmark \
+    --num-episodes 100
         """,
     )
 

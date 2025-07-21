@@ -67,7 +67,7 @@ class TestDataManager:
 
         # Create realistic OHLCV data
         data = []
-        for i, (date, close_price) in enumerate(zip(dates, prices)):
+        for i, (date, close_price) in enumerate(zip(dates, prices, strict=False)):
             # Generate realistic OHLC from close price
             volatility_factor = np.random.uniform(0.98, 1.02)
             high = close_price * volatility_factor

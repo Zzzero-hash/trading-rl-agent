@@ -103,7 +103,7 @@ class ProfessionalDataProvider:
 
         # Try to get configuration from the unified config system first
         try:
-            from ..core.unified_config import UnifiedConfig
+            from src.trading_rl_agent.core.unified_config import UnifiedConfig
 
             config = UnifiedConfig()
             api_key = config.alpaca_api_key
@@ -150,7 +150,7 @@ class ProfessionalDataProvider:
 
         # Try to get configuration from the unified config system first
         try:
-            from ..core.unified_config import UnifiedConfig
+            from src.trading_rl_agent.core.unified_config import UnifiedConfig
 
             config = UnifiedConfig()
             api_key = config.alphavantage_api_key
@@ -428,7 +428,7 @@ class ProfessionalDataProvider:
         try:
             all_data = []
             start_ts = int(pd.to_datetime(start_date).timestamp() * 1000)
-            end_ts = int(pd.to_datetime(end_date).timestamp() * 1000)
+            int(pd.to_datetime(end_date).timestamp() * 1000)
 
             tf_map = {
                 "1Min": "1m",
@@ -446,7 +446,10 @@ class ProfessionalDataProvider:
                     logger.warning(f"No data for {symbol}")
                     continue
 
-                df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
+                df = pd.DataFrame(
+                    ohlcv,
+                    columns=["timestamp", "open", "high", "low", "close", "volume"],
+                )
                 df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
                 df = df[(df["timestamp"] <= pd.to_datetime(end_date))]
                 df["symbol"] = symbol

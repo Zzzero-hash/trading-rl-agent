@@ -101,7 +101,10 @@ class ModelConfig(BaseModel):
 
     # Loss and metrics
     loss_function: str = Field(default="mse", description="Loss function: mse, mae, huber")
-    metrics: list[str] = Field(default=["mae", "rmse", "correlation", "r2_score"], description="Evaluation metrics")
+    metrics: list[str] = Field(
+        default=["mae", "rmse", "correlation", "r2_score"],
+        description="Evaluation metrics",
+    )
 
     # Model persistence
     model_save_path: str = Field(default="models/", description="Model save path")
@@ -283,7 +286,10 @@ class UnifiedConfig(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore")
 
     # Environment and system settings
-    environment: str = Field(default="production", description="Environment: development, staging, production")
+    environment: str = Field(
+        default="production",
+        description="Environment: development, staging, production",
+    )
     debug: bool = Field(default=False, description="Debug mode")
     log_level: str = Field(default="INFO", description="Log level")
 

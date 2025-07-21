@@ -84,7 +84,7 @@ def get_logging_config(verbose_level: int = 0, log_dir: Path | None = None) -> d
     handlers = {
         "console": {
             "level": "DEBUG" if verbose_level > 0 else "INFO",
-            "formatter": "trace" if trace_loops else "detailed" if verbose_level > 0 else "standard",
+            "formatter": ("trace" if trace_loops else "detailed" if verbose_level > 0 else "standard"),
             "class": "logging.StreamHandler",
             "stream": "ext://sys.stdout",
         },

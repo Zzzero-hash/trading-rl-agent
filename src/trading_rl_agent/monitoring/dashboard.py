@@ -105,7 +105,13 @@ class Dashboard:
 
         if self.metrics_collector:
             # Get risk metrics
-            for metric_name in ["var_95", "cvar_95", "current_exposure", "volatility", "beta"]:
+            for metric_name in [
+                "var_95",
+                "cvar_95",
+                "current_exposure",
+                "volatility",
+                "beta",
+            ]:
                 summary = self.metrics_collector.get_metric_summary(metric_name)
                 if summary["latest"] is not None:
                     risk_metrics[metric_name] = summary["latest"]
@@ -129,7 +135,12 @@ class Dashboard:
 
         if self.metrics_collector:
             # Get model metrics
-            for metric_name in ["model_accuracy", "model_loss", "prediction_latency", "model_confidence"]:
+            for metric_name in [
+                "model_accuracy",
+                "model_loss",
+                "prediction_latency",
+                "model_confidence",
+            ]:
                 summary = self.metrics_collector.get_metric_summary(metric_name)
                 if summary["latest"] is not None:
                     model_metrics[metric_name] = summary["latest"]
@@ -236,7 +247,7 @@ class Dashboard:
             )
 
         # Calculate summary statistics
-        values = [p.value for p in history if isinstance(p.value, (int, float))]
+        values = [p.value for p in history if isinstance(p.value, int | float)]
         summary = {}
         if values:
             summary = {

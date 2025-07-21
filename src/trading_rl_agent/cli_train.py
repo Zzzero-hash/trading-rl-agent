@@ -2,15 +2,16 @@ import importlib
 import sys
 import traceback
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import typer
 
-# Add root directory to path for config import
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_settings, load_settings
 
 from .console import console
+
+# Add root directory to path for config import
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 app = typer.Typer(help="Training CLI for Trading RL Agent")
 
@@ -45,20 +46,20 @@ def get_trainer(algo: str) -> Any:
 
 @app.command()
 def train(
-    config_file: Path | None = typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file"),  # noqa: B008
-    epochs: int | None = typer.Option(DEFAULT_EPOCHS, "--epochs", "-e", help="Override number of epochs"),
-    lr: float | None = typer.Option(DEFAULT_LR, "--lr", help="Override learning rate"),
-    devices: str | None = typer.Option(
-        DEFAULT_DEVICES,
-        "--devices",
-        help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')",
-    ),
-    checkpoint_out: Path | None = typer.Option(  # noqa: B008
-        DEFAULT_CHECKPOINT_OUT,
-        "--checkpoint-out",
-        help="Output checkpoint directory",
-    ),
-    log_interval: int = typer.Option(DEFAULT_LOG_INTERVAL, "--log-interval", help="Log metrics every N epochs/steps"),
+    config_file: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Path to config file")
+    ] = DEFAULT_CONFIG_FILE,
+    epochs: Annotated[int | None, typer.Option("--epochs", "-e", help="Override number of epochs")] = DEFAULT_EPOCHS,
+    lr: Annotated[float | None, typer.Option("--lr", help="Override learning rate")] = DEFAULT_LR,
+    devices: Annotated[
+        str | None, typer.Option("--devices", help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')")
+    ] = DEFAULT_DEVICES,
+    checkpoint_out: Annotated[
+        Path | None, typer.Option("--checkpoint-out", help="Output checkpoint directory")
+    ] = DEFAULT_CHECKPOINT_OUT,
+    log_interval: Annotated[
+        int, typer.Option("--log-interval", help="Log metrics every N epochs/steps")
+    ] = DEFAULT_LOG_INTERVAL,
 ) -> None:
     """
     Train a model using the algorithm specified in Settings.model.algorithm.
@@ -96,13 +97,15 @@ def train(
 
 @app.command()
 def resume(
-    config_file: Path | None = typer.Option(DEFAULT_CONFIG_FILE, "--config", "-c", help="Path to config file"),  # noqa: B008
-    devices: str | None = typer.Option(
-        DEFAULT_DEVICES,
-        "--devices",
-        help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')",
-    ),
-    log_interval: int = typer.Option(DEFAULT_LOG_INTERVAL, "--log-interval", help="Log metrics every N epochs/steps"),
+    config_file: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Path to config file")
+    ] = DEFAULT_CONFIG_FILE,
+    devices: Annotated[
+        str | None, typer.Option("--devices", help="Override devices (e.g., 'cpu', 'cuda', 'cuda:0,1')")
+    ] = DEFAULT_DEVICES,
+    log_interval: Annotated[
+        int, typer.Option("--log-interval", help="Log metrics every N epochs/steps")
+    ] = DEFAULT_LOG_INTERVAL,
 ) -> None:
     """
     Resume training from the last checkpoint in Settings.model.checkpoint_dir.

@@ -76,9 +76,23 @@ def monitor(
 
     try:
         if live:
-            _run_live_monitoring(health_monitor, health_dashboard, duration, output_path, html, json_output)
+            _run_live_monitoring(
+                health_monitor,
+                health_dashboard,
+                duration,
+                output_path,
+                html,
+                json_output,
+            )
         else:
-            _run_basic_monitoring(health_monitor, health_dashboard, duration, output_path, html, json_output)
+            _run_basic_monitoring(
+                health_monitor,
+                health_dashboard,
+                duration,
+                output_path,
+                html,
+                json_output,
+            )
 
     except KeyboardInterrupt:
         console.print("\n[yellow]⚠️  Monitoring interrupted by user[/yellow]")
@@ -88,7 +102,12 @@ def monitor(
 
 
 def _run_live_monitoring(
-    health_monitor: Any, health_dashboard: Any, duration: int, output_path: Path, html: bool, json_output: bool
+    health_monitor: Any,
+    health_dashboard: Any,
+    duration: int,
+    output_path: Path,
+    html: bool,
+    json_output: bool,
 ) -> None:
     """Run monitoring with live dashboard display."""
     start_time = time.time()
@@ -97,7 +116,11 @@ def _run_live_monitoring(
         """Generate the live dashboard layout."""
         layout = Layout()
 
-        layout.split_column(Layout(name="header", size=3), Layout(name="main"), Layout(name="footer", size=3))
+        layout.split_column(
+            Layout(name="header", size=3),
+            Layout(name="main"),
+            Layout(name="footer", size=3),
+        )
 
         layout["main"].split_row(Layout(name="left"), Layout(name="right"))
 
@@ -119,9 +142,12 @@ def _run_live_monitoring(
         elapsed = time.time() - start_time
         remaining = max(0, duration - elapsed)
 
-        status_color = {"healthy": "green", "degraded": "yellow", "critical": "red", "unknown": "gray"}.get(
-            health_summary["status"], "gray"
-        )
+        status_color = {
+            "healthy": "green",
+            "degraded": "yellow",
+            "critical": "red",
+            "unknown": "gray",
+        }.get(health_summary["status"], "gray")
 
         layout["header"].update(
             Panel(
@@ -170,14 +196,17 @@ def _run_live_monitoring(
 
         recent_checks = dashboard_data.get("recent_health_checks", [])
         for check in recent_checks[-5:]:  # Last 5 checks
-            status_color = {"healthy": "green", "degraded": "yellow", "critical": "red", "unknown": "gray"}.get(
-                check["status"], "gray"
-            )
+            status_color = {
+                "healthy": "green",
+                "degraded": "yellow",
+                "critical": "red",
+                "unknown": "gray",
+            }.get(check["status"], "gray")
 
             health_table.add_row(
                 check["check_type"],
                 f"[{status_color}]{check['status'].upper()}[/{status_color}]",
-                check["message"][:50] + "..." if len(check["message"]) > 50 else check["message"],
+                (check["message"][:50] + "..." if len(check["message"]) > 50 else check["message"]),
             )
 
         layout["health"].update(Panel(health_table))
@@ -188,12 +217,16 @@ def _run_live_monitoring(
 
         if active_alerts:
             for alert in active_alerts[-3:]:  # Last 3 alerts
-                severity_color = {"info": "blue", "warning": "yellow", "error": "red", "critical": "red"}.get(
-                    alert.severity.value, "white"
-                )
+                severity_color = {
+                    "info": "blue",
+                    "warning": "yellow",
+                    "error": "red",
+                    "critical": "red",
+                }.get(alert.severity.value, "white")
 
                 alerts_text.append(
-                    f"[{severity_color}]{alert.severity.value.upper()}[/{severity_color}] ", style="bold"
+                    f"[{severity_color}]{alert.severity.value.upper()}[/{severity_color}] ",
+                    style="bold",
                 )
                 alerts_text.append(f"{alert.title}\n")
         else:
@@ -223,21 +256,45 @@ def _run_live_monitoring(
             # Generate reports periodically
             elapsed = time.time() - start_time
             if int(elapsed) % 60 == 0 and elapsed > 0:  # Every minute
-                _generate_reports(health_monitor, health_dashboard, output_path, html, json_output, elapsed)
+                _generate_reports(
+                    health_monitor,
+                    health_dashboard,
+                    output_path,
+                    html,
+                    json_output,
+                    elapsed,
+                )
 
             time.sleep(0.5)
 
     # Generate final reports
-    _generate_reports(health_monitor, health_dashboard, output_path, html, json_output, duration, final=True)
+    _generate_reports(
+        health_monitor,
+        health_dashboard,
+        output_path,
+        html,
+        json_output,
+        duration,
+        final=True,
+    )
 
 
 def _run_basic_monitoring(
-    health_monitor: Any, health_dashboard: Any, duration: int, output_path: Path, html: bool, json_output: bool
+    health_monitor: Any,
+    health_dashboard: Any,
+    duration: int,
+    output_path: Path,
+    html: bool,
+    json_output: bool,
 ) -> None:
     """Run basic monitoring with progress bar."""
     start_time = time.time()
 
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
         task = progress.add_task("Monitoring system health...", total=duration)
 
         while time.time() - start_time < duration:
@@ -246,12 +303,27 @@ def _run_basic_monitoring(
 
             # Generate reports periodically
             if int(elapsed) % 60 == 0 and elapsed > 0:  # Every minute
-                _generate_reports(health_monitor, health_dashboard, output_path, html, json_output, elapsed)
+                _generate_reports(
+                    health_monitor,
+                    health_dashboard,
+                    output_path,
+                    html,
+                    json_output,
+                    elapsed,
+                )
 
             time.sleep(1)
 
     # Generate final reports
-    _generate_reports(health_monitor, health_dashboard, output_path, html, json_output, duration, final=True)
+    _generate_reports(
+        health_monitor,
+        health_dashboard,
+        output_path,
+        html,
+        json_output,
+        duration,
+        final=True,
+    )
 
 
 def _generate_reports(
@@ -300,9 +372,12 @@ def status() -> None:
     health_summary = health_monitor.get_health_summary()
 
     # Display status
-    status_color = {"healthy": "green", "degraded": "yellow", "critical": "red", "unknown": "gray"}.get(
-        health_summary["status"], "gray"
-    )
+    status_color = {
+        "healthy": "green",
+        "degraded": "yellow",
+        "critical": "red",
+        "unknown": "gray",
+    }.get(health_summary["status"], "gray")
 
     console.print(f"Overall Status: [{status_color}]{health_summary['status'].upper()}[/{status_color}]")
 
@@ -321,7 +396,9 @@ def status() -> None:
         }.get(result.status, "gray")
 
         table.add_row(
-            result.check_type.value, f"[{status_color}]{result.status.value.upper()}[/{status_color}]", result.message
+            result.check_type.value,
+            f"[{status_color}]{result.status.value.upper()}[/{status_color}]",
+            result.message,
         )
 
     console.print(table)
@@ -411,9 +488,12 @@ def alerts(
     table.add_column("Time", style="dim")
 
     for alert in alerts[:limit]:
-        severity_color = {"info": "blue", "warning": "yellow", "error": "red", "critical": "red"}.get(
-            alert.severity.value, "white"
-        )
+        severity_color = {
+            "info": "blue",
+            "warning": "yellow",
+            "error": "red",
+            "critical": "red",
+        }.get(alert.severity.value, "white")
 
         table.add_row(
             alert.id[:8] + "...",

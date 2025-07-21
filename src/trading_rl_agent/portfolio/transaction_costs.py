@@ -124,7 +124,7 @@ class FlatRateCommission(CommissionStructure):
     min_commission: float = 1.0
     max_commission: float = 1000.0
 
-    def calculate_commission(self, trade_value: float, quantity: float) -> float:
+    def calculate_commission(self, trade_value: float, _quantity: float) -> float:
         """Calculate flat rate commission."""
         commission = trade_value * self.rate
         return max(self.min_commission, min(commission, self.max_commission))
@@ -143,7 +143,7 @@ class TieredCommission(CommissionStructure):
     )
     min_commission: float = 1.0
 
-    def calculate_commission(self, trade_value: float, quantity: float) -> float:
+    def calculate_commission(self, trade_value: float, _quantity: float) -> float:
         """Calculate tiered commission."""
         commission = 0.0
         remaining_value = trade_value
@@ -166,7 +166,7 @@ class PerShareCommission(CommissionStructure):
     min_commission: float = 1.0
     max_commission: float = 1000.0
 
-    def calculate_commission(self, trade_value: float, quantity: float) -> float:
+    def calculate_commission(self, _trade_value: float, quantity: float) -> float:
         """Calculate per-share commission."""
         commission = abs(quantity) * self.rate_per_share
         return max(self.min_commission, min(commission, self.max_commission))
@@ -239,7 +239,7 @@ class ConstantSlippageModel(SlippageModel):
 
     slippage_rate: float = 0.0001  # 0.01%
 
-    def calculate_slippage(self, order_size: float, market_data: MarketData, order_type: OrderType) -> float:
+    def calculate_slippage(self, order_size: float, _market_data: MarketData, _order_type: OrderType) -> float:
         """Calculate constant slippage."""
         return float(order_size * self.slippage_rate)
 
@@ -251,7 +251,7 @@ class VolumeBasedSlippageModel(SlippageModel):
     base_slippage_rate: float = 0.00005
     volume_exponent: float = 0.5
 
-    def calculate_slippage(self, order_size: float, market_data: MarketData, order_type: OrderType) -> float:
+    def calculate_slippage(self, order_size: float, market_data: MarketData, _order_type: OrderType) -> float:
         """Calculate volume-based slippage."""
         volume_ratio = order_size / market_data.volume if market_data.volume > 0 else 0
         slippage_rate = self.base_slippage_rate * (volume_ratio**self.volume_exponent)
@@ -264,7 +264,7 @@ class SpreadBasedSlippageModel(SlippageModel):
 
     spread_multiplier: float = 0.5  # Assume 50% of spread as slippage
 
-    def calculate_slippage(self, order_size: float, market_data: MarketData, order_type: OrderType) -> float:
+    def calculate_slippage(self, order_size: float, market_data: MarketData, _order_type: OrderType) -> float:
         """Calculate spread-based slippage."""
         return float(order_size * market_data.spread * self.spread_multiplier)
 
@@ -283,7 +283,7 @@ class ConstantDelayModel(ExecutionDelayModel):
 
     delay_seconds: float = 1.0
 
-    def calculate_delay(self, order_size: float, market_data: MarketData, order_type: OrderType) -> float:
+    def calculate_delay(self, _order_size: float, _market_data: MarketData, _order_type: OrderType) -> float:
         """Calculate constant delay."""
         return self.delay_seconds
 
@@ -295,7 +295,7 @@ class SizeBasedDelayModel(ExecutionDelayModel):
     base_delay: float = 0.5
     size_multiplier: float = 0.1
 
-    def calculate_delay(self, order_size: float, market_data: MarketData, order_type: OrderType) -> float:
+    def calculate_delay(self, order_size: float, market_data: MarketData, _order_type: OrderType) -> float:
         """Calculate size-based delay."""
         volume_ratio = order_size / market_data.avg_daily_volume if market_data.avg_daily_volume > 0 else 0
         return self.base_delay + (volume_ratio * self.size_multiplier * 3600)  # Convert to seconds
@@ -473,17 +473,6 @@ class TransactionCostModel:
         # Total cost
         total_cost = commission + slippage + market_impact + spread_cost
 
-        cost_breakdown = {
-            "commission": commission,
-            "slippage": slippage,
-            "market_impact": market_impact,
-            "spread_cost": spread_cost,
-            "total_cost": total_cost,
-            "cost_pct": total_cost / trade_value if trade_value > 0 else 0,
-            "delay_seconds": delay,
-            "condition_multiplier": condition_multiplier,
-        }
-
         return {
             "commission": commission,
             "slippage": slippage,
@@ -573,7 +562,7 @@ class TransactionCostModel:
             slippage=cost_breakdown["slippage"],
             delay_seconds=delay,
             success=filled_quantity > 0,
-            reason="Partial fill" if filled_quantity < requested_quantity else "Full fill",
+            reason=("Partial fill" if filled_quantity < requested_quantity else "Full fill"),
         )
 
     def get_cost_summary(self) -> dict[str, Any]:
@@ -588,11 +577,13 @@ class TransactionCostModel:
             "total_transaction_costs": total_costs,
             "total_delays": self.total_delays,
             "num_trades": self.num_trades,
-            "avg_cost_per_trade": total_costs / self.num_trades if self.num_trades > 0 else 0,
-            "avg_delay_per_trade": self.total_delays / self.num_trades if self.num_trades > 0 else 0,
+            "avg_cost_per_trade": (total_costs / self.num_trades if self.num_trades > 0 else 0),
+            "avg_delay_per_trade": (self.total_delays / self.num_trades if self.num_trades > 0 else 0),
         }
 
-    def generate_optimization_recommendations(self) -> list[CostOptimizationRecommendation]:
+    def generate_optimization_recommendations(
+        self,
+    ) -> list[CostOptimizationRecommendation]:
         """
         Generate cost optimization recommendations based on trading history.
 
@@ -800,9 +791,9 @@ class TransactionCostAnalyzer:
         )
 
         return {
-            "cost_efficiency_ratio": total_costs / total_value if total_value > 0 else 0,
+            "cost_efficiency_ratio": (total_costs / total_value if total_value > 0 else 0),
             "avg_cost_per_trade": total_costs / len(self.cost_model.trade_history),
-            "cost_percentage": (total_costs / total_value * 100) if total_value > 0 else 0,
+            "cost_percentage": ((total_costs / total_value * 100) if total_value > 0 else 0),
             "commission_efficiency": (
                 sum(trade["cost_breakdown"]["commission"] for trade in self.cost_model.trade_history) / total_costs
                 if total_costs > 0
@@ -818,7 +809,7 @@ class TransactionCostAnalyzer:
     def generate_cost_report(self) -> str:
         """Generate a comprehensive cost report."""
         summary = self.cost_model.get_cost_summary()
-        trends = self.analyze_cost_trends()
+        self.analyze_cost_trends()
         efficiency = self.calculate_cost_efficiency_metrics()
         recommendations = self.cost_model.generate_optimization_recommendations()
 

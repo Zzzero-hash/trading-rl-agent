@@ -37,12 +37,12 @@ class MockPolicy:
         self.name = name
         self.action_bias = action_bias
 
-    def compute_single_action(self, obs):
+    def compute_single_action(self, _obs):
         # Return biased action for testing diversity
         action = np.array([0.5 + self.action_bias + np.random.normal(0, 0.1)])
         return action, [], {}
 
-    def get_uncertainty(self, obs):
+    def get_uncertainty(self, _obs):
         # Mock uncertainty for risk-adjusted voting
         return np.random.uniform(0, 1)
 
@@ -84,7 +84,11 @@ class TestEnsembleAgent:
 
     def test_ensemble_creation(self):
         """Test ensemble agent creation."""
-        ensemble = EnsembleAgent(policies=self.policies, weights=self.weights, ensemble_method="weighted_voting")
+        ensemble = EnsembleAgent(
+            policies=self.policies,
+            weights=self.weights,
+            ensemble_method="weighted_voting",
+        )
 
         assert len(ensemble.policy_map) == 3
         assert ensemble.ensemble_method == "weighted_voting"
@@ -92,7 +96,11 @@ class TestEnsembleAgent:
 
     def test_weighted_voting(self):
         """Test weighted voting mechanism."""
-        ensemble = EnsembleAgent(policies=self.policies, weights=self.weights, ensemble_method="weighted_voting")
+        ensemble = EnsembleAgent(
+            policies=self.policies,
+            weights=self.weights,
+            ensemble_method="weighted_voting",
+        )
 
         obs = np.array([0.1, 0.2, 0.3])
         action = ensemble._weighted_voting(obs)
@@ -103,7 +111,10 @@ class TestEnsembleAgent:
     def test_consensus_voting(self):
         """Test consensus voting mechanism."""
         ensemble = EnsembleAgent(
-            policies=self.policies, weights=self.weights, ensemble_method="consensus", consensus_threshold=0.5
+            policies=self.policies,
+            weights=self.weights,
+            ensemble_method="consensus",
+            consensus_threshold=0.5,
         )
 
         obs = np.array([0.1, 0.2, 0.3])
@@ -115,7 +126,10 @@ class TestEnsembleAgent:
     def test_diversity_aware_voting(self):
         """Test diversity-aware voting mechanism."""
         ensemble = EnsembleAgent(
-            policies=self.policies, weights=self.weights, ensemble_method="diversity_aware", diversity_penalty=0.1
+            policies=self.policies,
+            weights=self.weights,
+            ensemble_method="diversity_aware",
+            diversity_penalty=0.1,
         )
 
         obs = np.array([0.1, 0.2, 0.3])
@@ -126,7 +140,11 @@ class TestEnsembleAgent:
 
     def test_risk_adjusted_voting(self):
         """Test risk-adjusted voting mechanism."""
-        ensemble = EnsembleAgent(policies=self.policies, weights=self.weights, ensemble_method="risk_adjusted")
+        ensemble = EnsembleAgent(
+            policies=self.policies,
+            weights=self.weights,
+            ensemble_method="risk_adjusted",
+        )
 
         obs = np.array([0.1, 0.2, 0.3])
         action = ensemble._risk_adjusted_voting(obs)
@@ -136,7 +154,11 @@ class TestEnsembleAgent:
 
     def test_weight_updates(self):
         """Test dynamic weight updates."""
-        ensemble = EnsembleAgent(policies=self.policies, weights=self.weights, ensemble_method="weighted_voting")
+        ensemble = EnsembleAgent(
+            policies=self.policies,
+            weights=self.weights,
+            ensemble_method="weighted_voting",
+        )
 
         initial_weights = ensemble.weights.copy()
 
@@ -151,7 +173,11 @@ class TestEnsembleAgent:
 
     def test_diversity_calculation(self):
         """Test diversity calculation."""
-        ensemble = EnsembleAgent(policies=self.policies, weights=self.weights, ensemble_method="weighted_voting")
+        ensemble = EnsembleAgent(
+            policies=self.policies,
+            weights=self.weights,
+            ensemble_method="weighted_voting",
+        )
 
         # Create diverse actions
         actions = np.array([[0.1, 0.2], [0.9, 0.8], [0.5, 0.5]])
@@ -162,7 +188,11 @@ class TestEnsembleAgent:
 
     def test_agent_management(self):
         """Test adding and removing agents."""
-        ensemble = EnsembleAgent(policies=self.policies, weights=self.weights, ensemble_method="weighted_voting")
+        ensemble = EnsembleAgent(
+            policies=self.policies,
+            weights=self.weights,
+            ensemble_method="weighted_voting",
+        )
 
         initial_count = len(ensemble.policy_map)
 
@@ -181,7 +211,11 @@ class TestEnsembleAgent:
 
     def test_ensemble_diagnostics(self):
         """Test ensemble diagnostics."""
-        ensemble = EnsembleAgent(policies=self.policies, weights=self.weights, ensemble_method="weighted_voting")
+        ensemble = EnsembleAgent(
+            policies=self.policies,
+            weights=self.weights,
+            ensemble_method="weighted_voting",
+        )
 
         diagnostics = ensemble.get_ensemble_diagnostics()
 
@@ -356,7 +390,7 @@ class TestEnsembleTrainer:
 
     @patch("trading_rl_agent.agents.ensemble_trainer.SACTrainer")
     @patch("trading_rl_agent.agents.ensemble_trainer.TD3Trainer")
-    def test_trainer_creation(self, mock_td3, mock_sac):
+    def test_trainer_creation(self, _mock_td3, _mock_sac):
         """Test ensemble trainer creation."""
         trainer = EnsembleTrainer(config=self.config, env_creator=self.env_creator, save_dir="test_outputs")
 

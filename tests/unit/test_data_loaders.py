@@ -62,14 +62,20 @@ class TestYFinanceLoader:
     def test_load_yfinance_interval_mapping(self):
         """Test interval mapping for different timeframes."""
         mock_data = pd.DataFrame(
-            {"Open": [100.0], "High": [102.0], "Low": [99.0], "Close": [101.0], "Volume": [1000000]},
+            {
+                "Open": [100.0],
+                "High": [102.0],
+                "Low": [99.0],
+                "Close": [101.0],
+                "Volume": [1000000],
+            },
             index=pd.date_range("2024-01-01", periods=1),
         )
 
         intervals = ["day", "hour", "minute"]
         expected_yf_intervals = ["1d", "1h", "1m"]
 
-        for interval, expected in zip(intervals, expected_yf_intervals):
+        for interval, expected in zip(intervals, expected_yf_intervals, strict=False):
             with patch("yfinance.download") as mock_download:
                 mock_download.return_value = mock_data
                 load_yfinance("AAPL", "2024-01-01", "2024-01-02", interval)
@@ -81,7 +87,13 @@ class TestYFinanceLoader:
     def test_load_yfinance_custom_interval(self):
         """Test custom interval string handling."""
         mock_data = pd.DataFrame(
-            {"Open": [100.0], "High": [102.0], "Low": [99.0], "Close": [101.0], "Volume": [1000000]},
+            {
+                "Open": [100.0],
+                "High": [102.0],
+                "Low": [99.0],
+                "Close": [101.0],
+                "Volume": [1000000],
+            },
             index=pd.date_range("2024-01-01", periods=1),
         )
 
@@ -96,7 +108,13 @@ class TestYFinanceLoader:
         """Test timezone handling in YFinance data."""
         # Mock data with timezone-aware index
         mock_data = pd.DataFrame(
-            {"Open": [100.0], "High": [102.0], "Low": [99.0], "Close": [101.0], "Volume": [1000000]},
+            {
+                "Open": [100.0],
+                "High": [102.0],
+                "Low": [99.0],
+                "Close": [101.0],
+                "Volume": [1000000],
+            },
             index=pd.date_range("2024-01-01", periods=1, tz="UTC"),
         )
 
@@ -109,15 +127,19 @@ class TestYFinanceLoader:
 
     def test_load_yfinance_missing_yfinance(self):
         """Test error handling when yfinance is not available."""
-        with patch("trading_rl_agent.data.loaders.yfinance_loader.yf", None):
-            with pytest.raises(ImportError, match="yfinance package is required"):
-                load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
+        with (
+            patch("trading_rl_agent.data.loaders.yfinance_loader.yf", None),
+            pytest.raises(ImportError, match="yfinance package is required"),
+        ):
+            load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
 
     def test_load_yfinance_network_error(self):
         """Test handling of network errors."""
-        with patch("yfinance.download", side_effect=Exception("Network error")):
-            with pytest.raises(Exception, match="Network error"):
-                load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
+        with (
+            patch("yfinance.download", side_effect=Exception("Network error")),
+            pytest.raises(Exception, match="Network error"),
+        ):
+            load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
 
     @pytest.mark.benchmark
     def test_load_yfinance_performance(self, benchmark):
@@ -171,7 +193,13 @@ class TestAlphaVantageLoader:
     def test_load_alphavantage_api_key_from_env(self):
         """Test API key retrieval from environment variable."""
         mock_data = pd.DataFrame(
-            {"1. open": [100.0], "2. high": [102.0], "3. low": [99.0], "4. close": [101.0], "5. volume": [1000000]},
+            {
+                "1. open": [100.0],
+                "2. high": [102.0],
+                "3. low": [99.0],
+                "4. close": [101.0],
+                "5. volume": [1000000],
+            },
             index=pd.date_range("2024-01-01", periods=1),
         )
 
@@ -189,7 +217,13 @@ class TestAlphaVantageLoader:
     def test_load_alphavantage_api_key_parameter(self):
         """Test API key passed as parameter."""
         mock_data = pd.DataFrame(
-            {"1. open": [100.0], "2. high": [102.0], "3. low": [99.0], "4. close": [101.0], "5. volume": [1000000]},
+            {
+                "1. open": [100.0],
+                "2. high": [102.0],
+                "3. low": [99.0],
+                "4. close": [101.0],
+                "5. volume": [1000000],
+            },
             index=pd.date_range("2024-01-01", periods=1),
         )
 
@@ -205,7 +239,13 @@ class TestAlphaVantageLoader:
     def test_load_alphavantage_default_api_key(self):
         """Test default API key when none provided."""
         mock_data = pd.DataFrame(
-            {"1. open": [100.0], "2. high": [102.0], "3. low": [99.0], "4. close": [101.0], "5. volume": [1000000]},
+            {
+                "1. open": [100.0],
+                "2. high": [102.0],
+                "3. low": [99.0],
+                "4. close": [101.0],
+                "5. volume": [1000000],
+            },
             index=pd.date_range("2024-01-01", periods=1),
         )
 
@@ -222,7 +262,13 @@ class TestAlphaVantageLoader:
     def test_load_alphavantage_intraday_data(self):
         """Test intraday data fetching."""
         mock_data = pd.DataFrame(
-            {"1. open": [100.0], "2. high": [102.0], "3. low": [99.0], "4. close": [101.0], "5. volume": [1000000]},
+            {
+                "1. open": [100.0],
+                "2. high": [102.0],
+                "3. low": [99.0],
+                "4. close": [101.0],
+                "5. volume": [1000000],
+            },
             index=pd.date_range("2024-01-01", periods=1),
         )
 
@@ -263,19 +309,22 @@ class TestAlphaVantageLoader:
 
     def test_load_alphavantage_missing_alphavantage(self):
         """Test error handling when alpha_vantage is not available."""
-        with patch("trading_rl_agent.data.loaders.alphavantage_loader.TimeSeries", None):
-            with pytest.raises(ImportError, match="alpha_vantage package is required"):
-                load_alphavantage("AAPL", "2024-01-01", "2024-01-02", "day")
+        with (
+            patch("trading_rl_agent.data.loaders.alphavantage_loader.TimeSeries", None),
+            pytest.raises(ImportError, match="alpha_vantage package is required"),
+        ):
+            load_alphavantage("AAPL", "2024-01-01", "2024-01-02", "day")
 
     def test_load_alphavantage_api_error(self):
         """Test handling of API errors."""
-        with patch("trading_rl_agent.data.loaders.alphavantage_loader.TimeSeries") as mock_timeseries:
+        with (
+            patch("trading_rl_agent.data.loaders.alphavantage_loader.TimeSeries") as mock_timeseries,
+            pytest.raises(RuntimeError, match="Failed to fetch data from Alpha Vantage"),
+        ):
             mock_ts = Mock()
             mock_ts.get_daily.side_effect = Exception("API error")
             mock_timeseries.return_value = mock_ts
-
-            with pytest.raises(RuntimeError, match="Failed to fetch data from Alpha Vantage"):
-                load_alphavantage("AAPL", "2024-01-01", "2024-01-02", "day")
+            load_alphavantage("AAPL", "2024-01-01", "2024-01-02", "day")
 
     @pytest.mark.benchmark
     def test_load_alphavantage_performance(self, benchmark):
@@ -308,7 +357,14 @@ class TestSyntheticData:
 
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 10
-        assert list(df.columns) == ["timestamp", "open", "high", "low", "close", "volume"]
+        assert list(df.columns) == [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
         assert df["timestamp"].dtype == "datetime64[ns]"
         assert df["volume"].dtype == "int64"
 
@@ -380,7 +436,14 @@ class TestSyntheticData:
 
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 10
-        assert list(df.columns) == ["timestamp", "open", "high", "low", "close", "volume"]
+        assert list(df.columns) == [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
         assert df["timestamp"].dtype == "datetime64[ns]"
 
     def test_generate_gbm_prices_parameters(self):
@@ -415,7 +478,7 @@ class TestSyntheticData:
         df = generate_gbm_prices(n_days=100)
 
         # Calculate price movement
-        price_moves = abs(df["close"] - df["open"]) / df["close"]
+        abs(df["close"] - df["open"]) / df["close"]
 
         # Volume should be positive
         assert all(df["volume"] > 0)
@@ -514,9 +577,8 @@ class TestDataLoaderIntegration:
     def test_error_handling_consistency(self):
         """Test consistent error handling across data sources."""
         # Test YFinance error handling
-        with patch("yfinance.download", side_effect=Exception("Network error")):
-            with pytest.raises(RuntimeError):
-                load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
+        with patch("yfinance.download", side_effect=Exception("Network error")), pytest.raises(RuntimeError):
+            load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
 
         # Test Alpha Vantage error handling
         with patch("trading_rl_agent.data.loaders.alphavantage_loader.TimeSeries") as mock_timeseries:
@@ -603,13 +665,18 @@ class TestDataLoaderEdgeCases:
             index=pd.date_range("2024-01-01", periods=1),
         )
 
-        with patch("yfinance.download", return_value=malformed_data):
-            with pytest.raises(KeyError):
-                load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
+        with patch("yfinance.download", return_value=malformed_data), pytest.raises(KeyError):
+            load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
 
         # Alpha Vantage with unexpected column names
         malformed_av_data = pd.DataFrame(
-            {"open": [100.0], "high": [102.0], "low": [99.0], "close": [101.0], "volume": [1000000]},
+            {
+                "open": [100.0],
+                "high": [102.0],
+                "low": [99.0],
+                "close": [101.0],
+                "volume": [1000000],
+            },
             index=pd.date_range("2024-01-01", periods=1),
         )
 
@@ -624,31 +691,31 @@ class TestDataLoaderEdgeCases:
 
     def test_network_timeout_handling(self):
         """Test handling of network timeouts."""
-        with patch("yfinance.download", side_effect=TimeoutError("Request timeout")):
-            with pytest.raises(TimeoutError):
-                load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
+        with patch("yfinance.download", side_effect=TimeoutError("Request timeout")), pytest.raises(TimeoutError):
+            load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
 
-        with patch("trading_rl_agent.data.loaders.alphavantage_loader.TimeSeries") as mock_timeseries:
+        with (
+            patch("trading_rl_agent.data.loaders.alphavantage_loader.TimeSeries") as mock_timeseries,
+            pytest.raises(RuntimeError),
+        ):
             mock_ts = Mock()
             mock_ts.get_daily.side_effect = TimeoutError("Request timeout")
             mock_timeseries.return_value = mock_ts
-
-            with pytest.raises(RuntimeError):
-                load_alphavantage("AAPL", "2024-01-01", "2024-01-02", "day")
+            load_alphavantage("AAPL", "2024-01-01", "2024-01-02", "day")
 
     def test_rate_limiting_handling(self):
         """Test handling of API rate limiting."""
-        with patch("yfinance.download", side_effect=Exception("Rate limit exceeded")):
-            with pytest.raises(RuntimeError):
-                load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
+        with patch("yfinance.download", side_effect=Exception("Rate limit exceeded")), pytest.raises(RuntimeError):
+            load_yfinance("AAPL", "2024-01-01", "2024-01-02", "day")
 
-        with patch("trading_rl_agent.data.loaders.alphavantage_loader.TimeSeries") as mock_timeseries:
+        with (
+            patch("trading_rl_agent.data.loaders.alphavantage_loader.TimeSeries") as mock_timeseries,
+            pytest.raises(RuntimeError),
+        ):
             mock_ts = Mock()
             mock_ts.get_daily.side_effect = Exception("Rate limit exceeded")
             mock_timeseries.return_value = mock_ts
-
-            with pytest.raises(RuntimeError):
-                load_alphavantage("AAPL", "2024-01-01", "2024-01-02", "day")
+            load_alphavantage("AAPL", "2024-01-01", "2024-01-02", "day")
 
     def test_synthetic_data_edge_cases(self):
         """Test edge cases for synthetic data generation."""

@@ -122,10 +122,16 @@ class MetricsCollector:
         if not history:
             return {"count": 0, "min": None, "max": None, "mean": None, "std": None}
 
-        values = [p.value for p in history if isinstance(p.value, (int, float))]
+        values = [p.value for p in history if isinstance(p.value, int | float)]
 
         if not values:
-            return {"count": len(history), "min": None, "max": None, "mean": None, "std": None}
+            return {
+                "count": len(history),
+                "min": None,
+                "max": None,
+                "mean": None,
+                "std": None,
+            }
 
         return {
             "count": len(values),

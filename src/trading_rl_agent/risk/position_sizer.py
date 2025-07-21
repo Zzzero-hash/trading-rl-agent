@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def kelly_position_size(
-    expected_return: float,
+    _expected_return: float,
     win_rate: float,
     avg_win: float,
     avg_loss: float,

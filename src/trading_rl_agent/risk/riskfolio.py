@@ -42,11 +42,7 @@ class RiskfolioRiskManager:
             Dictionary containing risk metrics including VaR at 5% level
         """
         # Value at Risk at 5%: negative quantile
-        if returns.size == 0:
-            var = 0.0
-        else:
-            # Ensure var is native float
-            var = float(abs(np.percentile(returns, 5)))
+        var = 0.0 if returns.size == 0 else float(abs(np.percentile(returns, 5)))
         return {"var": var}
 
     def validate_action(self, action: float, returns: np.ndarray) -> bool:
