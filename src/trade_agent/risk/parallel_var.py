@@ -16,7 +16,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 from .monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig, VaRResult
 

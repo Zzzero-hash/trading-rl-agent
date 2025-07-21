@@ -18,7 +18,7 @@ try:
 except ImportError:
     SCIPY_AVAILABLE = False
 
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 logger = get_logger(__name__)
 

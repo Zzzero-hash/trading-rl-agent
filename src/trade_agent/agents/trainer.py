@@ -9,13 +9,13 @@ import pandas as pd
 import ray
 from ray import tune
 
-from src.trade_agent.core.exceptions import ConfigurationError
-from src.trade_agent.data.synthetic import fetch_synthetic_data
-from src.trade_agent.envs.finrl_trading_env import TradingEnv, register_env
-from src.trade_agent.risk.riskfolio import RiskfolioConfig, RiskfolioRiskManager
+from trade_agent.core.exceptions import ConfigurationError
+from trade_agent.data.synthetic import fetch_synthetic_data
+from trade_agent.envs.finrl_trading_env import TradingEnv, register_env
+from trade_agent.risk.riskfolio import RiskfolioConfig, RiskfolioRiskManager
 
 if TYPE_CHECKING:
-    from src.trade_agent.core.config import SystemConfig
+    from trade_agent.core.config import SystemConfig
 
 
 class RiskAwareEnv(gym.Wrapper):

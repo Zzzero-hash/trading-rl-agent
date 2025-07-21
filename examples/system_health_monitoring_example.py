@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from src.trade_agent.monitoring import (
+from trade_agent.monitoring import (
     AlertManager,
     HealthCheckResult,
     HealthCheckType,

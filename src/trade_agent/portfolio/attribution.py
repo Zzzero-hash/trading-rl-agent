@@ -35,7 +35,7 @@ except ImportError:
     PLOTLY_AVAILABLE = False
     go = None
     make_subplots = None
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 logger = get_logger(__name__)
 

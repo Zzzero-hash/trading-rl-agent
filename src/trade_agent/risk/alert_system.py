@@ -26,8 +26,8 @@ from typing import Any
 import pandas as pd
 from pydantic import BaseModel, Field
 
-from src.trade_agent.core.logging import get_logger
-from src.trade_agent.monitoring.alert_manager import Alert, AlertManager, AlertSeverity, AlertStatus
+from trade_agent.core.logging import get_logger
+from trade_agent.monitoring.alert_manager import Alert, AlertManager, AlertSeverity, AlertStatus
 
 from .manager import RiskManager, RiskMetrics
 

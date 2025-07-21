@@ -18,8 +18,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.trade_agent.monitoring.alert_manager import AlertManager, AlertSeverity
-from src.trade_agent.risk.alert_system import (
+from trade_agent.monitoring.alert_manager import AlertManager, AlertSeverity
+from trade_agent.risk.alert_system import (
     AlertThreshold,
     CircuitBreakerRule,
     CircuitBreakerStatus,
@@ -28,7 +28,7 @@ from src.trade_agent.risk.alert_system import (
     RiskAlertConfig,
     RiskAlertSystem,
 )
-from src.trade_agent.risk.manager import RiskManager, RiskMetrics
+from trade_agent.risk.manager import RiskManager, RiskMetrics
 
 
 class TestRiskAlertSystem:

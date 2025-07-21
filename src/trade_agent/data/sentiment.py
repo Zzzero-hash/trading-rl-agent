@@ -28,7 +28,7 @@ import requests
 from bs4 import BeautifulSoup
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 # Global sentiment cache for backward compatibility
 sentiment: dict[str, dict[str, Any]] = {}
@@ -64,7 +64,7 @@ class SentimentConfig:
         if self.news_api_key is None:
             # Try unified config first
             try:
-                from src.trade_agent.core.unified_config import UnifiedConfig
+                from trade_agent.core.unified_config import UnifiedConfig
 
                 config = UnifiedConfig()
                 self.news_api_key = config.newsapi_key
@@ -78,7 +78,7 @@ class SentimentConfig:
         if self.social_api_key is None:
             # Try unified config first
             try:
-                from src.trade_agent.core.unified_config import UnifiedConfig
+                from trade_agent.core.unified_config import UnifiedConfig
 
                 config = UnifiedConfig()
                 self.social_api_key = config.social_api_key

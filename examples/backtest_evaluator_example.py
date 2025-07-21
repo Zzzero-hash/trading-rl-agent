@@ -16,9 +16,9 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-from src.trade_agent.core.unified_config import BacktestConfig
-from src.trade_agent.eval.backtest_evaluator import BacktestEvaluator
-from src.trade_agent.portfolio.transaction_costs import (
+from trade_agent.core.unified_config import BacktestConfig
+from trade_agent.eval.backtest_evaluator import BacktestEvaluator
+from trade_agent.portfolio.transaction_costs import (
     BrokerType,
     TransactionCostModel,
 )

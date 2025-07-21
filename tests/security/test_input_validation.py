@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.trade_agent.core.config import Config
+from trade_agent.core.config import Config
 
 
 class TestInputValidationSecurity:

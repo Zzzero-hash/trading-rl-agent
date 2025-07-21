@@ -22,8 +22,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 from rich.table import Table
 
-from src.trade_agent.core.logging import get_logger
-from src.trade_agent.monitoring.alert_manager import AlertManager, AlertSeverity
+from trade_agent.core.logging import get_logger
+from trade_agent.monitoring.alert_manager import AlertManager, AlertSeverity
 
 from .alert_system import (
     AlertThreshold,

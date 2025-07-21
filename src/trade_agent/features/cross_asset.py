@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 
 @dataclass

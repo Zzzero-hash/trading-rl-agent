@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.trade_agent.data.data_loader import DataLoader
+from trade_agent.data.data_loader import DataLoader
 
 
 class TestDataSanitizationSecurity:

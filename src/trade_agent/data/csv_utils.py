@@ -12,7 +12,7 @@ from typing import Any
 import pandas as pd
 from tqdm import tqdm
 
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 logger = get_logger(__name__)
 

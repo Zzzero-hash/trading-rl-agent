@@ -24,7 +24,7 @@ try:
 
     EMPYRICAL_AVAILABLE = True
 except ImportError:
-    from src.trade_agent.utils.empyrical_mock import (
+    from trade_agent.utils.empyrical_mock import (
         beta,
         calmar_ratio,
         conditional_value_at_risk,
@@ -49,7 +49,7 @@ except ImportError:
     )()
     EMPYRICAL_AVAILABLE = True
 
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 from .transaction_costs import (
     BrokerType,
