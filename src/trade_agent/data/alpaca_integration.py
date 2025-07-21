@@ -754,7 +754,7 @@ def create_alpaca_config_from_env() -> AlpacaConfig:
     """
     # Try to get configuration from the unified config system first
     try:
-        from src.trade_agent.core.unified_config import UnifiedConfig
+        from trade_agent.core.unified_config import UnifiedConfig
 
         config = UnifiedConfig()
         if config.alpaca_api_key and config.alpaca_secret_key:

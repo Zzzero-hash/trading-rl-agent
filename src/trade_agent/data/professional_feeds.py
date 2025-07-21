@@ -103,7 +103,7 @@ class ProfessionalDataProvider:
 
         # Try to get configuration from the unified config system first
         try:
-            from src.trade_agent.core.unified_config import UnifiedConfig
+            from trade_agent.core.unified_config import UnifiedConfig
 
             config = UnifiedConfig()
             api_key = config.alpaca_api_key
@@ -150,7 +150,7 @@ class ProfessionalDataProvider:
 
         # Try to get configuration from the unified config system first
         try:
-            from src.trade_agent.core.unified_config import UnifiedConfig
+            from trade_agent.core.unified_config import UnifiedConfig
 
             config = UnifiedConfig()
             api_key = config.alphavantage_api_key

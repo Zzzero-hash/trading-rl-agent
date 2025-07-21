@@ -17,11 +17,11 @@ import pandas as pd
 from rich.console import Console
 from rich.table import Table
 
-from src.trade_agent.core.unified_config import BacktestConfig
-from src.trade_agent.portfolio.manager import PortfolioConfig, PortfolioManager
-from src.trade_agent.portfolio.transaction_costs import BrokerType, MarketCondition, MarketData, OrderType
-from src.trade_agent.portfolio.transaction_costs import TransactionCostModel as NewTransactionCostModel
-from src.trade_agent.utils.metrics import (
+from trade_agent.core.unified_config import BacktestConfig
+from trade_agent.portfolio.manager import PortfolioConfig, PortfolioManager
+from trade_agent.portfolio.transaction_costs import BrokerType, MarketCondition, MarketData, OrderType
+from trade_agent.portfolio.transaction_costs import TransactionCostModel as NewTransactionCostModel
+from trade_agent.utils.metrics import (
     calculate_beta,
     calculate_calmar_ratio,
     calculate_expected_shortfall,

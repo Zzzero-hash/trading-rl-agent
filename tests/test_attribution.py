@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.trade_agent.portfolio.attribution import (
+from trade_agent.portfolio.attribution import (
     AttributionConfig,
     AttributionVisualizer,
     BrinsonAttributor,
@@ -24,11 +24,11 @@ from src.trade_agent.portfolio.attribution import (
     PerformanceAttributor,
     RiskAdjustedAttributor,
 )
-from src.trade_agent.portfolio.attribution_integration import (
+from trade_agent.portfolio.attribution_integration import (
     AttributionIntegration,
     AutomatedAttributionWorkflow,
 )
-from src.trade_agent.portfolio.manager import PortfolioConfig, PortfolioManager
+from trade_agent.portfolio.manager import PortfolioConfig, PortfolioManager
 
 
 @pytest.fixture

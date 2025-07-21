@@ -16,8 +16,8 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-from src.trade_agent.features.alternative_data import SentimentAnalyzer
-from src.trade_agent.features.technical_indicators import TechnicalIndicators
+from trade_agent.features.alternative_data import SentimentAnalyzer
+from trade_agent.features.technical_indicators import TechnicalIndicators
 
 
 class LiveDataFeed:

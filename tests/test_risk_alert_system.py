@@ -16,8 +16,8 @@ from unittest.mock import AsyncMock
 import pytest
 from pydantic import ValidationError
 
-from src.trade_agent.monitoring.alert_manager import AlertManager, AlertSeverity
-from src.trade_agent.risk.alert_system import (
+from trade_agent.monitoring.alert_manager import AlertManager, AlertSeverity
+from trade_agent.risk.alert_system import (
     AlertThreshold,
     CircuitBreakerRule,
     CircuitBreakerStatus,
@@ -26,7 +26,7 @@ from src.trade_agent.risk.alert_system import (
     RiskAlertConfig,
     RiskAlertSystem,
 )
-from src.trade_agent.risk.manager import RiskLimits, RiskManager, RiskMetrics
+from trade_agent.risk.manager import RiskLimits, RiskManager, RiskMetrics
 
 
 class TestRiskAlertConfig:

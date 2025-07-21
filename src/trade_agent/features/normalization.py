@@ -23,7 +23,7 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 
 @dataclass

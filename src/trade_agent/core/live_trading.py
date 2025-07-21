@@ -19,11 +19,11 @@ from typing import Any
 import pandas as pd
 import torch
 
-from src.trade_agent.agents.hybrid import HybridAgent
-from src.trade_agent.data.live_feed import LiveDataFeed
-from src.trade_agent.models.cnn_lstm import CNNLSTMModel
-from src.trade_agent.risk.manager import RiskLimits, RiskManager
-from src.trade_agent.utils.metrics import calculate_sharpe_ratio
+from trade_agent.agents.hybrid import HybridAgent
+from trade_agent.data.live_feed import LiveDataFeed
+from trade_agent.models.cnn_lstm import CNNLSTMModel
+from trade_agent.risk.manager import RiskLimits, RiskManager
+from trade_agent.utils.metrics import calculate_sharpe_ratio
 
 
 @dataclass

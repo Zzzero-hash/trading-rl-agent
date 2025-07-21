@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 
 @dataclass

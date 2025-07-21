@@ -19,7 +19,7 @@ import pandas as pd
 from rich.console import Console
 from rich.table import Table
 
-from src.trade_agent.data.synthetic import generate_gbm_prices
+from trade_agent.data.synthetic import generate_gbm_prices
 
 from .metrics_calculator import MetricsCalculator
 from .model_evaluator import ModelEvaluator

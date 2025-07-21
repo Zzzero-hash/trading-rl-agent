@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.trade_agent.data.market_patterns import (
+from trade_agent.data.market_patterns import (
     STATSMODELS_AVAILABLE,
     MarketPatternGenerator,
     MarketRegime,

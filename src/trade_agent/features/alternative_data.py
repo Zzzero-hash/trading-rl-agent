@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-from src.trade_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 
 @dataclass

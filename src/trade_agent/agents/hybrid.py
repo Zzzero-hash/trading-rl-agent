@@ -16,7 +16,7 @@ import torch
 import torch.nn.functional as f
 from torch import nn
 
-from src.trade_agent.models.cnn_lstm import CNNLSTMModel
+from trade_agent.models.cnn_lstm import CNNLSTMModel
 
 
 class HybridAgent(nn.Module):

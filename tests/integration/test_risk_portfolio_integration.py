@@ -18,11 +18,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.trade_agent.monitoring.alert_manager import AlertManager
-from src.trade_agent.portfolio.attribution import PerformanceAttributor
-from src.trade_agent.portfolio.manager import PortfolioConfig, PortfolioManager
-from src.trade_agent.risk.alert_system import RiskAlertConfig, RiskAlertSystem
-from src.trade_agent.risk.manager import RiskLimits, RiskManager
+from trade_agent.monitoring.alert_manager import AlertManager
+from trade_agent.portfolio.attribution import PerformanceAttributor
+from trade_agent.portfolio.manager import PortfolioConfig, PortfolioManager
+from trade_agent.risk.alert_system import RiskAlertConfig, RiskAlertSystem
+from trade_agent.risk.manager import RiskLimits, RiskManager
 
 
 class TestRiskAwarePortfolioOptimization:

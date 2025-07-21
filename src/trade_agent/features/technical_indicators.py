@@ -10,8 +10,8 @@ from dataclasses import dataclass
 import pandas as pd
 import pandas_ta as ta
 
-from src.trade_agent.core.logging import get_logger
-from src.trade_agent.data.features import (
+from trade_agent.core.logging import get_logger
+from trade_agent.data.features import (
     detect_doji,
     detect_engulfing,
     detect_evening_star,

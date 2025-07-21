@@ -34,7 +34,7 @@ import psutil
 from sklearn.preprocessing import RobustScaler
 from tqdm import tqdm
 
-from src.trade_agent.features.alternative_data import AlternativeDataConfig, AlternativeDataFeatures
+from trade_agent.features.alternative_data import AlternativeDataConfig, AlternativeDataFeatures
 
 from .csv_utils import save_csv_chunked
 from .data_standardizer import DataStandardizer
