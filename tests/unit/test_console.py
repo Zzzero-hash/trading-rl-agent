@@ -7,7 +7,7 @@ Tests the table printing and formatting functions in console.py.
 import io
 from unittest.mock import patch
 
-from trading_rl_agent.console import (
+from trade_agent.console import (
     console,
     print_error_summary,
     print_metrics_table,

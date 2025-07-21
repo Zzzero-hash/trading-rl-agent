@@ -34,7 +34,7 @@
         {
           "label": "Run CLI Help",
           "type": "shell",
-          "command": "trading-rl-agent --help",
+          "command": "trade-agent --help",
           "problemMatcher": []
         }
       ]

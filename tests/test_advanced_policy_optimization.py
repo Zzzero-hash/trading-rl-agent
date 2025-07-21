@@ -8,20 +8,20 @@ import numpy as np
 import pytest
 import torch
 
-from trading_rl_agent.agents.advanced_policy_optimization import (
+from trade_agent.agents.advanced_policy_optimization import (
     TRPO,
     AdaptiveLearningRateScheduler,
     AdvancedPPO,
     MultiObjectiveOptimizer,
     NaturalPolicyGradient,
 )
-from trading_rl_agent.agents.advanced_trainer import (
+from trade_agent.agents.advanced_trainer import (
     AdvancedTrainer,
     MultiObjectiveTrainer,
     PolicyNetwork,
     ValueNetwork,
 )
-from trading_rl_agent.agents.configs import (
+from trade_agent.agents.configs import (
     AdvancedPPOConfig,
     MultiObjectiveConfig,
     NaturalPolicyGradientConfig,

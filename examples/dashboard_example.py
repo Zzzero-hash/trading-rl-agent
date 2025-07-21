@@ -16,10 +16,10 @@ import threading
 import time
 from pathlib import Path
 
-from trading_rl_agent.monitoring.dashboard import Dashboard
-from trading_rl_agent.monitoring.metrics_collector import MetricsCollector
-from trading_rl_agent.monitoring.performance_dashboard import PerformanceDashboard
-from trading_rl_agent.monitoring.streaming_dashboard import StreamingDashboard
+from trade_agent.monitoring.dashboard import Dashboard
+from trade_agent.monitoring.metrics_collector import MetricsCollector
+from trade_agent.monitoring.performance_dashboard import PerformanceDashboard
+from trade_agent.monitoring.streaming_dashboard import StreamingDashboard
 
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))

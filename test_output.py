@@ -7,7 +7,7 @@ from unittest.mock import patch
 from console import print_metrics_table
 
 # Import the console module directly
-sys.path.insert(0, "src/trading_rl_agent")
+sys.path.insert(0, "src/trade_agent")
 
 # Test data
 results = [{"strategy": "momentum", "total_return": 0.15, "sharpe_ratio": 1.25}]

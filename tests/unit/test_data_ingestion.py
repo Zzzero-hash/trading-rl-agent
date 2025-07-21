@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.data.preprocessing import clean_data, validate_data
-from trading_rl_agent.data.professional_feeds import ProfessionalDataProvider
+from trade_agent.data.preprocessing import clean_data, validate_data
+from trade_agent.data.professional_feeds import ProfessionalDataProvider
 
 
 def create_sample_df():

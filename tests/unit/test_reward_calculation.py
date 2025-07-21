@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from trading_rl_agent.envs.finrl_trading_env import TradingEnv
+from trade_agent.envs.finrl_trading_env import TradingEnv
 
 
 def make_env(tmp_path, closes):

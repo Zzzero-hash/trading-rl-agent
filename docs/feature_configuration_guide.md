@@ -260,13 +260,13 @@ The unified configuration integrates with the CLI system:
 
 ```bash
 # Use default configuration
-trading-rl-agent data download
+trade-agent data download
 
 # Use custom configuration file
-trading-rl-agent --config configs/custom.yaml data download
+trade-agent --config configs/custom.yaml data download
 
 # Override with environment variables
-ENVIRONMENT=development trading-rl-agent data download
+ENVIRONMENT=development trade-agent data download
 ```
 
 ## Migration from Legacy Configs

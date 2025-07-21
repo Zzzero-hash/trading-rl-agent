@@ -37,7 +37,7 @@ class TestCLIWorkflow:
     def test_cli_structure(self):
         """Test CLI structure and command availability."""
         try:
-            from trading_rl_agent.cli import (
+            from trade_agent.cli import (
                 app,
                 backtest_app,
                 data_app,
@@ -63,12 +63,12 @@ class TestCLIWorkflow:
     def test_help_system(self):
         """Test help system functionality."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             # Test main help
             result = self.runner.invoke(app, ["--help"])
             assert result.exit_code == 0
-            assert "trading-rl-agent" in result.output
+            assert "trade-agent" in result.output
             assert "Production-grade trading RL agent" in result.output
 
             # Test subcommand help
@@ -97,7 +97,7 @@ class TestCLIWorkflow:
     def test_argument_parsing(self):
         """Test argument parsing functionality."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             # Test verbose flag
             result = self.runner.invoke(app, ["-v", "--help"])
@@ -128,7 +128,7 @@ class TestCLIWorkflow:
     def test_error_handling(self):
         """Test error handling functionality."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             # Test invalid command
             result = self.runner.invoke(app, ["invalid-command"])
@@ -147,7 +147,7 @@ class TestCLIWorkflow:
     def test_data_commands_structure(self):
         """Test data command structure."""
         try:
-            from trading_rl_agent.cli import data_app
+            from trade_agent.cli import data_app
 
             # Test data subcommand help
             result = self.runner.invoke(data_app, ["--help"])
@@ -162,7 +162,7 @@ class TestCLIWorkflow:
     def test_train_commands_structure(self):
         """Test training command structure."""
         try:
-            from trading_rl_agent.cli import train_app
+            from trade_agent.cli import train_app
 
             # Test train subcommand help
             result = self.runner.invoke(train_app, ["--help"])
@@ -177,7 +177,7 @@ class TestCLIWorkflow:
     def test_backtest_commands_structure(self):
         """Test backtest command structure."""
         try:
-            from trading_rl_agent.cli import backtest_app
+            from trade_agent.cli import backtest_app
 
             # Test backtest subcommand help
             result = self.runner.invoke(backtest_app, ["--help"])
@@ -192,7 +192,7 @@ class TestCLIWorkflow:
     def test_trade_commands_structure(self):
         """Test trade command structure."""
         try:
-            from trading_rl_agent.cli import trade_app
+            from trade_agent.cli import trade_app
 
             # Test trade subcommand help
             result = self.runner.invoke(trade_app, ["--help"])
@@ -207,7 +207,7 @@ class TestCLIWorkflow:
     def test_scenario_commands_structure(self):
         """Test scenario command structure."""
         try:
-            from trading_rl_agent.cli import scenario_app
+            from trade_agent.cli import scenario_app
 
             # Test scenario subcommand help
             result = self.runner.invoke(scenario_app, ["--help"])
@@ -223,7 +223,7 @@ class TestCLIWorkflow:
     def test_data_download_command(self, mock_download):
         """Test data download command."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             mock_download.return_value = None
 
@@ -248,7 +248,7 @@ class TestCLIWorkflow:
     def test_training_command(self, mock_train):
         """Test training command."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             mock_train.return_value = None
 
@@ -263,7 +263,7 @@ class TestCLIWorkflow:
     def test_backtest_command(self, mock_backtest):
         """Test backtest command."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             mock_backtest.return_value = None
 
@@ -278,7 +278,7 @@ class TestCLIWorkflow:
     def test_trade_command(self, mock_start):
         """Test trade command."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             mock_start.return_value = None
 
@@ -292,7 +292,7 @@ class TestCLIWorkflow:
     def test_command_descriptions(self):
         """Test that command descriptions are clear and helpful."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             # Test main app description
             result = self.runner.invoke(app, ["--help"])
@@ -325,7 +325,7 @@ class TestCLIWorkflow:
     def test_consistent_output_format(self):
         """Test consistent output formatting."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             # Test help output consistency
             result = self.runner.invoke(app, ["--help"])
@@ -352,7 +352,7 @@ class TestCLIPerformance:
         try:
             import time
 
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             start_time = time.time()
             result = self.runner.invoke(app, ["--help"])
@@ -368,7 +368,7 @@ class TestCLIPerformance:
         try:
             import time
 
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             subcommands = ["data", "train", "backtest", "trade", "scenario"]
 

@@ -230,14 +230,14 @@ Comprehensive overview of the feature, its capabilities, and use cases.
 ### Option 1: Quick Install
 
 ```bash
-pip install trading-rl-agent[feature]
+pip install trade-agent[feature]
 ````
 
 ### Option 2: From Source
 
 ```bash
-git clone https://github.com/yourusername/trading-rl-agent.git
-cd trading-rl-agent
+git clone https://github.com/yourusername/trade-agent.git
+cd trade-agent
 pip install -e .
 ```
 

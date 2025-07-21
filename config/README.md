@@ -112,12 +112,12 @@ All fields marked with `# REQUIRED` in the configuration files must be provided.
 
 ### Environment Variable Format
 
-The system uses the prefix `TRADING_RL_AGENT_` for all environment variables:
+The system uses the prefix `TRADE_AGENT_` for all environment variables:
 
 ```bash
-export TRADING_RL_AGENT_ALPACA_API_KEY=your_api_key
-export TRADING_RL_AGENT_ALPACA_SECRET_KEY=your_secret_key
-export TRADING_RL_AGENT_ALPACA_BASE_URL=https://api.alpaca.markets
+export TRADE_AGENT_ALPACA_API_KEY=your_api_key
+export TRADE_AGENT_ALPACA_SECRET_KEY=your_secret_key
+export TRADE_AGENT_ALPACA_BASE_URL=https://api.alpaca.markets
 ```
 
 ### .env File
@@ -161,7 +161,7 @@ For Docker deployments, use the production configuration and pass environment va
 
 ```dockerfile
 # Dockerfile
-ENV TRADING_RL_AGENT_ENVIRONMENT=production
+ENV TRADE_AGENT_ENVIRONMENT=production
 COPY config/prod-example.yaml /app/config.yaml
 ```
 
@@ -170,9 +170,9 @@ COPY config/prod-example.yaml /app/config.yaml
 services:
   trading-agent:
     environment:
-      - TRADING_RL_AGENT_ALPACA_API_KEY=${ALPACA_API_KEY}
-      - TRADING_RL_AGENT_ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
-      - TRADING_RL_AGENT_ALPACA_BASE_URL=${ALPACA_BASE_URL}
+      - TRADE_AGENT_ALPACA_API_KEY=${ALPACA_API_KEY}
+      - TRADE_AGENT_ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+      - TRADE_AGENT_ALPACA_BASE_URL=${ALPACA_BASE_URL}
 ```
 
 ### Kubernetes Deployment
@@ -200,7 +200,7 @@ spec:
       containers:
         - name: trading-agent
           env:
-            - name: TRADING_RL_AGENT_ALPACA_API_KEY
+            - name: TRADE_AGENT_ALPACA_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: trading-rl-agent-secrets

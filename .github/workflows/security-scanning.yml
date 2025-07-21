@@ -198,24 +198,24 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t trading-rl-agent:security-scan .
+        docker build -t trade-agent:security-scan .
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: 'trading-rl-agent:security-scan'
+        image-ref: 'trade-agent:security-scan'
         format: 'sarif'
         output: 'trivy-container-results.sarif'
 
     - name: Run Trivy with detailed output
       run: |
-        trivy image --format json --output trivy-container-detailed.json trading-rl-agent:security-scan
-        trivy image --format table --output trivy-container-table.txt trading-rl-agent:security-scan
+        trivy image --format json --output trivy-container-detailed.json trade-agent:security-scan
+        trivy image --format table --output trivy-container-table.txt trade-agent:security-scan
 
     - name: Run Docker Scout
       run: |
-        docker scout cves trading-rl-agent:security-scan --format json --output docker-scout.json
-        docker scout cves trading-rl-agent:security-scan --format table --output docker-scout.txt
+        docker scout cves trade-agent:security-scan --format json --output docker-scout.json
+        docker scout cves trade-agent:security-scan --format table --output docker-scout.txt
 
     - name: Upload container security reports
       uses: actions/upload-artifact@v3

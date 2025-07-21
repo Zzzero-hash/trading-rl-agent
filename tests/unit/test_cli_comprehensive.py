@@ -25,7 +25,7 @@ from typer.testing import CliRunner
 # Add the src directory to the path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from trading_rl_agent.cli import app as main_app
+from trade_agent.cli import app as main_app
 
 
 class TestCLIArgumentParsing:
@@ -47,7 +47,7 @@ class TestCLIArgumentParsing:
         """Test main app help command."""
         result = self.runner.invoke(main_app, ["--help"])
         assert result.exit_code == 0
-        assert "trading-rl-agent" in result.output
+        assert "trade-agent" in result.output
         assert "Production-grade live trading system" in result.output
 
     def test_version_command(self):
@@ -216,16 +216,18 @@ class TestDataCLICommands:
         assert result.exit_code == 0
         mock_download.assert_called_once()
 
-    @patch("trading_rl_agent.cli.process_data")
-    def test_process_command(self, mock_process):
-        """Test data processing command."""
-        mock_process.return_value = None
+    @patch("trading_rl_agent.cli.prepare")
+    def test_prepare_command(self, mock_prepare):
+        """Test data prepare command."""
+        mock_prepare.return_value = None
 
         result = self.runner.invoke(
             main_app,
             [
                 "data",
-                "process",
+                "prepare",
+                "--input-path",
+                self.temp_dir,
                 "--output-dir",
                 self.temp_dir,
                 "--force-rebuild",
@@ -234,29 +236,9 @@ class TestDataCLICommands:
         )
 
         assert result.exit_code == 0
-        mock_process.assert_called_once()
+        mock_prepare.assert_called_once()
 
-    @patch("trading_rl_agent.cli.standardize_data")
-    def test_standardize_command(self, mock_standardize):
-        """Test data standardization command."""
-        mock_standardize.return_value = None
 
-        result = self.runner.invoke(
-            main_app,
-            [
-                "data",
-                "standardize",
-                "--input-path",
-                self.temp_dir,
-                "--output-path",
-                f"{self.temp_dir}/standardized",
-                "--method",
-                "robust",
-            ],
-        )
-
-        assert result.exit_code == 0
-        mock_standardize.assert_called_once()
 
     @patch("trading_rl_agent.cli.build_pipeline")
     def test_pipeline_command(self, mock_pipeline):

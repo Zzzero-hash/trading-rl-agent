@@ -19,8 +19,8 @@ This document describes the comprehensive robust test environment framework impl
 
 ```bash
 # Environment variables ensure consistent execution
-TRADING_RL_AGENT_ENVIRONMENT=test
-TRADING_RL_AGENT_DEBUG=false
+TRADE_AGENT_ENVIRONMENT=test
+TRADE_AGENT_DEBUG=false
 OMP_NUM_THREADS=1
 MKL_NUM_THREADS=1
 OPENBLAS_NUM_THREADS=1
@@ -270,8 +270,8 @@ The framework uses consistent environment variables for test execution:
 
 ```bash
 # Test environment configuration
-TRADING_RL_AGENT_ENVIRONMENT=test
-TRADING_RL_AGENT_DEBUG=false
+TRADE_AGENT_ENVIRONMENT=test
+TRADE_AGENT_DEBUG=false
 
 # Ray and ML framework settings
 RAY_DISABLE_IMPORT_WARNING=1
@@ -426,7 +426,7 @@ Enable debug mode for detailed logging:
 
 ```bash
 # Set debug environment variable
-export TRADING_RL_AGENT_DEBUG=true
+export TRADE_AGENT_DEBUG=true
 
 # Run tests with verbose output
 python3 scripts/run_tests.py --test-paths tests/unit -v

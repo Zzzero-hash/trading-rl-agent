@@ -16,9 +16,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.risk.alert_system import RiskAlertSystem
-from trading_rl_agent.risk.monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig
-from trading_rl_agent.risk.parallel_var import ParallelVaRCalculator
+from trade_agent.risk.alert_system import RiskAlertSystem
+from trade_agent.risk.monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig
+from trade_agent.risk.parallel_var import ParallelVaRCalculator
 
 
 class TestRiskCalculationPerformance:

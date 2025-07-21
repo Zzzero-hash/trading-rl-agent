@@ -5,7 +5,7 @@ Extended tests for CNNLSTMModel to increase coverage.
 import pytest
 import torch
 
-from trading_rl_agent.models.cnn_lstm import (
+from trade_agent.models.cnn_lstm import (
     CNNLSTMConfig,
     CNNLSTMModel,
     _load_config,

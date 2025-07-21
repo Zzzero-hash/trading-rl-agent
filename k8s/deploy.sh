@@ -98,7 +98,7 @@ update_image_tags() {
     # Update image tags in all deployment files
     find . -name "*-deployment.yaml" -type f | while read -r file; do
         if [ -f "$file" ]; then
-            sed -i "s|image:.*trading-rl-agent.*|image: ghcr.io/\${GITHUB_REPOSITORY}:${IMAGE_TAG}|g" "$file"
+            sed -i "s|image:.*trade-agent.*|image: ghcr.io/\${GITHUB_REPOSITORY}:${IMAGE_TAG}|g" "$file"
             log_info "Updated image tag in $file"
         fi
     done

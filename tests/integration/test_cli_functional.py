@@ -115,19 +115,22 @@ class TestCLIFunctional:
                 assert len(data_files) > 0
 
     @pytest.mark.slow
-    def test_data_process_functional(self):
-        """Test data process command with test config."""
+    def test_data_prepare_functional(self):
+        """Test data prepare command with test config."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            config_path = self.create_test_config(temp_path)
+
+            # Create test data file
+            test_data_file = temp_path / "test_data.csv"
+            test_data_file.write_text("date,open,high,low,close,volume\n2024-01-01,100,105,95,102,1000000")
 
             result = self.run_cli_command(
                 [
                     "data",
-                    "process",
-                    "--config",
-                    str(config_path),
-                    "--output",
+                    "prepare",
+                    "--input-path",
+                    str(test_data_file),
+                    "--output-dir",
                     str(temp_path),
                 ]
             )

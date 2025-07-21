@@ -36,11 +36,11 @@ python main.py data download --symbols "AAPL" --output data/market_data/
 #### Process and Build Datasets
 
 ```bash
-# Process downloaded data
-python main.py data process --symbols "AAPL,GOOGL" --force
+# Process and standardize downloaded data
+python main.py data prepare --input-path data/raw --output-dir processed_data/
 
 # Process with custom configuration
-python main.py data process --config configs/unified_config.yaml --output processed_data/
+python main.py data prepare --input-path data/raw --config configs/unified_config.yaml --output-dir processed_data/
 
 # Run complete data pipeline
 python main.py data pipeline configs/pipeline_config.yaml
@@ -214,13 +214,13 @@ python run_comprehensive_tests.py --quality-only
 
 ```bash
 # Build Docker image
-docker build -t trading-rl-agent .
+docker build -t trade-agent .
 
 # Run with configuration
-docker run -v $(pwd)/config:/app/config -v $(pwd)/data:/app/data trading-rl-agent version
+docker run -v $(pwd)/config:/app/config -v $(pwd)/data:/app/data trade-agent version
 
 # Run training in container
-docker run --gpus all -v $(pwd)/data:/app/data trading-rl-agent train cnn-lstm --epochs 100
+docker run --gpus all -v $(pwd)/data:/app/data trade-agent train cnn-lstm --epochs 100
 ```
 
 ## 📊 Example Workflows
@@ -231,8 +231,8 @@ docker run --gpus all -v $(pwd)/data:/app/data trading-rl-agent train cnn-lstm -
 # 1. Download data
 python main.py data download --symbols "AAPL,GOOGL,MSFT" --start 2023-01-01
 
-# 2. Process data
-python main.py data process --symbols "AAPL,GOOGL,MSFT" --force
+# 2. Process and standardize data
+python main.py data prepare --input-path data/raw --output-dir processed_data/
 
 # 3. Train CNN+LSTM model
 python main.py train cnn-lstm --epochs 100 --output models/cnn_lstm/

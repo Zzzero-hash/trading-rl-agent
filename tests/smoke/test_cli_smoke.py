@@ -21,10 +21,10 @@ from typer.testing import CliRunner
 # Add the src directory to the path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from trading_rl_agent.cli import app as main_app
-from trading_rl_agent.cli_backtest import app as backtest_app
-from trading_rl_agent.cli_health import app as health_app
-from trading_rl_agent.cli_trade import app as trade_app
+from trade_agent.cli import app as main_app
+from trade_agent.cli_backtest import app as backtest_app
+from trade_agent.cli_health import app as health_app
+from trade_agent.cli_trade import app as trade_app
 
 
 class TestCLISmokeBasic:
@@ -53,7 +53,7 @@ class TestCLISmokeBasic:
         """Test that help command works."""
         result = self.runner.invoke(main_app, ["--help"])
         assert result.exit_code == 0
-        assert "trading-rl-agent" in result.output
+        assert "trade-agent" in result.output
         assert "Production-grade live trading system" in result.output
 
     def test_version_command(self):
@@ -169,21 +169,15 @@ class TestCLISmokeData:
         result = self.runner.invoke(main_app, ["data", "download", "--symbols", "AAPL"])
         assert result.exit_code == 0
 
-    @patch("trading_rl_agent.cli.process_data")
-    def test_process_smoke(self, mock_process):
-        """Smoke test for process command."""
-        mock_process.return_value = None
+    @patch("trading_rl_agent.cli.prepare")
+    def test_prepare_smoke(self, mock_prepare):
+        """Smoke test for prepare command."""
+        mock_prepare.return_value = None
 
-        result = self.runner.invoke(main_app, ["data", "process"])
+        result = self.runner.invoke(main_app, ["data", "prepare"])
         assert result.exit_code == 0
 
-    @patch("trading_rl_agent.cli.standardize_data")
-    def test_standardize_smoke(self, mock_standardize):
-        """Smoke test for standardize command."""
-        mock_standardize.return_value = None
 
-        result = self.runner.invoke(main_app, ["data", "standardize"])
-        assert result.exit_code == 0
 
     @patch("trading_rl_agent.cli.build_pipeline")
     def test_pipeline_smoke(self, mock_pipeline):

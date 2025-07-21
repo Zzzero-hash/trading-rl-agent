@@ -177,7 +177,7 @@ jobs:
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
         # Check if all Python modules have documentation
-        import src.trading_rl_agent as tra
+        import src.trade_agent as tra
         modules_with_docs = []
         modules_without_docs = []
 

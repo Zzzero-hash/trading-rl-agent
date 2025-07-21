@@ -1,5 +1,5 @@
 #!/bin/bash
-# Universal locale fix script for trading-rl-agent
+# Universal locale fix script for trade-agent
 # This script should be sourced by shell init files
 
 # Unset any conflicting locale variables that VSCode might set

@@ -3,7 +3,7 @@ from pathlib import Path
 from setuptools import find_packages, setup
 
 setup(
-    name="trading_rl_agent",
+    name="trade-agent",
     version="0.1.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
@@ -11,7 +11,7 @@ setup(
     install_requires=Path("requirements.txt").read_text().splitlines(),
     entry_points={
         "console_scripts": [
-            "trading-rl-agent=main:app",
+            "trade-agent=trade_agent.cli:app",
         ],
     },
     classifiers=[

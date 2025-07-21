@@ -65,16 +65,16 @@ Welcome to the Trading RL Agent documentation! This project implements a reinfor
    :caption: API Reference
 
    src
-   src.trading_rl_agent
-   src.trading_rl_agent.core
-   src.trading_rl_agent.agents
-   src.trading_rl_agent.models
-   src.trading_rl_agent.features
-   src.trading_rl_agent.data
-   src.trading_rl_agent.portfolio
-   src.trading_rl_agent.risk
-   src.trading_rl_agent.monitoring
-   src.trading_rl_agent.execution
+   src.trade_agent
+   src.trade_agent.core
+   src.trade_agent.agents
+   src.trade_agent.models
+   src.trade_agent.features
+   src.trade_agent.data
+   src.trade_agent.portfolio
+   src.trade_agent.risk
+   src.trade_agent.monitoring
+   src.trade_agent.execution
    src.training
    src.backtesting
    src.optimization

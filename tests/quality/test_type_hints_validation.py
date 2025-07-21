@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 
-from src.trading_rl_agent.core.config import SystemConfig as Config
-from src.trading_rl_agent.data.data_loader import DataLoader
-from src.trading_rl_agent.features.feature_engineering import FeatureEngineer
-from src.trading_rl_agent.portfolio.portfolio_manager import PortfolioManager
-from src.trading_rl_agent.risk.risk_manager import RiskManager
+from src.trade_agent.core.config import SystemConfig as Config
+from src.trade_agent.data.data_loader import DataLoader
+from src.trade_agent.features.feature_engineering import FeatureEngineer
+from src.trade_agent.portfolio.portfolio_manager import PortfolioManager
+from src.trade_agent.risk.risk_manager import RiskManager
 
 
 class TestTypeHintsValidation:
@@ -21,7 +21,7 @@ class TestTypeHintsValidation:
     @pytest.fixture
     def source_files(self) -> list[str]:
         """Get all Python source files."""
-        src_dir = Path("src/trading_rl_agent")
+        src_dir = Path("src/trade_agent")
         python_files = []
 
         for root, dirs, files in os.walk(src_dir):
@@ -440,7 +440,7 @@ class TestTypeHintsValidation:
             "DataFrame": "pandas.DataFrame",
             "Series": "pandas.Series",
             "ndarray": "numpy.ndarray",
-            "Config": "src.trading_rl_agent.core.config.Config",
+            "Config": "src.trade_agent.core.config.Config",
         }
 
         for type_name in common_types:

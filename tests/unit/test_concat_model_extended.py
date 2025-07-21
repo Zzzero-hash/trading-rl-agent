@@ -5,7 +5,7 @@ Extended tests for ConcatModel to increase coverage.
 import pytest
 import torch
 
-from trading_rl_agent.models.concat_model import ConcatModel
+from trade_agent.models.concat_model import ConcatModel
 
 
 class TestConcatModelExtended:

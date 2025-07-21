@@ -22,8 +22,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
-from trading_rl_agent.training.train_cnn_lstm_enhanced import (
+from trade_agent.models.cnn_lstm import CNNLSTMModel
+from trade_agent.training.train_cnn_lstm_enhanced import (
     EnhancedCNNLSTMTrainer,
     HyperparameterOptimizer,
     create_enhanced_model_config,

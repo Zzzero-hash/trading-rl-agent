@@ -1,6 +1,6 @@
 import torch
 
-from trading_rl_agent.models.concat_model import ConcatModel
+from trade_agent.models.concat_model import ConcatModel
 
 
 def test_concat_model_output_shape():

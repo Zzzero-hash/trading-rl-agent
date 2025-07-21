@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from trading_rl_agent.core.config import ConfigManager, SystemConfig
+from trade_agent.core.config import ConfigManager, SystemConfig
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 

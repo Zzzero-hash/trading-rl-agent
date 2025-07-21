@@ -7,7 +7,7 @@ from datetime import datetime
 import numpy as np
 import pytest
 
-from src.trading_rl_agent.portfolio.transaction_costs import (
+from src.trade_agent.portfolio.transaction_costs import (
     AdaptiveImpactModel,
     BrokerType,
     ConstantDelayModel,
@@ -601,7 +601,7 @@ class TestIntegration:
 
     def test_portfolio_manager_integration(self):
         """Test integration with PortfolioManager."""
-        from src.trading_rl_agent.portfolio.manager import (
+        from src.trade_agent.portfolio.manager import (
             PortfolioConfig,
             PortfolioManager,
         )

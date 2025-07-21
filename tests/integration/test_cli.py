@@ -65,8 +65,7 @@ class TestCLI:
         assert "symbols" in result.stdout
         assert "refresh" in result.stdout
         assert "download" in result.stdout
-        assert "process" in result.stdout
-        assert "standardize" in result.stdout
+        assert "prepare" in result.stdout
         assert "pipeline" in result.stdout
 
     @pytest.mark.slow
@@ -151,17 +150,13 @@ class TestCLI:
         assert result.returncode == 0
         assert "Download market data" in result.stdout
 
-    def test_data_process_help(self):
-        """Test data process command --help."""
-        result = self.run_cli_command(["data", "process", "--help"])
+    def test_data_prepare_help(self):
+        """Test data prepare command --help."""
+        result = self.run_cli_command(["data", "prepare", "--help"])
         assert result.returncode == 0
-        assert "Process and build optimized datasets" in result.stdout
+        assert "Process and standardize downloaded data" in result.stdout
 
-    def test_data_standardize_help(self):
-        """Test data standardize command --help."""
-        result = self.run_cli_command(["data", "standardize", "--help"])
-        assert result.returncode == 0
-        assert "Standardize data" in result.stdout
+
 
     def test_data_pipeline_help(self):
         """Test data pipeline command --help."""

@@ -12,7 +12,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/yourusername/trading-rl-agent.git
+    repoURL: https://github.com/yourusername/trade-agent.git
     targetRevision: main
     path: k8s
     directory:

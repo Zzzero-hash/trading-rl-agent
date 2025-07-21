@@ -94,7 +94,7 @@ jobs:
           IMAGE_TAG="${{ needs.build-and-push.outputs.image_tag }}"
 
           # Update image tags in all deployment files
-          find k8s -name "*-deployment.yaml" -type f -exec sed -i "s|image:.*trading-rl-agent.*|image: ${IMAGE_TAG}|g" {} \;
+          find k8s -name "*-deployment.yaml" -type f -exec sed -i "s|image:.*trade-agent.*|image: ${IMAGE_TAG}|g" {} \;
 
           # Update image tag in configmap if it exists
           if [ -f "k8s/configmap.yaml" ]; then

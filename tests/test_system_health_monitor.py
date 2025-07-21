@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.trading_rl_agent.monitoring import (
+from src.trade_agent.monitoring import (
     AlertManager,
     HealthCheckResult,
     HealthCheckType,

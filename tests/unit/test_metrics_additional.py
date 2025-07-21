@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from trading_rl_agent.utils import metrics
+from trade_agent.utils import metrics
 
 
 def test_var_and_expected_shortfall():

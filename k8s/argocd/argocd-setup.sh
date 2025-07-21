@@ -9,7 +9,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ARGOCD_NAMESPACE="argocd"
 TRADING_NAMESPACE="trading-system"
-GITHUB_REPO="https://github.com/yourusername/trading-rl-agent.git"
+GITHUB_REPO="https://github.com/yourusername/trade-agent.git"
 GITHUB_BRANCH="main"
 
 # Colors for output
@@ -182,7 +182,7 @@ create_projects() {
     argocd proj create default \
         --description "Default project for trading system" \
         --dest https://kubernetes.default.svc,https://kubernetes.default.svc \
-        --src https://github.com/yourusername/trading-rl-agent.git \
+        --src https://github.com/yourusername/trade-agent.git \
         --allow-cluster-resource "*" \
         --allow-namespace-resource "*" \
         --orphaned-resources warn
@@ -192,7 +192,7 @@ create_projects() {
         --description "Trading system specific project" \
         --dest https://kubernetes.default.svc,trading-system \
         --dest https://kubernetes.default.svc,trading-system-staging \
-        --src https://github.com/yourusername/trading-rl-agent.git \
+        --src https://github.com/yourusername/trade-agent.git \
         --allow-cluster-resource "*" \
         --allow-namespace-resource "*" \
         --orphaned-resources warn
@@ -314,7 +314,7 @@ IMAGE_TAG="${2:-latest}"
 echo "Deploying trading system to $ENVIRONMENT with image tag $IMAGE_TAG"
 
 # Update image tag in deployment files
-find k8s -name "*-deployment.yaml" -type f -exec sed -i "s|image:.*trading-rl-agent.*|image: ghcr.io/\${GITHUB_REPOSITORY}:${IMAGE_TAG}|g" {} \;
+find k8s -name "*-deployment.yaml" -type f -exec sed -i "s|image:.*trade-agent.*|image: ghcr.io/\${GITHUB_REPOSITORY}:${IMAGE_TAG}|g" {} \;
 
 # Commit and push changes
 git add .

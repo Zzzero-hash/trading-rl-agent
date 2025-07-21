@@ -24,11 +24,11 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 try:
-    from trading_rl_agent.configs.alpaca_config import (
+    from trade_agent.configs.alpaca_config import (
         AlpacaConfigManager,
         validate_alpaca_environment,
     )
-    from trading_rl_agent.data.alpaca_integration import (
+    from trade_agent.data.alpaca_integration import (
         AlpacaConfig,
         AlpacaIntegration,
         OrderRequest,
@@ -37,7 +37,7 @@ try:
         create_alpaca_config_from_env,
     )
 except ImportError:
-    print("Error: Could not import trading_rl_agent modules.")
+    print("Error: Could not import trade_agent modules.")
     print("Make sure you're running this from the project root directory.")
     sys.exit(1)
 

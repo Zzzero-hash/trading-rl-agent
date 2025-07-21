@@ -1,6 +1,6 @@
 import pandas as pd
 
-from trading_rl_agent.data.synthetic import fetch_synthetic_data
+from trade_agent.data.synthetic import fetch_synthetic_data
 
 
 def test_synthetic_columns_and_length():

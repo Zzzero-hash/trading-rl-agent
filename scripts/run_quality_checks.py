@@ -247,7 +247,7 @@ class QualityChecker:
 
         # Run memory profiling
         memory_success, memory_output = self.run_command(
-            [sys.executable, "-m", "memory_profiler", "src/trading_rl_agent/main.py"],
+            [sys.executable, "-m", "memory_profiler", "src/trade_agent/main.py"],
             "Memory profiling",
         )
 

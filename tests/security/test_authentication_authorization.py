@@ -9,7 +9,7 @@ from unittest.mock import Mock
 import jwt
 import pytest
 
-from src.trading_rl_agent.monitoring.auth_manager import AuthManager
+from src.trade_agent.monitoring.auth_manager import AuthManager
 
 
 class TestAuthenticationSecurity:

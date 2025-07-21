@@ -26,11 +26,11 @@ try:
     import numpy as np
     import pandas as pd
 
-    from trading_rl_agent.portfolio.attribution import (
+    from trade_agent.portfolio.attribution import (
         AttributionConfig,
         PerformanceAttributor,
     )
-    from trading_rl_agent.portfolio.attribution_integration import (
+    from trade_agent.portfolio.attribution_integration import (
         AutomatedAttributionWorkflow,
     )
 except ImportError as e:

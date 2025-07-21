@@ -10,7 +10,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.trading_rl_agent.monitoring.api_security import APISecurityManager
+from src.trade_agent.monitoring.api_security import APISecurityManager
 
 
 class TestAPISecurity:

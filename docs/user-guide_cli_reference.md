@@ -8,8 +8,8 @@ A production-grade trading system that combines CNN+LSTM supervised learning wit
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/trading-rl-agent.git
-cd trading-rl-agent
+git clone https://github.com/your-org/trade-agent.git
+cd trade-agent
 
 # Create virtual environment
 python -m venv venv
@@ -25,17 +25,17 @@ pip install -e .
 ### From PyPI (Future Release)
 
 ```bash
-pip install trading-rl-agent
+pip install trade-agent
 ```
 
 ### Docker Installation
 
 ```bash
 # Build the Docker image
-docker build -t trading-rl-agent .
+docker build -t trade-agent .
 
 # Run with configuration
-docker run -v $(pwd)/config:/app/config -v $(pwd)/data:/app/data trading-rl-agent --help
+docker run -v $(pwd)/config:/app/config -v $(pwd)/data:/app/data trade-agent --help
 ```
 
 ## ⚙️ Configuration
@@ -84,13 +84,13 @@ The system automatically loads configuration from multiple sources in this order
 1. Default settings (embedded)
 2. YAML configuration file (if provided)
 3. `.env` file (if provided)
-4. Environment variables with `TRADING_RL_AGENT_` prefix
+4. Environment variables with `TRADE_AGENT_` prefix
 
 ```bash
 # Environment variables override config file settings
-export TRADING_RL_AGENT_ENVIRONMENT=production
-export TRADING_RL_AGENT_DEBUG=false
-export TRADING_RL_AGENT_DATA_SYMBOLS='["AAPL","GOOGL","MSFT","TSLA"]'
+export TRADE_AGENT_ENVIRONMENT=production
+export TRADE_AGENT_DEBUG=false
+export TRADE_AGENT_DATA_SYMBOLS='["AAPL","GOOGL","MSFT","TSLA"]'
 ```
 
 ## 🚀 Basic Usage
@@ -99,7 +99,7 @@ export TRADING_RL_AGENT_DATA_SYMBOLS='["AAPL","GOOGL","MSFT","TSLA"]'
 
 ```bash
 # Main CLI command
-trading-rl-agent [OPTIONS] COMMAND [ARGS]...
+trade-agent [OPTIONS] COMMAND [ARGS]...
 
 # Or using Python module
 python main.py [OPTIONS] COMMAND [ARGS]...
@@ -118,23 +118,23 @@ python main.py [OPTIONS] COMMAND [ARGS]...
 
 ```bash
 # Show version and system info
-trading-rl-agent version
+trade-agent version
 
 # Show help for all commands
-trading-rl-agent --help
+trade-agent --help
 
 # Show help for specific subcommand
-trading-rl-agent data --help
+trade-agent data --help
 ```
 
 ### 2. Data Pipeline
 
 ```bash
 # Download all configured datasets
-trading-rl-agent data all
+trade-agent data all
 
 # Download specific symbols with custom parameters
-trading-rl-agent data all \
+trade-agent data all \
   --symbols "AAPL,GOOGL,MSFT" \
   --start 2023-01-01 \
   --end 2024-01-01 \
@@ -142,22 +142,23 @@ trading-rl-agent data all \
   --source yfinance
 
 # Process and build datasets
-trading-rl-agent data process configs/dataset_config.yaml \
-  --output outputs/datasets \
+trade-agent data prepare \
+  --input-path data/raw \
+  --output-dir outputs/datasets \
   --force-rebuild
 
 # Run complete data pipeline
-trading-rl-agent data pipeline configs/pipeline_config.yaml
+trade-agent data pipeline configs/pipeline_config.yaml
 ```
 
 ### 3. Model Training
 
 ```bash
 # Train CNN+LSTM model with default config
-trading-rl-agent train cnn-lstm
+trade-agent train cnn-lstm
 
 # Train with custom configuration
-trading-rl-agent train cnn-lstm \
+trade-agent train cnn-lstm \
   --config config/local-example.yaml \
   --epochs 200 \
   --batch-size 64 \
@@ -166,13 +167,13 @@ trading-rl-agent train cnn-lstm \
   --output models/cnn_lstm/
 
 # Train RL agent (PPO, SAC, TD3)
-trading-rl-agent train rl sac \
+trade-agent train rl sac \
   --config config/local-example.yaml \
   --timesteps 1000000 \
   --output models/rl/
 
 # Train with custom parameters
-trading-rl-agent train rl ppo \
+trade-agent train rl ppo \
   --timesteps 500000 \
   --ray-address ray://localhost:10001 \
   --workers 8
@@ -182,14 +183,14 @@ trading-rl-agent train rl ppo \
 
 ```bash
 # Run backtesting with default strategy
-trading-rl-agent backtest strategy \
+trade-agent backtest strategy \
   --data-path data/historical_data.csv \
   --model models/best_model.pth \
   --initial-capital 100000 \
   --commission 0.001
 
 # Run with custom parameters
-trading-rl-agent backtest strategy \
+trade-agent backtest strategy \
   --data-path data/AAPL_1h.csv \
   --model models/sac_agent.zip \
   --initial-capital 50000 \
@@ -202,21 +203,21 @@ trading-rl-agent backtest strategy \
 
 ```bash
 # Start paper trading session
-trading-rl-agent trade start \
+trade-agent trade start \
   --config config/local-example.yaml \
   --symbols "AAPL,GOOGL,MSFT" \
   --paper \
   --initial-capital 100000
 
 # Start live trading (REAL MONEY - use with caution!)
-trading-rl-agent trade start \
+trade-agent trade start \
   --config config/prod-example.yaml \
   --symbols "AAPL,GOOGL" \
   --model models/best_model.pth \
   --initial-capital 50000
 
 # Start with custom parameters
-trading-rl-agent trade start \
+trade-agent trade start \
   --config config/my-config.yaml \
   --symbols "AAPL,GOOGL,MSFT,TSLA" \
   --max-position 0.05 \
@@ -241,12 +242,12 @@ services:
       - ./models:/app/models
       - ./logs:/app/logs
     environment:
-      - TRADING_RL_AGENT_ALPACA_API_KEY=${ALPACA_API_KEY}
-      - TRADING_RL_AGENT_ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
-      - TRADING_RL_AGENT_ALPACA_BASE_URL=${ALPACA_BASE_URL}
+      - TRADE_AGENT_ALPACA_API_KEY=${ALPACA_API_KEY}
+      - TRADE_AGENT_ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+      - TRADE_AGENT_ALPACA_BASE_URL=${ALPACA_BASE_URL}
     command:
       [
-        "trading-rl-agent",
+        "trade-agent",
         "trade",
         "start",
         "--config",
@@ -272,32 +273,32 @@ docker-compose down
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: trading-rl-agent
+  name: trade-agent
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: trading-rl-agent
+      app: trade-agent
   template:
     metadata:
       labels:
-        app: trading-rl-agent
+        app: trade-agent
     spec:
       containers:
         - name: trading-agent
-          image: trading-rl-agent:latest
-          command: ["trading-rl-agent", "trade", "start"]
+          image: trade-agent:latest
+          command: ["trade-agent", "trade", "start"]
           args: ["--config", "/app/config/prod-example.yaml"]
           env:
-            - name: TRADING_RL_AGENT_ALPACA_API_KEY
+            - name: TRADE_AGENT_ALPACA_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-api-key
-            - name: TRADING_RL_AGENT_ALPACA_SECRET_KEY
+            - name: TRADE_AGENT_ALPACA_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-secret-key
           volumeMounts:
             - name: config-volume
@@ -309,13 +310,13 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: trading-rl-agent-config
+            name: trade-agent-config
         - name: data-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-data
+            claimName: trade-agent-data
         - name: models-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-models
+            claimName: trade-agent-models
 ```
 
 ## 📊 Example Workflows
@@ -328,13 +329,13 @@ cp config/local-example.yaml config/dev-config.yaml
 # Edit config/dev-config.yaml for your needs
 
 # 2. Download test data
-trading-rl-agent data all --config config/dev-config.yaml
+trade-agent data all --config config/dev-config.yaml
 
 # 3. Train model
-trading-rl-agent train cnn-lstm --config config/dev-config.yaml
+trade-agent train cnn-lstm --config config/dev-config.yaml
 
 # 4. Test with paper trading
-trading-rl-agent trade start --config config/dev-config.yaml --paper
+trade-agent trade start --config config/dev-config.yaml --paper
 ```
 
 ### Production Workflow
@@ -345,17 +346,17 @@ cp config/prod-example.yaml config/prod-config.yaml
 # Edit config/prod-config.yaml for production settings
 
 # 2. Set production environment variables
-export TRADING_RL_AGENT_ENVIRONMENT=production
-export TRADING_RL_AGENT_DEBUG=false
+export TRADE_AGENT_ENVIRONMENT=production
+export TRADE_AGENT_DEBUG=false
 
 # 3. Download production data
-trading-rl-agent data all --config config/prod-config.yaml
+trade-agent data all --config config/prod-config.yaml
 
 # 4. Train production model
-trading-rl-agent train cnn-lstm --config config/prod-config.yaml --gpu
+trade-agent train cnn-lstm --config config/prod-config.yaml --gpu
 
 # 5. Start live trading
-trading-rl-agent trade start --config config/prod-config.yaml
+trade-agent trade start --config config/prod-config.yaml
 ```
 
 ## 🔧 Troubleshooting
@@ -367,17 +368,17 @@ trading-rl-agent trade start --config config/prod-config.yaml
    ```bash
    # Ensure config file exists and path is correct
    ls -la config/local-example.yaml
-   trading-rl-agent --config config/local-example.yaml version
+   trade-agent --config config/local-example.yaml version
    ```
 
 2. **API key issues**:
 
    ```bash
    # Verify environment variables are set
-   echo $TRADING_RL_AGENT_ALPACA_API_KEY
+   echo $TRADE_AGENT_ALPACA_API_KEY
 
    # Test API connection
-   trading-rl-agent trade start --paper --symbols AAPL
+   trade-agent trade start --paper --symbols AAPL
    ```
 
 3. **GPU not available**:
@@ -387,23 +388,23 @@ trading-rl-agent trade start --config config/prod-config.yaml
    python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 
    # Use CPU fallback
-   trading-rl-agent train cnn-lstm --device cpu
+   trade-agent train cnn-lstm --device cpu
    ```
 
 4. **Memory issues**:
    ```bash
    # Reduce batch size and workers
-   trading-rl-agent train cnn-lstm --batch-size 16 --workers 2
+   trade-agent train cnn-lstm --batch-size 16 --workers 2
    ```
 
 ### Debug Mode
 
 ```bash
 # Enable verbose logging
-trading-rl-agent --verbose --verbose data all
+trade-agent --verbose --verbose data all
 
 # Check configuration loading
-trading-rl-agent --config config/local-example.yaml version
+trade-agent --config config/local-example.yaml version
 ```
 
 ## 📚 Next Steps

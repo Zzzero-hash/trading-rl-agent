@@ -193,7 +193,7 @@ def main() -> None:
         if success:
             print("\n🎉 Setup completed! You can now run:")
             print("   python minimal_test.py  # Test your installation")
-            print("   python -m trading_rl_agent.main  # Start the system")
+            print("   python -m trade_agent.main  # Start the system")
         else:
             print("\n❌ Setup failed. Check the error messages above.")
             sys.exit(1)

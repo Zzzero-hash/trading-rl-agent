@@ -25,7 +25,7 @@ class TestCLIBasic:
     def test_cli_import(self):
         """Test that CLI can be imported."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             assert app is not None
         except ImportError as e:
@@ -34,18 +34,18 @@ class TestCLIBasic:
     def test_help_command(self):
         """Test help command."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             result = self.runner.invoke(app, ["--help"])
             assert result.exit_code == 0
-            assert "trading-rl-agent" in result.output
+            assert "trade-agent" in result.output
         except ImportError as e:
             pytest.skip(f"CLI import failed: {e}")
 
     def test_version_command(self):
         """Test version command function directly."""
         try:
-            from trading_rl_agent.cli import version
+            from trade_agent.cli import version
 
             # Mock the console to avoid I/O issues
             with patch("trading_rl_agent.cli.console") as mock_console:
@@ -59,7 +59,7 @@ class TestCLIBasic:
     def test_info_command(self):
         """Test info command function directly."""
         try:
-            from trading_rl_agent.cli import info
+            from trade_agent.cli import info
 
             # Mock both the config manager and console to avoid issues
             with (
@@ -102,7 +102,7 @@ class TestCLIBasic:
     def test_subcommand_structure(self):
         """Test subcommand structure without using CliRunner."""
         try:
-            from trading_rl_agent.cli import (
+            from trade_agent.cli import (
                 backtest_app,
                 data_app,
                 scenario_app,
@@ -130,7 +130,7 @@ class TestCLIBasic:
     def test_invalid_command(self):
         """Test invalid command handling."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             result = self.runner.invoke(app, ["invalid-command"])
             assert result.exit_code != 0
@@ -144,7 +144,7 @@ class TestCLIStructure:
     def test_cli_structure(self):
         """Test that CLI has the expected structure."""
         try:
-            from trading_rl_agent.cli import (
+            from trade_agent.cli import (
                 app,
                 backtest_app,
                 data_app,
@@ -166,7 +166,7 @@ class TestCLIStructure:
     def test_command_registration(self):
         """Test that commands are properly registered."""
         try:
-            from trading_rl_agent.cli import app
+            from trade_agent.cli import app
 
             # Check that the app has commands
             assert hasattr(app, "registered_commands")

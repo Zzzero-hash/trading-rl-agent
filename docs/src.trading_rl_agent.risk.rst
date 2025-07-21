@@ -7,7 +7,7 @@ Submodules
 src.trading\_rl\_agent.risk.manager module
 ------------------------------------------
 
-.. automodule:: src.trading_rl_agent.risk.manager
+.. automodule:: src.trade_agent.risk.manager
    :members:
    :show-inheritance:
    :undoc-members:
@@ -15,7 +15,7 @@ src.trading\_rl\_agent.risk.manager module
 src.trading\_rl\_agent.risk.position\_sizer module
 --------------------------------------------------
 
-.. automodule:: src.trading_rl_agent.risk.position_sizer
+.. automodule:: src.trade_agent.risk.position_sizer
    :members:
    :show-inheritance:
    :undoc-members:
@@ -23,7 +23,7 @@ src.trading\_rl\_agent.risk.position\_sizer module
 src.trading\_rl\_agent.risk.riskfolio module
 --------------------------------------------
 
-.. automodule:: src.trading_rl_agent.risk.riskfolio
+.. automodule:: src.trade_agent.risk.riskfolio
    :members:
    :show-inheritance:
    :undoc-members:
@@ -31,7 +31,7 @@ src.trading\_rl\_agent.risk.riskfolio module
 Module contents
 ---------------
 
-.. automodule:: src.trading_rl_agent.risk
+.. automodule:: src.trade_agent.risk
    :members:
    :show-inheritance:
    :undoc-members:

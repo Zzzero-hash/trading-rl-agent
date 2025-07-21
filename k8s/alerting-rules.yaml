@@ -23,7 +23,7 @@ spec:
           annotations:
             summary: "Trading Engine is down"
             description: "Trading Engine has been down for more than 1 minute"
-            runbook_url: "https://github.com/yourusername/trading-rl-agent/docs/runbooks/trading-engine-down.md"
+            runbook_url: "https://github.com/yourusername/trade-agent/docs/runbooks/trading-engine-down.md"
 
         - alert: APIServiceDown
           expr: up{job="api-service"} == 0
@@ -34,7 +34,7 @@ spec:
           annotations:
             summary: "API Service is down"
             description: "API Service has been down for more than 1 minute"
-            runbook_url: "https://github.com/yourusername/trading-rl-agent/docs/runbooks/api-service-down.md"
+            runbook_url: "https://github.com/yourusername/trade-agent/docs/runbooks/api-service-down.md"
 
         - alert: DataPipelineDown
           expr: up{job="data-pipeline"} == 0

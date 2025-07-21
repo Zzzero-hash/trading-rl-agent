@@ -14,8 +14,8 @@ This guide will help you get up and running with the Trading RL Agent, a product
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/trading-rl-agent.git
-cd trading-rl-agent
+git clone https://github.com/yourusername/trade-agent.git
+cd trade-agent
 ```
 
 ### Step 2: Set Up Environment
@@ -57,7 +57,7 @@ pip install -r requirements.dev.txt
 
 ```bash
 # Test basic import
-python -c "import trading_rl_agent; print('✅ Package imported successfully')"
+python -c "import trade_agent; print('✅ Package imported successfully')"
 
 # Check CLI
 python main.py version
@@ -90,7 +90,7 @@ python main.py data download \
 
 ```bash
 # Process downloaded data into training datasets
-python main.py data process --force
+python main.py data prepare --input-path data/raw --output-dir outputs/datasets
 
 # Standardize data for consistent training
 python main.py data standardize --method robust
@@ -239,7 +239,7 @@ export YAHOO_FINANCE_API_KEY="your_key_here"
 
 # Logging
 export LOG_LEVEL="INFO"
-export LOG_FILE="trading_rl_agent.log"
+export LOG_FILE="trade_agent.log"
 
 # Ray configuration
 export RAY_ADDRESS="ray://localhost:10001"
@@ -259,7 +259,7 @@ python -m pytest tests/unit/
 python -m pytest tests/integration/
 
 # Run with coverage
-python -m pytest --cov=trading_rl_agent --cov-report=html
+python -m pytest --cov=trade_agent --cov-report=html
 ```
 
 ### Quick Validation
@@ -283,7 +283,7 @@ python main.py backtest strategy --data data/AAPL_2024.csv --initial-capital 100
 
 ```bash
 # Ensure you're in the correct environment
-source .venv/bin/activate  # or conda activate trading-rl-agent
+source .venv/bin/activate  # or conda activate trade-agent
 
 # Reinstall dependencies
 pip install -r requirements.txt --force-reinstall
@@ -322,7 +322,7 @@ python main.py data download --source "alpha_vantage" --symbols "AAPL"
 ### Getting Help
 
 - **Documentation**: Check the [main documentation](index.md)
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/yourusername/trading-rl-agent/issues)
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/yourusername/trade-agent/issues)
 - **Discussions**: Join community discussions for questions
 
 ## 🎯 Next Steps

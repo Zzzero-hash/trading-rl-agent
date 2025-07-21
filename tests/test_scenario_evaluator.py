@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.eval import AgentScenarioEvaluator, MarketScenario, ScenarioResult
-from trading_rl_agent.eval.scenario_evaluator import MarketScenarioGenerator
+from trade_agent.eval import AgentScenarioEvaluator, MarketScenario, ScenarioResult
+from trade_agent.eval.scenario_evaluator import MarketScenarioGenerator
 
 
 class TestMarketScenario:

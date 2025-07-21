@@ -12,8 +12,8 @@ from unittest.mock import Mock, patch
 import pytest
 import torch
 
-from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
-from trading_rl_agent.training.train_cnn_lstm_enhanced import (
+from trade_agent.models.cnn_lstm import CNNLSTMModel
+from trade_agent.training.train_cnn_lstm_enhanced import (
     EnhancedCNNLSTMTrainer,
     create_enhanced_model_config,
     create_enhanced_training_config,

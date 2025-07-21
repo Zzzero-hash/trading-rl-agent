@@ -17,11 +17,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.data.loaders.alphavantage_loader import load_alphavantage
+from trade_agent.data.loaders.alphavantage_loader import load_alphavantage
 
 # from freezegun import freeze_time  # Not used in current tests
-from trading_rl_agent.data.loaders.yfinance_loader import load_yfinance
-from trading_rl_agent.data.synthetic import fetch_synthetic_data, generate_gbm_prices
+from trade_agent.data.loaders.yfinance_loader import load_yfinance
+from trade_agent.data.synthetic import fetch_synthetic_data, generate_gbm_prices
 
 
 class TestYFinanceLoader:

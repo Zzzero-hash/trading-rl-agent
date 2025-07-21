@@ -33,7 +33,7 @@ Get started with live trading in 30 minutes.
 
 1. **Install System**
    ```bash
-   pip install trading-rl-agent[production]
+   pip install trade-agent[production]
    ```
 ````
 
@@ -49,7 +49,7 @@ Get started with live trading in 30 minutes.
 
 3. **Start Trading**
    ```bash
-   trading-rl-agent trade --config config/trading.yaml
+   trade-agent trade --config config/trading.yaml
    ```
 
 ## First Steps
@@ -80,8 +80,8 @@ Get started with live trading in 30 minutes.
 ## Development Setup
 1. **Clone Repository**
    ```bash
-   git clone https://github.com/company/trading-rl-agent.git
-   cd trading-rl-agent
+   git clone https://github.com/company/trade-agent.git
+   cd trade-agent
 ````
 
 2. **Install Dependencies**
@@ -124,7 +124,7 @@ Get started with live trading in 30 minutes.
 ## Deployment Steps
 1. **Build Production Image**
    ```bash
-   docker build -f Dockerfile.production -t trading-rl-agent:latest .
+   docker build -f Dockerfile.production -t trade-agent:latest .
 ````
 
 2. **Deploy to Kubernetes**
@@ -137,7 +137,7 @@ Get started with live trading in 30 minutes.
 
    ```bash
    kubectl get pods -n trading
-   kubectl logs -f deployment/trading-rl-agent
+   kubectl logs -f deployment/trade-agent
    ```
 
 4. **Monitor Health**
@@ -289,14 +289,14 @@ Get started with live trading in 30 minutes.
 
 1. Check system logs:
    ```bash
-   journalctl -u trading-rl-agent -f
+   journalctl -u trade-agent -f
    ```
 ````
 
 2. Verify configuration:
 
    ```bash
-   trading-rl-agent validate-config config.yaml
+   trade-agent validate-config config.yaml
    ```
 
 3. Check dependencies:
@@ -311,7 +311,7 @@ Get started with live trading in 30 minutes.
 
    ```bash
    # Validate and fix configuration
-   trading-rl-agent validate-config config.yaml
+   trade-agent validate-config config.yaml
    # Edit configuration file
    nano config.yaml
    ```
@@ -361,18 +361,18 @@ Get started with live trading in 30 minutes.
 ### Diagnostic Steps
 1. Check API connectivity:
    ```bash
-   trading-rl-agent health --check-api
+   trade-agent health --check-api
 ````
 
 2. Verify account status:
 
    ```bash
-   trading-rl-agent account --status
+   trade-agent account --status
    ```
 
 3. Review recent orders:
    ```bash
-   trading-rl-agent orders --recent
+   trade-agent orders --recent
    ```
 
 ### Solutions
@@ -381,23 +381,23 @@ Get started with live trading in 30 minutes.
 
    ```bash
    # Test API connection
-   trading-rl-agent test-api
+   trade-agent test-api
 
    # Check rate limits
-   trading-rl-agent api-status
+   trade-agent api-status
    ```
 
 2. **Order Issues**
 
    ```bash
    # Validate order parameters
-   trading-rl-agent validate-order --symbol AAPL --quantity 100
+   trade-agent validate-order --symbol AAPL --quantity 100
    ```
 
 3. **System Issues**
    ```bash
    # Reset risk limits
-   trading-rl-agent risk --reset-limits
+   trade-agent risk --reset-limits
    ```
 
 ````
@@ -415,7 +415,7 @@ Get started with live trading in 30 minutes.
 ## Q: How do I install the Trading RL Agent?
 **A**: Follow the installation guide in the documentation. Basic installation:
 ```bash
-pip install trading-rl-agent[production]
+pip install trade-agent[production]
 ````
 
 ## Q: What are the system requirements?
@@ -467,7 +467,7 @@ export ALPACA_SECRET_KEY=your_secret
 **A**: Use the validation command:
 
 ```bash
-trading-rl-agent validate-config config.yaml
+trade-agent validate-config config.yaml
 ```
 
 ````
@@ -479,8 +479,8 @@ trading-rl-agent validate-config config.yaml
 ## Q: The system won't start. What should I do?
 **A**: Check the logs and verify your configuration:
 ```bash
-trading-rl-agent --log-level DEBUG
-trading-rl-agent validate-config config.yaml
+trade-agent --log-level DEBUG
+trade-agent validate-config config.yaml
 ````
 
 ## Q: My orders aren't being placed. Why?
@@ -488,8 +488,8 @@ trading-rl-agent validate-config config.yaml
 **A**: Check API connectivity and account status:
 
 ```bash
-trading-rl-agent health --check-api
-trading-rl-agent account --status
+trade-agent health --check-api
+trade-agent account --status
 ```
 
 ## Q: How do I check system health?
@@ -497,15 +497,15 @@ trading-rl-agent account --status
 **A**: Use the health check command:
 
 ```bash
-trading-rl-agent health --all
+trade-agent health --all
 ```
 
 ## Q: Where can I find logs?
 
-**A**: Logs are typically in `/var/log/trading-rl-agent/` or use:
+**A**: Logs are typically in `/var/log/trade-agent/` or use:
 
 ```bash
-trading-rl-agent logs --follow
+trade-agent logs --follow
 ```
 
 ````

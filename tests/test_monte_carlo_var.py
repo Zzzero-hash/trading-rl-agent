@@ -16,12 +16,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.risk.monte_carlo_var import (
+from trade_agent.risk.monte_carlo_var import (
     MonteCarloVaR,
     MonteCarloVaRConfig,
     VaRResult,
 )
-from trading_rl_agent.risk.parallel_var import ParallelVaRCalculator, ParallelVaRConfig
+from trade_agent.risk.parallel_var import ParallelVaRCalculator, ParallelVaRConfig
 
 
 @pytest.fixture

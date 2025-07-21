@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from trading_rl_agent.portfolio.transaction_costs import (
+from trade_agent.portfolio.transaction_costs import (
     BrokerType,
     FlatRateCommission,
     MarketCondition,

@@ -17,7 +17,7 @@ def test_configuration_system():
 
     try:
         # Test basic imports
-        from trading_rl_agent.core.config import (
+        from trade_agent.core.config import (
             ConfigManager,
             SystemConfig,
         )

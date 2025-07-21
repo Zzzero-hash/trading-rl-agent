@@ -1,6 +1,6 @@
 import torch
 
-from trading_rl_agent.models import CNNLSTMModel
+from trade_agent.models import CNNLSTMModel
 
 
 def test_model_instantiation_from_yaml():

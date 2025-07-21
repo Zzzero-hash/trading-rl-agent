@@ -13,7 +13,7 @@ Subpackages
    src.nlp
    src.optimization
    src.portfolio
-   src.trading_rl_agent
+   src.trade_agent
    src.training
 
 Submodules

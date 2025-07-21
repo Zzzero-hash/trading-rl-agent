@@ -17,14 +17,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.trading_rl_agent.risk.manager import RiskLimits, RiskManager, RiskMetrics
-from src.trading_rl_agent.risk.monte_carlo_var import (
+from src.trade_agent.risk.manager import RiskLimits, RiskManager, RiskMetrics
+from src.trade_agent.risk.monte_carlo_var import (
     MonteCarloVaR,
     MonteCarloVaRConfig,
     VaRResult,
 )
-from src.trading_rl_agent.risk.parallel_var import ParallelVaRCalculator
-from src.trading_rl_agent.risk.position_sizer import kelly_position_size
+from src.trade_agent.risk.parallel_var import ParallelVaRCalculator
+from src.trade_agent.risk.position_sizer import kelly_position_size
 
 
 class TestRiskMetricsCalculation:
@@ -288,7 +288,7 @@ class TestParallelVaR:
 
     def setup_method(self):
         """Setup test fixtures."""
-        from src.trading_rl_agent.risk.parallel_var import ParallelVaRConfig
+        from src.trade_agent.risk.parallel_var import ParallelVaRConfig
 
         config = ParallelVaRConfig(n_processes=2, n_threads=2)
         self.parallel_var = ParallelVaRCalculator(config)
@@ -307,7 +307,7 @@ class TestParallelVaR:
         weights = {"AAPL": 0.4, "GOOGL": 0.35, "MSFT": 0.25}
 
         # Create VaR config
-        from src.trading_rl_agent.risk.monte_carlo_var import MonteCarloVaRConfig
+        from src.trade_agent.risk.monte_carlo_var import MonteCarloVaRConfig
 
         var_config = MonteCarloVaRConfig(n_simulations=1000)
 
@@ -326,7 +326,7 @@ class TestParallelVaR:
         weights = {"AAPL": 0.4, "GOOGL": 0.35, "MSFT": 0.25}
 
         # Create VaR config
-        from src.trading_rl_agent.risk.monte_carlo_var import MonteCarloVaRConfig
+        from src.trade_agent.risk.monte_carlo_var import MonteCarloVaRConfig
 
         var_config = MonteCarloVaRConfig(n_simulations=1000)
 
@@ -612,7 +612,7 @@ class TestRiskCalculationPerformance:
 
     def test_parallel_processing_performance(self):
         """Test parallel processing performance."""
-        from src.trading_rl_agent.risk.parallel_var import ParallelVaRConfig
+        from src.trade_agent.risk.parallel_var import ParallelVaRConfig
 
         config = ParallelVaRConfig(n_processes=4, n_threads=4)
         parallel_var = ParallelVaRCalculator(config)
@@ -631,7 +631,7 @@ class TestRiskCalculationPerformance:
         weights = {"AAPL": 0.4, "GOOGL": 0.35, "MSFT": 0.25}
 
         # Create VaR config
-        from src.trading_rl_agent.risk.monte_carlo_var import MonteCarloVaRConfig
+        from src.trade_agent.risk.monte_carlo_var import MonteCarloVaRConfig
 
         var_config = MonteCarloVaRConfig(n_simulations=2000)
 

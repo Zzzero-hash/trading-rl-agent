@@ -14,10 +14,10 @@ import time
 
 import pytest
 
-from trading_rl_agent.data.data_standardizer import DataStandardizer
-from trading_rl_agent.data.features import FeatureEngineer
-from trading_rl_agent.data.optimized_dataset_builder import OptimizedDatasetBuilder
-from trading_rl_agent.data.parallel_data_fetcher import ParallelDataManager
+from trade_agent.data.data_standardizer import DataStandardizer
+from trade_agent.data.features import FeatureEngineer
+from trade_agent.data.optimized_dataset_builder import OptimizedDatasetBuilder
+from trade_agent.data.parallel_data_fetcher import ParallelDataManager
 
 
 class TestDataProcessingPerformance:
@@ -202,7 +202,7 @@ class TestDataProcessingPerformance:
     @pytest.mark.benchmark
     def test_cache_performance(self, benchmark_data, performance_monitor):
         """Test cache performance for data fetching."""
-        from trading_rl_agent.data.parallel_data_fetcher import SmartDataCache
+        from trade_agent.data.parallel_data_fetcher import SmartDataCache
 
         # Initialize cache
         cache = SmartDataCache(ttl_hours=24)
@@ -332,7 +332,7 @@ class TestDataProcessingPerformance:
     @pytest.mark.benchmark
     def test_data_pipeline_throughput(self, benchmark_data, performance_monitor):
         """Test end-to-end data pipeline throughput."""
-        from trading_rl_agent.data.pipeline import DataPipeline
+        from trade_agent.data.pipeline import DataPipeline
 
         # Prepare test data
         test_data = benchmark_data.copy()

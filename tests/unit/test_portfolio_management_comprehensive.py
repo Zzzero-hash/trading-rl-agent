@@ -19,18 +19,18 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.trading_rl_agent.portfolio.attribution import (
+from src.trade_agent.portfolio.attribution import (
     AttributionConfig,
     BrinsonAttributor,
     FactorModel,
     PerformanceAttributor,
 )
-from src.trading_rl_agent.portfolio.manager import (
+from src.trade_agent.portfolio.manager import (
     PortfolioConfig,
     PortfolioManager,
     Position,
 )
-from src.trading_rl_agent.portfolio.transaction_costs import (
+from src.trade_agent.portfolio.transaction_costs import (
     BrokerType,
     MarketCondition,
     MarketData,

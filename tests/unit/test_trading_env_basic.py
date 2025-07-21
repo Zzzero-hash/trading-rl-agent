@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.envs.finrl_trading_env import TradingEnv
+from trade_agent.envs.finrl_trading_env import TradingEnv
 
 
 def make_env(tmp_path, reward_type="profit"):

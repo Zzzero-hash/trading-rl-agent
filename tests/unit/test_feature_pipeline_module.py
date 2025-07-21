@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.features.technical_indicators import TechnicalIndicators
+from trade_agent.features.technical_indicators import TechnicalIndicators
 
 
 @pytest.fixture

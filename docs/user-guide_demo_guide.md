@@ -123,7 +123,7 @@ Edit the demo scripts to:
 
 ```bash
 # Use your own data files
-python main.py data process --data-path your_data.csv --output custom_output/
+python main.py data prepare --input-path your_data.csv --output-dir custom_output/
 ```
 
 ### Custom Configurations

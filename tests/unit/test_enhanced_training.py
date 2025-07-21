@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 import torch
 
-from trading_rl_agent.training.train_cnn_lstm_enhanced import (
+from trade_agent.training.train_cnn_lstm_enhanced import (
     EnhancedCNNLSTMTrainer,
     HyperparameterOptimizer,
     create_enhanced_model_config,

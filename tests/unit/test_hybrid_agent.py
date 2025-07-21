@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 import torch
 
-from trading_rl_agent.agents.hybrid import HybridAgent
-from trading_rl_agent.models.cnn_lstm import CNNLSTMModel
+from trade_agent.agents.hybrid import HybridAgent
+from trade_agent.models.cnn_lstm import CNNLSTMModel
 
 
 class TestHybridAgent:

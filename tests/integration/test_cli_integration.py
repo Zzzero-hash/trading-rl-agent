@@ -22,8 +22,8 @@ from typer.testing import CliRunner
 # Add the src directory to the path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from trading_rl_agent.cli import app as main_app
-from trading_rl_agent.cli_health import app as health_app
+from trade_agent.cli import app as main_app
+from trade_agent.cli_health import app as health_app
 
 
 class TestEndToEndWorkflows:
@@ -43,8 +43,7 @@ class TestEndToEndWorkflows:
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     @patch("trading_rl_agent.cli.download_all")
-    @patch("trading_rl_agent.cli.process_data")
-    @patch("trading_rl_agent.cli.standardize_data")
+    @patch("trading_rl_agent.cli.prepare")
     @patch("trading_rl_agent.cli.build_pipeline")
     @patch("trading_rl_agent.cli.train_cnn_lstm")
     @patch("trading_rl_agent.cli.train_rl_agent")
@@ -61,15 +60,13 @@ class TestEndToEndWorkflows:
         mock_rl,
         mock_cnn_lstm,
         mock_pipeline,
-        mock_standardize,
-        mock_process,
+        mock_prepare,
         mock_download,
     ):
         """Test complete trading workflow from data to live trading."""
         # Setup mocks
         mock_download.return_value = None
-        mock_process.return_value = None
-        mock_standardize.return_value = None
+        mock_prepare.return_value = None
         mock_pipeline.return_value = None
         mock_cnn_lstm.return_value = None
         mock_rl.return_value = None
@@ -104,7 +101,9 @@ class TestEndToEndWorkflows:
             main_app,
             [
                 "data",
-                "process",
+                "prepare",
+                "--input-path",
+                str(self.workflow_dir / "raw"),
                 "--output-dir",
                 str(self.workflow_dir / "processed"),
                 "--force-rebuild",
@@ -112,23 +111,10 @@ class TestEndToEndWorkflows:
             ],
         )
         assert result.exit_code == 0
-        mock_process.assert_called_once()
+        mock_prepare.assert_called_once()
 
-        result = self.runner.invoke(
-            main_app,
-            [
-                "data",
-                "standardize",
-                "--input-path",
-                str(self.workflow_dir / "processed"),
-                "--output-path",
-                str(self.workflow_dir / "standardized"),
-                "--method",
-                "robust",
-            ],
-        )
-        assert result.exit_code == 0
-        mock_standardize.assert_called_once()
+        # Standardization is now handled by the prepare command
+        # No separate standardize step needed
 
         result = self.runner.invoke(
             main_app,
@@ -263,7 +249,7 @@ class TestEndToEndWorkflows:
         mock_start_trading.assert_called_once()
 
     @patch("trading_rl_agent.cli.download_all")
-    @patch("trading_rl_agent.cli.process_data")
+    @patch("trading_rl_agent.cli.prepare")
     @patch("trading_rl_agent.cli.train_cnn_lstm")
     @patch("trading_rl_agent.cli.run_walk_forward")
     @patch("trading_rl_agent.cli.compare_models")
@@ -274,13 +260,13 @@ class TestEndToEndWorkflows:
         mock_compare,
         mock_walk_forward,
         mock_train,
-        mock_process,
+        mock_prepare,
         mock_download,
     ):
         """Test research workflow with walk-forward analysis."""
         # Setup mocks
         mock_download.return_value = None
-        mock_process.return_value = None
+        mock_prepare.return_value = None
         mock_train.return_value = None
         mock_walk_forward.return_value = None
         mock_compare.return_value = None
@@ -306,7 +292,9 @@ class TestEndToEndWorkflows:
             main_app,
             [
                 "data",
-                "process",
+                "prepare",
+                "--input-path",
+                str(self.workflow_dir / "research_data"),
                 "--output-dir",
                 str(self.workflow_dir / "research_processed"),
             ],
@@ -469,15 +457,13 @@ class TestDataPipelineIntegration:
 
     @patch("trading_rl_agent.cli.download_all")
     @patch("trading_rl_agent.cli.refresh_data")
-    @patch("trading_rl_agent.cli.process_data")
-    @patch("trading_rl_agent.cli.standardize_data")
-    def test_data_refresh_workflow(self, mock_standardize, mock_process, mock_refresh, mock_download):
+    @patch("trading_rl_agent.cli.prepare")
+    def test_data_refresh_workflow(self, mock_prepare, mock_refresh, mock_download):
         """Test data refresh workflow."""
         # Setup mocks
         mock_download.return_value = None
         mock_refresh.return_value = None
-        mock_process.return_value = None
-        mock_standardize.return_value = None
+        mock_prepare.return_value = None
 
         # Initial data download
         result = self.runner.invoke(
@@ -518,7 +504,9 @@ class TestDataPipelineIntegration:
             main_app,
             [
                 "data",
-                "process",
+                "prepare",
+                "--input-path",
+                str(self.data_dir / "raw"),
                 "--output-dir",
                 str(self.data_dir / "processed"),
                 "--force-rebuild",
@@ -526,25 +514,12 @@ class TestDataPipelineIntegration:
         )
         assert result.exit_code == 0
 
-        # Standardize updated data
-        result = self.runner.invoke(
-            main_app,
-            [
-                "data",
-                "standardize",
-                "--input-path",
-                str(self.data_dir / "processed"),
-                "--output-path",
-                str(self.data_dir / "standardized"),
-                "--method",
-                "robust",
-            ],
-        )
-        assert result.exit_code == 0
+        # Standardization is now handled by the prepare command
+        # No separate standardize step needed
 
     @patch("trading_rl_agent.cli.download_symbols")
-    @patch("trading_rl_agent.cli.process_data")
-    def test_multi_symbol_workflow(self, mock_process, mock_download):
+    @patch("trading_rl_agent.cli.prepare")
+    def test_multi_symbol_workflow(self, mock_prepare, mock_download):  # noqa: ARG002
         """Test multi-symbol data workflow."""
         # Setup mocks
         mock_download.return_value = None
@@ -578,7 +553,9 @@ class TestDataPipelineIntegration:
             main_app,
             [
                 "data",
-                "process",
+                "prepare",
+                "--input-path",
+                str(self.data_dir / "multi_symbol"),
                 "--output-dir",
                 str(self.data_dir / "multi_symbol_processed"),
                 "--force-rebuild",
@@ -1288,12 +1265,12 @@ class TestErrorRecoveryScenarios:
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     @patch("trading_rl_agent.cli.download_all")
-    @patch("trading_rl_agent.cli.process_data")
-    def test_recovery_from_data_failure(self, mock_process, mock_download):
+    @patch("trading_rl_agent.cli.prepare")
+    def test_recovery_from_data_failure(self, mock_prepare, mock_download):
         """Test recovery from data download failure."""
         # First call fails, second succeeds
         mock_download.side_effect = [Exception("Network error"), None]
-        mock_process.return_value = None
+        mock_prepare.return_value = None
 
         # First attempt fails
         result = self.runner.invoke(
@@ -1324,7 +1301,7 @@ class TestErrorRecoveryScenarios:
         assert result.exit_code == 0
 
         # Processing should still work
-        result = self.runner.invoke(main_app, ["data", "process", "--output-dir", str(self.temp_dir)])
+        result = self.runner.invoke(main_app, ["data", "prepare", "--input-path", str(self.temp_dir), "--output-dir", str(self.temp_dir)])
         assert result.exit_code == 0
 
     @patch("trading_rl_agent.cli.train_cnn_lstm")

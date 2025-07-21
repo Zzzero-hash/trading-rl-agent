@@ -20,8 +20,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from trading_rl_agent.risk.monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig
-from trading_rl_agent.risk.parallel_var import ParallelVaRCalculator, ParallelVaRConfig
+from trade_agent.risk.monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig
+from trade_agent.risk.parallel_var import ParallelVaRCalculator, ParallelVaRConfig
 
 # Add the src directory to the path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
