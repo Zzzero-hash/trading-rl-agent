@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from trading_rl_agent.portfolio.manager import PortfolioConfig, PortfolioManager
+from trade_agent.portfolio.manager import PortfolioConfig, PortfolioManager
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 

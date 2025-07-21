@@ -7,7 +7,7 @@ import pytest
 from gymnasium import spaces
 from ray.rllib.policy.policy import Policy
 
-from trading_rl_agent.agents.policy_utils import (
+from trade_agent.agents.policy_utils import (
     CallablePolicy,
     WeightedEnsembleAgent,
     weighted_policy_mapping,

@@ -215,7 +215,7 @@ jobs:
       run: |
         # Pull the built image and run basic tests
         docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} python -c "import trading_rl_agent; print('✅ Container test passed')"
+        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} python -c "import trade_agent; print('✅ Container test passed')"
 
     - name: Security scan Docker image
       uses: aquasecurity/trivy-action@master

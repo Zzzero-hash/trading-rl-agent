@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 import typer
 
-from trading_rl_agent.cli_backtest import (
+from trade_agent.cli_backtest import (
     _generate_sample_signals,
     _load_historical_data,
     batch,

@@ -11,8 +11,8 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 
-from trading_rl_agent.portfolio.portfolio_manager import PortfolioManager
-from trading_rl_agent.risk.risk_manager import RiskManager
+from trade_agent.portfolio.portfolio_manager import PortfolioManager
+from trade_agent.risk.risk_manager import RiskManager
 
 
 class TestPortfolioProperties:

@@ -5,10 +5,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: trading-rl-agent-data
+  name: trade-agent-data
   namespace: trading-system
   labels:
-    app: trading-rl-agent
+    app: trade-agent
     volume-type: data
 spec:
   accessModes:
@@ -22,10 +22,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: trading-rl-agent-models
+  name: trade-agent-models
   namespace: trading-system
   labels:
-    app: trading-rl-agent
+    app: trade-agent
     volume-type: models
 spec:
   accessModes:
@@ -39,10 +39,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: trading-rl-agent-artifacts
+  name: trade-agent-artifacts
   namespace: trading-system
   labels:
-    app: trading-rl-agent
+    app: trade-agent
     volume-type: artifacts
 spec:
   accessModes:
@@ -56,10 +56,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: trading-rl-agent-results
+  name: trade-agent-results
   namespace: trading-system
   labels:
-    app: trading-rl-agent
+    app: trade-agent
     volume-type: results
 spec:
   accessModes:
@@ -73,10 +73,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: trading-rl-agent-logs
+  name: trade-agent-logs
   namespace: trading-system
   labels:
-    app: trading-rl-agent
+    app: trade-agent
     volume-type: logs
 spec:
   accessModes:
@@ -90,10 +90,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: trading-rl-agent-mlruns
+  name: trade-agent-mlruns
   namespace: trading-system
   labels:
-    app: trading-rl-agent
+    app: trade-agent
     volume-type: mlruns
 spec:
   accessModes:

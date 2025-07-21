@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: trading-rl-agent-config
+  name: trade-agent-config
   namespace: trading-system
   labels:
-    app: trading-rl-agent
+    app: trade-agent
 data:
   config.yaml: |
     environment: production

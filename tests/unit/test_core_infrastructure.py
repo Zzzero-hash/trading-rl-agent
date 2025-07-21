@@ -19,7 +19,7 @@ import yaml
 # Add src to path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from trading_rl_agent.core.config import (
+from trade_agent.core.config import (
     AgentConfig,
     ConfigManager,
     DataConfig,
@@ -30,7 +30,7 @@ from trading_rl_agent.core.config import (
     RiskConfig,
     SystemConfig,
 )
-from trading_rl_agent.core.exceptions import (
+from trade_agent.core.exceptions import (
     ConfigurationError,
     DataValidationError,
     ExecutionError,
@@ -39,13 +39,13 @@ from trading_rl_agent.core.exceptions import (
     RiskManagementError,
     TradingSystemError,
 )
-from trading_rl_agent.core.logging import (
+from trade_agent.core.logging import (
     DEFAULT_LOG_CONFIG,
     get_logger,
     get_structured_logger,
     setup_logging,
 )
-from trading_rl_agent.core.unified_config import (
+from trade_agent.core.unified_config import (
     BacktestConfig,
     DataSourcesConfig,
     HyperoptConfig,
@@ -54,8 +54,8 @@ from trading_rl_agent.core.unified_config import (
     UnifiedConfig,
     load_config,
 )
-from trading_rl_agent.core.unified_config import InfrastructureConfig as UnifiedInfrastructureConfig
-from trading_rl_agent.core.unified_config import MonitoringConfig as UnifiedMonitoringConfig
+from trade_agent.core.unified_config import InfrastructureConfig as UnifiedInfrastructureConfig
+from trade_agent.core.unified_config import MonitoringConfig as UnifiedMonitoringConfig
 
 pytestmark = pytest.mark.unit
 

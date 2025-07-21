@@ -4,7 +4,7 @@ Tests for the NLP module.
 
 from datetime import datetime
 
-from trading_rl_agent.nlp import (
+from trade_agent.nlp import (
     NewsAnalysis,
     NewsAnalyzer,
     NewsArticle,

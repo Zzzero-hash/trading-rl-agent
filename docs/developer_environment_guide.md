@@ -53,9 +53,9 @@ Successfully integrated all `.env` variables throughout the Trading RL Agent cod
 
 ### Core System Variables
 
-- `TRADING_RL_AGENT_ENVIRONMENT` - Environment (development/staging/production)
-- `TRADING_RL_AGENT_DEBUG` - Debug mode
-- `TRADING_RL_AGENT_LOG_LEVEL` - Logging level
+- `TRADE_AGENT_ENVIRONMENT` - Environment (development/staging/production)
+- `TRADE_AGENT_DEBUG` - Debug mode
+- `TRADE_AGENT_LOG_LEVEL` - Logging level
 
 ### Alpaca Trading API
 
@@ -87,12 +87,12 @@ Successfully integrated all `.env` variables throughout the Trading RL Agent cod
 
 ### Nested Configuration Variables
 
-All nested configuration variables are supported with the `TRADING_RL_AGENT_` prefix:
+All nested configuration variables are supported with the `TRADE_AGENT_` prefix:
 
-- `TRADING_RL_AGENT_DATA__PRIMARY_SOURCE`
-- `TRADING_RL_AGENT_DATA__SYMBOLS`
-- `TRADING_RL_AGENT_MODEL__BATCH_SIZE`
-- `TRADING_RL_AGENT_AGENT__AGENT_TYPE`
+- `TRADE_AGENT_DATA__PRIMARY_SOURCE`
+- `TRADE_AGENT_DATA__SYMBOLS`
+- `TRADE_AGENT_MODEL__BATCH_SIZE`
+- `TRADE_AGENT_AGENT__AGENT_TYPE`
 - And many more...
 
 ## Configuration Loading Priority

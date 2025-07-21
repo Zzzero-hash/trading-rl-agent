@@ -22,10 +22,10 @@ import pytest
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import accuracy_score, mean_squared_error
 
-from trading_rl_agent.supervised_model.base_model import BaseSupervisedModel
-from trading_rl_agent.supervised_model.model_evaluator import ModelEvaluator
-from trading_rl_agent.supervised_model.price_predictor import PricePredictor
-from trading_rl_agent.supervised_model.signal_classifier import SignalClassifier
+from trade_agent.supervised_model.base_model import BaseSupervisedModel
+from trade_agent.supervised_model.model_evaluator import ModelEvaluator
+from trade_agent.supervised_model.price_predictor import PricePredictor
+from trade_agent.supervised_model.signal_classifier import SignalClassifier
 
 
 class MockSupervisedModel(BaseSupervisedModel):

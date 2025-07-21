@@ -16,16 +16,16 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.features.alternative_data import (
+from trade_agent.features.alternative_data import (
     AlternativeDataConfig,
     AlternativeDataFeatures,
 )
-from trading_rl_agent.features.normalization import (
+from trade_agent.features.normalization import (
     FeatureNormalizer,
     NormalizationConfig,
 )
-from trading_rl_agent.features.pipeline import FeaturePipeline
-from trading_rl_agent.features.technical_indicators import (
+from trade_agent.features.pipeline import FeaturePipeline
+from trade_agent.features.technical_indicators import (
     IndicatorConfig,
     TechnicalIndicators,
 )
@@ -192,7 +192,7 @@ class TestFeatureShapeConsistency:
 
     def test_sequence_creation_consistency(self, multi_timeframe_data):
         """Test that sequence creation works consistently across timeframes."""
-        from trading_rl_agent.data.preprocessing import create_sequences
+        from trade_agent.data.preprocessing import create_sequences
 
         pipeline = FeaturePipeline()
 
@@ -334,7 +334,7 @@ class TestVaryingTimeframesRobustness:
 
     def test_sequence_creation_irregular(self, varying_timeframe_data):
         """Test that sequence creation works with irregular timeframes."""
-        from trading_rl_agent.data.preprocessing import create_sequences
+        from trade_agent.data.preprocessing import create_sequences
 
         pipeline = FeaturePipeline()
         result = pipeline.fit_transform(varying_timeframe_data)

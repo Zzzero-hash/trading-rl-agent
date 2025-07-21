@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 import yfinance as yf
 
-from trading_rl_agent.data.live_feed import LiveDataFeed
+from trade_agent.data.live_feed import LiveDataFeed
 
 
 class TestLiveDataFeed:

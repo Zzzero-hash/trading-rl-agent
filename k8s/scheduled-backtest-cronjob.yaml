@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: scheduled-backtest-cronjob
   labels:
-    app: trading-rl-agent
+    app: trade-agent
     job-type: scheduled-backtest
 spec:
   schedule: "0 2 * * *" # Run daily at 2 AM UTC
@@ -15,14 +15,14 @@ spec:
       template:
         metadata:
           labels:
-            app: trading-rl-agent
+            app: trade-agent
             job-type: scheduled-backtest
         spec:
           restartPolicy: Never
           containers:
             - name: trading-agent
-              image: trading-rl-agent:latest
-              command: ["trading-rl-agent"]
+              image: trade-agent:latest
+              command: ["trade-agent"]
               args:
                 - "backtest"
                 - "strategy"
@@ -43,17 +43,17 @@ spec:
                 - name: TRADING_RL_AGENT_ALPACA_API_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: trading-rl-agent-secrets
+                      name: trade-agent-secrets
                       key: alpaca-api-key
                 - name: TRADING_RL_AGENT_ALPACA_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: trading-rl-agent-secrets
+                      name: trade-agent-secrets
                       key: alpaca-secret-key
                 - name: TRADING_RL_AGENT_ALPACA_BASE_URL
                   valueFrom:
                     secretKeyRef:
-                      name: trading-rl-agent-secrets
+                      name: trade-agent-secrets
                       key: alpaca-base-url
               volumeMounts:
                 - name: config-volume
@@ -79,18 +79,18 @@ spec:
           volumes:
             - name: config-volume
               configMap:
-                name: trading-rl-agent-config
+                name: trade-agent-config
             - name: data-volume
               persistentVolumeClaim:
-                claimName: trading-rl-agent-data
+                claimName: trade-agent-data
             - name: models-volume
               persistentVolumeClaim:
-                claimName: trading-rl-agent-models
+                claimName: trade-agent-models
             - name: results-volume
               persistentVolumeClaim:
-                claimName: trading-rl-agent-results
+                claimName: trade-agent-results
             - name: logs-volume
               persistentVolumeClaim:
-                claimName: trading-rl-agent-logs
+                claimName: trade-agent-logs
       backoffLimit: 2
       activeDeadlineSeconds: 7200 # 2 hours timeout

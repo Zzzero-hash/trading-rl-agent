@@ -3,20 +3,20 @@ kind: Job
 metadata:
   name: download-datasets-job
   labels:
-    app: trading-rl-agent
+    app: trade-agent
     job-type: data-download
 spec:
   template:
     metadata:
       labels:
-        app: trading-rl-agent
+        app: trade-agent
         job-type: data-download
     spec:
       restartPolicy: Never
       containers:
         - name: trading-agent
-          image: trading-rl-agent:latest
-          command: ["trading-rl-agent"]
+          image: trade-agent:latest
+          command: ["trade-agent"]
           args:
             - "data"
             - "all"
@@ -27,27 +27,27 @@ spec:
             - name: TRADING_RL_AGENT_ALPACA_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-api-key
             - name: TRADING_RL_AGENT_ALPACA_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-secret-key
             - name: TRADING_RL_AGENT_ALPACA_BASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-base-url
             - name: TRADING_RL_AGENT_ALPHAVANTAGE_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alphavantage-api-key
             - name: TRADING_RL_AGENT_NEWSAPI_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: newsapi-key
           volumeMounts:
             - name: config-volume
@@ -67,12 +67,12 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: trading-rl-agent-config
+            name: trade-agent-config
         - name: data-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-data
+            claimName: trade-agent-data
         - name: logs-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-logs
+            claimName: trade-agent-logs
   backoffLimit: 3
   activeDeadlineSeconds: 3600 # 1 hour timeout

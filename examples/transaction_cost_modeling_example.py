@@ -15,7 +15,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from trading_rl_agent.portfolio.transaction_costs import (
+from trade_agent.portfolio.transaction_costs import (
     AdaptiveImpactModel,
     BrokerType,
     ConstantDelayModel,

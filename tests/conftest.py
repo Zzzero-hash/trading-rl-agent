@@ -130,7 +130,7 @@ def finrl_sample_data(_test_data_manager):
 def finrl_trading_env(finrl_sample_data):
     """Provide a robust FinRL-based trading environment for testing."""
     try:
-        from trading_rl_agent.envs.finrl_trading_env import HybridFinRLEnv
+        from trade_agent.envs.finrl_trading_env import HybridFinRLEnv
 
         # Create environment with minimal configuration for fast testing
         env = HybridFinRLEnv(
@@ -148,7 +148,7 @@ def finrl_trading_env(finrl_sample_data):
     except ImportError:
         # Fallback to simple TradingEnv using synthetic data
         from tests.unit.test_data_utils import get_dynamic_test_config
-        from trading_rl_agent.envs.finrl_trading_env import TradingEnv
+        from trade_agent.envs.finrl_trading_env import TradingEnv
 
         cfg = get_dynamic_test_config(
             {
@@ -201,7 +201,7 @@ def production_dataset_path():
 @pytest.fixture
 def basic_trading_env(sample_csv_file):
     """Return a minimal TradingEnv using sample_csv_file."""
-    from trading_rl_agent.envs.finrl_trading_env import TradingEnv
+    from trade_agent.envs.finrl_trading_env import TradingEnv
 
     cfg = {"dataset_paths": sample_csv_file, "reward_type": "profit"}
     env = TradingEnv(cfg)
@@ -304,7 +304,7 @@ def pytest_configure(config: Config):
         config.addinivalue_line("markers", marker)
 
 
-def pytest_collection_modifyitems(_config: Config, items):
+def pytest_collection_modifyitems(config: Config, items):  # noqa: ARG001
     """Modify test collection to add default markers."""
     for item in items:
         # Add default markers based on test location

@@ -17,8 +17,8 @@ import pytest
 import torch
 from torch import nn
 
-from trading_rl_agent.models.cnn_lstm import CNNLSTMModel, create_model
-from trading_rl_agent.models.concat_model import ConcatModel
+from trade_agent.models.cnn_lstm import CNNLSTMModel, create_model
+from trade_agent.models.concat_model import ConcatModel
 
 
 class TestCNNLSTMModel:

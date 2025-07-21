@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-import trading_rl_agent.features.technical_indicators as ti
+import trade_agent.features.technical_indicators as ti
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 

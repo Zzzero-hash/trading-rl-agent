@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.risk.manager import RiskManager
-from trading_rl_agent.risk.position_sizer import kelly_position_size
+from trade_agent.risk.manager import RiskManager
+from trade_agent.risk.position_sizer import kelly_position_size
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 

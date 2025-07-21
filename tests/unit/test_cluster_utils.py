@@ -1,6 +1,6 @@
 import ray
 
-from trading_rl_agent.utils.cluster import get_available_devices
+from trade_agent.utils.cluster import get_available_devices
 
 
 def test_get_available_devices(monkeypatch):

@@ -3,20 +3,20 @@ kind: Job
 metadata:
   name: training-job
   labels:
-    app: trading-rl-agent
+    app: trade-agent
     job-type: training
 spec:
   template:
     metadata:
       labels:
-        app: trading-rl-agent
+        app: trade-agent
         job-type: training
     spec:
       restartPolicy: Never
       containers:
         - name: trading-agent
-          image: trading-rl-agent:latest
-          command: ["trading-rl-agent"]
+          image: trade-agent:latest
+          command: ["trade-agent"]
           args:
             - "train"
             - "cnn-lstm"
@@ -35,17 +35,17 @@ spec:
             - name: TRADING_RL_AGENT_ALPACA_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-api-key
             - name: TRADING_RL_AGENT_ALPACA_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-secret-key
             - name: TRADING_RL_AGENT_ALPACA_BASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-base-url
             # GPU support for training
             - name: NVIDIA_VISIBLE_DEVICES
@@ -79,21 +79,21 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: trading-rl-agent-config
+            name: trade-agent-config
         - name: data-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-data
+            claimName: trade-agent-data
         - name: models-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-models
+            claimName: trade-agent-models
         - name: artifacts-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-artifacts
+            claimName: trade-agent-artifacts
         - name: logs-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-logs
+            claimName: trade-agent-logs
         - name: mlruns-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-mlruns
+            claimName: trade-agent-mlruns
   backoffLimit: 1
   activeDeadlineSeconds: 14400 # 4 hours timeout

@@ -69,7 +69,7 @@ class MockNumpy:
 sys.modules["numpy"] = MockNumpy()  # type: ignore
 
 # Now import the transaction costs module directly
-sys.path.insert(0, str(Path(__file__).parent / "src" / "trading_rl_agent" / "portfolio"))
+sys.path.insert(0, str(Path(__file__).parent / "src" / "trade_agent" / "portfolio"))
 
 
 # Test the classes

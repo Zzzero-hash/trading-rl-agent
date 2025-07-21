@@ -19,7 +19,7 @@ import psutil
 import pytest
 from memory_profiler import memory_usage
 
-from trading_rl_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 logger = get_logger(__name__)
 

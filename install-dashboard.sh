@@ -71,8 +71,8 @@ if $PYTHON_BIN -c "
 import sys
 sys.path.insert(0, 'src')
 try:
-    from trading_rl_agent.monitoring.performance_dashboard import PerformanceDashboard
-    from trading_rl_agent.monitoring.streaming_dashboard import StreamingDashboard
+    from trade_agent.monitoring.performance_dashboard import PerformanceDashboard
+from trade_agent.monitoring.streaming_dashboard import StreamingDashboard
     print('✅ Dashboard components imported successfully')
 except ImportError as e:
     print(f'❌ Dashboard component import failed: {e}')
@@ -97,7 +97,7 @@ echo "Press Ctrl+C to stop the dashboard"
 echo ""
 
 # Run the dashboard
-python3 -m trading_rl_agent.cli_dashboard run "$@"
+python3 -m trade_agent.cli_dashboard run "$@"
 EOF
 
 chmod +x run-dashboard.sh
@@ -113,7 +113,7 @@ echo "Press Ctrl+C to stop the streaming server"
 echo ""
 
 # Run the streaming dashboard
-python3 -m trading_rl_agent.cli_dashboard stream "$@"
+python3 -m trade_agent.cli_dashboard stream "$@"
 EOF
 
 chmod +x run-streaming-dashboard.sh
@@ -150,14 +150,14 @@ echo "  ./run-dashboard-example.sh            # Run with sample data"
 echo "  ./run-streaming-dashboard.sh          # Start streaming server only"
 echo ""
 echo "CLI commands:"
-echo "  python3 -m trading_rl_agent.cli_dashboard run"
-echo "  python3 -m trading_rl_agent.cli_dashboard run --streaming"
-echo "  python3 -m trading_rl_agent.cli_dashboard stream"
-echo "  python3 -m trading_rl_agent.cli_dashboard status"
+echo "  python3 -m trade_agent.cli_dashboard run"
+echo "  python3 -m trade_agent.cli_dashboard run --streaming"
+echo "  python3 -m trade_agent.cli_dashboard stream"
+echo "  python3 -m trade_agent.cli_dashboard status"
 echo ""
 echo "Configuration:"
-echo "  python3 -m trading_rl_agent.cli_dashboard config --create my_config.json"
-echo "  python3 -m trading_rl_agent.cli_dashboard run --config my_config.json"
+echo "  python3 -m trade_agent.cli_dashboard config --create my_config.json"
+echo "  python3 -m trade_agent.cli_dashboard run --config my_config.json"
 echo ""
 echo "Documentation:"
 echo "  See docs/DASHBOARD_README.md for detailed usage"

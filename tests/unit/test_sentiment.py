@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from trading_rl_agent.data.sentiment import (
+from trade_agent.data.sentiment import (
     NewsSentimentProvider,
     SentimentAnalyzer,
     SentimentConfig,
@@ -247,7 +247,7 @@ class TestSentimentIntegration:
 
     def test_sentiment_with_global_dict_backward_compatibility(self):
         """Test that global sentiment dict is updated for backward compatibility."""
-        from trading_rl_agent.data import sentiment
+        from trade_agent.data import sentiment
 
         analyzer = SentimentAnalyzer()
         analyzer.fetch_all_sentiment("META", days_back=1)
@@ -285,7 +285,7 @@ class TestSentimentIntegration:
     def test_sentiment_error_handling(self):
         """Test sentiment provider error handling."""
         # Test with provider that raises exception
-        from trading_rl_agent.data.sentiment import SentimentProvider
+        from trade_agent.data.sentiment import SentimentProvider
 
         class FailingProvider(SentimentProvider):
             def fetch_sentiment(self, _symbol, _days_back=1):

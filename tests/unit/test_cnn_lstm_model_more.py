@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from trading_rl_agent.models import CNNLSTMModel
+from trade_agent.models import CNNLSTMModel
 
 pytestmark = pytest.mark.unit
 

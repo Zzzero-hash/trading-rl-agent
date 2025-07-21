@@ -31,17 +31,17 @@ spec:
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: postgres-database
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: postgres-username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: postgres-password
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
@@ -165,7 +165,7 @@ spec:
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: redis-password
           resources:
             requests:
@@ -279,12 +279,12 @@ spec:
             - name: RABBITMQ_DEFAULT_USER
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: rabbitmq-username
             - name: RABBITMQ_DEFAULT_PASS
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: rabbitmq-password
             - name: RABBITMQ_DEFAULT_VHOST
               value: trading

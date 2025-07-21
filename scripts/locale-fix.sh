@@ -1,5 +1,5 @@
 #!/bin/bash
-# Comprehensive locale fix for trading-rl-agent development environment
+# Comprehensive locale fix for trade-agent development environment
 # This script should be sourced at the beginning of any shell session
 
 # Set locale to prevent "setlocale: LC_ALL: cannot change locale" warnings
@@ -20,7 +20,7 @@ echo "✅ Locale configured: LANG=$LANG, LC_ALL=$LC_ALL"
 # Add this to shell profiles if not already present
 for profile in ~/.bashrc ~/.profile; do
     if [ -f "$profile" ] && ! grep -q "source.*locale-fix.sh" "$profile" 2>/dev/null; then
-        echo "# Source locale fix for trading-rl-agent" >> "$profile"
-        echo "[ -f /workspaces/trading-rl-agent/scripts/locale-fix.sh ] && source /workspaces/trading-rl-agent/scripts/locale-fix.sh" >> "$profile"
+        echo "# Source locale fix for trade-agent" >> "$profile"
+        echo "[ -f /workspaces/trade-agent/scripts/locale-fix.sh ] && source /workspaces/trade-agent/scripts/locale-fix.sh" >> "$profile"
     fi
 done

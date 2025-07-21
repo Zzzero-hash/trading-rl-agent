@@ -62,7 +62,7 @@ Describe how this component fits into the overall system architecture.
 
 ```bash
 # Installation command
-pip install trading-rl-agent[component-name]
+pip install trade-agent[component-name]
 ```
 ````
 
@@ -71,7 +71,7 @@ pip install trading-rl-agent[component-name]
 ```bash
 # Step-by-step setup instructions
 git clone [repository]
-cd trading-rl-agent
+cd trade-agent
 pip install -e .
 ```
 

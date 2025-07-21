@@ -84,7 +84,7 @@ python main.py info
 python main.py data download --symbols "AAPL,GOOGL,MSFT" --start 2023-01-01
 
 # Process and build datasets
-python main.py data process --symbols "EURUSD=X,GBPUSD=X" --force
+python main.py data prepare --input-path data/raw --output-dir outputs/datasets
 
 # Train CNN+LSTM model
 python main.py train cnn-lstm --epochs 100 --gpu --output models/

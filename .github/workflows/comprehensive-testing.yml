@@ -195,10 +195,10 @@ jobs:
 
     - name: Import tests
       run: |
-        python -c "import trading_rl_agent.agents; print('✅ Agents module imported')"
-        python -c "import trading_rl_agent.data; print('✅ Data module imported')"
-        python -c "import trading_rl_agent.envs; print('✅ Envs module imported')"
-        python -c "import trading_rl_agent.utils; print('✅ Utils module imported')"
+        python -c "import trade_agent.agents; print('✅ Agents module imported')"
+        python -c "import trade_agent.data; print('✅ Data module imported')"
+        python -c "import trade_agent.envs; print('✅ Envs module imported')"
+        python -c "import trade_agent.utils; print('✅ Utils module imported')"
 
   # =============================================================================
   # UNIT TESTS

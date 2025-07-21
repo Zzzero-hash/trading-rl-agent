@@ -16,12 +16,12 @@ import numpy as np
 import pytest
 import torch
 
-from trading_rl_agent.agents.advanced_policy_optimization import (
+from trade_agent.agents.advanced_policy_optimization import (
     AdvancedPPO,
     AdvancedPPOConfig,
 )
-from trading_rl_agent.agents.configs import EnsembleConfig, PPOConfig, SACConfig
-from trading_rl_agent.agents.ensemble_trainer import EnsembleTrainer
+from trade_agent.agents.configs import EnsembleConfig, PPOConfig, SACConfig
+from trade_agent.agents.ensemble_trainer import EnsembleTrainer
 
 
 class TestModelTrainingPerformance:
@@ -288,7 +288,7 @@ class TestModelTrainingPerformance:
     @pytest.mark.ml
     def test_training_pipeline_efficiency(self, training_data, performance_monitor):
         """Test training pipeline efficiency."""
-        from trading_rl_agent.training.trainer import TrainingManager
+        from trade_agent.training.trainer import TrainingManager
 
         # Prepare training data
         train_data = []
@@ -348,7 +348,7 @@ class TestModelTrainingPerformance:
     @pytest.mark.ml
     def test_memory_usage_during_training(self, training_data, memory_profiler):
         """Test memory usage during training."""
-        from trading_rl_agent.training.trainer import TrainingManager
+        from trade_agent.training.trainer import TrainingManager
 
         # Prepare training data
         train_data = training_data[:5]  # Use 5 sequences for memory testing
@@ -394,7 +394,7 @@ class TestModelTrainingPerformance:
         if not torch.cuda.is_available():
             pytest.skip("GPU not available for testing")
 
-        from trading_rl_agent.training.trainer import TrainingManager
+        from trade_agent.training.trainer import TrainingManager
 
         # Prepare training data
         train_data = training_data[:5]
@@ -451,7 +451,7 @@ class TestModelTrainingPerformance:
     @pytest.mark.ml
     def test_training_convergence_speed(self, training_data, performance_monitor):
         """Test training convergence speed."""
-        from trading_rl_agent.training.trainer import TrainingManager
+        from trade_agent.training.trainer import TrainingManager
 
         # Prepare training data
         train_data = training_data[:6]
@@ -526,7 +526,7 @@ class TestModelTrainingPerformance:
     @pytest.mark.ml
     def test_batch_processing_efficiency(self, training_data, performance_monitor):
         """Test batch processing efficiency during training."""
-        from trading_rl_agent.training.trainer import TrainingManager
+        from trade_agent.training.trainer import TrainingManager
 
         # Prepare training data
         train_data = training_data[:4]
@@ -590,7 +590,7 @@ class TestModelTrainingPerformance:
     @pytest.mark.ml
     def test_model_checkpointing_performance(self, training_data, performance_monitor, tmp_path):
         """Test model checkpointing performance."""
-        from trading_rl_agent.training.trainer import TrainingManager
+        from trade_agent.training.trainer import TrainingManager
 
         # Prepare training data
         train_data = training_data[:3]

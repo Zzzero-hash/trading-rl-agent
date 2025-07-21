@@ -17,7 +17,7 @@ import pytest
 
 # Import with fallback for missing dependencies
 try:
-    from trading_rl_agent.agents import (
+    from trade_agent.agents import (
         EnsembleAgent,
         EnsembleConfig,
         EnsembleEvaluator,

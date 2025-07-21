@@ -16,8 +16,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from src.trading_rl_agent.monitoring.alert_manager import AlertManager, AlertSeverity
-from src.trading_rl_agent.risk.alert_system import (
+from src.trade_agent.monitoring.alert_manager import AlertManager, AlertSeverity
+from src.trade_agent.risk.alert_system import (
     AlertThreshold,
     CircuitBreakerRule,
     EscalationLevel,
@@ -25,7 +25,7 @@ from src.trading_rl_agent.risk.alert_system import (
     RiskAlertConfig,
     RiskAlertSystem,
 )
-from src.trading_rl_agent.risk.manager import RiskLimits, RiskManager, RiskMetrics
+from src.trade_agent.risk.manager import RiskLimits, RiskManager, RiskMetrics
 
 
 def create_sample_portfolio_data(days: int = 252) -> dict[str, pd.Series]:

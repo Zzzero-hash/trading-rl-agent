@@ -105,7 +105,7 @@ jobs:
       with:
         context: .
         push: false
-        tags: trading-rl-agent:${{ github.sha }}
+        tags: trade-agent:${{ github.sha }}
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
@@ -117,13 +117,13 @@ jobs:
     - name: Test Docker image
       run: |
         # Test that the container can start and run basic commands
-        docker run --rm trading-rl-agent:${{ github.sha }} python --version
-        docker run --rm trading-rl-agent:${{ github.sha }} pip list | grep trading-rl-agent
+        docker run --rm trade-agent:${{ github.sha }} python --version
+        docker run --rm trade-agent:${{ github.sha }} pip list | grep trade-agent
 
     - name: Run smoke tests in Docker
       run: |
         # Run smoke tests inside the container
-        docker run --rm trading-rl-agent:${{ github.sha }} pytest tests/smoke/ -v -m smoke
+        docker run --rm trade-agent:${{ github.sha }} pytest tests/smoke/ -v -m smoke
 
   integration-tests:
     name: Integration Tests

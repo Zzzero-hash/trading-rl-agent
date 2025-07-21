@@ -428,7 +428,7 @@ spec:
             - name: GF_SECURITY_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: grafana-admin-password
             - name: GF_INSTALL_PLUGINS
               value: "grafana-piechart-panel,grafana-worldmap-panel"

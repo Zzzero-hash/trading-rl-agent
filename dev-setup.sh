@@ -34,7 +34,7 @@ for profile_file in ~/.bashrc ~/.profile; do
         if ! grep -q "export LANG=C.utf8" "$profile_file" 2>/dev/null; then
             echo "📝 Adding locale settings to $profile_file"
             echo "" >> "$profile_file"
-            echo "# Fix locale for trading-rl-agent" >> "$profile_file"
+            echo "# Fix locale for trade-agent" >> "$profile_file"
             echo "export LANG=C.utf8" >> "$profile_file"
             echo "export LC_ALL=C.utf8" >> "$profile_file"
         fi

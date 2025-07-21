@@ -17,7 +17,7 @@ def test_imports() -> bool:
     print("Testing imports...")
 
     try:
-        from trading_rl_agent.data.alpaca_integration import (
+        from trade_agent.data.alpaca_integration import (
             AlpacaIntegration,
             AlpacaOrderError,
             MarketData,
@@ -44,7 +44,7 @@ def test_imports() -> bool:
         return False
 
     try:
-        from trading_rl_agent.configs.alpaca_config import (
+        from trade_agent.configs.alpaca_config import (
             AlpacaConfigManager,
             AlpacaConfigModel,
         )
@@ -66,7 +66,7 @@ def test_config_creation() -> bool:
     print("\nTesting configuration creation...")
 
     try:
-        from trading_rl_agent.data.alpaca_integration import AlpacaConfig
+        from trade_agent.data.alpaca_integration import AlpacaConfig
 
         # Test basic config creation
         config = AlpacaConfig(api_key="test_key", secret_key="test_secret", paper_trading=True)
@@ -88,7 +88,7 @@ def test_data_structures() -> bool:
     try:
         from datetime import datetime
 
-        from trading_rl_agent.data.alpaca_integration import (
+        from trade_agent.data.alpaca_integration import (
             MarketData,
             OrderRequest,
             OrderSide,
@@ -152,7 +152,7 @@ def test_config_validation() -> bool:
     print("\nTesting configuration validation...")
 
     try:
-        from trading_rl_agent.configs.alpaca_config import AlpacaConfigModel
+        from trade_agent.configs.alpaca_config import AlpacaConfigModel
 
         # Test valid config
         _ = AlpacaConfigModel(api_key="test_key", secret_key="test_secret")
@@ -177,7 +177,7 @@ def test_exceptions() -> bool:
     print("\nTesting custom exceptions...")
 
     try:
-        from trading_rl_agent.data.alpaca_integration import (
+        from trade_agent.data.alpaca_integration import (
             AlpacaConnectionError,
             AlpacaDataError,
             AlpacaError,

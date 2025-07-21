@@ -14,7 +14,7 @@ import pandera as pa
 import pytest
 from pandera.typing import DataFrame, Series
 
-from trading_rl_agent.data.data_validator import DataValidator
+from trade_agent.data.data_validator import DataValidator
 
 
 class TestMarketDataQuality:

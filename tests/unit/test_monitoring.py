@@ -4,7 +4,7 @@ Tests for the monitoring module.
 
 import time
 
-from trading_rl_agent.monitoring import (
+from trade_agent.monitoring import (
     AlertManager,
     AlertSeverity,
     AlertStatus,

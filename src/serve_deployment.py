@@ -18,7 +18,7 @@ try:
 except Exception:  # pragma: no cover - ray might not be installed
     serve = None
 
-from trading_rl_agent.supervised_model import load_model, predict_features
+from trade_agent.supervised_model import load_model, predict_features
 
 if serve:
 

@@ -17,7 +17,7 @@ import pytest
 import torch
 import yaml
 
-from trading_rl_agent.training.optimized_trainer import OptimizedTrainingManager
+from trade_agent.training.optimized_trainer import OptimizedTrainingManager
 
 
 @pytest.fixture
@@ -398,7 +398,7 @@ class TestCNNLSTMTrainingCLI:
 
     def test_cli_help(self):
         """Test that CLI help works."""
-        from trading_rl_agent.training.cli import create_parser
+        from trade_agent.training.cli import create_parser
 
         parser = create_parser()
         help_text = parser.format_help()
@@ -412,7 +412,7 @@ class TestCNNLSTMTrainingCLI:
         """Test CLI train command."""
         import sys
 
-        from trading_rl_agent.training.cli import main
+        from trade_agent.training.cli import main
 
         # Mock command line arguments
         sys.argv = [
@@ -443,7 +443,7 @@ class TestCNNLSTMTrainingCLI:
         """Test CLI evaluate command."""
         import sys
 
-        from trading_rl_agent.training.cli import main
+        from trade_agent.training.cli import main
 
         # First train a model
         trainer = OptimizedTrainingManager(str(config_file))
@@ -485,7 +485,7 @@ class TestCNNLSTMTrainingCLI:
         """Test CLI predict command."""
         import sys
 
-        from trading_rl_agent.training.cli import main
+        from trade_agent.training.cli import main
 
         # First train a model
         trainer = OptimizedTrainingManager(str(config_file))

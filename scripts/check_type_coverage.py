@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks the type coverage of the trading-rl-agent project using mypy."""
+"""Checks the type coverage of the trade-agent project using mypy."""
 
 import ast
 import subprocess

@@ -1,24 +1,40 @@
 #!/usr/bin/env python3
 """
-Main entry point for Trading RL Agent CLI.
+DEPRECATED: Main entry point for Trading RL Agent.
 
-This provides a clean interface to the unified Typer CLI.
+This script is deprecated. Please use 'trade-agent' command instead.
+Usage: trade-agent [command] [options]
+
+This script provides a simple command-line interface for the trading RL agent.
+Usage: python main.py [command] [options]
 """
 
 import sys
 from pathlib import Path
 
-# Ensure src is in Python path
-sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+# Add the src directory to Python path to resolve imports
+sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-# Import CLI directly to avoid heavy dependencies
-try:
-    from trading_rl_agent.cli import app
-except ImportError as e:
-    print(f"Error importing CLI: {e}")
-    print("This might be due to missing dependencies.")
-    print("Try installing the core dependencies first.")
-    sys.exit(1)
+def main() -> None:
+    """Main entry point."""
+    import warnings
+    warnings.warn(
+        "main.py is deprecated. Please use 'trade-agent' command instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    try:
+        # Import and run the CLI app
+        from trade_agent.cli import app
+        app()
+    except ImportError as e:
+        print(f"Import error: {e}")
+        print("Make sure all dependencies are installed and the project structure is correct.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    app()
+    main()

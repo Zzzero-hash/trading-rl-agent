@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from trading_rl_agent.data.pipeline import load_cached_csvs
+from trade_agent.data.pipeline import load_cached_csvs
 
 
 def test_load_cached_csvs(tmp_path):

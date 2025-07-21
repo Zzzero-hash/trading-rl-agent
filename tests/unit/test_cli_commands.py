@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 import pytest
 import typer
 
-from trading_rl_agent.cli import (
+from trade_agent.cli import (
     cnn_lstm,
     compare,
     custom,
@@ -31,7 +31,6 @@ from trading_rl_agent.cli import (
     rl,
     scenario_compare,
     scenario_evaluate,
-    standardize,
     start,
     status,
     stop,
@@ -107,6 +106,13 @@ class TestCLICommands:
     def test_symbols_command(self, mock_get_config, mock_console):
         """Test symbols command."""
         mock_config = Mock()
+        mock_config.data.symbols = ["AAPL", "GOOGL"]
+        mock_config.data.start_date = "2024-01-01"
+        mock_config.data.end_date = "2024-01-31"
+        mock_config.data.data_path = str(self.temp_path)
+        mock_config.data.primary_source = "yfinance"
+        mock_config.data.timeframe = "1d"
+        mock_config.infrastructure.max_workers = 4
         mock_get_config.return_value = mock_config
 
         symbols(
@@ -179,16 +185,7 @@ class TestCLICommands:
 
         mock_console.print.assert_called()
 
-    @patch("trading_rl_agent.cli.console")
-    def test_standardize_command(self, mock_console):
-        """Test standardize command."""
-        # Create test data file
-        test_data_file = self.temp_path / "test_data.csv"
-        test_data_file.write_text("date,open,high,low,close,volume\n2024-01-01,100,105,95,102,1000000")
 
-        standardize(input_path=test_data_file, output_path=self.temp_path, method="robust")
-
-        mock_console.print.assert_called()
 
     @patch("trading_rl_agent.cli.console")
     @patch("trading_rl_agent.cli.get_config_manager")
@@ -542,19 +539,7 @@ class TestCLICommands:
     # ERROR HANDLING TESTS
     # ============================================================================
 
-    @patch("trading_rl_agent.cli.console")
-    def test_standardize_command_invalid_input(self, mock_console):
-        """Test standardize command with invalid input file."""
-        # Currently the standardize function is a placeholder and doesn't validate input files
-        # So it should not raise an exception for non-existent files
-        standardize(
-            input_path=Path("/nonexistent/file.csv"),
-            output_path=self.temp_path,
-            method="robust",
-        )
 
-        # Verify that the console was called (placeholder message)
-        mock_console.print.assert_called()
 
     @patch("trading_rl_agent.cli.console")
     def test_strategy_command_invalid_data(self, _mock_console):

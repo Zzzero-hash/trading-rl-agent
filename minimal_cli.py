@@ -20,7 +20,7 @@ verbose_count: int = 0
 
 # Root app
 app = typer.Typer(
-    name="trading-rl-agent",
+    name="trade-agent",
     help="Production-grade trading RL agent with CNN+LSTM integration",
     add_completion=False,
     rich_markup_mode="rich",
@@ -51,7 +51,7 @@ def main(
 
     # Setup logging
     try:
-        from trading_rl_agent.logging_conf import setup_logging_for_typer
+        from trade_agent.logging_conf import setup_logging_for_typer
 
         setup_logging_for_typer(verbose)
     except ImportError:

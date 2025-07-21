@@ -1,9 +1,9 @@
 import pytest
 
-from trading_rl_agent.agents.configs import EnsembleConfig
-from trading_rl_agent.agents.trainer import Trainer
-from trading_rl_agent.core.config import AgentConfig, SystemConfig
-from trading_rl_agent.core.exceptions import ConfigurationError
+from trade_agent.agents.configs import EnsembleConfig
+from trade_agent.agents.trainer import Trainer
+from trade_agent.core.config import AgentConfig, SystemConfig
+from trade_agent.core.exceptions import ConfigurationError
 
 
 def test_ensemble_config_alias_and_validation():

@@ -7,9 +7,9 @@ source = src
 
 # Include all Python files in src
 include =
-    src/trading_rl_agent/*.py
-    src/trading_rl_agent/*/*.py
-    src/trading_rl_agent/*/*/*.py
+    src/trade_agent/*.py
+    src/trade_agent/*/*.py
+    src/trade_agent/*/*/*.py
 
 # Exclude test files and generated files
 omit =
@@ -50,9 +50,9 @@ relative_files = True
 [report]
 # Include all source files
 include =
-    src/trading_rl_agent/*.py
-    src/trading_rl_agent/*/*.py
-    src/trading_rl_agent/*/*/*.py
+    src/trade_agent/*.py
+    src/trade_agent/*/*.py
+    src/trade_agent/*/*/*.py
 
 # Exclude the same files as in run section
 omit =

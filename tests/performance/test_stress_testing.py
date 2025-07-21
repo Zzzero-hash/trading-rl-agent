@@ -21,9 +21,9 @@ import pandas as pd
 import psutil
 import pytest
 
-from trading_rl_agent.data.features import FeatureEngineer
-from trading_rl_agent.data.parallel_data_fetcher import ParallelDataManager
-from trading_rl_agent.risk.monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig
+from trade_agent.data.features import FeatureEngineer
+from trade_agent.data.parallel_data_fetcher import ParallelDataManager
+from trade_agent.risk.monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig
 
 
 class TestStressTesting:

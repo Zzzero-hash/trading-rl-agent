@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 import torch
 
-from trading_rl_agent.eval.walk_forward_analyzer import (
+from trade_agent.eval.walk_forward_analyzer import (
     WalkForwardAnalyzer,
     WalkForwardConfig,
     WindowResult,

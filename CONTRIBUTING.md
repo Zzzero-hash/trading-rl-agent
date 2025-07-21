@@ -38,8 +38,8 @@ This project adheres to a code of conduct that promotes a welcoming and inclusiv
 1. **Fork the repository**
 
    ```bash
-   git clone https://github.com/yourusername/trading-rl-agent.git
-   cd trading-rl-agent
+   git clone https://github.com/yourusername/trade-agent.git
+   cd trade-agent
    ```
 
 2. **Set up development environment**
@@ -302,8 +302,8 @@ import pandas as pd
 from unittest.mock import Mock, patch
 from pathlib import Path
 
-from trading_rl_agent.agents.td3_agent import TD3Agent
-from trading_rl_agent.agents.configs import TD3Config
+from trade_agent.agents.td3_agent import TD3Agent
+from trade_agent.agents.configs import TD3Config
 
 
 class TestTD3Agent:

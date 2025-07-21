@@ -21,7 +21,7 @@ import pandas as pd
 import pytest
 import ray
 
-from trading_rl_agent.data.parallel_data_fetcher import (
+from trade_agent.data.parallel_data_fetcher import (
     MemoryMappedDataset,
     ParallelDataFetcher,
     ParallelDataManager,

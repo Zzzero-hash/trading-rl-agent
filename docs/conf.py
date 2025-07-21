@@ -62,7 +62,7 @@ autodoc_typehints_format = "short"
 # Mock imports for unimplemented modules
 autodoc_mock_imports = [
     "nats",
-    "src.trading_rl_agent.execution",
+    "src.trade_agent.execution",
     "src.portfolio",
     "src.messaging",
 ]
@@ -140,7 +140,7 @@ def linkcode_resolve(domain, info):
         return None
 
     filename = info["module"].replace(".", "/")
-    return f"https://github.com/Zzzero-hash/trading-rl-agent/blob/main/src/{filename}.py"
+    return f"https://github.com/Zzzero-hash/trade-agent/blob/main/src/{filename}.py"
 
 
 # -- MyST parser configuration -----------------------------------------------

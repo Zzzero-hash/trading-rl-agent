@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from trading_rl_agent.core.logging import get_logger
+from trade_agent.core.logging import get_logger
 
 logger = get_logger(__name__)
 

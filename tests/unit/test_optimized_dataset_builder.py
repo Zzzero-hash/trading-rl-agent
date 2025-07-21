@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.data.optimized_dataset_builder import OptimizedDatasetBuilder
+from trade_agent.data.optimized_dataset_builder import OptimizedDatasetBuilder
 
 
 class TestOptimizedDatasetBuilder:

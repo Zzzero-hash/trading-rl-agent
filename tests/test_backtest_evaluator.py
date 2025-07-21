@@ -10,13 +10,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.core.unified_config import BacktestConfig
-from trading_rl_agent.eval.backtest_evaluator import (
+from trade_agent.core.unified_config import BacktestConfig
+from trade_agent.eval.backtest_evaluator import (
     BacktestEvaluator,
     BacktestResult,
     TradeRecord,
 )
-from trading_rl_agent.portfolio.transaction_costs import TransactionCostModel
+from trade_agent.portfolio.transaction_costs import TransactionCostModel
 
 
 class TestTransactionCostModel:

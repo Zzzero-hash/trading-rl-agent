@@ -145,7 +145,7 @@ infrastructure:
 # docker run -e TRADING_RL_AGENT_ALPACA_API_KEY=your_key \
 #            -e TRADING_RL_AGENT_ALPACA_SECRET_KEY=your_secret \
 #            -e TRADING_RL_AGENT_ALPACA_BASE_URL=https://api.alpaca.markets \
-#            trading-rl-agent
+#            trade-agent
 
 # Docker Compose environment variables example:
 # environment:
@@ -159,7 +159,7 @@ infrastructure:
 # apiVersion: v1
 # kind: Secret
 # metadata:
-#   name: trading-rl-agent-secrets
+#   name: trade-agent-secrets
 # type: Opaque
 # data:
 #   alpaca-api-key: <base64-encoded-key>

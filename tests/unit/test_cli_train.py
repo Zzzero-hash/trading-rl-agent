@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 import pytest
 import typer
 
-from trading_rl_agent.cli_train import (
+from trade_agent.cli_train import (
     get_trainer,
     resume,
     train,

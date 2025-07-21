@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.data.data_standardizer import (
+from trade_agent.data.data_standardizer import (
     DataStandardizer,
     FeatureConfig,
     LiveDataProcessor,

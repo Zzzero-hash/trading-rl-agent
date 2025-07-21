@@ -29,7 +29,7 @@ spec:
       serviceAccountName: trading-data-pipeline-service-account
       containers:
         - name: data-pipeline
-          image: trading-rl-agent:latest
+          image: trade-agent:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8003
@@ -40,27 +40,27 @@ spec:
             - name: TRADING_RL_AGENT_ALPACA_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-api-key
             - name: TRADING_RL_AGENT_ALPACA_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-secret-key
             - name: TRADING_RL_AGENT_ALPACA_BASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alpaca-base-url
             - name: TRADING_RL_AGENT_ALPHAVANTAGE_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: alphavantage-api-key
             - name: TRADING_RL_AGENT_NEWSAPI_KEY
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: newsapi-key
             - name: POSTGRES_HOST
               value: "trading-db-service"
@@ -69,17 +69,17 @@ spec:
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: postgres-database
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: postgres-username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: postgres-password
             - name: REDIS_HOST
               value: "trading-redis-service"
@@ -88,7 +88,7 @@ spec:
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: redis-password
             - name: RABBITMQ_HOST
               value: "trading-rabbitmq-service"
@@ -97,12 +97,12 @@ spec:
             - name: RABBITMQ_USER
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: rabbitmq-username
             - name: RABBITMQ_PASS
               valueFrom:
                 secretKeyRef:
-                  name: trading-rl-agent-secrets
+                  name: trade-agent-secrets
                   key: rabbitmq-password
             - name: LOG_LEVEL
               value: "INFO"
@@ -170,16 +170,16 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: trading-rl-agent-config
+            name: trade-agent-config
         - name: logs-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-logs
+            claimName: trade-agent-logs
         - name: data-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-data
+            claimName: trade-agent-data
         - name: results-volume
           persistentVolumeClaim:
-            claimName: trading-rl-agent-results
+            claimName: trade-agent-results
       nodeSelector:
         node-role.kubernetes.io/worker: "true"
       tolerations:

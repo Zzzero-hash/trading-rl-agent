@@ -4,7 +4,7 @@ metadata:
   name: trading-system
   labels:
     name: trading-system
-    app: trading-rl-agent
+    app: trade-agent
 ---
 apiVersion: v1
 kind: ResourceQuota

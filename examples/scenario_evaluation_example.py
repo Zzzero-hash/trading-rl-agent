@@ -11,8 +11,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from trading_rl_agent.eval import AgentScenarioEvaluator
-from trading_rl_agent.eval.scenario_evaluator import MarketScenario
+from trade_agent.eval import AgentScenarioEvaluator
+from trade_agent.eval.scenario_evaluator import MarketScenario
 
 
 def create_simple_moving_average_agent(

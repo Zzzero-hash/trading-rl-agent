@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from trading_rl_agent.data.market_patterns import (
+from trade_agent.data.market_patterns import (
     STATSMODELS_AVAILABLE,
     MarketPatternGenerator,
 )

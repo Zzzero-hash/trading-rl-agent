@@ -15,10 +15,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.data.data_manager import DataManager
-from trading_rl_agent.portfolio.portfolio_manager import PortfolioManager
-from trading_rl_agent.risk.risk_manager import RiskManager
-from trading_rl_agent.trading.trading_engine import TradingEngine
+from trade_agent.data.data_manager import DataManager
+from trade_agent.portfolio.portfolio_manager import PortfolioManager
+from trade_agent.risk.risk_manager import RiskManager
+from trade_agent.trading.trading_engine import TradingEngine
 
 
 class TestNetworkFailureResilience:

@@ -111,7 +111,7 @@ run_with_error_handling() {
 
 # Check if we're in the right directory
 if [ ! -f "main.py" ]; then
-    print_error "Please run this script from the trading-rl-agent root directory"
+    print_error "Please run this script from the trade-agent root directory"
     exit 1
 fi
 

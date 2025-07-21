@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.utils import metrics
+from trade_agent.utils import metrics
 
 pytestmark = pytest.mark.unit
 

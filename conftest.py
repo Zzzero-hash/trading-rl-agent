@@ -1,4 +1,4 @@
-# Add src directory to PYTHONPATH so that pytest can find the trading_rl_agent package
+# Add src directory to PYTHONPATH so that pytest can find the trade_agent package
 import sys
 from pathlib import Path
 
