@@ -135,7 +135,14 @@ class TestCLICommands:
         mock_config.infrastructure.max_workers = 4
         mock_get_config.return_value = mock_config
 
-        refresh(days=1, symbols="AAPL", output_dir=self.temp_path, source="yfinance", timeframe="1d", parallel=False)
+        refresh(
+            days=1,
+            symbols="AAPL",
+            output_dir=self.temp_path,
+            source="yfinance",
+            timeframe="1d",
+            parallel=False,
+        )
 
         mock_console.print.assert_called()
 
@@ -147,7 +154,11 @@ class TestCLICommands:
         mock_get_config.return_value = mock_config
 
         download(
-            symbols="AAPL", start_date="2024-01-01", end_date="2024-01-31", output_dir=self.temp_path, source="yfinance"
+            symbols="AAPL",
+            start_date="2024-01-01",
+            end_date="2024-01-31",
+            output_dir=self.temp_path,
+            source="yfinance",
         )
 
         mock_console.print.assert_called()
@@ -159,7 +170,12 @@ class TestCLICommands:
         mock_config = Mock()
         mock_get_config.return_value = mock_config
 
-        process(config_file=None, output_dir=self.temp_path, force_rebuild=False, parallel=True)
+        process(
+            config_file=None,
+            output_dir=self.temp_path,
+            force_rebuild=False,
+            parallel=True,
+        )
 
         mock_console.print.assert_called()
 
@@ -242,7 +258,12 @@ class TestCLICommands:
         rl_path.mkdir()
         (rl_path / "model.ckpt").touch()
 
-        hybrid(config_file=None, cnn_lstm_path=cnn_path, rl_path=rl_path, output_dir=self.temp_path)
+        hybrid(
+            config_file=None,
+            cnn_lstm_path=cnn_path,
+            rl_path=rl_path,
+            output_dir=self.temp_path,
+        )
 
         mock_console.print.assert_called()
 
@@ -291,7 +312,12 @@ class TestCLICommands:
         model_path.mkdir()
         (model_path / "model.ckpt").touch()
 
-        evaluate(model_path=model_path, data_path=test_data_file, output_dir=self.temp_path, initial_capital=10000.0)
+        evaluate(
+            model_path=model_path,
+            data_path=test_data_file,
+            output_dir=self.temp_path,
+            initial_capital=10000.0,
+        )
 
         mock_console.print.assert_called()
 
@@ -333,7 +359,11 @@ class TestCLICommands:
         model2_path.mkdir()
         (model2_path / "model.ckpt").touch()
 
-        compare(models=f"{model1_path},{model2_path}", data_path=test_data_file, output_dir=self.temp_path)
+        compare(
+            models=f"{model1_path},{model2_path}",
+            data_path=test_data_file,
+            output_dir=self.temp_path,
+        )
 
         mock_console.print.assert_called()
 
@@ -360,7 +390,13 @@ class TestCLICommands:
         mock_config = Mock()
         mock_get_config.return_value = mock_config
 
-        start(config_file=None, symbols="AAPL", model_path=None, paper_trading=True, initial_capital=10000.0)
+        start(
+            config_file=None,
+            symbols="AAPL",
+            model_path=None,
+            paper_trading=True,
+            initial_capital=10000.0,
+        )
 
         mock_console.print.assert_called()
 
@@ -426,7 +462,11 @@ class TestCLICommands:
         mock_get_config.return_value = mock_config
 
         scenario_compare(
-            config_file=None, output_dir=self.temp_path, seed=42, save_reports=True, save_visualizations=True
+            config_file=None,
+            output_dir=self.temp_path,
+            seed=42,
+            save_reports=True,
+            save_visualizations=True,
         )
 
         mock_console.print.assert_called()
@@ -507,13 +547,17 @@ class TestCLICommands:
         """Test standardize command with invalid input file."""
         # Currently the standardize function is a placeholder and doesn't validate input files
         # So it should not raise an exception for non-existent files
-        standardize(input_path=Path("/nonexistent/file.csv"), output_path=self.temp_path, method="robust")
+        standardize(
+            input_path=Path("/nonexistent/file.csv"),
+            output_path=self.temp_path,
+            method="robust",
+        )
 
         # Verify that the console was called (placeholder message)
         mock_console.print.assert_called()
 
     @patch("trading_rl_agent.cli.console")
-    def test_strategy_command_invalid_data(self, mock_console):
+    def test_strategy_command_invalid_data(self, _mock_console):
         """Test strategy command with invalid data file."""
         with pytest.raises(typer.Exit):
             strategy(
@@ -527,7 +571,7 @@ class TestCLICommands:
             )
 
     @patch("trading_rl_agent.cli.console")
-    def test_evaluate_command_invalid_model(self, mock_console):
+    def test_evaluate_command_invalid_model(self, _mock_console):
         """Test evaluate command with invalid model path."""
         # Create test data file
         test_data_file = self.temp_path / "test_data.csv"
@@ -542,10 +586,14 @@ class TestCLICommands:
             )
 
     @patch("trading_rl_agent.cli.console")
-    def test_report_command_invalid_results(self, mock_console):
+    def test_report_command_invalid_results(self, _mock_console):
         """Test report command with invalid results path."""
         with pytest.raises(typer.Exit):
-            report(results_path=Path("/nonexistent/results"), output_format="html", output_dir=self.temp_path)
+            report(
+                results_path=Path("/nonexistent/results"),
+                output_format="html",
+                output_dir=self.temp_path,
+            )
 
     # ============================================================================
     # EDGE CASES
@@ -571,7 +619,11 @@ class TestCLICommands:
     def test_commands_with_empty_strings(self, mock_console):
         """Test commands handle empty strings gracefully."""
         download(
-            symbols="", start_date="2024-01-01", end_date="2024-01-31", output_dir=self.temp_path, source="yfinance"
+            symbols="",
+            start_date="2024-01-01",
+            end_date="2024-01-31",
+            output_dir=self.temp_path,
+            source="yfinance",
         )
 
         mock_console.print.assert_called()

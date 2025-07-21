@@ -194,9 +194,9 @@ class PerformanceMonitor:
         return {
             "total_time_seconds": total_time,
             "total_memory_delta_mb": total_memory_delta,
-            "peak_memory_mb": max([m["memory_mb"] for m in self.measurements]) if self.measurements else end_memory,
+            "peak_memory_mb": (max([m["memory_mb"] for m in self.measurements]) if self.measurements else end_memory),
             "average_cpu_percent": avg_cpu,
-            "peak_cpu_percent": max([m["cpu_percent"] for m in self.measurements]) if self.measurements else end_cpu,
+            "peak_cpu_percent": (max([m["cpu_percent"] for m in self.measurements]) if self.measurements else end_cpu),
             "measurements": self.measurements,
         }
 

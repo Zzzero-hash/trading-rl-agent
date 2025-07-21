@@ -74,7 +74,7 @@ class TestSuiteOptimizer:
         if xml_file.exists():
             try:
                 # Use defusedxml for safe XML parsing
-                tree = safe_parse(str(xml_file))  # noqa: S314
+                tree = safe_parse(str(xml_file))
                 root = tree.getroot()
 
                 for package in root.findall(".//package"):
@@ -110,7 +110,12 @@ class TestSuiteOptimizer:
 
     def _identify_coverage_gaps(self, coverage_data: dict) -> dict:
         """Identify specific coverage gaps by module."""
-        gaps = {"low_coverage_modules": [], "untested_modules": [], "missing_tests": [], "recommendations": []}
+        gaps = {
+            "low_coverage_modules": [],
+            "untested_modules": [],
+            "missing_tests": [],
+            "recommendations": [],
+        }
 
         # Analyze source modules
         for module_path in self.src_dir.rglob("*.py"):
@@ -129,7 +134,7 @@ class TestSuiteOptimizer:
                     {
                         "module": str(relative_path),
                         "module_name": module_name,
-                        "priority": "high" if "core" in str(relative_path) else "medium",
+                        "priority": ("high" if "core" in str(relative_path) else "medium"),
                     }
                 )
 
@@ -141,7 +146,7 @@ class TestSuiteOptimizer:
                         "package": package_name,
                         "line_coverage": package_data["line_rate"],
                         "branch_coverage": package_data.get("branch_rate", 0),
-                        "priority": "high" if package_data["line_rate"] < 0.5 else "medium",
+                        "priority": ("high" if package_data["line_rate"] < 0.5 else "medium"),
                     }
                 )
 
@@ -151,10 +156,22 @@ class TestSuiteOptimizer:
         """Analyze test execution performance and identify bottlenecks."""
         print("⚡ Analyzing test performance...")
 
-        performance_data = {"slow_tests": [], "test_categories": {}, "optimization_opportunities": []}
+        performance_data = {
+            "slow_tests": [],
+            "test_categories": {},
+            "optimization_opportunities": [],
+        }
 
         # Run tests with timing
-        timing_cmd = ["python3", "-m", "pytest", "tests/", "--durations=20", "--durations-min=0.1", "-q"]
+        timing_cmd = [
+            "python3",
+            "-m",
+            "pytest",
+            "tests/",
+            "--durations=20",
+            "--durations-min=0.1",
+            "-q",
+        ]
 
         try:
             result = subprocess.run(timing_cmd, check=False, capture_output=True, text=True)
@@ -171,7 +188,11 @@ class TestSuiteOptimizer:
 
                         if duration > 1.0:  # Tests taking more than 1 second
                             performance_data["slow_tests"].append(
-                                {"test": test_name, "duration": duration, "category": self._categorize_test(test_name)}
+                                {
+                                    "test": test_name,
+                                    "duration": duration,
+                                    "category": self._categorize_test(test_name),
+                                }
                             )
         except subprocess.CalledProcessError:
             print("⚠️  Performance analysis failed")
@@ -288,7 +309,11 @@ class TestSuiteOptimizer:
         # Generate parallel execution configuration
         optimization_data["parallel_config"] = {
             "pytest_xdist_workers": "auto",
-            "test_grouping": {"fast": "tests/unit/", "medium": "tests/integration/", "slow": "tests/performance/"},
+            "test_grouping": {
+                "fast": "tests/unit/",
+                "medium": "tests/integration/",
+                "slow": "tests/performance/",
+            },
             "markers": {
                 "fast": "pytest.mark.fast",
                 "slow": "pytest.mark.slow",
@@ -332,7 +357,11 @@ class TestSuiteOptimizer:
         """Generate specific coverage improvement recommendations."""
         print("📈 Generating coverage improvements...")
 
-        improvements = {"missing_tests": [], "test_priorities": {}, "implementation_plan": {}}
+        improvements = {
+            "missing_tests": [],
+            "test_priorities": {},
+            "implementation_plan": {},
+        }
 
         # Analyze source modules for missing tests
         for module_path in self.src_dir.rglob("*.py"):
@@ -385,7 +414,11 @@ class TestSuiteOptimizer:
 
     def _check_test_exists(self, module_path: Path) -> bool:
         """Check if tests exist for a given module."""
-        test_patterns = [f"test_{module_path.stem}.py", f"test_{module_path.stem}_*.py", f"*{module_path.stem}*.py"]
+        test_patterns = [
+            f"test_{module_path.stem}.py",
+            f"test_{module_path.stem}_*.py",
+            f"*{module_path.stem}*.py",
+        ]
 
         return any(list(self.tests_dir.rglob(pattern)) for pattern in test_patterns)
 
@@ -417,7 +450,12 @@ class TestSuiteOptimizer:
         """Create comprehensive test documentation."""
         print("📚 Creating test documentation...")
 
-        docs = {"test_overview": {}, "execution_guide": {}, "maintenance_procedures": {}, "best_practices": {}}
+        docs = {
+            "test_overview": {},
+            "execution_guide": {},
+            "maintenance_procedures": {},
+            "best_practices": {},
+        }
 
         # Test overview
         docs["test_overview"] = {
@@ -594,7 +632,15 @@ def main():
     parser = argparse.ArgumentParser(description="Trading RL Agent Test Suite Optimizer")
     parser.add_argument(
         "--action",
-        choices=["full", "coverage", "performance", "redundancy", "optimization", "improvements", "documentation"],
+        choices=[
+            "full",
+            "coverage",
+            "performance",
+            "redundancy",
+            "optimization",
+            "improvements",
+            "documentation",
+        ],
         default="full",
         help="Optimization action to perform",
     )

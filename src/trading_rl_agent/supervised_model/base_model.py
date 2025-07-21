@@ -50,7 +50,8 @@ class BaseSupervisedModel(ABC):
         """Get feature importance scores.
 
         Returns:
-            Dictionary mapping feature names to importance scores, or None if not available
+            Dictionary mapping feature names to importance scores,
+            or None if not available
         """
         return None
 

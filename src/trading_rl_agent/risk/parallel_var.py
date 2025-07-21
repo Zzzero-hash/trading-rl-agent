@@ -16,7 +16,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ..core.logging import get_logger
+from src.trading_rl_agent.core.logging import get_logger
+
 from .monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig, VaRResult
 
 logger = get_logger(__name__)
@@ -265,7 +266,6 @@ class ParallelVaRCalculator:
             raise ValueError("No chunk results to aggregate")
 
         # Extract simulation results from chunks
-        all_simulated_returns: list[Any] = []
         total_simulations = 0
 
         for result in chunk_results:
@@ -438,7 +438,7 @@ class ParallelVaRCalculator:
     def real_time_var_monitoring(
         self,
         var_config: MonteCarloVaRConfig,
-        returns_data: pd.DataFrame,
+        _returns_data: pd.DataFrame,
         weights: dict[str, float],
         update_frequency: int = 1,
     ) -> dict[str, Any]:

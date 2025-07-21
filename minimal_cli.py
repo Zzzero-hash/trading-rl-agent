@@ -32,7 +32,12 @@ app = typer.Typer(
 def main(
     verbose: Annotated[
         int,
-        typer.Option("--verbose", "-v", count=True, help="Increase verbosity (use multiple times for more detail)"),
+        typer.Option(
+            "--verbose",
+            "-v",
+            count=True,
+            help="Increase verbosity (use multiple times for more detail)",
+        ),
     ] = 0,
 ) -> None:
     """
@@ -54,7 +59,10 @@ def main(
         import logging
 
         log_level = logging.DEBUG if verbose > 0 else logging.INFO
-        logging.basicConfig(level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        logging.basicConfig(
+            level=log_level,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
 
 
 @app.command()

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from src.trading_rl_agent.core.config import Config
+from src.trading_rl_agent.core.config import SystemConfig as Config
 from src.trading_rl_agent.data.data_loader import DataLoader
 from src.trading_rl_agent.features.feature_engineering import FeatureEngineer
 from src.trading_rl_agent.portfolio.portfolio_manager import PortfolioManager
@@ -41,7 +41,7 @@ class TestDocumentationAccuracy:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not ast.get_docstring(node):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and not ast.get_docstring(node):
                         missing_docstrings.append(f"{file_path}:{node.lineno} - {node.name}")
             except Exception as e:
                 missing_docstrings.append(f"{file_path}: Error parsing - {e}")
@@ -91,7 +91,7 @@ class TestDocumentationAccuracy:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
                         docstring = ast.get_docstring(node)
                         if (
                             docstring
@@ -333,7 +333,7 @@ class TestDocumentationAccuracy:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                         docstring = ast.get_docstring(node)
                         if docstring:
                             # Extract parameters from function signature
@@ -366,7 +366,7 @@ class TestDocumentationAccuracy:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                         docstring = ast.get_docstring(node)
                         if docstring:
                             # Check if function has return statements
@@ -395,7 +395,7 @@ class TestDocumentationAccuracy:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                         docstring = ast.get_docstring(node)
                         if docstring:
                             # Check if function has raise statements
@@ -424,12 +424,18 @@ class TestDocumentationAccuracy:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
                         docstring = ast.get_docstring(node)
                         if docstring:
                             # Find code examples in docstring
                             code_examples = re.findall(r"```python\n(.*?)\n```", docstring, re.DOTALL)
-                            code_examples.extend(re.findall(r">>>\s+(.*?)(?=\n>>>|\n\n|\n$)", docstring, re.DOTALL))
+                            code_examples.extend(
+                                re.findall(
+                                    r">>>\s+(.*?)(?=\n>>>|\n\n|\n$)",
+                                    docstring,
+                                    re.DOTALL,
+                                )
+                            )
 
                             for i, example in enumerate(code_examples):
                                 try:
@@ -455,7 +461,7 @@ class TestDocumentationAccuracy:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
                         docstring = ast.get_docstring(node)
                         if docstring:
                             # Find links in docstring
@@ -485,7 +491,7 @@ class TestDocumentationAccuracy:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
                         docstring = ast.get_docstring(node)
                         if docstring:
                             # Check for consistent indentation

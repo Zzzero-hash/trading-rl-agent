@@ -12,17 +12,19 @@ This example demonstrates how to use the new BacktestEvaluator to:
 import sys
 from pathlib import Path
 
-# Add the project root to the path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 import numpy as np
 import pandas as pd
 import yfinance as yf
 
 from src.trading_rl_agent.core.unified_config import BacktestConfig
 from src.trading_rl_agent.eval.backtest_evaluator import BacktestEvaluator
-from src.trading_rl_agent.portfolio.transaction_costs import BrokerType, TransactionCostModel
+from src.trading_rl_agent.portfolio.transaction_costs import (
+    BrokerType,
+    TransactionCostModel,
+)
+
+# Add the project root to the path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def load_sample_data(symbols: list[str], start_date: str, end_date: str) -> pd.DataFrame:
@@ -62,7 +64,7 @@ def create_momentum_strategy(data: pd.DataFrame) -> pd.Series:
 def create_mean_reversion_strategy(data: pd.DataFrame) -> pd.Series:
     """Create a simple mean reversion strategy."""
     sma_20 = data["close"].rolling(20).mean()
-    sma_50 = data["close"].rolling(50).mean()
+    data["close"].rolling(50).mean()
 
     signals = pd.Series(0, index=data.index)
 

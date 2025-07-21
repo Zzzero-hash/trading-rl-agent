@@ -175,7 +175,11 @@ class EnhancedCNNLSTMTrainer:
             "lstm_units": cfg.get("lstm_units", 256),
             "dropout": cfg.get("dropout_rate", 0.2),
         }
-        self.model = CNNLSTMModel(input_dim=input_dim, config=config, use_attention=cfg.get("use_attention", False))
+        self.model = CNNLSTMModel(
+            input_dim=input_dim,
+            config=config,
+            use_attention=cfg.get("use_attention", False),
+        )
         return self.model
 
     def create_optimizer(
@@ -384,7 +388,7 @@ class EnhancedCNNLSTMTrainer:
     def load_checkpoint(self, checkpoint_path: str) -> tuple[CNNLSTMModel, int, float] | None:
         """Load model from checkpoint."""
         try:
-            checkpoint = torch.load(checkpoint_path, map_location=self.device)
+            checkpoint = torch.load(checkpoint_path, map_location=self.device)  # nosec
 
             # Recreate model with saved config
             self.model_config = checkpoint.get("model_config", self.model_config)
@@ -416,7 +420,13 @@ class EnhancedCNNLSTMTrainer:
             print(f"Failed to load checkpoint: {e}")
             return None
 
-    def train_step(self, model: CNNLSTMModel, optimizer: optim.Optimizer, X: torch.Tensor, y: torch.Tensor) -> float:
+    def train_step(
+        self,
+        model: CNNLSTMModel,
+        optimizer: optim.Optimizer,
+        X: torch.Tensor,
+        y: torch.Tensor,
+    ) -> float:
         model.train()
         optimizer.zero_grad()
         outputs = model(X)
@@ -440,7 +450,7 @@ class EnhancedCNNLSTMTrainer:
             checkpoint["scheduler_state_dict"] = self.scheduler.state_dict()
         torch.save(checkpoint, checkpoint_path)
 
-    def setup_mlflow(self, experiment_name: str) -> None:
+    def setup_mlflow(self, _experiment_name: str) -> None:
         try:
             self._setup_mlflow()
         except Exception as e:
@@ -454,7 +464,7 @@ class EnhancedCNNLSTMTrainer:
     def create_hyperparameter_optimizer(self) -> "HyperparameterOptimizer":
         return HyperparameterOptimizer([], [])
 
-    def optimization_objective(self, trial: "Trial") -> float:
+    def optimization_objective(self, _trial: "Trial") -> float:
         return 0.0
 
     def optimize_hyperparameters(self, X: np.ndarray, y: np.ndarray, n_trials: int = 2) -> dict[str, Any]:

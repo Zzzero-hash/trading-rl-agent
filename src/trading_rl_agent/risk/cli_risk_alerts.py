@@ -22,8 +22,9 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 from rich.table import Table
 
-from ..core.logging import get_logger
-from ..monitoring.alert_manager import AlertManager, AlertSeverity
+from src.trading_rl_agent.core.logging import get_logger
+from src.trading_rl_agent.monitoring.alert_manager import AlertManager, AlertSeverity
+
 from .alert_system import (
     AlertThreshold,
     CircuitBreakerRule,
@@ -157,25 +158,28 @@ def status(ctx: click.Context, portfolio_id: str) -> None:
 @cli.command()
 @click.option("--portfolio-id", default="default", help="Portfolio identifier")
 @click.option("--limit", default=10, help="Number of alerts to show")
-@click.option("--severity", type=click.Choice(["info", "warning", "error", "critical"]), help="Filter by severity")
+@click.option(
+    "--severity",
+    type=click.Choice(["info", "warning", "error", "critical"]),
+    help="Filter by severity",
+)
 @click.option(
     "--status",
     type=click.Choice(["active", "acknowledged", "resolved", "dismissed"]),
     help="Filter by status",
 )
 @click.pass_context
-def alerts(ctx: click.Context, portfolio_id: str, limit: int, severity: str | None, status: str | None) -> None:
+def alerts(
+    ctx: click.Context,
+    portfolio_id: str,
+    limit: int,
+    severity: str | None,
+    status: str | None,
+) -> None:
     """Show recent alerts."""
-    config = load_risk_alert_config(ctx.obj.get("config_path"))
-    risk_manager = create_sample_risk_manager()
+    load_risk_alert_config(ctx.obj.get("config_path"))
+    create_sample_risk_manager()
     alert_manager = AlertManager()
-
-    risk_alert_system = RiskAlertSystem(
-        risk_manager=risk_manager,
-        alert_manager=alert_manager,
-        config=config,
-        portfolio_id=portfolio_id,
-    )
 
     # Get alerts from alert manager
     all_alerts = alert_manager.alerts
@@ -241,7 +245,11 @@ def report(ctx: click.Context, portfolio_id: str, days: int, output: str | None)
     end_time = datetime.now()
     start_time = end_time - timedelta(days=days)
 
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
         task = progress.add_task("Generating risk report...", total=None)
         report_data = risk_alert_system.generate_risk_report(start_time, end_time)
         progress.update(task, completed=True)
@@ -361,7 +369,7 @@ def circuit_breakers(ctx: click.Context, portfolio_id: str) -> None:
             str(rule.threshold_value),
             rule.action,
             "✓" if rule.enabled else "✗",
-            rule.description[:50] + "..." if len(rule.description) > 50 else rule.description,
+            (rule.description[:50] + "..." if len(rule.description) > 50 else rule.description),
         )
 
     console.print(table)
@@ -423,7 +431,11 @@ def config_show(ctx: click.Context, portfolio_id: str) -> None:
         "✓" if notifications.email_enabled else "✗",
         f"{len(notifications.email_recipients)} recipients",
     )
-    notification_table.add_row("Slack", "✓" if notifications.slack_enabled else "✗", notifications.slack_channel)
+    notification_table.add_row(
+        "Slack",
+        "✓" if notifications.slack_enabled else "✗",
+        notifications.slack_channel,
+    )
     notification_table.add_row(
         "SMS",
         "✓" if notifications.sms_enabled else "✗",
@@ -507,7 +519,14 @@ def add_threshold(
 @click.option(
     "--condition",
     required=True,
-    type=click.Choice(["var_exceeded", "drawdown_exceeded", "leverage_exceeded", "correlation_risk_exceeded"]),
+    type=click.Choice(
+        [
+            "var_exceeded",
+            "drawdown_exceeded",
+            "leverage_exceeded",
+            "correlation_risk_exceeded",
+        ]
+    ),
     help="Trigger condition",
 )
 @click.option("--value", required=True, type=float, help="Threshold value")

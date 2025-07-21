@@ -43,7 +43,7 @@ except ImportError:
         def get_settings() -> Any:  # type: ignore[misc]
             return None
 
-        def load_settings(config_path: "Path | None" = None, env_file: "Path | None" = None) -> Any:  # type: ignore[misc]
+        def load_settings(_config_path: "Path | None" = None, _env_file: "Path | None" = None) -> Any:  # type: ignore[misc]
             return None
 
 
@@ -212,7 +212,12 @@ def main(
     config_file: Annotated[Path | None, typer.Option("--config", "-c", help="Path to configuration file")] = None,
     verbose: Annotated[
         int,
-        typer.Option("--verbose", "-v", count=True, help="Increase verbosity (use multiple times for more detail)"),
+        typer.Option(
+            "--verbose",
+            "-v",
+            count=True,
+            help="Increase verbosity (use multiple times for more detail)",
+        ),
     ] = 0,
     env_file: Annotated[Path | None, typer.Option("--env-file", help="Path to environment file (.env)")] = None,
 ) -> None:
@@ -307,7 +312,10 @@ def info() -> None:
     table.add_row("Data Source", settings.data.primary_source)
     table.add_row("Symbols", ", ".join(settings.data.symbols))
     table.add_row("Agent Type", settings.agent.agent_type)
-    table.add_row("Risk Management", "Enabled" if settings.risk.max_position_size > 0 else "Disabled")
+    table.add_row(
+        "Risk Management",
+        "Enabled" if settings.risk.max_position_size > 0 else "Disabled",
+    )
     table.add_row("Execution Broker", settings.execution.broker)
     table.add_row("Paper Trading", str(settings.execution.paper_trading))
 
@@ -327,7 +335,7 @@ def download_all(
     source: str | None = DEFAULT_SOURCE,
     timeframe: str | None = DEFAULT_TIMEFRAME,
     parallel: bool = DEFAULT_PARALLEL,
-    force: bool = DEFAULT_FORCE,
+    _force: bool = DEFAULT_FORCE,
 ) -> None:
     """
     Download all configured datasets.
@@ -357,7 +365,10 @@ def download_all(
         console.print(f"[cyan]Output: {output_dir}[/cyan]")
 
         # Import and use actual download functions
-        from .data.parallel_data_fetcher import fetch_data_parallel, fetch_data_with_retry
+        from .data.parallel_data_fetcher import (
+            fetch_data_parallel,
+            fetch_data_with_retry,
+        )
 
         # Create output directory
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -433,10 +444,7 @@ def symbols(
         settings = get_config_manager()
 
         # Parse symbols
-        if symbols is None:
-            symbol_list = settings.data.symbols
-        else:
-            symbol_list = [s.strip() for s in symbols.split(",")]
+        symbol_list = settings.data.symbols if symbols is None else [s.strip() for s in symbols.split(",")]
 
         # Use config values with CLI overrides
         resolved_start_date = start_date or settings.data.start_date
@@ -453,7 +461,10 @@ def symbols(
         console.print(f"[cyan]Output: {output_dir}[/cyan]")
 
         # Import and use actual download functions
-        from .data.parallel_data_fetcher import fetch_data_parallel, fetch_data_with_retry
+        from .data.parallel_data_fetcher import (
+            fetch_data_parallel,
+            fetch_data_with_retry,
+        )
 
         # Create output directory
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -528,10 +539,7 @@ def refresh(
         settings = get_config_manager()
 
         # Determine symbols to refresh
-        if symbols:
-            symbol_list = [s.strip() for s in symbols.split(",")]
-        else:
-            symbol_list = settings.data.symbols
+        symbol_list = [s.strip() for s in symbols.split(",")] if symbols else settings.data.symbols
 
         # Use config values with CLI overrides
         start_date = settings.data.start_date
@@ -621,8 +629,8 @@ def download(
     symbols: str | None = DEFAULT_SYMBOLS_STR,
     start_date: str | None = DEFAULT_START_DATE,
     end_date: str | None = DEFAULT_END_DATE,
-    output_dir: Path | None = DEFAULT_OUTPUT_DIR_NONE,
-    source: str | None = DEFAULT_SOURCE,
+    _output_dir: Path | None = DEFAULT_OUTPUT_DIR_NONE,
+    _source: str | None = DEFAULT_SOURCE,
 ) -> None:
     """
     Download market data for specified symbols.
@@ -722,13 +730,13 @@ def pipeline(
 
 @train_app.command(name="cnn_lstm")
 def cnn_lstm(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    epochs: int = DEFAULT_EPOCHS,
-    batch_size: int = DEFAULT_BATCH_SIZE,
-    learning_rate: float = DEFAULT_LEARNING_RATE,
-    output_dir: Path = DEFAULT_CNN_LSTM_OUTPUT,
-    gpu: bool = DEFAULT_GPU,
-    mixed_precision: bool = DEFAULT_MIXED_PRECISION,
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _epochs: int = DEFAULT_EPOCHS,
+    _batch_size: int = DEFAULT_BATCH_SIZE,
+    _learning_rate: float = DEFAULT_LEARNING_RATE,
+    _output_dir: Path = DEFAULT_CNN_LSTM_OUTPUT,
+    _gpu: bool = DEFAULT_GPU,
+    _mixed_precision: bool = DEFAULT_MIXED_PRECISION,
 ) -> None:
     """
     Train CNN+LSTM models for pattern recognition.
@@ -737,20 +745,21 @@ def cnn_lstm(
     src/trading_rl_agent/training/optimized_trainer.py to train
     CNN+LSTM models with advanced optimizations.
     """
-    console.print(f"[blue]PLACEHOLDER: Would train CNN+LSTM model for {epochs} epochs[/blue]")
+    console.print(f"[blue]PLACEHOLDER: Would train CNN+LSTM model for {_epochs} epochs[/blue]")
     console.print(
-        "[blue]Target module: src/trading_rl_agent/training/optimized_trainer.py - OptimizedTrainingManager.train()[/blue]",
+        "[blue]Target module: src/trading_rl_agent/training/optimized_trainer.py - "
+        "OptimizedTrainingManager.train()[/blue]",
     )
 
 
 @train_app.command(name="rl")
 def rl(
-    agent_type: str | None = DEFAULT_AGENT_TYPE,
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    timesteps: int = DEFAULT_TIMESTEPS,
-    output_dir: Path = DEFAULT_RL_OUTPUT,
-    ray_address: str | None = DEFAULT_RAY_ADDRESS,
-    num_workers: int = DEFAULT_NUM_WORKERS,
+    _agent_type: str | None = DEFAULT_AGENT_TYPE,
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _timesteps: int = DEFAULT_TIMESTEPS,
+    _output_dir: Path = DEFAULT_RL_OUTPUT,
+    _ray_address: str | None = DEFAULT_RAY_ADDRESS,
+    _num_workers: int = DEFAULT_NUM_WORKERS,
 ) -> None:
     """
     Train reinforcement learning agents.
@@ -758,16 +767,16 @@ def rl(
     Uses the Trainer.train() function from src/trading_rl_agent/agents/trainer.py
     to train RL agents (PPO, SAC, TD3) using Ray RLlib.
     """
-    console.print(f"[blue]PLACEHOLDER: Would train {agent_type} agent for {timesteps} timesteps[/blue]")
+    console.print(f"[blue]PLACEHOLDER: Would train {_agent_type} agent for {_timesteps} timesteps[/blue]")
     console.print("[blue]Target module: src/trading_rl_agent/agents/trainer.py - Trainer.train()[/blue]")
 
 
 @train_app.command(name="hybrid")
 def hybrid(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    cnn_lstm_path: Path | None = DEFAULT_CNN_LSTM_PATH,
-    rl_path: Path | None = DEFAULT_RL_PATH,
-    output_dir: Path = DEFAULT_HYBRID_OUTPUT,
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _cnn_lstm_path: Path | None = DEFAULT_CNN_LSTM_PATH,
+    _rl_path: Path | None = DEFAULT_RL_PATH,
+    _output_dir: Path = DEFAULT_HYBRID_OUTPUT,
 ) -> None:
     """
     Train hybrid models combining CNN+LSTM with RL agents.
@@ -781,9 +790,9 @@ def hybrid(
 
 @train_app.command(name="hyperopt")
 def hyperopt(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    n_trials: int = DEFAULT_N_TRIALS,
-    output_dir: Path = DEFAULT_OPTIMIZATION_OUTPUT,
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _n_trials: int = DEFAULT_N_TRIALS,
+    _output_dir: Path = DEFAULT_OPTIMIZATION_OUTPUT,
 ) -> None:
     """
     Perform hyperparameter optimization.
@@ -791,7 +800,7 @@ def hyperopt(
     Uses Optuna-based optimization from train.py to find optimal
     hyperparameters for models and training configurations.
     """
-    console.print(f"[blue]PLACEHOLDER: Would run hyperparameter optimization with {n_trials} trials[/blue]")
+    console.print(f"[blue]PLACEHOLDER: Would run hyperparameter optimization with {_n_trials} trials[/blue]")
     console.print("[blue]Target module: train.py - hyperparameter optimization functions[/blue]")
 
 
@@ -802,13 +811,13 @@ def hyperopt(
 
 @backtest_app.command()
 def strategy(
-    data_path: Path | None = DEFAULT_DATA_PATH,
-    model_path: Path | None = DEFAULT_MODEL_PATH,
-    policy: str | None = DEFAULT_POLICY,
-    initial_capital: float = DEFAULT_INITIAL_CAPITAL,
-    commission: float = DEFAULT_COMMISSION,
-    slippage: float = DEFAULT_SLIPPAGE,
-    output_dir: Path = DEFAULT_BACKTEST_OUTPUT,
+    _data_path: Path | None = DEFAULT_DATA_PATH,
+    _model_path: Path | None = DEFAULT_MODEL_PATH,
+    _policy: str | None = DEFAULT_POLICY,
+    _initial_capital: float = DEFAULT_INITIAL_CAPITAL,
+    _commission: float = DEFAULT_COMMISSION,
+    _slippage: float = DEFAULT_SLIPPAGE,
+    _output_dir: Path = DEFAULT_BACKTEST_OUTPUT,
 ) -> None:
     """
     Run backtesting on historical data.
@@ -816,16 +825,16 @@ def strategy(
     Uses the TradingSession class from src/trading_rl_agent/core/live_trading.py
     adapted for backtesting to evaluate trading strategies on historical data.
     """
-    console.print(f"[blue]PLACEHOLDER: Would backtest strategy on {data_path} with ${initial_capital} capital[/blue]")
+    console.print(f"[blue]PLACEHOLDER: Would backtest strategy on {_data_path} with ${_initial_capital} capital[/blue]")
     console.print("[blue]Target module: src/trading_rl_agent/core/live_trading.py - TradingSession (adapted)[/blue]")
 
 
 @backtest_app.command()
 def evaluate(
     model_path: Path | None = DEFAULT_MODEL_PATH,
-    data_path: Path | None = DEFAULT_DATA_PATH,
-    output_dir: Path = DEFAULT_EVALUATION_OUTPUT,
-    initial_capital: float = DEFAULT_INITIAL_CAPITAL,
+    _data_path: Path | None = DEFAULT_DATA_PATH,
+    _output_dir: Path = DEFAULT_EVALUATION_OUTPUT,
+    _initial_capital: float = DEFAULT_INITIAL_CAPITAL,
 ) -> None:
     """
     Evaluate trained models on test data.
@@ -836,22 +845,23 @@ def evaluate(
     """
     console.print(f"[blue]PLACEHOLDER: Would evaluate model {model_path} on test data[/blue]")
     console.print(
-        "[blue]Target module: src/trading_rl_agent/training/optimized_trainer.py - OptimizedTrainingManager.evaluate()[/blue]",
+        "[blue]Target module: src/trading_rl_agent/training/optimized_trainer.py - "
+        "OptimizedTrainingManager.evaluate()[/blue]",
     )
 
 
 @backtest_app.command()
 def walk_forward(
-    data_path: Path | None = DEFAULT_DATA_PATH,
-    model_type: str = "cnn_lstm",
-    train_window_size: int = 252,
-    validation_window_size: int = 63,
-    test_window_size: int = 63,
-    step_size: int = 21,
-    output_dir: Path = DEFAULT_EVALUATION_OUTPUT,
-    confidence_level: float = 0.95,
-    generate_plots: bool = True,
-    save_results: bool = True,
+    _data_path: Path | None = DEFAULT_DATA_PATH,
+    _model_type: str = "cnn_lstm",
+    _train_window_size: int = 252,
+    _validation_window_size: int = 63,
+    _test_window_size: int = 63,
+    _step_size: int = 21,
+    _output_dir: Path = DEFAULT_EVALUATION_OUTPUT,
+    _confidence_level: float = 0.95,
+    _generate_plots: bool = True,
+    _save_results: bool = True,
 ) -> None:
     """
     Perform walk-forward analysis for robust model evaluation.
@@ -859,7 +869,7 @@ def walk_forward(
     Uses the WalkForwardAnalyzer class from src/trading_rl_agent/eval/walk_forward_analyzer.py
     to evaluate model performance across multiple time windows.
     """
-    console.print(f"[blue]PLACEHOLDER: Would perform walk-forward analysis on {data_path}[/blue]")
+    console.print(f"[blue]PLACEHOLDER: Would perform walk-forward analysis on {_data_path}[/blue]")
     console.print(
         "[blue]Target module: src/trading_rl_agent/eval/walk_forward_analyzer.py - WalkForwardAnalyzer[/blue]",
     )
@@ -887,8 +897,8 @@ def walk_forward(
 @backtest_app.command()
 def compare(
     models: str | None = DEFAULT_MODELS,
-    data_path: Path | None = DEFAULT_DATA_PATH,
-    output_dir: Path = DEFAULT_COMPARISON_OUTPUT,
+    _data_path: Path | None = DEFAULT_DATA_PATH,
+    _output_dir: Path = DEFAULT_COMPARISON_OUTPUT,
 ) -> None:
     """
     Compare multiple models on the same dataset.
@@ -904,7 +914,7 @@ def compare(
 def report(
     results_path: Path | None = DEFAULT_RESULTS_PATH,
     output_format: str = DEFAULT_REPORT_FORMAT,
-    output_dir: Path = DEFAULT_REPORTS_OUTPUT,
+    _output_dir: Path = DEFAULT_REPORTS_OUTPUT,
 ) -> None:
     """
     Generate performance reports from backtest results.
@@ -923,11 +933,11 @@ def report(
 
 @trade_app.command()
 def start(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    symbols: str | None = DEFAULT_SYMBOLS_NONE,
-    model_path: Path | None = DEFAULT_MODEL_PATH,
-    paper_trading: bool = DEFAULT_PAPER_TRADING,
-    initial_capital: float = DEFAULT_TRADING_CAPITAL,
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _symbols: str | None = DEFAULT_SYMBOLS_NONE,
+    _model_path: Path | None = DEFAULT_MODEL_PATH,
+    _paper_trading: bool = DEFAULT_PAPER_TRADING,
+    _initial_capital: float = DEFAULT_TRADING_CAPITAL,
 ) -> None:
     """
     Start live trading session.
@@ -935,7 +945,7 @@ def start(
     Uses the LiveTradingEngine.create_session() and TradingSession.start() functions
     from src/trading_rl_agent/core/live_trading.py to initiate live trading.
     """
-    console.print(f"[blue]PLACEHOLDER: Would start live trading with ${initial_capital} capital[/blue]")
+    console.print(f"[blue]PLACEHOLDER: Would start live trading with ${_initial_capital} capital[/blue]")
     console.print(
         "[blue]Target module: src/trading_rl_agent/core/live_trading.py - LiveTradingEngine, TradingSession[/blue]",
     )
@@ -943,8 +953,8 @@ def start(
 
 @trade_app.command()
 def stop(
-    session_id: str | None = DEFAULT_SESSION_ID_NONE,
-    all_sessions: bool = DEFAULT_ALL_SESSIONS_FALSE,
+    _session_id: str | None = DEFAULT_SESSION_ID_NONE,
+    _all_sessions: bool = DEFAULT_ALL_SESSIONS_FALSE,
 ) -> None:
     """
     Stop live trading session(s).
@@ -960,8 +970,8 @@ def stop(
 
 @trade_app.command()
 def status(
-    session_id: str | None = DEFAULT_SESSION_ID_NONE,
-    detailed: bool = DEFAULT_DETAILED_FALSE,
+    _session_id: str | None = DEFAULT_SESSION_ID_NONE,
+    _detailed: bool = DEFAULT_DETAILED_FALSE,
 ) -> None:
     """
     Show trading session status.
@@ -975,9 +985,9 @@ def status(
 
 @trade_app.command()
 def monitor(
-    session_id: str | None = DEFAULT_SESSION_ID_NONE,
-    metrics: str = DEFAULT_METRICS_ALL,
-    interval: int = DEFAULT_INTERVAL_60,
+    _session_id: str | None = DEFAULT_SESSION_ID_NONE,
+    _metrics: str = DEFAULT_METRICS_ALL,
+    _interval: int = DEFAULT_INTERVAL_60,
 ) -> None:
     """
     Monitor live trading session in real-time.
@@ -985,20 +995,20 @@ def monitor(
     Provides real-time monitoring of trading sessions with live updates
     on portfolio performance, risk metrics, and trading activity.
     """
-    console.print(f"[blue]PLACEHOLDER: Would monitor trading session with {interval}s interval[/blue]")
+    console.print(f"[blue]PLACEHOLDER: Would monitor trading session with {_interval}s interval[/blue]")
     console.print("[blue]Target module: Real-time monitoring functions[/blue]")
 
 
 @trade_app.command()
 def paper(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
     symbols: str = DEFAULT_PAPER_SYMBOLS,
-    duration: str = DEFAULT_PAPER_DURATION,
+    _duration: str = DEFAULT_PAPER_DURATION,
 ) -> None:
     """
     Start a paper trading session with simulated trades.
     """
-    console.print(f"[blue]PLACEHOLDER: Would start paper trading for {symbols} for {duration}[/blue]")
+    console.print(f"[blue]PLACEHOLDER: Would start paper trading for {symbols} for {_duration}[/blue]")
     console.print("[blue]Target module: Paper trading utilities[/blue]")
 
 
@@ -1009,7 +1019,7 @@ def paper(
 
 @scenario_app.command()
 def scenario_evaluate(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
     agent_type: str = "moving_average",
     output_dir: Path = Path("outputs/scenario_evaluation"),
     seed: int = 42,
@@ -1086,8 +1096,8 @@ def scenario_evaluate(
 
 @scenario_app.command()
 def scenario_compare(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    output_dir: Path = Path("outputs/scenario_evaluation"),
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _output_dir: Path = Path("outputs/scenario_evaluation"),
     seed: int = 42,
     save_reports: bool = True,
     save_visualizations: bool = True,
@@ -1110,7 +1120,7 @@ def scenario_compare(
         from trading_rl_agent.eval import AgentScenarioEvaluator
 
         # Create output directory
-        output_dir.mkdir(parents=True, exist_ok=True)
+        _output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize scenario evaluator
         evaluator = AgentScenarioEvaluator(seed=seed)
@@ -1150,7 +1160,11 @@ def scenario_compare(
 """
 
         for agent_name, results in all_results.items():
-            comparison_report += f"| {agent_name} | {results['overall_score']:.3f} | {results['robustness_score']:.3f} | {results['adaptation_score']:.3f} | {results['aggregate_metrics']['pass_rate']:.1%} |\n"
+            comparison_report += (
+                f"| {agent_name} | {results['overall_score']:.3f} | "
+                f"{results['robustness_score']:.3f} | {results['adaptation_score']:.3f} | "
+                f"{results['aggregate_metrics']['pass_rate']:.1%} |\n"
+            )
 
         comparison_report += f"""
 
@@ -1163,17 +1177,24 @@ Each agent has been evaluated across multiple market scenarios including:
 - Market Crisis Scenarios
 - Regime Change Scenarios
 
-Detailed reports and visualizations have been saved to: {output_dir}
+Detailed reports and visualizations have been saved to: {_output_dir}
+"""
 
+        # Find best performers
+        best_overall = max(all_results.keys(), key=lambda k: all_results[k]["overall_score"])
+        most_robust = max(all_results.keys(), key=lambda k: all_results[k]["robustness_score"])
+        best_adaptation = max(all_results.keys(), key=lambda k: all_results[k]["adaptation_score"])
+
+        comparison_report += f"""
 ## Key Insights
 
-1. **Best Overall Performance**: {max(all_results.keys(), key=lambda k: all_results[k]["overall_score"])} achieved the highest overall score
-2. **Most Robust**: {max(all_results.keys(), key=lambda k: all_results[k]["robustness_score"])} showed the most consistent performance
-3. **Best Adaptation**: {max(all_results.keys(), key=lambda k: all_results[k]["adaptation_score"])} adapted best to challenging scenarios
+1. **Best Overall Performance**: {best_overall} achieved the highest overall score
+2. **Most Robust**: {most_robust} showed the most consistent performance
+3. **Best Adaptation**: {best_adaptation} adapted best to challenging scenarios
 
 ## Recommendations
 
-- Use {max(all_results.keys(), key=lambda k: all_results[k]["overall_score"])} for general market conditions
+- Use {best_overall} for general market conditions
 - Consider scenario-specific agent selection for specialized strategies
 - Monitor performance during regime changes and market crises
 - Regular re-evaluation recommended as market conditions evolve
@@ -1181,7 +1202,7 @@ Detailed reports and visualizations have been saved to: {output_dir}
 
         # Save comparison report
         if save_reports:
-            report_path = output_dir / "agent_comparison_report.md"
+            report_path = _output_dir / "agent_comparison_report.md"
             with open(report_path, "w") as f:
                 f.write(comparison_report)
             console.print(f"📄 Comparison report saved: {report_path}")
@@ -1189,31 +1210,30 @@ Detailed reports and visualizations have been saved to: {output_dir}
         # Save individual agent reports
         if save_reports:
             for agent_name, results in all_results.items():
-                agent_report_path = output_dir / f"{agent_name.lower().replace(' ', '_')}_report.md"
+                agent_report_path = _output_dir / f"{agent_name.lower().replace(' ', '_')}_report.md"
                 evaluator.generate_evaluation_report(results, agent_report_path)
 
         # Save visualizations
         if save_visualizations:
             for agent_name, results in all_results.items():
-                viz_path = output_dir / f"{agent_name.lower().replace(' ', '_')}_evaluation.png"
+                viz_path = _output_dir / f"{agent_name.lower().replace(' ', '_')}_evaluation.png"
                 evaluator.create_visualization(results, viz_path)
 
         console.print("[bold green]✅ Agent comparison complete![/bold green]")
-        console.print(f"📁 Results saved to: {output_dir}")
+        console.print(f"📁 Results saved to: {_output_dir}")
 
     except Exception as e:
         console.print(f"[red]Error during agent comparison: {e}[/red]")
-        if verbose_count > 0:
-            raise
+        # Note: verbose_count is not available in this scope, so we'll just exit
         raise typer.Exit(1) from None
 
 
 @scenario_app.command()
 def custom(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
+    _config_file: Path | None = DEFAULT_CONFIG_FILE,
     agent_type: str = "moving_average",
     scenario_name: str = "strong_uptrend",
-    output_dir: Path = Path("outputs/scenario_evaluation"),
+    _output_dir: Path = Path("outputs/scenario_evaluation"),
     seed: int = 42,
     save_reports: bool = True,
 ) -> None:
@@ -1236,7 +1256,7 @@ def custom(
         from trading_rl_agent.eval import AgentScenarioEvaluator
 
         # Create output directory
-        output_dir.mkdir(parents=True, exist_ok=True)
+        _output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize scenario evaluator
         evaluator = AgentScenarioEvaluator(seed=seed)
@@ -1279,7 +1299,7 @@ def custom(
 
         # Save report
         if save_reports:
-            report_path = output_dir / f"{agent_type}_{scenario_name}_report.md"
+            report_path = _output_dir / f"{agent_type}_{scenario_name}_report.md"
             evaluator.generate_evaluation_report(results, report_path)
             console.print(f"📄 Report saved: {report_path}")
 
@@ -1287,8 +1307,7 @@ def custom(
 
     except Exception as e:
         console.print(f"[red]Error during custom scenario evaluation: {e}[/red]")
-        if verbose_count > 0:
-            raise
+        # Note: verbose_count is not available in this scope, so we'll just exit
         raise typer.Exit(1) from None
 
 

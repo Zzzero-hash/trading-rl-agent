@@ -1,27 +1,39 @@
+#!/usr/bin/env python3
+"""
+Backtesting CLI for Trading RL Agent.
+
+Provides command-line interface for running backtests with various strategies.
+"""
+
 import sys
 import traceback
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 import pandas as pd
 import typer
 
+from .console import console, print_metrics_table
+from .core.unified_config import BacktestConfig
+from .eval.backtest_evaluator import BacktestEvaluator
+from .portfolio.transaction_costs import BrokerType, TransactionCostModel
+
 # Add root directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from config import get_settings, load_settings
+try:
+    from config import get_settings, load_settings
+except ImportError:
+    print("Error: Could not import config module.")
+    print("Make sure you're running this from the project root directory.")
+    sys.exit(1)
 
 # Import yfinance at module level for mocking in tests
 try:
     import yfinance as yf
 except ImportError:
     yf = None
-
-from .console import console, print_metrics_table
-from .core.unified_config import BacktestConfig
-from .eval.backtest_evaluator import BacktestEvaluator
-from .portfolio.transaction_costs import BrokerType, TransactionCostModel
 
 app = typer.Typer(help="Backtesting CLI for Trading RL Agent")
 
@@ -92,7 +104,10 @@ def _generate_sample_signals(data: pd.DataFrame, strategy_type: str = "momentum"
     if "close" not in data.columns:
         # Create a simple random signal if no close price data
         np.random.seed(42)
-        return pd.Series(np.random.choice([-1, 0, 1], size=len(data), p=[0.3, 0.4, 0.3]), index=data.index)
+        return pd.Series(
+            np.random.choice([-1, 0, 1], size=len(data), p=[0.3, 0.4, 0.3]),
+            index=data.index,
+        )
 
     if strategy_type == "momentum":
         # Simple momentum strategy
@@ -111,7 +126,10 @@ def _generate_sample_signals(data: pd.DataFrame, strategy_type: str = "momentum"
     else:
         # Random strategy for testing
         np.random.seed(42)
-        signals = pd.Series(np.random.choice([-1, 0, 1], size=len(data), p=[0.3, 0.4, 0.3]), index=data.index)
+        signals = pd.Series(
+            np.random.choice([-1, 0, 1], size=len(data), p=[0.3, 0.4, 0.3]),
+            index=data.index,
+        )
 
     return signals
 
@@ -119,11 +137,11 @@ def _generate_sample_signals(data: pd.DataFrame, strategy_type: str = "momentum"
 @app.command()
 def run(
     strategy: str = typer.Argument(..., help="Strategy name (momentum, mean_reversion, or custom)"),
-    start_date: str | None = typer.Option(None, "--start", help="Start date (YYYY-MM-DD)"),
-    end_date: str | None = typer.Option(None, "--end", help="End date (YYYY-MM-DD)"),
-    symbols: str | None = typer.Option(None, "--symbols", help="Comma-separated list of symbols"),
-    export_csv: Path | None = typer.Option(None, "--export-csv", help="Export summary metrics to CSV"),  # noqa: B008
-    config_file: Path | None = typer.Option(None, "--config", "-c", help="Path to config file"),  # noqa: B008
+    start_date: Annotated[str | None, typer.Option("--start", help="Start date (YYYY-MM-DD)")] = None,
+    end_date: Annotated[str | None, typer.Option("--end", help="End date (YYYY-MM-DD)")] = None,
+    symbols: Annotated[str | None, typer.Option("--symbols", help="Comma-separated list of symbols")] = None,
+    export_csv: Annotated[Path | None, typer.Option("--export-csv", help="Export summary metrics to CSV")] = None,
+    config_file: Annotated[Path | None, typer.Option("--config", "-c", help="Path to config file")] = None,
     initial_capital: float | None = None,
     commission_rate: float | None = None,
     slippage_rate: float | None = None,
@@ -257,8 +275,8 @@ def batch(
         help="Comma-separated list of periods as start:end (e.g. 2023-01-01:2023-06-01,2023-06-02:2023-12-31)",
     ),
     symbols: str | None = None,
-    export_csv: Path | None = typer.Option(None, "--export-csv", help="Export summary metrics to CSV"),  # noqa: B008
-    config_file: Path | None = typer.Option(None, "--config", "-c", help="Path to config file"),  # noqa: B008
+    export_csv: Annotated[Path | None, typer.Option("--export-csv", help="Export summary metrics to CSV")] = None,
+    config_file: Annotated[Path | None, typer.Option("--config", "-c", help="Path to config file")] = None,
     initial_capital: float | None = None,
 ) -> None:
     """
@@ -371,10 +389,10 @@ def batch(
 @app.command()
 def compare(
     strategies: str = typer.Argument(..., help="Comma-separated list of strategies to compare"),
-    start_date: str | None = typer.Option(None, "--start", help="Start date (YYYY-MM-DD)"),
-    end_date: str | None = typer.Option(None, "--end", help="End date (YYYY-MM-DD)"),
-    symbols: str | None = typer.Option(None, "--symbols", help="Comma-separated list of symbols"),
-    config_file: Path | None = typer.Option(None, "--config", "-c", help="Path to config file"),  # noqa: B008
+    start_date: Annotated[str | None, typer.Option("--start", help="Start date (YYYY-MM-DD)")] = None,
+    end_date: Annotated[str | None, typer.Option("--end", help="End date (YYYY-MM-DD)")] = None,
+    symbols: Annotated[str | None, typer.Option("--symbols", help="Comma-separated list of symbols")] = None,
+    config_file: Annotated[Path | None, typer.Option("--config", "-c", help="Path to config file")] = None,
     output_dir: Path | None = None,
 ) -> None:
     """

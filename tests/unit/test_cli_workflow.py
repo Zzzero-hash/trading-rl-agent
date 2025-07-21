@@ -37,7 +37,14 @@ class TestCLIWorkflow:
     def test_cli_structure(self):
         """Test CLI structure and command availability."""
         try:
-            from trading_rl_agent.cli import app, backtest_app, data_app, scenario_app, trade_app, train_app
+            from trading_rl_agent.cli import (
+                app,
+                backtest_app,
+                data_app,
+                scenario_app,
+                trade_app,
+                train_app,
+            )
 
             # Verify all sub-apps exist
             assert app is not None
@@ -221,7 +228,15 @@ class TestCLIWorkflow:
             mock_download.return_value = None
 
             result = self.runner.invoke(
-                app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-01-31"]
+                app,
+                [
+                    "data",
+                    "download-all",
+                    "--start-date",
+                    "2023-01-01",
+                    "--end-date",
+                    "2023-01-31",
+                ],
             )
 
             # Command should execute (even if it fails due to mocking)

@@ -317,7 +317,7 @@ class TestCNNLSTMTrainingIntegration:
 
         assert predictions.shape == (2, 1)
 
-    def test_prediction_functionality(self, config_file, temp_output_dir):
+    def test_prediction_functionality(self, config_file, _temp_output_dir):
         """Test prediction functionality."""
         trainer = OptimizedTrainingManager(str(config_file))
 

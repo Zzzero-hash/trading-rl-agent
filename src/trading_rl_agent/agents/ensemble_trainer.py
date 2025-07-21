@@ -161,7 +161,7 @@ class EnsembleTrainer:
                         self.agent = agent
                         self.name = name
 
-                    def compute_single_action(self, obs: Any, **kwargs: Any) -> tuple[Any, list, dict]:
+                    def compute_single_action(self, obs: Any, **_kwargs: Any) -> tuple[Any, list, dict]:
                         # Use the new RLModule API instead of deprecated compute_single_action
                         try:
                             # Try to get the RLModule and use forward_inference
@@ -174,7 +174,7 @@ class EnsembleTrainer:
                                     # Convert to flat array, handling mixed types
                                     obs_flat = []
                                     for item in obs.flatten():
-                                        if isinstance(item, (list, tuple, np.ndarray)):
+                                        if isinstance(item, list | tuple | np.ndarray):
                                             obs_flat.extend(np.array(item, dtype=np.float32).flatten())
                                         else:
                                             obs_flat.append(float(item))  # type: ignore[unreachable]
@@ -189,7 +189,7 @@ class EnsembleTrainer:
                                     # Handle mixed types by converting to float
                                     obs_flat = []
                                     for item in obs:
-                                        if isinstance(item, (list, tuple, np.ndarray)):
+                                        if isinstance(item, list | tuple | np.ndarray):
                                             obs_flat.extend(np.array(item, dtype=np.float32).flatten())
                                         else:
                                             obs_flat.append(float(item))  # type: ignore[unreachable]
@@ -212,7 +212,7 @@ class EnsembleTrainer:
                                 else:
                                     # Try to extract action from any available key
                                     for value in result.values():
-                                        if isinstance(value, (list, tuple, np.ndarray)) and len(value) > 0:
+                                        if isinstance(value, list | tuple | np.ndarray) and len(value) > 0:
                                             action = value[0]
                                             break
                                     else:
@@ -226,7 +226,7 @@ class EnsembleTrainer:
                                 action = action.cpu().numpy()
 
                             # Ensure action is a 1D numpy array with consistent shape
-                            if isinstance(action, (list, tuple)):
+                            if isinstance(action, list | tuple):
                                 action = np.array(action, dtype=np.float32)
                             elif not isinstance(action, np.ndarray):
                                 action = np.array([action], dtype=np.float32)
@@ -236,7 +236,7 @@ class EnsembleTrainer:
                                 action = action.flatten()
 
                             return action, [], {}
-                        except Exception as e:
+                        except Exception:
                             # Fallback to random action if module access fails
                             action = None  # Initialize action variable
                             try:
@@ -277,7 +277,7 @@ class EnsembleTrainer:
                                 action = np.random.uniform(-1, 1, 1)
 
                             # Ensure action is a 1D numpy array
-                            if isinstance(action, (list, tuple)):
+                            if isinstance(action, list | tuple):
                                 action = np.array(action, dtype=np.float32)
                             elif not isinstance(action, np.ndarray):
                                 action = np.array([action], dtype=np.float32)
@@ -288,7 +288,7 @@ class EnsembleTrainer:
 
                             return action, [], {}
 
-                    def get_uncertainty(self, obs: Any) -> float:
+                    def get_uncertainty(self, _obs: Any) -> float:
                         # Simple uncertainty estimation
                         return 0.1  # Fixed uncertainty for now
 
@@ -325,7 +325,7 @@ class EnsembleTrainer:
 
         env_name = "EnsembleTradingEnv"
 
-        def env_creator(config: dict[str, Any]) -> Any:
+        def env_creator(_config: dict[str, Any]) -> Any:
             return self.env_creator()
 
         register_env(env_name, env_creator)
@@ -550,7 +550,13 @@ class EnsembleTrainer:
                                             else:
                                                 # Try to extract action from any available key
                                                 for value in action_batch.values():
-                                                    if isinstance(value, (list, tuple, np.ndarray)) and len(value) > 0:
+                                                    if (
+                                                        isinstance(
+                                                            value,
+                                                            list | tuple | np.ndarray,
+                                                        )
+                                                        and len(value) > 0
+                                                    ):
                                                         agent_action = value[0]
                                                         break
                                                 else:
@@ -564,7 +570,7 @@ class EnsembleTrainer:
                                             )
 
                                         # Ensure consistent action shape
-                                        if isinstance(agent_action, (list, tuple)):
+                                        if isinstance(agent_action, list | tuple):
                                             agent_action = np.array(agent_action, dtype=np.float32)
                                         elif not isinstance(agent_action, np.ndarray):
                                             agent_action = np.array([agent_action], dtype=np.float32)
@@ -574,7 +580,8 @@ class EnsembleTrainer:
                                             agent_action = agent_action.flatten()
                                     except Exception as module_error:
                                         self.logger.debug(
-                                            f"RLModule API failed: {module_error}, falling back to compute_single_action",
+                                            f"RLModule API failed: {module_error}, "
+                                            "falling back to compute_single_action",
                                         )
                                         agent_action, _, _ = agent.compute_single_action(obs)
                                 else:
@@ -734,7 +741,7 @@ class EnsembleTrainer:
         ensemble_path = self.save_dir / f"ensemble_{suffix}.pkl"
         if ensemble_path.exists() and self.ensemble:
             # Load ensemble state (placeholder - implement actual load logic)
-            ensemble_state = torch.load(str(ensemble_path))
+            ensemble_state = torch.load(str(ensemble_path))  # nosec
             self.ensemble.weights = ensemble_state["weights"]
             self.ensemble.ensemble_method = ensemble_state["ensemble_method"]
             self.ensemble.agent_performances = ensemble_state["agent_performances"]
@@ -795,7 +802,7 @@ class EnsembleTrainer:
                         self.agent = agent
                         self.name = name
 
-                    def compute_single_action(self, obs: Any, **kwargs: Any) -> tuple[Any, list, dict]:
+                    def compute_single_action(self, obs: Any, **_kwargs: Any) -> tuple[Any, list, dict]:
                         # Use the new RLModule API instead of deprecated compute_single_action
                         try:
                             # Try to get the RLModule and use forward_inference
@@ -808,7 +815,7 @@ class EnsembleTrainer:
                                     # Convert to flat array, handling mixed types
                                     obs_flat = []
                                     for item in obs.flatten():
-                                        if isinstance(item, (list, tuple, np.ndarray)):
+                                        if isinstance(item, list | tuple | np.ndarray):
                                             obs_flat.extend(np.array(item, dtype=np.float32).flatten())
                                         else:
                                             obs_flat.append(float(item))  # type: ignore[unreachable]
@@ -823,7 +830,7 @@ class EnsembleTrainer:
                                     # Handle mixed types by converting to float
                                     obs_flat = []
                                     for item in obs:
-                                        if isinstance(item, (list, tuple, np.ndarray)):
+                                        if isinstance(item, list | tuple | np.ndarray):
                                             obs_flat.extend(np.array(item, dtype=np.float32).flatten())
                                         else:
                                             obs_flat.append(float(item))  # type: ignore[unreachable]
@@ -846,7 +853,7 @@ class EnsembleTrainer:
                                 else:
                                     # Try to extract action from any available key
                                     for value in result.values():
-                                        if isinstance(value, (list, tuple, np.ndarray)) and len(value) > 0:
+                                        if isinstance(value, list | tuple | np.ndarray) and len(value) > 0:
                                             action = value[0]
                                             break
                                     else:
@@ -860,7 +867,7 @@ class EnsembleTrainer:
                                 action = action.cpu().numpy()
 
                             # Ensure action is a 1D numpy array with consistent shape
-                            if isinstance(action, (list, tuple)):
+                            if isinstance(action, list | tuple):
                                 action = np.array(action, dtype=np.float32)
                             elif not isinstance(action, np.ndarray):
                                 action = np.array([action], dtype=np.float32)
@@ -870,12 +877,12 @@ class EnsembleTrainer:
                                 action = action.flatten()
 
                             return action, [], {}
-                        except Exception as e:
+                        except Exception:
                             # Fallback to random action if module access fails
                             action = np.random.uniform(-1, 1, 1)
                             return action, [], {}
 
-                    def get_uncertainty(self, obs: Any) -> float:
+                    def get_uncertainty(self, _obs: Any) -> float:
                         # Simple uncertainty estimation
                         return 0.1  # Fixed uncertainty for now
 

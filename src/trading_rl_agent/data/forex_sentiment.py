@@ -51,7 +51,12 @@ class ForexSentimentData:
             "AUD": ["australian dollar", "aussie", "rba", "reserve bank of australia"],
             "CAD": ["canadian dollar", "loonie", "boc", "bank of canada"],
             "CHF": ["swiss franc", "franc", "snb", "swiss national bank"],
-            "NZD": ["new zealand dollar", "kiwi", "rbnz", "reserve bank of new zealand"],
+            "NZD": [
+                "new zealand dollar",
+                "kiwi",
+                "rbnz",
+                "reserve bank of new zealand",
+            ],
         }
 
     def get_forex_sentiment(self, currency_pair: str, days_back: int = 7) -> dict[str, float]:
@@ -108,7 +113,7 @@ class ForexSentimentData:
         # Default parsing
         return currency_pair[:3], currency_pair[3:]
 
-    def _get_economic_calendar_sentiment(self, currency_pair: str, days_back: int) -> float:
+    def _get_economic_calendar_sentiment(self, _currency_pair: str, _days_back: int) -> float:
         """Get sentiment based on economic calendar events."""
         # This would integrate with economic calendar APIs
         # For now, return a mock sentiment based on recent events
@@ -123,7 +128,7 @@ class ForexSentimentData:
 
         return random.uniform(-0.5, 0.5)
 
-    def _get_central_bank_sentiment(self, currency_pair: str, days_back: int) -> float:
+    def _get_central_bank_sentiment(self, currency_pair: str, _days_back: int) -> float:
         """Get sentiment based on central bank announcements and policy."""
         base_currency, quote_currency = self._parse_currency_pair(currency_pair)
 
@@ -149,7 +154,7 @@ class ForexSentimentData:
         }
 
         # Get keywords for this currency
-        keywords = cb_keywords.get(currency, [currency])
+        cb_keywords.get(currency, [currency])
 
         # Search for recent news about this central bank
         # For now, return mock sentiment

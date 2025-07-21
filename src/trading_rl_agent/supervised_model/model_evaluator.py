@@ -43,10 +43,7 @@ class ModelEvaluator:
 
         # Determine scoring metric based on model type
         if scoring == "default":
-            if hasattr(model, "classes_"):  # Classification model
-                scoring = "accuracy"
-            else:  # Regression model
-                scoring = "neg_mean_squared_error"
+            scoring = "accuracy" if hasattr(model, "classes_") else "neg_mean_squared_error"
 
         # Perform cross-validation
         if not hasattr(model, "model") or model.model is None:
@@ -102,7 +99,11 @@ class ModelEvaluator:
         # Evaluate on test set
         if hasattr(model, "classes_"):  # Classification model
             y_pred = model.predict(X_test)
-            metrics = {"accuracy": accuracy_score(y_test, y_pred), "test_size": len(X_test), "train_size": len(X_train)}
+            metrics = {
+                "accuracy": accuracy_score(y_test, y_pred),
+                "test_size": len(X_test),
+                "train_size": len(X_train),
+            }
         else:  # Regression model
             y_pred = model.predict(X_test)
             metrics = {

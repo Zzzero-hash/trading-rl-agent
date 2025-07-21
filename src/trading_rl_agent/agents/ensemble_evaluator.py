@@ -50,7 +50,6 @@ class EnsembleEvaluator:
         # Initialize results containers
         episode_results = []
         agent_actions = defaultdict(list)
-        agent_rewards: dict[str, list[float]] = defaultdict(list)
         consensus_events = []
 
         for episode in range(num_episodes):
@@ -249,7 +248,7 @@ class EnsembleEvaluator:
     def _calculate_diagnostics(
         self,
         agent_actions: dict[str, list[np.ndarray]],
-        episode_results: list[dict[str, Any]],
+        _episode_results: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """Calculate detailed ensemble diagnostics."""
         diagnostics = {}
@@ -285,7 +284,7 @@ class EnsembleEvaluator:
     def _calculate_weight_entropy(self) -> float:
         """Calculate entropy of agent weights (measure of diversity)."""
         weights = list(self.ensemble.weights.values())
-        weights_array = np.array(weights)
+        np.array(weights)
         weights = weights / np.sum(weights)  # Normalize
 
         # Calculate entropy

@@ -79,7 +79,7 @@ WORKDIR /app
 COPY --chown=trading:trading src/ ./src/
 COPY --chown=trading:trading config/ ./config/
 COPY --chown=trading:trading configs/ ./configs/
-COPY --chown=trading:trading pyproject.toml setup.py ./
+COPY --chown=trading:trading setup.py ./
 
 # Copy configuration files
 COPY --chown=trading:trading config.yaml ./

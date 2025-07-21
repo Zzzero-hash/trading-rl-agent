@@ -24,7 +24,7 @@ try:
 
     EMPYRICAL_AVAILABLE = True
 except ImportError:
-    from ..utils.empyrical_mock import (
+    from src.trading_rl_agent.utils.empyrical_mock import (
         beta,
         calmar_ratio,
         conditional_value_at_risk,
@@ -49,7 +49,8 @@ except ImportError:
     )()
     EMPYRICAL_AVAILABLE = True
 
-from ..core.logging import get_logger
+from src.trading_rl_agent.core.logging import get_logger
+
 from .transaction_costs import (
     BrokerType,
     MarketCondition,
@@ -411,8 +412,8 @@ class PortfolioManager:
         symbol: str,
         quantity: float,
         price: float,
-        side: str,
-        total_cost: float,
+        _side: str,
+        _total_cost: float,
     ) -> bool:
         """Validate trade against risk parameters."""
 

@@ -254,7 +254,14 @@ class NewsAnalyzer:
             score += 0.1
 
         # Financial terms in content
-        financial_terms = {"stock", "market", "trading", "investment", "financial", "earnings"}
+        financial_terms = {
+            "stock",
+            "market",
+            "trading",
+            "investment",
+            "financial",
+            "earnings",
+        }
         token_set = set(processed_text.tokens)
         financial_term_count = len(token_set.intersection(financial_terms))
         score += min(financial_term_count * 0.1, 0.3)

@@ -16,10 +16,19 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.features.alternative_data import AlternativeDataConfig, AlternativeDataFeatures
-from trading_rl_agent.features.normalization import FeatureNormalizer, NormalizationConfig
+from trading_rl_agent.features.alternative_data import (
+    AlternativeDataConfig,
+    AlternativeDataFeatures,
+)
+from trading_rl_agent.features.normalization import (
+    FeatureNormalizer,
+    NormalizationConfig,
+)
 from trading_rl_agent.features.pipeline import FeaturePipeline
-from trading_rl_agent.features.technical_indicators import IndicatorConfig, TechnicalIndicators
+from trading_rl_agent.features.technical_indicators import (
+    IndicatorConfig,
+    TechnicalIndicators,
+)
 
 
 class TestFeatureEngineeringDeterminism:
@@ -79,7 +88,11 @@ class TestFeatureEngineeringDeterminism:
         pd.testing.assert_frame_equal(result1, result2)
 
         # Check that sentiment features are present
-        sentiment_features = ["news_sentiment", "news_sentiment_magnitude", "news_sentiment_direction"]
+        sentiment_features = [
+            "news_sentiment",
+            "news_sentiment_magnitude",
+            "news_sentiment_direction",
+        ]
         for feature in sentiment_features:
             assert feature in result1.columns
 
@@ -165,7 +178,14 @@ class TestFeatureShapeConsistency:
         assert len(daily_features) > 0
 
         # Check that temporal features are properly encoded
-        temporal_features = ["hour_sin", "hour_cos", "day_sin", "day_cos", "month_sin", "month_cos"]
+        temporal_features = [
+            "hour_sin",
+            "hour_cos",
+            "day_sin",
+            "day_cos",
+            "month_sin",
+            "month_cos",
+        ]
         for feature in temporal_features:
             if feature in daily_features:
                 assert feature in hourly_features
@@ -419,6 +439,8 @@ class TestFeatureConsistency:
 
         finally:
             # Cleanup
+            from pathlib import Path
+
             if os.path.exists(pipeline_path):
                 Path(pipeline_path).unlink()
             normalizer_path = pipeline_path.replace(".pkl", "_normalizer.pkl")

@@ -1,0 +1,113 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: trading-system-apps
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - environment: staging
+            namespace: trading-system-staging
+            imageTag: staging
+            replicas: 1
+            resources:
+              cpu: "500m"
+              memory: "1Gi"
+          - environment: production
+            namespace: trading-system
+            imageTag: latest
+            replicas: 2
+            resources:
+              cpu: "1000m"
+              memory: "2Gi"
+    - list:
+        elements:
+          - component: infrastructure
+            path: k8s/infrastructure
+            includes:
+              - "namespace.yaml"
+              - "persistent-volumes.yaml"
+              - "infrastructure-services.yaml"
+          - component: core-services
+            path: k8s/core
+            includes:
+              - "configmap.yaml"
+              - "secrets.yaml"
+              - "data-pipeline-deployment.yaml"
+              - "ml-service-deployment.yaml"
+              - "trading-engine-deployment.yaml"
+              - "api-service-deployment.yaml"
+          - component: networking
+            path: k8s/networking
+            includes:
+              - "ingress.yaml"
+              - "autoscaling.yaml"
+          - component: monitoring
+            path: k8s/monitoring
+            includes:
+              - "monitoring-stack.yaml"
+              - "alerting-rules.yaml"
+          - component: jobs
+            path: k8s/jobs
+            includes:
+              - "training-job.yaml"
+              - "scheduled-backtest-job.yaml"
+              - "download-datasets-job.yaml"
+  template:
+    metadata:
+      name: "{{environment}}-{{component}}"
+      namespace: argocd
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+      labels:
+        app: trading-system
+        environment: "{{environment}}"
+        component: "{{component}}"
+        team: trading
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/yourusername/trading-rl-agent.git
+        targetRevision: main
+        path: "{{path}}"
+        directory:
+          recurse: true
+          include: "{{includes}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 3
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 5m
+      revisionHistoryLimit: 5
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas
+        - group: apps
+          kind: StatefulSet
+          jsonPointers:
+            - /spec/replicas
+      info:
+        - name: Environment
+          value: "{{environment}}"
+        - name: Component
+          value: "{{component}}"
+        - name: Image Tag
+          value: "{{imageTag}}"
+        - name: Replicas
+          value: "{{replicas}}"

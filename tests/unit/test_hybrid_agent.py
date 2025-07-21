@@ -30,7 +30,13 @@ class TestHybridAgent:
 
     def test_initialization_custom_parameters(self):
         """Test HybridAgent initialization with custom parameters."""
-        agent = HybridAgent(state_dim=100, action_dim=5, hidden_dim=256, learning_rate=0.001, device="cpu")
+        agent = HybridAgent(
+            state_dim=100,
+            action_dim=5,
+            hidden_dim=256,
+            learning_rate=0.001,
+            device="cpu",
+        )
 
         assert agent.state_dim == 100
         assert agent.action_dim == 5
@@ -81,7 +87,11 @@ class TestHybridAgent:
             state_dim=10,
             action_dim=3,
             cnn_lstm_model=CNNLSTMModel(
-                input_dim=5, lstm_units=64, lstm_num_layers=2, output_dim=32, use_attention=True
+                input_dim=5,
+                lstm_units=64,
+                lstm_num_layers=2,
+                output_dim=32,
+                use_attention=True,
             ),
         )
 
@@ -101,7 +111,11 @@ class TestHybridAgent:
             state_dim=10,
             action_dim=3,
             cnn_lstm_model=CNNLSTMModel(
-                input_dim=5, lstm_units=64, lstm_num_layers=2, output_dim=32, use_attention=False
+                input_dim=5,
+                lstm_units=64,
+                lstm_num_layers=2,
+                output_dim=32,
+                use_attention=False,
             ),
         )
 

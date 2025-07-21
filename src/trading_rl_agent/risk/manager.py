@@ -18,7 +18,7 @@ try:
 except ImportError:
     SCIPY_AVAILABLE = False
 
-from ..core.logging import get_logger
+from src.trading_rl_agent.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -224,10 +224,7 @@ class RiskManager:
             var_threshold = np.percentile(portfolio_returns, confidence_level * 100)
             tail_returns = portfolio_returns[portfolio_returns <= var_threshold]
 
-            if len(tail_returns) > 0:
-                cvar_value = abs(tail_returns.mean())
-            else:
-                cvar_value = var_value * 1.3  # Conservative estimate
+            cvar_value = abs(tail_returns.mean()) if len(tail_returns) > 0 else var_value * 1.3
 
             return float(cvar_value)
 
@@ -418,7 +415,7 @@ class RiskManager:
     def check_risk_limits(
         self,
         portfolio_weights: dict[str, float],
-        portfolio_value: float,
+        _portfolio_value: float,
     ) -> list[dict[str, Any]]:
         """
         Check portfolio against risk limits.
@@ -494,7 +491,7 @@ class RiskManager:
 
     def calculate_kelly_position_size(
         self,
-        expected_return: float,
+        _expected_return: float,
         win_rate: float,
         avg_win: float,
         avg_loss: float,

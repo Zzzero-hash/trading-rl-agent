@@ -54,7 +54,7 @@ jobs:
     - name: Generate cache key
       id: cache-key
       run: |
-        echo "key=pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}" >> $GITHUB_OUTPUT
+        echo "key=pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}" >> $GITHUB_OUTPUT
 
     - name: Cache Python dependencies
       uses: actions/cache@v3
@@ -515,7 +515,7 @@ jobs:
         from pathlib import Path
 
         # Check if all version files are consistent
-        version_files = ['pyproject.toml', 'setup.py']
+        version_files = ['setup.py']
         versions = []
 
         for file in version_files:

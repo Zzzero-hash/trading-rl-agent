@@ -63,7 +63,13 @@ class ParallelDataFetcher:
             try:
                 logger.debug(f"Loading {symbol} from cache: {cache_path}")
                 data = pd.read_parquet(cache_path)
-                return {"symbol": symbol, "data": data, "source": "cache", "success": True, "error": None}
+                return {
+                    "symbol": symbol,
+                    "data": data,
+                    "source": "cache",
+                    "success": True,
+                    "error": None,
+                }
             except Exception as e:
                 logger.warning(f"Cache read failed for {symbol}: {e}")
 
@@ -78,7 +84,13 @@ class ParallelDataFetcher:
                     data.to_parquet(cache_path)
                     logger.debug(f"Cached {symbol} data: {len(data)} rows")
 
-                    return {"symbol": symbol, "data": data, "source": "api", "success": True, "error": None}
+                    return {
+                        "symbol": symbol,
+                        "data": data,
+                        "source": "api",
+                        "success": True,
+                        "error": None,
+                    }
                 return {
                     "symbol": symbol,
                     "data": pd.DataFrame(),
@@ -127,7 +139,15 @@ class ParallelDataFetcher:
             return pd.DataFrame()
 
         # Standardize column names
-        df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
+        df = df.rename(
+            columns={
+                "Open": "open",
+                "High": "high",
+                "Low": "low",
+                "Close": "close",
+                "Volume": "volume",
+            }
+        )
 
         # Reset index to get timestamp as column
         df = df.reset_index()
@@ -227,7 +247,12 @@ class MemoryMappedDataset:
 class ParallelDataManager:
     """Main class for managing parallel data fetching."""
 
-    def __init__(self, cache_dir: str = "data/cache", ttl_hours: int = 24, max_workers: int | None = None):
+    def __init__(
+        self,
+        cache_dir: str = "data/cache",
+        ttl_hours: int = 24,
+        max_workers: int | None = None,
+    ):
         self.cache_dir: Path = Path(cache_dir)
         self.ttl_hours = ttl_hours
         self.max_workers = max_workers

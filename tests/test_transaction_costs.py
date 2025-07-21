@@ -601,7 +601,10 @@ class TestIntegration:
 
     def test_portfolio_manager_integration(self):
         """Test integration with PortfolioManager."""
-        from src.trading_rl_agent.portfolio.manager import PortfolioConfig, PortfolioManager
+        from src.trading_rl_agent.portfolio.manager import (
+            PortfolioConfig,
+            PortfolioManager,
+        )
 
         # Create portfolio manager with transaction cost model
         config = PortfolioConfig(broker_type=BrokerType.RETAIL)

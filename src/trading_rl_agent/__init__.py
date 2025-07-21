@@ -23,7 +23,7 @@ __version__ = "2.0.0"
 __author__ = "Trading RL Team"
 
 # Core imports for easy access
-from typing import Any, List
+from typing import Any
 
 from .core.config import ConfigManager, SystemConfig
 from .core.exceptions import DataValidationError, ModelError, TradingSystemError
@@ -58,7 +58,10 @@ _OPTIONAL_IMPORTS = {
     "HybridAgent": (".agents.hybrid", "HybridAgent"),
     # Training
     "Trainer": (".training.trainer", "Trainer"),
-    "OptimizedTrainingManager": (".training.optimized_trainer", "OptimizedTrainingManager"),
+    "OptimizedTrainingManager": (
+        ".training.optimized_trainer",
+        "OptimizedTrainingManager",
+    ),
     # RL Agents
     "PPOAgent": (".agents.ppo_agent", "PPOAgent"),
     "SACAgent": (".agents.sac_agent", "SACAgent"),

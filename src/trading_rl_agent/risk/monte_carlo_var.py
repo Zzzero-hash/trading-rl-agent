@@ -21,7 +21,7 @@ from scipy import stats
 from scipy.stats import laplace, logistic, norm
 from sklearn.covariance import LedoitWolf
 
-from ..core.logging import get_logger
+from src.trading_rl_agent.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -63,9 +63,21 @@ class MonteCarloVaRConfig:
         """Initialize default stress scenarios if not provided."""
         if self.stress_scenarios is None:
             self.stress_scenarios = {
-                "market_crash": {"volatility_multiplier": 3.0, "correlation_increase": 0.3, "mean_shift": -0.02},
-                "flash_crash": {"volatility_multiplier": 5.0, "correlation_increase": 0.5, "mean_shift": -0.05},
-                "liquidity_crisis": {"volatility_multiplier": 2.5, "correlation_increase": 0.4, "mean_shift": -0.015},
+                "market_crash": {
+                    "volatility_multiplier": 3.0,
+                    "correlation_increase": 0.3,
+                    "mean_shift": -0.02,
+                },
+                "flash_crash": {
+                    "volatility_multiplier": 5.0,
+                    "correlation_increase": 0.5,
+                    "mean_shift": -0.05,
+                },
+                "liquidity_crisis": {
+                    "volatility_multiplier": 2.5,
+                    "correlation_increase": 0.4,
+                    "mean_shift": -0.015,
+                },
             }
 
 
@@ -144,7 +156,7 @@ class MonteCarloVaR:
         self._calculate_correlation_matrix()
 
         self.logger.info(
-            f"Updated data with {len(self._returns_data)} observations for {len(self._returns_data.columns)} assets",
+            f"Updated data with {len(self._returns_data)} \nobservations for {len(self._returns_data.columns)} assets"
         )
 
     def _calculate_covariance_matrix(self) -> None:
@@ -225,7 +237,10 @@ class MonteCarloVaR:
             distribution="empirical",
             simulation_count=len(portfolio_returns),
             calculation_time=calculation_time,
-            additional_metrics={"bootstrap_used": use_bootstrap, "data_points": len(portfolio_returns)},
+            additional_metrics={
+                "bootstrap_used": use_bootstrap,
+                "data_points": len(portfolio_returns),
+            },
             timestamp=datetime.now(),
         )
 
@@ -316,7 +331,10 @@ class MonteCarloVaR:
             distribution=distribution,
             simulation_count=1,
             calculation_time=calculation_time,
-            additional_metrics={"portfolio_mean": portfolio_mean, "portfolio_std": portfolio_std},
+            additional_metrics={
+                "portfolio_mean": portfolio_mean,
+                "portfolio_std": portfolio_std,
+            },
             timestamp=datetime.now(),
         )
 
@@ -417,7 +435,10 @@ class MonteCarloVaR:
             distribution="simulated",
             simulation_count=self.config.n_simulations,
             calculation_time=calculation_time,
-            additional_metrics={"correlation_used": use_correlation, "simulation_std": np.std(portfolio_returns)},
+            additional_metrics={
+                "correlation_used": use_correlation,
+                "simulation_std": np.std(portfolio_returns),
+            },
             timestamp=datetime.now(),
         )
 
@@ -694,7 +715,7 @@ class MonteCarloVaR:
             "total_calculations": len(self._var_history),
             "methods_used": list({result.method for result in self._var_history}),
             "distributions_used": list({result.distribution for result in self._var_history}),
-            "latest_var": self._var_history[-1].var_value if self._var_history else None,
+            "latest_var": (self._var_history[-1].var_value if self._var_history else None),
             "average_calculation_time": float(np.mean([r.calculation_time for r in self._var_history])),
             "backtest_results": self._backtest_results,
         }

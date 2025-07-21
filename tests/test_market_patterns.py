@@ -74,7 +74,11 @@ class TestMarketPatternGenerator:
             {"period": 30, "new_volatility": 0.5, "new_drift": -0.001},
         ]
         df = generator.generate_trend_pattern(
-            n_periods=50, trend_type="uptrend", trend_strength=0.001, volatility=0.02, regime_changes=regime_changes
+            n_periods=50,
+            trend_type="uptrend",
+            trend_strength=0.001,
+            volatility=0.02,
+            regime_changes=regime_changes,
         )
         assert len(df) == 50
 
@@ -99,20 +103,29 @@ class TestMarketPatternGenerator:
 
     def test_generate_reversal_pattern_double_top(self, generator):
         df = generator.generate_reversal_pattern(
-            pattern_type=PatternType.DOUBLE_TOP.value, n_periods=252, pattern_intensity=0.5, base_volatility=0.02
+            pattern_type=PatternType.DOUBLE_TOP.value,
+            n_periods=252,
+            pattern_intensity=0.5,
+            base_volatility=0.02,
         )
         assert len(df) == 252
 
     def test_generate_reversal_pattern_double_bottom(self, generator):
         df = generator.generate_reversal_pattern(
-            pattern_type=PatternType.DOUBLE_BOTTOM.value, n_periods=252, pattern_intensity=0.5, base_volatility=0.02
+            pattern_type=PatternType.DOUBLE_BOTTOM.value,
+            n_periods=252,
+            pattern_intensity=0.5,
+            base_volatility=0.02,
         )
         assert len(df) == 252
 
     def test_generate_reversal_pattern_invalid_type(self, generator):
         with pytest.raises(ValueError, match="Unknown pattern type"):
             generator.generate_reversal_pattern(
-                pattern_type="invalid_pattern", n_periods=252, pattern_intensity=0.5, base_volatility=0.02
+                pattern_type="invalid_pattern",
+                n_periods=252,
+                pattern_intensity=0.5,
+                base_volatility=0.02,
             )
 
     def test_generate_volatility_clustering(self, generator):
@@ -123,7 +136,10 @@ class TestMarketPatternGenerator:
         ]
         regime_durations = [50, 30, 20]
         df = generator.generate_volatility_clustering(
-            n_periods=100, volatility_regimes=volatility_regimes, regime_durations=regime_durations, base_price=100.0
+            n_periods=100,
+            volatility_regimes=volatility_regimes,
+            regime_durations=regime_durations,
+            base_price=100.0,
         )
         assert len(df) == 100
         assert "volatility_regime" in df.columns
@@ -133,18 +149,31 @@ class TestMarketPatternGenerator:
         if not STATSMODELS_AVAILABLE:
             pytest.skip("statsmodels/arch not available")
         volatility_regimes = [
-            {"omega": 0.001, "alpha": 0.1, "beta": 0.8, "mu": 0.0, "label": "garch_regime"},
+            {
+                "omega": 0.001,
+                "alpha": 0.1,
+                "beta": 0.8,
+                "mu": 0.0,
+                "label": "garch_regime",
+            },
         ]
         regime_durations = [50]
         df = generator.generate_volatility_clustering(
-            n_periods=50, volatility_regimes=volatility_regimes, regime_durations=regime_durations, base_price=100.0
+            n_periods=50,
+            volatility_regimes=volatility_regimes,
+            regime_durations=regime_durations,
+            base_price=100.0,
         )
         assert len(df) == 50
         assert "volatility_regime" in df.columns
 
     def test_generate_microstructure_effects(self, generator, sample_data):
         df = generator.generate_microstructure_effects(
-            base_data=sample_data, bid_ask_spread=0.001, order_book_depth=10, tick_size=0.01, market_impact=0.0001
+            base_data=sample_data,
+            bid_ask_spread=0.001,
+            order_book_depth=10,
+            tick_size=0.01,
+            market_impact=0.0001,
         )
         assert "bid" in df.columns
         assert "ask" in df.columns
@@ -284,7 +313,9 @@ class TestMarketPatternGenerator:
 
     def test_missing_statsmodels_graceful_degradation(self, generator):
         df = generator.generate_volatility_clustering(
-            n_periods=50, volatility_regimes=[{"volatility": 0.02, "drift": 0}], regime_durations=[50]
+            n_periods=50,
+            volatility_regimes=[{"volatility": 0.02, "drift": 0}],
+            regime_durations=[50],
         )
         assert len(df) == 50
         assert "volatility_regime" in df.columns

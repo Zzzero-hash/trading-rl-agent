@@ -108,7 +108,7 @@ class TestStressTesting:
         portfolios = []
         for i in range(10):  # Create 10 different portfolios
             weights = np.random.dirichlet(np.ones(len(returns_df.columns)))
-            portfolio_weights = dict(zip(returns_df.columns, weights))
+            portfolio_weights = dict(zip(returns_df.columns, weights, strict=False))
             portfolios.append(portfolio_weights)
 
         # Initialize VaR calculator
@@ -184,7 +184,11 @@ class TestStressTesting:
 
         def data_fetching_task(symbol_list):
             return data_manager.fetch_multiple_symbols(
-                symbols=symbol_list, start_date="2020-01-01", end_date="2023-01-01", interval="1d", show_progress=False
+                symbols=symbol_list,
+                start_date="2020-01-01",
+                end_date="2023-01-01",
+                interval="1d",
+                show_progress=False,
             )
 
         def risk_calculation_task(data):
@@ -405,7 +409,7 @@ class TestStressTesting:
                         {
                             "iteration": i,
                             "state_size": len(current_state),
-                            "features_calculated": len(features.columns) if len(features) > 0 else 0,
+                            "features_calculated": (len(features.columns) if len(features) > 0 else 0),
                         }
                     )
 
@@ -469,7 +473,7 @@ class TestStressTesting:
                             {
                                 "chunk_id": i // 1000,
                                 "memory_usage": current_memory,
-                                "features_calculated": len(features.columns) if len(features) > 0 else 0,
+                                "features_calculated": (len(features.columns) if len(features) > 0 else 0),
                             }
                         )
                     else:
@@ -571,13 +575,16 @@ class TestStressTesting:
                 if len(chunk) > 0:
                     features = feature_engineer.calculate_all_features(chunk)
                     results["feature_engineering"].append(
-                        {"chunk_id": i, "features": len(features.columns) if len(features) > 0 else 0}
+                        {
+                            "chunk_id": i,
+                            "features": (len(features.columns) if len(features) > 0 else 0),
+                        }
                     )
 
             # Phase 3: Risk calculations stress
             for i in range(3):
                 weights = np.random.dirichlet(np.ones(len(returns_df.columns)))
-                portfolio_weights = dict(zip(returns_df.columns, weights))
+                portfolio_weights = dict(zip(returns_df.columns, weights, strict=False))
                 var_result = var_calculator.monte_carlo_var(portfolio_weights)
                 results["risk_calculations"].append({"portfolio_id": i, "var_value": var_result.var_value})
 

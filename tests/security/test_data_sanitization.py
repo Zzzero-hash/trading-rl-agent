@@ -21,7 +21,7 @@ class TestDataSanitizationSecurity:
         """Create a mock data loader for testing."""
         return Mock(spec=DataLoader)
 
-    def test_sql_injection_sanitization(self, mock_data_loader):
+    def test_sql_injection_sanitization(self, _mock_data_loader):
         """Test SQL injection sanitization."""
         malicious_inputs = [
             "'; DROP TABLE users; --",
@@ -68,7 +68,7 @@ class TestDataSanitizationSecurity:
                 if detected_keywords:
                     raise ValueError(f"SQL injection detected: {detected_keywords}")
 
-    def test_xss_sanitization(self, mock_data_loader):
+    def test_xss_sanitization(self, _mock_data_loader):
         """Test XSS sanitization."""
         malicious_scripts = [
             "<script>alert('xss')</script>",
@@ -116,7 +116,7 @@ class TestDataSanitizationSecurity:
                 if detected_xss:
                     raise ValueError(f"XSS attempt detected: {malicious_script}")
 
-    def test_html_encoding(self, mock_data_loader):
+    def test_html_encoding(self, _mock_data_loader):
         """Test HTML encoding for safe output."""
         test_inputs = [
             "<script>alert('xss')</script>",
@@ -143,7 +143,7 @@ class TestDataSanitizationSecurity:
             assert "<script>" not in encoded.lower()
             assert "javascript:" not in encoded.lower()
 
-    def test_path_traversal_sanitization(self, mock_data_loader):
+    def test_path_traversal_sanitization(self, _mock_data_loader):
         """Test path traversal sanitization."""
         malicious_paths = [
             "../../../etc/passwd",
@@ -183,7 +183,7 @@ class TestDataSanitizationSecurity:
                 if detected_traversal:
                     raise ValueError(f"Path traversal detected: {malicious_path}")
 
-    def test_command_injection_sanitization(self, mock_data_loader):
+    def test_command_injection_sanitization(self, _mock_data_loader):
         """Test command injection sanitization."""
         malicious_commands = [
             "; rm -rf /",
@@ -242,7 +242,7 @@ class TestDataSanitizationSecurity:
                 if detected_injection:
                     raise ValueError(f"Command injection detected: {malicious_command}")
 
-    def test_numeric_data_sanitization(self, mock_data_loader):
+    def test_numeric_data_sanitization(self, _mock_data_loader):
         """Test numeric data sanitization."""
         # Test valid numeric data
         valid_numerics = [
@@ -269,7 +269,7 @@ class TestDataSanitizationSecurity:
                 assert np.isinf(numeric)
             else:
                 # Handle regular numbers
-                assert isinstance(numeric, (int, float))
+                assert isinstance(numeric, int | float)
 
         # Test invalid numeric data
         invalid_numerics = [
@@ -294,7 +294,7 @@ class TestDataSanitizationSecurity:
                 else:
                     float(invalid_numeric)
 
-    def test_string_data_sanitization(self, mock_data_loader):
+    def test_string_data_sanitization(self, _mock_data_loader):
         """Test string data sanitization."""
         # Test valid strings
         valid_strings = [
@@ -334,7 +334,7 @@ class TestDataSanitizationSecurity:
                 else:
                     str(invalid_string)  # This should work, but we're testing validation
 
-    def test_json_data_sanitization(self, mock_data_loader):
+    def test_json_data_sanitization(self, _mock_data_loader):
         """Test JSON data sanitization."""
         # Test valid JSON
         valid_jsons = [
@@ -370,7 +370,7 @@ class TestDataSanitizationSecurity:
                     raise ValueError("JSON string cannot be None")
                 json.loads(json_str)
 
-    def test_url_sanitization(self, mock_data_loader):
+    def test_url_sanitization(self, _mock_data_loader):
         """Test URL sanitization."""
         # Test valid URLs
         valid_urls = [
@@ -408,7 +408,7 @@ class TestDataSanitizationSecurity:
                 if len(url) > 2048:
                     raise ValueError("URL too long")
 
-    def test_email_sanitization(self, mock_data_loader):
+    def test_email_sanitization(self, _mock_data_loader):
         """Test email sanitization."""
         # Test valid emails
         valid_emails = [
@@ -451,7 +451,7 @@ class TestDataSanitizationSecurity:
                 if not re.match(email_pattern, email):
                     raise ValueError(f"Invalid email format: {email}")
 
-    def test_file_extension_sanitization(self, mock_data_loader):
+    def test_file_extension_sanitization(self, _mock_data_loader):
         """Test file extension sanitization."""
         # Test valid file extensions
         valid_extensions = [
@@ -543,7 +543,7 @@ class TestDataSanitizationSecurity:
                 ]:
                     raise ValueError(f"Invalid file extension: {ext}")
 
-    def test_base64_sanitization(self, mock_data_loader):
+    def test_base64_sanitization(self, _mock_data_loader):
         """Test base64 data sanitization."""
         # Test valid base64
         valid_base64 = [
@@ -604,7 +604,7 @@ class TestDataSanitizationSecurity:
                     raise ValueError("Base64 string cannot be empty")
                 base64.b64decode(b64_str)
 
-    def test_xml_sanitization(self, mock_data_loader):
+    def test_xml_sanitization(self, _mock_data_loader):
         """Test XML data sanitization."""
         # Test valid XML
         valid_xmls = [
@@ -646,7 +646,7 @@ class TestDataSanitizationSecurity:
                 if any(tag in xml_str.lower() for tag in dangerous_tags):
                     raise ValueError("Dangerous XML tags detected")
 
-    def test_csv_sanitization(self, mock_data_loader):
+    def test_csv_sanitization(self, _mock_data_loader):
         """Test CSV data sanitization."""
         # Test valid CSV
         valid_csvs = [
@@ -682,7 +682,7 @@ class TestDataSanitizationSecurity:
                     if line and len(line.split(",")) != header_columns:
                         raise ValueError("Inconsistent number of columns")
 
-    def test_dataframe_sanitization(self, mock_data_loader):
+    def test_dataframe_sanitization(self, _mock_data_loader):
         """Test DataFrame sanitization."""
         # Test valid DataFrames
         valid_dfs = [
@@ -712,7 +712,7 @@ class TestDataSanitizationSecurity:
                 if df.empty:
                     raise ValueError("DataFrame cannot be empty")
 
-    def test_numeric_range_sanitization(self, mock_data_loader):
+    def test_numeric_range_sanitization(self, _mock_data_loader):
         """Test numeric range sanitization."""
         # Test valid numeric ranges
         valid_ranges = [
@@ -726,8 +726,8 @@ class TestDataSanitizationSecurity:
         for min_val, max_val in valid_ranges:
             # Test range validation
             assert min_val <= max_val
-            assert isinstance(min_val, (int, float))
-            assert isinstance(max_val, (int, float))
+            assert isinstance(min_val, int | float)
+            assert isinstance(max_val, int | float)
 
         # Test invalid numeric ranges
         invalid_ranges = [
@@ -746,14 +746,14 @@ class TestDataSanitizationSecurity:
             with pytest.raises(ValueError):
                 if min_val is None or max_val is None:
                     raise ValueError("Range values cannot be None")
-                if not isinstance(min_val, (int, float)) or not isinstance(max_val, (int, float)):
+                if not isinstance(min_val, int | float) or not isinstance(max_val, int | float):
                     raise ValueError("Range values must be numeric")
                 if min_val > max_val:
                     raise ValueError("Min value cannot be greater than max value")
                 if np.isinf(min_val) or np.isinf(max_val):
                     raise ValueError("Range values cannot be infinite")
 
-    def test_whitespace_sanitization(self, mock_data_loader):
+    def test_whitespace_sanitization(self, _mock_data_loader):
         """Test whitespace sanitization."""
         # Test whitespace removal
         test_strings = [
@@ -783,7 +783,7 @@ class TestDataSanitizationSecurity:
             normalized = re.sub(r"\s+", " ", test_string)
             assert normalized.count(" ") <= test_string.count(" ") + 1  # At most one space between words
 
-    def test_encoding_sanitization(self, mock_data_loader):
+    def test_encoding_sanitization(self, _mock_data_loader):
         """Test encoding sanitization."""
         # Test valid encodings
         valid_encodings = ["utf-8", "ascii", "latin-1", "iso-8859-1"]
@@ -809,7 +809,7 @@ class TestDataSanitizationSecurity:
             with pytest.raises((LookupError, TypeError)):
                 test_string.encode(encoding)
 
-    def test_special_character_sanitization(self, mock_data_loader):
+    def test_special_character_sanitization(self, _mock_data_loader):
         """Test special character sanitization."""
         # Test special character removal
         test_strings = [

@@ -14,7 +14,8 @@ from typing import Any
 
 import yaml
 
-from ..agents.configs import PPOConfig, SACConfig, TD3Config
+from src.trading_rl_agent.agents.configs import PPOConfig, SACConfig, TD3Config
+
 from .exceptions import ConfigurationError
 
 try:

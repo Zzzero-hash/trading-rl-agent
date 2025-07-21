@@ -163,7 +163,7 @@ class TestCNNLSTMModel:
                 torch.cuda.synchronize()
                 mem_before = torch.cuda.memory_allocated()
 
-            output = model(x)
+            model(x)
 
             # Measure memory after
             if torch.cuda.is_available():
@@ -223,7 +223,7 @@ class TestCNNLSTMModel:
         # Test if attention is available
         if hasattr(model, "attention"):
             x = torch.randn(4, 1)
-            output = model(x)
+            model(x)
 
             # Check attention weights if available
             if hasattr(model, "get_attention_weights"):
@@ -273,7 +273,13 @@ class TestModelFactory:
         assert isinstance(model, CNNLSTMModel)
 
         # Test with custom parameters
-        config = {"cnn_filters": [16, 32], "cnn_kernel_sizes": [3, 3], "lstm_units": 64, "dropout": 0.1, "input_dim": 5}
+        config = {
+            "cnn_filters": [16, 32],
+            "cnn_kernel_sizes": [3, 3],
+            "lstm_units": 64,
+            "dropout": 0.1,
+            "input_dim": 5,
+        }
         model = create_model(config=config)
         assert isinstance(model, CNNLSTMModel)
 
@@ -335,7 +341,7 @@ class TestModelIntegration:
 
         # Test scheduler step
         x = torch.randn(4, 1)
-        y = torch.randn(4, 1)
+        torch.randn(4, 1)
 
         for _ in range(2):
             optimizer.zero_grad()
@@ -362,7 +368,7 @@ class TestModelIntegration:
 
         with torch.no_grad():
             for _ in range(100):
-                output = model(x)
+                model(x)
 
         end_time = time.time()
         inference_time = end_time - start_time
@@ -383,7 +389,7 @@ class TestModelIntegration:
             mem_before = torch.cuda.memory_allocated()
 
         with torch.no_grad():
-            output = model(large_batch)
+            model(large_batch)
 
         if torch.cuda.is_available():
             torch.cuda.synchronize()

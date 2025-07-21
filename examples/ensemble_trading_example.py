@@ -77,7 +77,7 @@ class SimpleEnsemble:
                 predictions.append(0.0)
 
         # Weighted average
-        weighted_pred = sum(p * w for p, w in zip(predictions, self.weights))
+        weighted_pred = sum(p * w for p, w in zip(predictions, self.weights, strict=False))
         return float(np.clip(weighted_pred, -1, 1))
 
     def update_weights(self, performances: list[float]) -> None:
@@ -147,12 +147,24 @@ def backtest_ensemble(data: pd.DataFrame, ensemble: SimpleEnsemble, initial_capi
                 position = capital * 0.95 / current_price  # Use 95% of capital
                 capital -= position * current_price
                 trades.append(
-                    {"date": data.iloc[i]["date"], "action": "buy", "price": current_price, "position": position}
+                    {
+                        "date": data.iloc[i]["date"],
+                        "action": "buy",
+                        "price": current_price,
+                        "position": position,
+                    }
                 )
         elif signal < -0.1 and position > 0:  # Sell signal
             capital += position * current_price
             position = 0
-            trades.append({"date": data.iloc[i]["date"], "action": "sell", "price": current_price, "position": 0})
+            trades.append(
+                {
+                    "date": data.iloc[i]["date"],
+                    "action": "sell",
+                    "price": current_price,
+                    "position": 0,
+                }
+            )
 
         # Calculate current equity
         current_equity = capital + (position * current_price)
@@ -221,16 +233,26 @@ def plot_results(data: pd.DataFrame, results: dict[str, Any], ensemble: SimpleEn
 
     # Performance metrics
     metrics = ["Total Return", "Sharpe Ratio", "Max Drawdown"]
-    values = [results["total_return"] * 100, results["sharpe_ratio"], results["max_drawdown"] * 100]
+    values = [
+        results["total_return"] * 100,
+        results["sharpe_ratio"],
+        results["max_drawdown"] * 100,
+    ]
 
     bars = axes[1, 1].bar(metrics, values, color=["green", "blue", "red"], alpha=0.7)
     axes[1, 1].set_title("Performance Metrics")
     axes[1, 1].grid(True, alpha=0.3)
 
     # Add value labels on bars
-    for bar, value in zip(bars, values):
+    for bar, value in zip(bars, values, strict=False):
         height = bar.get_height()
-        axes[1, 1].text(bar.get_x() + bar.get_width() / 2.0, height, f"{value:.2f}", ha="center", va="bottom")
+        axes[1, 1].text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height,
+            f"{value:.2f}",
+            ha="center",
+            va="bottom",
+        )
 
     plt.tight_layout()
     plt.savefig("ensemble_trading_results.png", dpi=300, bbox_inches="tight")

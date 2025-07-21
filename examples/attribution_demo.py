@@ -1,32 +1,45 @@
 #!/usr/bin/env python3
 """
-Comprehensive Performance Attribution Analysis Demo.
+Performance Attribution Demo
 
-This script demonstrates all the capabilities of the performance attribution system:
-- Factor model analysis and return decomposition
+Comprehensive demonstration of performance attribution analysis:
+- Factor analysis and decomposition
 - Brinson attribution for sector allocation
-- Risk-adjusted performance analysis
-- Interactive dashboards
-- Automated reporting
+- Risk attribution and decomposition
+- Visualization and reporting
+- Automated workflow integration
+
+Usage:
+    python attribution_demo.py [--output-dir OUTPUT_DIR]
 """
 
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+try:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
 
-from trading_rl_agent.portfolio.attribution import (
-    AttributionConfig,
-    PerformanceAttributor,
-)
-from trading_rl_agent.portfolio.attribution_integration import AutomatedAttributionWorkflow
+    from trading_rl_agent.portfolio.attribution import (
+        AttributionConfig,
+        PerformanceAttributor,
+    )
+    from trading_rl_agent.portfolio.attribution_integration import (
+        AutomatedAttributionWorkflow,
+    )
+except ImportError as e:
+    print(f"Error: Could not import required modules: {e}")
+    print("Make sure you're running this from the project root directory.")
+    sys.exit(1)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def create_sample_data() -> dict[str, Any]:
@@ -39,7 +52,18 @@ def create_sample_data() -> dict[str, Any]:
     dates = pd.date_range(start_date, end_date, freq="D")
 
     # Asset universe
-    symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "META", "NVDA", "NFLX", "CRM", "ADBE"]
+    symbols = [
+        "AAPL",
+        "GOOGL",
+        "MSFT",
+        "AMZN",
+        "TSLA",
+        "META",
+        "NVDA",
+        "NFLX",
+        "CRM",
+        "ADBE",
+    ]
     sectors = [
         "Technology",
         "Technology",
@@ -234,9 +258,8 @@ def demo_brinson_attribution(attributor: Any, data: dict[str, Any]) -> dict[str,
         print(f"Average Allocation Effect: {np.mean(allocation_effects):.6f}")
         print(f"Average Selection Effect:  {np.mean(selection_effects):.6f}")
         print(f"Average Interaction Effect: {np.mean(interaction_effects):.6f}")
-        print(
-            f"Total Attribution:         {np.mean(allocation_effects) + np.mean(selection_effects) + np.mean(interaction_effects):.6f}"
-        )
+        total_attribution = np.mean(allocation_effects) + np.mean(selection_effects) + np.mean(interaction_effects)
+        print(f"Total Attribution:         {total_attribution:.6f}")
 
     return results
 
@@ -314,8 +337,18 @@ def create_additional_plots(data: dict[str, Any], results: dict[str, Any], outpu
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
 
     # Cumulative returns
-    axes[0, 0].plot(portfolio_cumulative.index, portfolio_cumulative.values, label="Portfolio", linewidth=2)
-    axes[0, 0].plot(benchmark_cumulative.index, benchmark_cumulative.values, label="Benchmark", linewidth=2)
+    axes[0, 0].plot(
+        portfolio_cumulative.index,
+        portfolio_cumulative.values,
+        label="Portfolio",
+        linewidth=2,
+    )
+    axes[0, 0].plot(
+        benchmark_cumulative.index,
+        benchmark_cumulative.values,
+        label="Benchmark",
+        linewidth=2,
+    )
     axes[0, 0].set_title("Cumulative Returns")
     axes[0, 0].set_ylabel("Cumulative Return")
     axes[0, 0].legend()
@@ -357,29 +390,62 @@ def create_additional_plots(data: dict[str, Any], results: dict[str, Any], outpu
         fig = make_subplots(
             rows=2,
             cols=2,
-            subplot_titles=("Cumulative Returns", "Rolling Volatility", "Factor Contributions", "Sector Weights"),
-            specs=[[{"secondary_y": False}, {"secondary_y": False}], [{"secondary_y": False}, {"secondary_y": False}]],
+            subplot_titles=(
+                "Cumulative Returns",
+                "Rolling Volatility",
+                "Factor Contributions",
+                "Sector Weights",
+            ),
+            specs=[
+                [{"secondary_y": False}, {"secondary_y": False}],
+                [{"secondary_y": False}, {"secondary_y": False}],
+            ],
         )
 
         # Cumulative returns
         fig.add_trace(
-            go.Scatter(x=portfolio_cumulative.index, y=portfolio_cumulative.values, name="Portfolio"), row=1, col=1
+            go.Scatter(
+                x=portfolio_cumulative.index,
+                y=portfolio_cumulative.values,
+                name="Portfolio",
+            ),
+            row=1,
+            col=1,
         )
         fig.add_trace(
-            go.Scatter(x=benchmark_cumulative.index, y=benchmark_cumulative.values, name="Benchmark"), row=1, col=1
+            go.Scatter(
+                x=benchmark_cumulative.index,
+                y=benchmark_cumulative.values,
+                name="Benchmark",
+            ),
+            row=1,
+            col=1,
         )
 
         # Rolling volatility
-        fig.add_trace(go.Scatter(x=rolling_vol.index, y=rolling_vol.values, name="Portfolio Volatility"), row=1, col=2)
+        fig.add_trace(
+            go.Scatter(x=rolling_vol.index, y=rolling_vol.values, name="Portfolio Volatility"),
+            row=1,
+            col=2,
+        )
 
         # Factor contributions
         if "factor_attribution" in results:
-            fig.add_trace(go.Bar(x=factors, y=contributions, name="Factor Contributions"), row=2, col=1)
+            fig.add_trace(
+                go.Bar(x=factors, y=contributions, name="Factor Contributions"),
+                row=2,
+                col=1,
+            )
 
         # Sector weights
         for sector in sector_weights.index:
             fig.add_trace(
-                go.Scatter(x=sector_weights.columns, y=sector_weights.loc[sector], name=sector, stackgroup="sectors"),
+                go.Scatter(
+                    x=sector_weights.columns,
+                    y=sector_weights.loc[sector],
+                    name=sector,
+                    stackgroup="sectors",
+                ),
                 row=2,
                 col=2,
             )

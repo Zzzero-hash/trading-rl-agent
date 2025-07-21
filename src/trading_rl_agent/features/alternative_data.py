@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-from ..core.logging import get_logger
+from src.trading_rl_agent.core.logging import get_logger
 
 
 @dataclass
@@ -28,7 +28,7 @@ class SentimentAnalyzer:
         self.analyzer = SentimentIntensityAnalyzer()
         self.logger = get_logger(self.__class__.__name__)
 
-    def get_symbol_sentiment(self, symbol: str, days_back: int = 7) -> float:
+    def get_symbol_sentiment(self, symbol: str) -> float:
         """Get aggregated sentiment score for a symbol."""
         scores = []
         if self.config.enable_news:
@@ -128,7 +128,11 @@ class AlternativeDataConfig:
         if self.economic_indicators is None:
             self.economic_indicators = ["vix", "treasury_yield", "dollar_index"]
         if self.microstructure_features is None:
-            self.microstructure_features = ["bid_ask_spread", "order_imbalance", "volume_profile"]
+            self.microstructure_features = [
+                "bid_ask_spread",
+                "order_imbalance",
+                "volume_profile",
+            ]
 
 
 class AlternativeDataFeatures:
@@ -183,10 +187,7 @@ class AlternativeDataFeatures:
         try:
             # Get sentiment scores
             if self.sentiment_analyzer is not None:
-                sentiment_score = self.sentiment_analyzer.get_symbol_sentiment(
-                    symbol,
-                    days_back=self.config.sentiment_lookback_days,
-                )
+                sentiment_score = self.sentiment_analyzer.get_symbol_sentiment(symbol)
             else:
                 sentiment_score = 0.0
 

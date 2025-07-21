@@ -137,7 +137,10 @@ class TestCircuitBreakerRule:
     def test_circuit_breaker_rule_defaults(self):
         """Test circuit breaker rule default values."""
         rule = CircuitBreakerRule(
-            name="test_rule", trigger_condition="drawdown_exceeded", threshold_value=0.2, action="liquidate"
+            name="test_rule",
+            trigger_condition="drawdown_exceeded",
+            threshold_value=0.2,
+            action="liquidate",
         )
 
         assert rule.cooldown_minutes == 60
@@ -217,7 +220,10 @@ class TestRiskAlertSystem:
     def risk_alert_system(self, risk_manager, alert_manager, config):
         """Create a test risk alert system."""
         return RiskAlertSystem(
-            risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id="test_portfolio"
+            risk_manager=risk_manager,
+            alert_manager=alert_manager,
+            config=config,
+            portfolio_id="test_portfolio",
         )
 
     @pytest.fixture
@@ -353,7 +359,10 @@ class TestRiskAlertSystem:
         """Test circuit breaker trigger conditions."""
         # Test VaR circuit breaker
         rule = CircuitBreakerRule(
-            name="var_breaker", trigger_condition="var_exceeded", threshold_value=0.05, action="stop_trading"
+            name="var_breaker",
+            trigger_condition="var_exceeded",
+            threshold_value=0.05,
+            action="stop_trading",
         )
 
         # Should trigger (VaR = 0.03 < 0.05, so no trigger)
@@ -379,7 +388,10 @@ class TestRiskAlertSystem:
     async def test_trigger_circuit_breaker(self, risk_alert_system, sample_metrics):
         """Test circuit breaker triggering."""
         rule = CircuitBreakerRule(
-            name="test_breaker", trigger_condition="var_exceeded", threshold_value=0.05, action="stop_trading"
+            name="test_breaker",
+            trigger_condition="var_exceeded",
+            threshold_value=0.05,
+            action="stop_trading",
         )
 
         # Mock methods
@@ -427,7 +439,11 @@ class TestRiskAlertSystem:
     async def test_trigger_escalation(self, risk_alert_system):
         """Test escalation procedures."""
         alert = risk_alert_system.alert_manager.create_alert(
-            title="Test Alert", message="Test message", severity=AlertSeverity.WARNING, source="test", alert_type="test"
+            title="Test Alert",
+            message="Test message",
+            severity=AlertSeverity.WARNING,
+            source="test",
+            alert_type="test",
         )
 
         # Mock notification methods
@@ -533,7 +549,11 @@ class TestRiskAlertSystem:
 
         # Add error alert
         alert = risk_alert_system.alert_manager.create_alert(
-            title="Error Alert", message="Test error", severity=AlertSeverity.ERROR, source="test", alert_type="test"
+            title="Error Alert",
+            message="Test error",
+            severity=AlertSeverity.ERROR,
+            source="test",
+            alert_type="test",
         )
         risk_alert_system.alert_history.append(alert)
 
@@ -551,7 +571,7 @@ class TestRiskAlertSystem:
 
         assert risk_alert_system._get_current_escalation_level() == EscalationLevel.LEVEL_5.value
 
-    def test_generate_risk_report(self, risk_alert_system, sample_metrics):
+    def test_generate_risk_report(self, risk_alert_system, _sample_metrics):
         """Test risk report generation."""
         # Add some sample data
         for i in range(5):
@@ -631,7 +651,10 @@ class TestRiskAlertSystem:
     def test_add_remove_circuit_breakers(self, risk_alert_system):
         """Test adding and removing circuit breaker rules."""
         rule = CircuitBreakerRule(
-            name="test_rule", trigger_condition="var_exceeded", threshold_value=0.1, action="stop_trading"
+            name="test_rule",
+            trigger_condition="var_exceeded",
+            threshold_value=0.1,
+            action="stop_trading",
         )
 
         # Add rule
@@ -676,7 +699,7 @@ class TestRiskAlertSystem:
         assert len(limited_history) == 3
         assert limited_history[-1].title == "Alert 4"
 
-    def test_get_risk_history(self, risk_alert_system, sample_metrics):
+    def test_get_risk_history(self, risk_alert_system, _sample_metrics):
         """Test getting risk history."""
         # Add some metrics
         for i in range(5):
@@ -751,7 +774,10 @@ class TestIntegration:
         )
 
         risk_alert_system = RiskAlertSystem(
-            risk_manager=risk_manager, alert_manager=alert_manager, config=config, portfolio_id="integration_test"
+            risk_manager=risk_manager,
+            alert_manager=alert_manager,
+            config=config,
+            portfolio_id="integration_test",
         )
 
         # Mock notification methods

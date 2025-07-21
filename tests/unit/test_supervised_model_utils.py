@@ -103,7 +103,7 @@ def test_model_evaluator_cross_validation():
     assert "std" in results
     assert "min" in results
     assert "max" in results
-    assert all(isinstance(v, (int, float, list)) for v in results.values())
+    assert all(isinstance(v, int | float | list) for v in results.values())
 
 
 def test_model_evaluator_train_test_evaluate():
@@ -116,7 +116,7 @@ def test_model_evaluator_train_test_evaluate():
     assert "accuracy" in results
     assert "test_size" in results
     assert "train_size" in results
-    assert all(isinstance(v, (int, float)) for v in results.values())
+    assert all(isinstance(v, int | float) for v in results.values())
 
 
 def test_feature_importance():

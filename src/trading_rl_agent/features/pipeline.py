@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..core.logging import get_logger
+from src.trading_rl_agent.core.logging import get_logger
+
 from .alternative_data import AlternativeDataFeatures
 from .cross_asset import CrossAssetFeatures
 from .market_microstructure import MarketMicrostructure

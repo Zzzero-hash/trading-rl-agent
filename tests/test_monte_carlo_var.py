@@ -16,7 +16,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.risk.monte_carlo_var import MonteCarloVaR, MonteCarloVaRConfig, VaRResult
+from trading_rl_agent.risk.monte_carlo_var import (
+    MonteCarloVaR,
+    MonteCarloVaRConfig,
+    VaRResult,
+)
 from trading_rl_agent.risk.parallel_var import ParallelVaRCalculator, ParallelVaRConfig
 
 
@@ -49,7 +53,13 @@ def sample_returns_data():
 @pytest.fixture
 def sample_weights():
     """Sample portfolio weights."""
-    return {"ASSET_01": 0.3, "ASSET_02": 0.25, "ASSET_03": 0.2, "ASSET_04": 0.15, "ASSET_05": 0.1}
+    return {
+        "ASSET_01": 0.3,
+        "ASSET_02": 0.25,
+        "ASSET_03": 0.2,
+        "ASSET_04": 0.15,
+        "ASSET_05": 0.1,
+    }
 
 
 @pytest.fixture
@@ -80,7 +90,12 @@ class TestMonteCarloVaRConfig:
 
     def test_custom_config(self):
         """Test custom configuration values."""
-        config = MonteCarloVaRConfig(n_simulations=5000, confidence_level=0.01, time_horizon=5, distribution_type="t")
+        config = MonteCarloVaRConfig(
+            n_simulations=5000,
+            confidence_level=0.01,
+            time_horizon=5,
+            distribution_type="t",
+        )
 
         assert config.n_simulations == 5000
         assert config.confidence_level == 0.01

@@ -12,7 +12,7 @@ def fetch_synthetic_data(
     n_samples: int,
     timeframe: str = "day",
     volatility: float = 0.01,
-    symbol: str | None = None,
+    _symbol: str | None = None,
 ) -> pd.DataFrame:
     """Generate synthetic OHLCV data.
 

@@ -166,7 +166,11 @@ class AlertManager:
                     severity=AlertSeverity.WARNING,
                     source="threshold_monitor",
                     alert_type=f"{metric_name}_threshold",
-                    metadata={"metric": metric_name, "value": value, "threshold": threshold_value},
+                    metadata={
+                        "metric": metric_name,
+                        "value": value,
+                        "threshold": threshold_value,
+                    },
                 )
                 alerts.append(alert)
 
@@ -177,7 +181,11 @@ class AlertManager:
                     severity=AlertSeverity.WARNING,
                     source="threshold_monitor",
                     alert_type=f"{metric_name}_threshold",
-                    metadata={"metric": metric_name, "value": value, "threshold": threshold_value},
+                    metadata={
+                        "metric": metric_name,
+                        "value": value,
+                        "threshold": threshold_value,
+                    },
                 )
                 alerts.append(alert)
 

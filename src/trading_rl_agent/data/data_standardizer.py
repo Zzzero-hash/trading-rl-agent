@@ -122,7 +122,13 @@ class FeatureConfig:
 
     # Market regime features
     market_regime_features: list[str] = field(
-        default_factory=lambda: ["price_change_pct", "high_low_pct", "volume_ma_20", "volume_ratio", "volume_change"],
+        default_factory=lambda: [
+            "price_change_pct",
+            "high_low_pct",
+            "volume_ma_20",
+            "volume_ratio",
+            "volume_change",
+        ],
     )
 
     # Target variable
@@ -283,7 +289,12 @@ class DataStandardizer:
         result_chunks = []
         iterator = range(0, n_rows, chunk_size)
         if show_progress:
-            iterator = tqdm(iterator, total=(n_rows + chunk_size - 1) // chunk_size, desc="Standardizing", unit="chunk")
+            iterator = tqdm(
+                iterator,
+                total=(n_rows + chunk_size - 1) // chunk_size,
+                desc="Standardizing",
+                unit="chunk",
+            )
         for start in iterator:
             end = min(start + chunk_size, n_rows)
             chunk = df.iloc[start:end].copy()
@@ -293,7 +304,7 @@ class DataStandardizer:
         self.logger.info(f"Transformation complete. Output shape: {result.shape}")
         return result
 
-    def _transform_chunk(self, df: pd.DataFrame, is_training: bool = False) -> pd.DataFrame:
+    def _transform_chunk(self, df: pd.DataFrame, _is_training: bool = False) -> pd.DataFrame:
         """Transform a single chunk of data (internal use)."""
         result = df.copy()
         result = self._ensure_features_exist(result)
@@ -580,7 +591,9 @@ def load_standardized_dataset(data_path: str, standardizer_path: str) -> tuple[p
     return standardized_df, standardizer
 
 
-def create_live_inference_processor(standardizer_path: str = "outputs/data_standardizer.pkl") -> LiveDataProcessor:
+def create_live_inference_processor(
+    standardizer_path: str = "outputs/data_standardizer.pkl",
+) -> LiveDataProcessor:
     """Create a live inference processor for real-time trading."""
     try:
         standardizer = DataStandardizer.load(standardizer_path)

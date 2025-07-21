@@ -6,7 +6,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trading_rl_agent.supervised_model import ModelEvaluator, PricePredictor, SignalClassifier
+from trading_rl_agent.supervised_model import (
+    ModelEvaluator,
+    PricePredictor,
+    SignalClassifier,
+)
 
 
 class TestBaseSupervisedModel:

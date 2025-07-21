@@ -50,7 +50,7 @@ class TestRiskCalculationPerformance:
         """Generate portfolio weights."""
         symbols = portfolio_data.columns
         weights = np.random.dirichlet(np.ones(len(symbols)))  # Random weights that sum to 1
-        return dict(zip(symbols, weights))
+        return dict(zip(symbols, weights, strict=False))
 
     @pytest.mark.performance
     @pytest.mark.benchmark
@@ -136,7 +136,11 @@ class TestRiskCalculationPerformance:
         """Test historical simulation VaR performance."""
         # Initialize VaR calculator
         config = MonteCarloVaRConfig(
-            n_simulations=1000, confidence_level=0.05, time_horizon=1, lookback_period=252, use_parallel=False
+            n_simulations=1000,
+            confidence_level=0.05,
+            time_horizon=1,
+            lookback_period=252,
+            use_parallel=False,
         )
 
         var_calculator = MonteCarloVaR(config)
@@ -173,7 +177,12 @@ class TestRiskCalculationPerformance:
     def test_parametric_var_performance(self, portfolio_data, portfolio_weights, performance_monitor):
         """Test parametric VaR performance."""
         # Initialize VaR calculator
-        config = MonteCarloVaRConfig(n_simulations=1000, confidence_level=0.05, time_horizon=1, lookback_period=252)
+        config = MonteCarloVaRConfig(
+            n_simulations=1000,
+            confidence_level=0.05,
+            time_horizon=1,
+            lookback_period=252,
+        )
 
         var_calculator = MonteCarloVaR(config)
         var_calculator.update_data(portfolio_data)
@@ -215,7 +224,12 @@ class TestRiskCalculationPerformance:
     def test_stress_testing_performance(self, portfolio_data, portfolio_weights, performance_monitor):
         """Test stress testing performance."""
         # Initialize VaR calculator
-        config = MonteCarloVaRConfig(n_simulations=5000, confidence_level=0.05, time_horizon=1, lookback_period=252)
+        config = MonteCarloVaRConfig(
+            n_simulations=5000,
+            confidence_level=0.05,
+            time_horizon=1,
+            lookback_period=252,
+        )
 
         var_calculator = MonteCarloVaR(config)
         var_calculator.update_data(portfolio_data)
@@ -276,7 +290,9 @@ class TestRiskCalculationPerformance:
             alerts = []
             for _ in range(10):  # Simulate 10 risk checks
                 alert = alert_system.check_risk_metrics(
-                    var_value=var_result.var_value, cvar_value=var_result.cvar_value, portfolio_value=1000000
+                    var_value=var_result.var_value,
+                    cvar_value=var_result.cvar_value,
+                    portfolio_value=1000000,
                 )
                 if alert:
                     alerts.append(alert)
@@ -348,7 +364,7 @@ class TestRiskCalculationPerformance:
         for i in range(5):  # Create 5 different portfolios
             # Random weights for each portfolio
             weights = np.random.dirichlet(np.ones(len(symbols)))
-            portfolio_weights = dict(zip(symbols, weights))
+            portfolio_weights = dict(zip(symbols, weights, strict=False))
             portfolios.append(portfolio_weights)
 
         # Initialize VaR calculator
@@ -400,7 +416,12 @@ class TestRiskCalculationPerformance:
     def test_risk_calculation_accuracy_under_load(self, portfolio_data, portfolio_weights, performance_monitor):
         """Test risk calculation accuracy under load."""
         # Initialize VaR calculator
-        config = MonteCarloVaRConfig(n_simulations=1000, confidence_level=0.05, time_horizon=1, lookback_period=252)
+        config = MonteCarloVaRConfig(
+            n_simulations=1000,
+            confidence_level=0.05,
+            time_horizon=1,
+            lookback_period=252,
+        )
 
         var_calculator = MonteCarloVaR(config)
         var_calculator.update_data(portfolio_data)
@@ -470,7 +491,7 @@ class TestRiskCalculationPerformance:
         # Generate portfolio weights
         symbols = returns_df.columns
         weights = np.random.dirichlet(np.ones(len(symbols)))
-        portfolio_weights = dict(zip(symbols, weights))
+        portfolio_weights = dict(zip(symbols, weights, strict=False))
 
         # Initialize VaR calculator
         config = MonteCarloVaRConfig(

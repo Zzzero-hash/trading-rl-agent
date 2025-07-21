@@ -208,7 +208,17 @@ class TestCLI:
     def test_train_rl_dry_run(self):
         """Test train rl command with minimal timesteps."""
         result = self.run_cli_command(
-            ["train", "rl", "ppo", "--timesteps", "100", "--workers", "1", "--output", "/tmp/test_models"]
+            [
+                "train",
+                "rl",
+                "ppo",
+                "--timesteps",
+                "100",
+                "--workers",
+                "1",
+                "--output",
+                "/tmp/test_models",
+            ]
         )
         # Note: This command doesn't have a --dry-run flag, so it will actually run
         # but with minimal timesteps to keep it fast

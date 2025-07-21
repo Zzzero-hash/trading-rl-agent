@@ -102,7 +102,11 @@ def print_table(
         for i in range(len(rows[0])):
             # Ensure minimum width for "Col X" headers
             min_width = len(f"Col {i + 1}") + 2
-            table.add_column(f"Col {i + 1}", width=max(min_width, min(col_widths[i] + 2, 50)), style="cyan")
+            table.add_column(
+                f"Col {i + 1}",
+                width=max(min_width, min(col_widths[i] + 2, 50)),
+                style="cyan",
+            )
 
     # Add rows
     for row in rows:
@@ -111,7 +115,7 @@ def print_table(
         for cell in row:
             if cell is None:
                 formatted_row.append("-")
-            elif isinstance(cell, (int, float)):
+            elif isinstance(cell, int | float):
                 # Format numbers nicely
                 if isinstance(cell, float):
                     formatted_row.append(f"{cell:.2f}")
@@ -201,8 +205,7 @@ def print_error_summary(errors: list[str], title: str = "Errors") -> None:
     if not errors:
         return
 
-    headers = ["Error"]
-    rows = [[error] for error in errors]
+    [[error] for error in errors]
 
     # Use red styling for errors
     table = Table(title=title, title_style="red")
@@ -219,8 +222,20 @@ def example_backtest_usage() -> None:
     """Example of how to use print_table in backtest commands."""
     # Simulate backtest results
     results = [
-        {"Strategy": "PPO", "Period": "2023-01-01 to 2023-06-01", "CAGR": 0.15, "Sharpe": 1.25, "Max Drawdown": -0.08},
-        {"Strategy": "SAC", "Period": "2023-01-01 to 2023-06-01", "CAGR": 0.18, "Sharpe": 1.45, "Max Drawdown": -0.06},
+        {
+            "Strategy": "PPO",
+            "Period": "2023-01-01 to 2023-06-01",
+            "CAGR": 0.15,
+            "Sharpe": 1.25,
+            "Max Drawdown": -0.08,
+        },
+        {
+            "Strategy": "SAC",
+            "Period": "2023-01-01 to 2023-06-01",
+            "CAGR": 0.18,
+            "Sharpe": 1.45,
+            "Max Drawdown": -0.06,
+        },
     ]
 
     print("=== Backtest Results ===")
@@ -228,7 +243,13 @@ def example_backtest_usage() -> None:
 
     print("\n=== TSV Output ===")
     rows = [
-        [r["Strategy"], r["Period"], f"{r['CAGR']:.2%}", f"{r['Sharpe']:.2f}", f"{r['Max Drawdown']:.2%}"]
+        [
+            r["Strategy"],
+            r["Period"],
+            f"{r['CAGR']:.2%}",
+            f"{r['Sharpe']:.2f}",
+            f"{r['Max Drawdown']:.2%}",
+        ]
         for r in results
     ]
     headers = ["Strategy", "Period", "CAGR", "Sharpe", "Max Drawdown"]
@@ -265,7 +286,11 @@ if __name__ == "__main__":
     print_table([[1, "AAPL", 150.25]], headers=["ID", "Symbol", "Price"])
 
     print("\n3. TSV output:")
-    print_table([[1, "AAPL", 150.25], [2, "GOOGL", 2750.50]], headers=["ID", "Symbol", "Price"], no_style=True)
+    print_table(
+        [[1, "AAPL", 150.25], [2, "GOOGL", 2750.50]],
+        headers=["ID", "Symbol", "Price"],
+        no_style=True,
+    )
 
     print("\n4. Backtest example:")
     example_backtest_usage()

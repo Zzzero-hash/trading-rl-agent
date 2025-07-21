@@ -8,11 +8,12 @@ paper trading order execution, and portfolio monitoring.
 import logging
 import os
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pandas as pd
 
@@ -191,7 +192,12 @@ class AlpacaIntegration:
 
         # Initialize V1 API client (fallback)
         try:
-            self.rest_api = REST(self.config.api_key, self.config.secret_key, self.config.base_url, api_version="v2")
+            self.rest_api = REST(
+                self.config.api_key,
+                self.config.secret_key,
+                self.config.base_url,
+                api_version="v2",
+            )
         except TypeError:
             # Handle case where REST is a mock that doesn't accept arguments
             self.rest_api = REST()
@@ -199,7 +205,9 @@ class AlpacaIntegration:
         # Initialize V2 API clients if available
         if ALPACA_V2_AVAILABLE and self.config.use_v2_api:
             self.trading_client = TradingClient(
-                self.config.api_key, self.config.secret_key, paper=self.config.paper_trading
+                self.config.api_key,
+                self.config.secret_key,
+                paper=self.config.paper_trading,
             )
             self.data_client = StockHistoricalDataClient(self.config.api_key, self.config.secret_key)
             logger.info("Using Alpaca V2 SDK")
@@ -291,7 +299,11 @@ class AlpacaIntegration:
             for symbol in symbols:
                 try:
                     bars = self.rest_api.get_bars(
-                        symbol, timeframe, start=start_date, end=end_date, adjustment=adjustment
+                        symbol,
+                        timeframe,
+                        start=start_date,
+                        end=end_date,
+                        adjustment=adjustment,
                     ).df
 
                     if not bars.empty:
@@ -393,11 +405,11 @@ class AlpacaIntegration:
                         "type": order.type,
                         "status": order.status,
                         "filled_at": order.filled_at,
-                        "filled_avg_price": float(order.filled_avg_price) if order.filled_avg_price else None,
+                        "filled_avg_price": (float(order.filled_avg_price) if order.filled_avg_price else None),
                         "filled_qty": float(order.filled_qty),
                         "submitted_at": order.submitted_at,
-                        "limit_price": float(order.limit_price) if order.limit_price else None,
-                        "stop_price": float(order.stop_price) if order.stop_price else None,
+                        "limit_price": (float(order.limit_price) if order.limit_price else None),
+                        "stop_price": (float(order.stop_price) if order.stop_price else None),
                     }
 
                 except Exception as e:
@@ -583,7 +595,7 @@ class AlpacaIntegration:
                 close=float(bar.close),
                 volume=int(bar.volume),
                 vwap=float(bar.vwap) if hasattr(bar, "vwap") else None,
-                trade_count=int(bar.trade_count) if hasattr(bar, "trade_count") else None,
+                trade_count=(int(bar.trade_count) if hasattr(bar, "trade_count") else None),
             )
 
             # Notify callbacks
@@ -609,7 +621,11 @@ class AlpacaIntegration:
         self._portfolio_callbacks.append(callback)
 
     def get_order_history(
-        self, status: str | None = None, limit: int = 500, after: datetime | None = None, until: datetime | None = None
+        self,
+        status: str | None = None,
+        limit: int = 500,
+        after: datetime | None = None,
+        until: datetime | None = None,
     ) -> list[dict[str, Any]]:
         """
         Get order history.
@@ -636,10 +652,10 @@ class AlpacaIntegration:
                     "type": order.type,
                     "status": order.status,
                     "filled_at": order.filled_at,
-                    "filled_avg_price": float(order.filled_avg_price) if order.filled_avg_price else None,
+                    "filled_avg_price": (float(order.filled_avg_price) if order.filled_avg_price else None),
                     "filled_qty": float(order.filled_qty),
                     "submitted_at": order.submitted_at,
-                    "limit_price": float(order.limit_price) if order.limit_price else None,
+                    "limit_price": (float(order.limit_price) if order.limit_price else None),
                     "stop_price": float(order.stop_price) if order.stop_price else None,
                 }
                 for order in orders
@@ -707,9 +723,9 @@ class AlpacaIntegration:
                 "shortable": asset.shortable,
                 "easy_to_borrow": asset.easy_to_borrow,
                 "fractionable": asset.fractionable,
-                "min_order_size": float(asset.min_order_size) if asset.min_order_size else None,
-                "min_trade_increment": float(asset.min_trade_increment) if asset.min_trade_increment else None,
-                "price_increment": float(asset.price_increment) if asset.price_increment else None,
+                "min_order_size": (float(asset.min_order_size) if asset.min_order_size else None),
+                "min_trade_increment": (float(asset.min_trade_increment) if asset.min_trade_increment else None),
+                "price_increment": (float(asset.price_increment) if asset.price_increment else None),
             }
         except Exception as e:
             logger.exception(f"Failed to get asset info for {symbol}: {e}")
@@ -719,7 +735,12 @@ class AlpacaIntegration:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
+    ) -> None:
         """Context manager exit - cleanup resources."""
         self.stop_data_stream()
 
@@ -733,7 +754,7 @@ def create_alpaca_config_from_env() -> AlpacaConfig:
     """
     # Try to get configuration from the unified config system first
     try:
-        from ..core.unified_config import UnifiedConfig
+        from src.trading_rl_agent.core.unified_config import UnifiedConfig
 
         config = UnifiedConfig()
         if config.alpaca_api_key and config.alpaca_secret_key:

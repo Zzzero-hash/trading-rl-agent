@@ -367,7 +367,13 @@ class BenchmarkFramework:
         # Add value labels on bars
         for bar, reward in zip(bars, final_rewards, strict=False):
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width() / 2.0, height + 0.01, f"{reward:.3f}", ha="center", va="bottom")
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height + 0.01,
+                f"{reward:.3f}",
+                ha="center",
+                va="bottom",
+            )
 
     def _plot_training_time_comparison(self, ax: plt.Axes) -> None:
         """Plot training time comparison."""
@@ -388,7 +394,13 @@ class BenchmarkFramework:
         # Add value labels on bars
         for bar, time_val in zip(bars, training_times, strict=False):
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width() / 2.0, height + 0.01, f"{time_val:.1f}s", ha="center", va="bottom")
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height + 0.01,
+                f"{time_val:.1f}s",
+                ha="center",
+                va="bottom",
+            )
 
     def _plot_convergence_analysis(self, ax: plt.Axes) -> None:
         """Plot convergence analysis."""
@@ -416,7 +428,13 @@ class BenchmarkFramework:
         # Add value labels on bars
         for bar, conv_ep in zip(bars, convergence_episodes, strict=False):
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width() / 2.0, height + 0.01, f"{conv_ep:.0f}", ha="center", va="bottom")
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height + 0.01,
+                f"{conv_ep:.0f}",
+                ha="center",
+                va="bottom",
+            )
 
     def _save_results(self) -> None:
         """Save benchmark results to files."""
@@ -517,7 +535,10 @@ class BenchmarkFramework:
 
         # Rank by convergence speed
         convergence_speed = [
-            (alg, self.summary_stats[alg].get("convergence_episode_mean", self.config.num_episodes))
+            (
+                alg,
+                self.summary_stats[alg].get("convergence_episode_mean", self.config.num_episodes),
+            )
             for alg in algorithms
         ]
         rankings["convergence_speed"] = [alg for alg, _ in sorted(convergence_speed, key=lambda x: x[1])]

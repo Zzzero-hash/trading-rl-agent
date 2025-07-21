@@ -11,19 +11,18 @@ This script shows how to:
 
 import asyncio
 import json
-
-# Add the src directory to the path
 import sys
 import threading
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
 from trading_rl_agent.monitoring.dashboard import Dashboard
 from trading_rl_agent.monitoring.metrics_collector import MetricsCollector
 from trading_rl_agent.monitoring.performance_dashboard import PerformanceDashboard
 from trading_rl_agent.monitoring.streaming_dashboard import StreamingDashboard
+
+# Add the src directory to the path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
 def create_sample_data(metrics_collector: MetricsCollector) -> None:
@@ -96,12 +95,18 @@ async def run_streaming_example() -> None:
     metrics_collector = MetricsCollector()
     dashboard = Dashboard(metrics_collector)
     performance_dashboard = PerformanceDashboard(
-        metrics_collector=metrics_collector, dashboard=dashboard, update_interval=1.0, max_data_points=500
+        metrics_collector=metrics_collector,
+        dashboard=dashboard,
+        update_interval=1.0,
+        max_data_points=500,
     )
 
     # Create streaming dashboard
     streaming_dashboard = StreamingDashboard(
-        performance_dashboard=performance_dashboard, host="localhost", port=8765, update_interval=0.5
+        performance_dashboard=performance_dashboard,
+        host="localhost",
+        port=8765,
+        update_interval=0.5,
     )
 
     # Start data simulator
@@ -137,7 +142,10 @@ def run_basic_example() -> None:
     create_sample_data(metrics_collector)
 
     performance_dashboard = PerformanceDashboard(
-        metrics_collector=metrics_collector, dashboard=dashboard, update_interval=2.0, max_data_points=200
+        metrics_collector=metrics_collector,
+        dashboard=dashboard,
+        update_interval=2.0,
+        max_data_points=200,
     )
 
     # Create custom configuration

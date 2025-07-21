@@ -325,7 +325,14 @@ class TestConsoleFunctions:
 
     def test_print_metrics_table_percentage_formatting(self):
         """Test metrics table percentage formatting."""
-        results = [{"strategy": "momentum", "return_rate": 0.15, "sharpe_ratio": 1.25, "win_rate": 0.65}]
+        results = [
+            {
+                "strategy": "momentum",
+                "return_rate": 0.15,
+                "sharpe_ratio": 1.25,
+                "win_rate": 0.65,
+            }
+        ]
 
         with patch("sys.stdout", new=io.StringIO()) as fake_out:
             print_metrics_table(results)

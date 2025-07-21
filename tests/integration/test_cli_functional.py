@@ -41,8 +41,18 @@ class TestCLIFunctional:
                 "source": "yfinance",
                 "timeframe": "1d",
             },
-            "model": {"algorithm": "cnn_lstm", "epochs": 1, "batch_size": 2, "learning_rate": 0.001, "device": "cpu"},
-            "backtest": {"initial_capital": 10000.0, "commission_rate": 0.001, "slippage_rate": 0.0001},
+            "model": {
+                "algorithm": "cnn_lstm",
+                "epochs": 1,
+                "batch_size": 2,
+                "learning_rate": 0.001,
+                "device": "cpu",
+            },
+            "backtest": {
+                "initial_capital": 10000.0,
+                "commission_rate": 0.001,
+                "slippage_rate": 0.0001,
+            },
         }
 
         config_path = temp_dir / "test_config.yaml"
@@ -84,7 +94,17 @@ class TestCLIFunctional:
             temp_path = Path(temp_dir)
 
             result = self.run_cli_command(
-                ["data", "download", "AAPL", "--start", "2024-01-01", "--end", "2024-01-02", "--output", str(temp_path)]
+                [
+                    "data",
+                    "download",
+                    "AAPL",
+                    "--start",
+                    "2024-01-01",
+                    "--end",
+                    "2024-01-02",
+                    "--output",
+                    str(temp_path),
+                ]
             )
 
             # Should succeed or fail gracefully
@@ -101,7 +121,16 @@ class TestCLIFunctional:
             temp_path = Path(temp_dir)
             config_path = self.create_test_config(temp_path)
 
-            result = self.run_cli_command(["data", "process", "--config", str(config_path), "--output", str(temp_path)])
+            result = self.run_cli_command(
+                [
+                    "data",
+                    "process",
+                    "--config",
+                    str(config_path),
+                    "--output",
+                    str(temp_path),
+                ]
+            )
 
             # Should succeed or fail gracefully
             assert result.returncode in [0, 1]
@@ -126,7 +155,14 @@ class TestCLIFunctional:
             config_path = self.create_test_config(temp_path)
 
             result = self.run_cli_command(
-                ["data", "pipeline", "--config", str(config_path), "--output", str(temp_path)]
+                [
+                    "data",
+                    "pipeline",
+                    "--config",
+                    str(config_path),
+                    "--output",
+                    str(temp_path),
+                ]
             )
 
             # Should succeed or fail gracefully
@@ -225,7 +261,16 @@ class TestCLIFunctional:
             config_path = self.create_test_config(temp_path)
 
             result = self.run_cli_command(
-                ["train", "hyperopt", "--config", str(config_path), "--n-trials", "2", "--output", str(temp_path)]
+                [
+                    "train",
+                    "hyperopt",
+                    "--config",
+                    str(config_path),
+                    "--n-trials",
+                    "2",
+                    "--output",
+                    str(temp_path),
+                ]
             )
 
             # Should succeed or fail gracefully
@@ -356,7 +401,12 @@ class TestCLIFunctional:
             results_path = temp_path / "results"
             results_path.mkdir()
 
-            results_data = {"strategy": "test", "total_return": 0.05, "sharpe_ratio": 1.2, "max_drawdown": -0.02}
+            results_data = {
+                "strategy": "test",
+                "total_return": 0.05,
+                "sharpe_ratio": 1.2,
+                "max_drawdown": -0.02,
+            }
 
             with open(results_path / "results.json", "w") as f:
                 json.dump(results_data, f)
@@ -419,7 +469,16 @@ class TestCLIFunctional:
             config_path = self.create_test_config(temp_path)
 
             result = self.run_cli_command(
-                ["trade", "paper", "--config", str(config_path), "--symbols", "AAPL", "--duration", "1h"]
+                [
+                    "trade",
+                    "paper",
+                    "--config",
+                    str(config_path),
+                    "--symbols",
+                    "AAPL",
+                    "--duration",
+                    "1h",
+                ]
             )
 
             # Should succeed or fail gracefully
@@ -460,7 +519,16 @@ class TestCLIFunctional:
             config_path = self.create_test_config(temp_path)
 
             result = self.run_cli_command(
-                ["scenario", "compare", "--config", str(config_path), "--output", str(temp_path), "--seed", "42"]
+                [
+                    "scenario",
+                    "compare",
+                    "--config",
+                    str(config_path),
+                    "--output",
+                    str(temp_path),
+                    "--seed",
+                    "42",
+                ]
             )
 
             # Should succeed or fail gracefully

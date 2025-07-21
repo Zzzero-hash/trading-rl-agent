@@ -24,7 +24,7 @@ class TestInputValidationSecurity:
         config.risk_free_rate = 0.02
         return config
 
-    def test_sql_injection_prevention(self, mock_config):
+    def test_sql_injection_prevention(self, _mock_config):
         """Test that SQL injection attempts are prevented."""
         malicious_inputs = [
             "'; DROP TABLE users; --",
@@ -41,7 +41,7 @@ class TestInputValidationSecurity:
                 config.symbols = [malicious_input]
                 assert malicious_input not in str(config.symbols)
 
-    def test_path_traversal_prevention(self, mock_config):
+    def test_path_traversal_prevention(self, _mock_config):
         """Test that path traversal attempts are prevented."""
         malicious_paths = [
             "../../../etc/passwd",
@@ -57,7 +57,7 @@ class TestInputValidationSecurity:
                 if any(char in malicious_path for char in ["..", "%2F", "%5C"]):
                     raise ValueError(f"Path traversal detected: {malicious_path}")
 
-    def test_command_injection_prevention(self, mock_config):
+    def test_command_injection_prevention(self, _mock_config):
         """Test that command injection attempts are prevented."""
         malicious_commands = [
             "; rm -rf /",
@@ -75,7 +75,7 @@ class TestInputValidationSecurity:
                 if any(char in malicious_command for char in [";", "&", "|", "`", "$(", "&&", "||"]):
                     raise ValueError(f"Command injection detected: {malicious_command}")
 
-    def test_xss_prevention(self, mock_config):
+    def test_xss_prevention(self, _mock_config):
         """Test that XSS attempts are prevented."""
         malicious_scripts = [
             "<script>alert('xss')</script>",
@@ -92,16 +92,24 @@ class TestInputValidationSecurity:
                 # Test XSS prevention
                 if any(
                     tag in malicious_script.lower()
-                    for tag in ["<script>", "javascript:", "onload=", "onerror=", "onclick=", "<img", "<svg"]
+                    for tag in [
+                        "<script>",
+                        "javascript:",
+                        "onload=",
+                        "onerror=",
+                        "onclick=",
+                        "<img",
+                        "<svg",
+                    ]
                 ):
                     raise ValueError(f"XSS attempt detected: {malicious_script}")
 
-    def test_numeric_input_validation(self, mock_config):
+    def test_numeric_input_validation(self, _mock_config):
         """Test numeric input validation."""
         # Test valid numeric inputs
         valid_numbers = [0, 1, 100, 1000.5, -1, -100.5]
         for num in valid_numbers:
-            assert isinstance(num, (int, float))
+            assert isinstance(num, int | float)
 
         # Test invalid numeric inputs
         invalid_inputs = ["not_a_number", "123abc", "abc123", "", None, [], {}]
@@ -109,7 +117,7 @@ class TestInputValidationSecurity:
             with pytest.raises((ValueError, TypeError)):
                 float(invalid_input)
 
-    def test_symbol_validation(self, mock_config):
+    def test_symbol_validation(self, _mock_config):
         """Test trading symbol validation."""
         valid_symbols = ["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"]
         for symbol in valid_symbols:
@@ -157,7 +165,7 @@ class TestInputValidationSecurity:
                 if not symbol or len(symbol) > 10 or not symbol.isalnum():
                     raise ValueError(f"Invalid symbol: {symbol}")
 
-    def test_date_validation(self, mock_config):
+    def test_date_validation(self, _mock_config):
         """Test date input validation."""
         valid_dates = ["2023-01-01", "2023-12-31", "2024-02-29"]
         for date_str in valid_dates:
@@ -183,7 +191,7 @@ class TestInputValidationSecurity:
             with pytest.raises(ValueError):
                 pd.to_datetime(date_str, format="%Y-%m-%d")
 
-    def test_array_input_validation(self, mock_config):
+    def test_array_input_validation(self, _mock_config):
         """Test array/DataFrame input validation."""
         # Test valid arrays
         valid_arrays = [
@@ -220,10 +228,10 @@ class TestInputValidationSecurity:
         assert all(isinstance(s, str) for s in mock_config.symbols)
 
         assert mock_config.initial_balance > 0
-        assert isinstance(mock_config.initial_balance, (int, float))
+        assert isinstance(mock_config.initial_balance, int | float)
 
         assert 0 < mock_config.max_position_size <= 1
-        assert isinstance(mock_config.max_position_size, (int, float))
+        assert isinstance(mock_config.max_position_size, int | float)
 
         # Test invalid configurations
         invalid_configs = [
@@ -244,10 +252,18 @@ class TestInputValidationSecurity:
                 if "max_position_size" in invalid_config and not (0 < invalid_config["max_position_size"] <= 1):
                     raise ValueError("Max position size must be between 0 and 1")
 
-    def test_file_upload_validation(self, mock_config):
+    def test_file_upload_validation(self, _mock_config):
         """Test file upload validation."""
         # Test valid file types
-        valid_extensions = [".csv", ".json", ".yaml", ".yml", ".parquet", ".h5", ".hdf5"]
+        valid_extensions = [
+            ".csv",
+            ".json",
+            ".yaml",
+            ".yml",
+            ".parquet",
+            ".h5",
+            ".hdf5",
+        ]
         for ext in valid_extensions:
             assert ext.startswith(".")
 
@@ -295,7 +311,7 @@ class TestInputValidationSecurity:
                 ]:
                     raise ValueError(f"Invalid file type: {ext}")
 
-    def test_url_validation(self, mock_config):
+    def test_url_validation(self, _mock_config):
         """Test URL validation."""
         valid_urls = [
             "https://api.example.com",
@@ -321,7 +337,7 @@ class TestInputValidationSecurity:
                 if not url or not url.startswith(("http://", "https://")):
                     raise ValueError(f"Invalid URL: {url}")
 
-    def test_json_validation(self, mock_config):
+    def test_json_validation(self, _mock_config):
         """Test JSON input validation."""
         import json
 
@@ -350,7 +366,7 @@ class TestInputValidationSecurity:
             with pytest.raises(json.JSONDecodeError):
                 json.loads(json_str)
 
-    def test_environment_variable_validation(self, mock_config):
+    def test_environment_variable_validation(self, _mock_config):
         """Test environment variable validation."""
         import os
 
@@ -371,7 +387,7 @@ class TestInputValidationSecurity:
                 log_message = f"Environment variable {var} is set"
                 assert os.environ[var] not in log_message
 
-    def test_memory_usage_validation(self, mock_config):
+    def test_memory_usage_validation(self, _mock_config):
         """Test memory usage validation."""
         import os
 
@@ -384,7 +400,7 @@ class TestInputValidationSecurity:
         # Memory usage should be less than 1GB for normal operations
         assert memory_info.rss < 1024 * 1024 * 1024  # 1GB
 
-    def test_cpu_usage_validation(self, mock_config):
+    def test_cpu_usage_validation(self, _mock_config):
         """Test CPU usage validation."""
         import os
 
@@ -397,7 +413,7 @@ class TestInputValidationSecurity:
         # CPU usage should be reasonable (less than 100% for a single process)
         assert cpu_percent < 100
 
-    def test_network_validation(self, mock_config):
+    def test_network_validation(self, _mock_config):
         """Test network input validation."""
         valid_ips = [
             "127.0.0.1",
@@ -433,7 +449,7 @@ class TestInputValidationSecurity:
                 else:
                     raise ValueError(f"Invalid IP: {ip}")
 
-    def test_encoding_validation(self, mock_config):
+    def test_encoding_validation(self, _mock_config):
         """Test encoding validation."""
         # Test valid encodings
         valid_encodings = ["utf-8", "ascii", "latin-1", "iso-8859-1"]
@@ -455,7 +471,7 @@ class TestInputValidationSecurity:
             with pytest.raises(LookupError):
                 "test".encode(encoding)
 
-    def test_compression_validation(self, mock_config):
+    def test_compression_validation(self, _mock_config):
         """Test compression validation."""
         import bz2
         import gzip
@@ -481,7 +497,7 @@ class TestInputValidationSecurity:
         assert bz2.decompress(compressed_bz2) == test_data
         assert lzma.decompress(compressed_lzma) == test_data
 
-    def test_serialization_validation(self, mock_config):
+    def test_serialization_validation(self, _mock_config):
         """Test serialization validation."""
         import json
         import pickle
@@ -503,7 +519,7 @@ class TestInputValidationSecurity:
         with pytest.raises((pickle.UnpicklingError, EOFError)):
             pickle.loads(malicious_pickle)
 
-    def test_regular_expression_validation(self, mock_config):
+    def test_regular_expression_validation(self, _mock_config):
         """Test regular expression validation."""
         import re
 
@@ -534,7 +550,7 @@ class TestInputValidationSecurity:
                 if "++" in pattern or "**" in pattern or "??" in pattern:
                     raise ValueError(f"Potentially dangerous regex pattern: {pattern}")
 
-    def test_thread_safety_validation(self, mock_config):
+    def test_thread_safety_validation(self, _mock_config):
         """Test thread safety validation."""
         import threading
         import time
@@ -564,7 +580,7 @@ class TestInputValidationSecurity:
         # Counter should be exactly 10
         assert shared_counter == 10
 
-    def test_resource_cleanup_validation(self, mock_config):
+    def test_resource_cleanup_validation(self, _mock_config):
         """Test resource cleanup validation."""
         import os
         import tempfile
@@ -578,12 +594,14 @@ class TestInputValidationSecurity:
         assert os.path.exists(temp_path)
 
         # Clean up
+        from pathlib import Path
+
         Path(temp_path).unlink()
 
         # File should not exist
         assert not os.path.exists(temp_path)
 
-    def test_error_handling_validation(self, mock_config):
+    def test_error_handling_validation(self, _mock_config):
         """Test error handling validation."""
         # Test that exceptions are properly caught and handled
         try:
@@ -601,7 +619,7 @@ class TestInputValidationSecurity:
             assert "API_KEY" not in error_message
             assert "secret123" not in error_message
 
-    def test_logging_security_validation(self, mock_config):
+    def test_logging_security_validation(self, _mock_config):
         """Test logging security validation."""
         import logging
 
@@ -632,7 +650,7 @@ class TestInputValidationSecurity:
             assert key not in log_message
             assert value not in log_message
 
-    def test_configuration_security_validation(self, mock_config):
+    def test_configuration_security_validation(self, _mock_config):
         """Test configuration security validation."""
         # Test that configuration files are properly validated
         valid_config = {

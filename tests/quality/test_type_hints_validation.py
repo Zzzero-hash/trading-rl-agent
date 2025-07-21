@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from src.trading_rl_agent.core.config import Config
+from src.trading_rl_agent.core.config import SystemConfig as Config
 from src.trading_rl_agent.data.data_loader import DataLoader
 from src.trading_rl_agent.features.feature_engineering import FeatureEngineer
 from src.trading_rl_agent.portfolio.portfolio_manager import PortfolioManager
@@ -41,7 +41,7 @@ class TestTypeHintsValidation:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                         # Check if function has type hints
                         has_return_annotation = node.returns is not None
                         has_param_annotations = all(arg.annotation is not None for arg in node.args.args)
@@ -69,7 +69,7 @@ class TestTypeHintsValidation:
                     if isinstance(node, ast.ClassDef):
                         # Check class methods for type hints
                         for item in node.body:
-                            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            if isinstance(item, ast.FunctionDef | ast.AsyncFunctionDef):
                                 has_return_annotation = item.returns is not None
                                 has_param_annotations = all(arg.annotation is not None for arg in item.args.args)
 
@@ -135,8 +135,8 @@ class TestTypeHintsValidation:
                 # Check if file uses type hints
                 uses_type_hints = False
                 for node in ast.walk(tree):
-                    if (isinstance(node, (ast.AnnAssign, ast.arg)) and node.annotation is not None) or (
-                        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.returns is not None
+                    if (isinstance(node, ast.AnnAssign | ast.arg) and node.annotation is not None) or (
+                        isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and node.returns is not None
                     ):
                         uses_type_hints = True
                         break
@@ -278,7 +278,7 @@ class TestTypeHintsValidation:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.returns:
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and node.returns:
                         # Check return type annotation
                         return_type = ast.unparse(node.returns)
 
@@ -357,7 +357,7 @@ class TestTypeHintsValidation:
                     tree = ast.parse(f.read())
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                         docstring = ast.get_docstring(node)
                         if docstring and node.args.args:
                             # Check if docstring mentions parameter types
@@ -434,7 +434,6 @@ class TestTypeHintsValidation:
 
     def test_type_hint_consistency_across_modules(self):
         """Test that type hints are consistent across modules."""
-        consistency_issues = []
 
         # Check for consistent type usage across modules
         common_types = {

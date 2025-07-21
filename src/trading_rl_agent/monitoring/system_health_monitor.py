@@ -14,10 +14,11 @@ import socket
 import threading
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import psutil
@@ -361,7 +362,11 @@ class SystemHealthMonitor:
         else:
             overall_status = HealthStatus.HEALTHY
 
-        message = f"Drawdown: {trading_metrics.max_drawdown:.2%}, Latency: {trading_metrics.execution_latency:.1f}ms, Error Rate: {error_rate:.2%}"
+        message = (
+            f"Drawdown: {trading_metrics.max_drawdown:.2%}, "
+            f"Latency: {trading_metrics.execution_latency:.1f}ms, "
+            f"Error Rate: {error_rate:.2%}"
+        )
 
         return HealthCheckResult(
             check_type=HealthCheckType.TRADING_PERFORMANCE,
@@ -524,7 +529,7 @@ class SystemHealthMonitor:
         self.metrics_collector.set_gauge("health_degraded_checks", degraded_count)
         self.metrics_collector.set_gauge("health_total_checks", len(health_results))
 
-    def _check_alerts(self, system_metrics: SystemMetrics, health_results: list[HealthCheckResult]) -> None:
+    def _check_alerts(self, _system_metrics: SystemMetrics, health_results: list[HealthCheckResult]) -> None:
         """Check for conditions that require alerts."""
         if not self.alert_manager:
             return
@@ -568,7 +573,10 @@ class SystemHealthMonitor:
     def get_health_summary(self) -> dict[str, Any]:
         """Get a summary of system health."""
         if not self.health_history:
-            return {"status": HealthStatus.UNKNOWN.value, "message": "No health checks performed"}
+            return {
+                "status": HealthStatus.UNKNOWN.value,
+                "message": "No health checks performed",
+            }
 
         # Get recent health results
         recent_results = list(self.health_history)[-10:]  # Last 10 results

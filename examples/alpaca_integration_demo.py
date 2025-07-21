@@ -23,15 +23,23 @@ from typing import Any
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from trading_rl_agent.configs.alpaca_config import AlpacaConfigManager, validate_alpaca_environment
-from trading_rl_agent.data.alpaca_integration import (
-    AlpacaConfig,
-    AlpacaIntegration,
-    OrderRequest,
-    OrderSide,
-    OrderType,
-    create_alpaca_config_from_env,
-)
+try:
+    from trading_rl_agent.configs.alpaca_config import (
+        AlpacaConfigManager,
+        validate_alpaca_environment,
+    )
+    from trading_rl_agent.data.alpaca_integration import (
+        AlpacaConfig,
+        AlpacaIntegration,
+        OrderRequest,
+        OrderSide,
+        OrderType,
+        create_alpaca_config_from_env,
+    )
+except ImportError:
+    print("Error: Could not import trading_rl_agent modules.")
+    print("Make sure you're running this from the project root directory.")
+    sys.exit(1)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -164,7 +172,10 @@ class AlpacaDemo:
             logger.info(f"Fetching historical data for {self.symbols} from {start_date.date()} to {end_date.date()}")
 
             data = alpaca.get_historical_data(
-                symbols=self.symbols, start_date=start_date, end_date=end_date, timeframe="1Day"
+                symbols=self.symbols,
+                start_date=start_date,
+                end_date=end_date,
+                timeframe="1Day",
             )
 
             if not data.empty:
@@ -328,7 +339,8 @@ class AlpacaDemo:
             )
         elif data_type == "trade":
             logger.info(
-                f"TRADE UPDATE [{self.data_updates}]: {data['symbol']} - Price: ${data['price']:.2f}, Size: {data['size']}"
+                f"TRADE UPDATE [{self.data_updates}]: {data['symbol']} - "
+                f"Price: ${data['price']:.2f}, Size: {data['size']}"
             )
 
     def demo_real_time_streaming(self, duration: int = 30) -> None:
@@ -465,9 +477,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Alpaca Integration Demo")
     parser.add_argument("--config", help="Path to configuration file")
     parser.add_argument(
-        "--symbols", nargs="+", default=["AAPL", "MSFT", "GOOGL", "TSLA"], help="Symbols to trade/monitor"
+        "--symbols",
+        nargs="+",
+        default=["AAPL", "MSFT", "GOOGL", "TSLA"],
+        help="Symbols to trade/monitor",
     )
-    parser.add_argument("--stream-only", action="store_true", help="Only run the real-time streaming demo")
+    parser.add_argument(
+        "--stream-only",
+        action="store_true",
+        help="Only run the real-time streaming demo",
+    )
     parser.add_argument("--duration", type=int, default=30, help="Duration of streaming demo in seconds")
 
     args = parser.parse_args()

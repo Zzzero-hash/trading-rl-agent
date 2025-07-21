@@ -32,13 +32,19 @@ class TestRiskAwarePortfolioOptimization:
         """Setup test fixtures."""
         # Risk management setup
         self.risk_limits = RiskLimits(
-            max_portfolio_var=0.03, max_drawdown=0.15, max_leverage=1.5, max_position_size=0.2
+            max_portfolio_var=0.03,
+            max_drawdown=0.15,
+            max_leverage=1.5,
+            max_position_size=0.2,
         )
         self.risk_manager = RiskManager(self.risk_limits)
 
         # Portfolio management setup
         self.portfolio_config = PortfolioConfig(
-            max_position_size=0.2, max_sector_exposure=0.4, max_leverage=1.5, rebalance_threshold=0.05
+            max_position_size=0.2,
+            max_sector_exposure=0.4,
+            max_leverage=1.5,
+            rebalance_threshold=0.05,
         )
         self.portfolio_manager = PortfolioManager(initial_capital=1000000, config=self.portfolio_config)
 
@@ -67,7 +73,10 @@ class TestRiskAwarePortfolioOptimization:
         self.price_data = {}
         for symbol, returns in returns_data.items():
             prices = pd.DataFrame(
-                {"close": 100 * (1 + returns).cumprod(), "volume": np.random.randint(1000000, 10000000, 252)},
+                {
+                    "close": 100 * (1 + returns).cumprod(),
+                    "volume": np.random.randint(1000000, 10000000, 252),
+                },
                 index=dates,
             )
             self.price_data[symbol] = prices
@@ -84,7 +93,7 @@ class TestRiskAwarePortfolioOptimization:
         if optimal_weights is not None:
             # Calculate risk metrics for optimal portfolio
             portfolio_var = self.risk_manager.calculate_portfolio_var(optimal_weights)
-            portfolio_cvar = self.risk_manager.calculate_portfolio_cvar(optimal_weights)
+            self.risk_manager.calculate_portfolio_cvar(optimal_weights)
             max_drawdown = self.risk_manager.calculate_portfolio_drawdown(optimal_weights)
 
             # Verify risk constraints are satisfied
@@ -214,7 +223,9 @@ class TestRealTimeRiskPortfolioIntegration:
         )
 
         self.alert_system = RiskAlertSystem(
-            risk_manager=self.risk_manager, alert_manager=self.alert_manager, config=self.alert_config
+            risk_manager=self.risk_manager,
+            alert_manager=self.alert_manager,
+            config=self.alert_config,
         )
 
         # Create test data
@@ -369,7 +380,10 @@ class TestRealTimeRiskPortfolioIntegration:
 
                 if reduction_quantity > 0:
                     self.portfolio_manager.execute_trade(
-                        "AAPL", -reduction_quantity, current_position.current_price, "long"
+                        "AAPL",
+                        -reduction_quantity,
+                        current_position.current_price,
+                        "long",
                     )
 
                 # Verify risk is reduced
@@ -394,7 +408,10 @@ class TestRegulatoryComplianceWorkflows:
 
         # Portfolio management with regulatory constraints
         self.portfolio_config = PortfolioConfig(
-            max_position_size=0.05, max_sector_exposure=0.20, max_leverage=1.0, rebalance_threshold=0.02
+            max_position_size=0.05,
+            max_sector_exposure=0.20,
+            max_leverage=1.0,
+            rebalance_threshold=0.02,
         )
         self.portfolio_manager = PortfolioManager(initial_capital=1000000, config=self.portfolio_config)
 
@@ -641,10 +658,14 @@ class TestEndToEndTradingScenarios:
         )
 
         portfolio_weights = pd.DataFrame(
-            {"AAPL": [0.4] * 252, "GOOGL": [0.35] * 252, "MSFT": [0.25] * 252}, index=dates
+            {"AAPL": [0.4] * 252, "GOOGL": [0.35] * 252, "MSFT": [0.25] * 252},
+            index=dates,
         )
 
-        benchmark_weights = pd.DataFrame({"AAPL": [0.3] * 252, "GOOGL": [0.4] * 252, "MSFT": [0.3] * 252}, index=dates)
+        benchmark_weights = pd.DataFrame(
+            {"AAPL": [0.3] * 252, "GOOGL": [0.4] * 252, "MSFT": [0.3] * 252},
+            index=dates,
+        )
 
         # Perform attribution analysis
         attribution_results = attributor.analyze_performance(

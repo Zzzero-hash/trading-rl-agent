@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import gymnasium as gym
 import numpy as np
@@ -15,14 +15,14 @@ if TYPE_CHECKING:
 class TradingEnv(gym.Env):
     """A pure Gymnasium environment for stock trading."""
 
-    metadata = {"render_modes": ["human"]}
+    metadata: ClassVar[dict[str, list[str]]] = {"render_modes": ["human"]}
 
     def __init__(self, env_cfg: dict[str, Any] | None = None, **kwargs: Any) -> None:
         super().__init__()
         cfg = {**(env_cfg or {}), **kwargs}
 
         data_paths: Iterable[str | Path] = cfg.get("dataset_paths", [])
-        if isinstance(data_paths, (str, Path)):
+        if isinstance(data_paths, str | Path):
             data_paths = [data_paths]
         if not data_paths:
             raise ValueError("dataset_paths is required")
@@ -70,7 +70,7 @@ class TradingEnv(gym.Env):
         self,
         *,
         seed: int | None = None,
-        options: dict[str, Any] | None = None,
+        _options: dict[str, Any] | None = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
         self.day = 0
@@ -155,7 +155,7 @@ class TradingEnv(gym.Env):
         market_features = self.df.loc[self.day, self.feature_columns].values.flatten().astype(np.float32)
         return np.hstack([cash, shares, market_features])
 
-    def render(self, mode: str = "human") -> np.ndarray:
+    def render(self, _mode: str = "human") -> np.ndarray:
         return self.state
 
 

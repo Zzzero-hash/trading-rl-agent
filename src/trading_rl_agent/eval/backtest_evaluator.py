@@ -17,16 +17,11 @@ import pandas as pd
 from rich.console import Console
 from rich.table import Table
 
-from ..core.unified_config import BacktestConfig
-from ..portfolio.manager import PortfolioConfig, PortfolioManager
-from ..portfolio.transaction_costs import (
-    BrokerType,
-    MarketCondition,
-    MarketData,
-    OrderType,
-)
-from ..portfolio.transaction_costs import TransactionCostModel as NewTransactionCostModel
-from ..utils.metrics import (
+from src.trading_rl_agent.core.unified_config import BacktestConfig
+from src.trading_rl_agent.portfolio.manager import PortfolioConfig, PortfolioManager
+from src.trading_rl_agent.portfolio.transaction_costs import BrokerType, MarketCondition, MarketData, OrderType
+from src.trading_rl_agent.portfolio.transaction_costs import TransactionCostModel as NewTransactionCostModel
+from src.trading_rl_agent.utils.metrics import (
     calculate_beta,
     calculate_calmar_ratio,
     calculate_expected_shortfall,
@@ -38,6 +33,7 @@ from ..utils.metrics import (
     calculate_var,
     calculate_win_rate,
 )
+
 from .metrics_calculator import MetricsCalculator
 from .statistical_tests import StatisticalTests
 
@@ -448,7 +444,7 @@ class BacktestEvaluator:
     def _calculate_results(
         self,
         benchmark_returns: pd.Series | None,
-        strategy_name: str,
+        _strategy_name: str,
     ) -> BacktestResult:
         """Calculate comprehensive backtest results."""
         # Convert to pandas series

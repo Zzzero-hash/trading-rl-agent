@@ -80,7 +80,11 @@ class TestSentimentAnalyzer:
         """Test batch sentiment analysis."""
         analyzer = SentimentAnalyzer()
 
-        texts = ["Strong growth in the market.", "Significant decline in performance.", "Stable market conditions."]
+        texts = [
+            "Strong growth in the market.",
+            "Significant decline in performance.",
+            "Stable market conditions.",
+        ]
 
         results = analyzer.analyze_batch(texts)
 
@@ -197,7 +201,11 @@ class TestTextProcessor:
         """Test batch text processing."""
         processor = TextProcessor()
 
-        texts = ["Strong earnings growth.", "Market decline reported.", "Stable performance."]
+        texts = [
+            "Strong earnings growth.",
+            "Market decline reported.",
+            "Stable performance.",
+        ]
 
         results = processor.process_batch(texts)
 
@@ -278,10 +286,16 @@ class TestNewsAnalyzer:
                 published_at=datetime.now(),
             ),
             NewsArticle(
-                title="Negative News", content="Decline in performance.", source="Reuters", published_at=datetime.now()
+                title="Negative News",
+                content="Decline in performance.",
+                source="Reuters",
+                published_at=datetime.now(),
             ),
             NewsArticle(
-                title="Neutral News", content="Stable market conditions.", source="WSJ", published_at=datetime.now()
+                title="Neutral News",
+                content="Stable market conditions.",
+                source="WSJ",
+                published_at=datetime.now(),
             ),
         ]
 

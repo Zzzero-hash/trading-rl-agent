@@ -40,7 +40,11 @@ class TestDataProcessingPerformance:
         # Benchmark parallel fetching
         def fetch_data():
             return data_manager.fetch_multiple_symbols(
-                symbols=symbols, start_date=start_date, end_date=end_date, interval="1d", show_progress=False
+                symbols=symbols,
+                start_date=start_date,
+                end_date=end_date,
+                interval="1d",
+                show_progress=False,
             )
 
         # Measure performance
@@ -146,7 +150,10 @@ class TestDataProcessingPerformance:
         # Benchmark dataset building
         def build_dataset():
             return dataset_builder.build_optimized_dataset(
-                data=test_data, sequence_length=60, prediction_horizon=5, target_column="close"
+                data=test_data,
+                sequence_length=60,
+                prediction_horizon=5,
+                target_column="close",
             )
 
         # Measure performance

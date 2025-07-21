@@ -33,7 +33,11 @@ class AttributionIntegration:
     and managing results with caching and automation capabilities.
     """
 
-    def __init__(self, portfolio_manager: PortfolioManager, attribution_config: AttributionConfig | None = None):
+    def __init__(
+        self,
+        portfolio_manager: PortfolioManager,
+        attribution_config: AttributionConfig | None = None,
+    ):
         """
         Initialize attribution integration.
 
@@ -167,17 +171,23 @@ class AttributionIntegration:
         # Generate synthetic asset returns
         np.random.seed(42)
         asset_returns = pd.DataFrame(
-            np.random.normal(0.0006, 0.02, (len(symbols), len(dates))), index=symbols, columns=dates
+            np.random.normal(0.0006, 0.02, (len(symbols), len(dates))),
+            index=symbols,
+            columns=dates,
         )
 
         # Generate synthetic weights
         portfolio_weights = pd.DataFrame(
-            np.random.dirichlet(np.ones(len(symbols)), len(dates)).T, index=symbols, columns=dates
+            np.random.dirichlet(np.ones(len(symbols)), len(dates)).T,
+            index=symbols,
+            columns=dates,
         )
 
         # Generate benchmark weights (market cap weighted)
         benchmark_weights = pd.DataFrame(
-            np.random.dirichlet(np.ones(len(symbols)) * 2, len(dates)).T, index=symbols, columns=dates
+            np.random.dirichlet(np.ones(len(symbols)) * 2, len(dates)).T,
+            index=symbols,
+            columns=dates,
         )
 
         # Generate sector data
@@ -455,7 +465,11 @@ class AutomatedAttributionWorkflow:
     Provides scheduled and event-driven attribution analysis capabilities.
     """
 
-    def __init__(self, portfolio_manager: PortfolioManager, attribution_config: AttributionConfig | None = None):
+    def __init__(
+        self,
+        portfolio_manager: PortfolioManager,
+        attribution_config: AttributionConfig | None = None,
+    ):
         """
         Initialize automated attribution workflow.
 

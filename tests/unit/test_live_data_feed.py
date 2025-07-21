@@ -6,6 +6,7 @@ with focus on small incremental fixes and edge cases.
 """
 
 import asyncio
+import contextlib
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
@@ -80,7 +81,13 @@ class TestLiveDataFeed:
 
         # Mock yfinance data
         mock_data = pd.DataFrame(
-            {"Open": [150.0], "High": [155.0], "Low": [149.0], "Close": [153.0], "Volume": [1000000]},
+            {
+                "Open": [150.0],
+                "High": [155.0],
+                "Low": [149.0],
+                "Close": [153.0],
+                "Volume": [1000000],
+            },
             index=[datetime.now()],
         )
 
@@ -100,9 +107,8 @@ class TestLiveDataFeed:
         """Test data fetching failure handling."""
         feed = LiveDataFeed(["AAPL"], data_source="yfinance")
 
-        with patch.object(yf.Ticker, "history", side_effect=Exception("Network error")):
-            with pytest.raises(RuntimeError):
-                await feed.fetch_latest_data("AAPL")
+        with patch.object(yf.Ticker, "history", side_effect=Exception("Network error")), pytest.raises(RuntimeError):
+            await feed.fetch_latest_data("AAPL")
 
     @pytest.mark.asyncio
     async def test_fetch_latest_data_empty_result(self):
@@ -121,7 +127,13 @@ class TestLiveDataFeed:
 
         # Mock data for both symbols
         mock_data = pd.DataFrame(
-            {"Open": [150.0], "High": [155.0], "Low": [149.0], "Close": [153.0], "Volume": [1000000]},
+            {
+                "Open": [150.0],
+                "High": [155.0],
+                "Low": [149.0],
+                "Close": [153.0],
+                "Volume": [1000000],
+            },
             index=[datetime.now()],
         )
 
@@ -142,11 +154,17 @@ class TestLiveDataFeed:
 
         # Mock successful data for AAPL, failure for INVALID_SYMBOL
         mock_data = pd.DataFrame(
-            {"Open": [150.0], "High": [155.0], "Low": [149.0], "Close": [153.0], "Volume": [1000000]},
+            {
+                "Open": [150.0],
+                "High": [155.0],
+                "Low": [149.0],
+                "Close": [153.0],
+                "Volume": [1000000],
+            },
             index=[datetime.now()],
         )
 
-        def mock_history(*args, **kwargs):
+        def mock_history(*args, **_):
             if "AAPL" in str(args):
                 return mock_data
             raise Exception("Symbol not found")
@@ -165,7 +183,11 @@ class TestLiveDataFeed:
         # Mock cached data
         mock_data = pd.DataFrame(
             {"Close": [153.0, 154.0, 155.0]},
-            index=[datetime.now() - timedelta(minutes=2), datetime.now() - timedelta(minutes=1), datetime.now()],
+            index=[
+                datetime.now() - timedelta(minutes=2),
+                datetime.now() - timedelta(minutes=1),
+                datetime.now(),
+            ],
         )
 
         feed.price_cache["AAPL"] = mock_data
@@ -193,7 +215,8 @@ class TestLiveDataFeed:
 
         # Mock cached data
         mock_data = pd.DataFrame(
-            {"Close": [150.0, 151.0, 152.0, 153.0, 154.0]}, index=pd.date_range(start="2023-01-01", periods=5, freq="D")
+            {"Close": [150.0, 151.0, 152.0, 153.0, 154.0]},
+            index=pd.date_range(start="2023-01-01", periods=5, freq="D"),
         )
 
         feed.price_cache["AAPL"] = mock_data
@@ -208,7 +231,8 @@ class TestLiveDataFeed:
 
         # Mock cached data
         mock_data = pd.DataFrame(
-            {"Close": [150.0, 151.0, 152.0]}, index=pd.date_range(start="2023-01-01", periods=3, freq="D")
+            {"Close": [150.0, 151.0, 152.0]},
+            index=pd.date_range(start="2023-01-01", periods=3, freq="D"),
         )
 
         feed.price_cache["AAPL"] = mock_data
@@ -320,10 +344,8 @@ class TestLiveDataFeed:
         # Cancel the task
         task.cancel()
 
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await task
-        except asyncio.CancelledError:
-            pass
 
         # Check that update was called
         assert feed.update_all_symbols.called
@@ -425,18 +447,22 @@ class TestErrorHandling:
         """Test handling of network timeouts."""
         feed = LiveDataFeed(["AAPL"], data_source="yfinance")
 
-        with patch.object(yf.Ticker, "history", side_effect=TimeoutError("Network timeout")):
-            with pytest.raises(TimeoutError):
-                await feed.fetch_latest_data("AAPL")
+        with (
+            patch.object(yf.Ticker, "history", side_effect=TimeoutError("Network timeout")),
+            pytest.raises(TimeoutError),
+        ):
+            await feed.fetch_latest_data("AAPL")
 
     @pytest.mark.asyncio
     async def test_rate_limit_handling(self):
         """Test handling of rate limiting."""
         feed = LiveDataFeed(["AAPL"], data_source="yfinance")
 
-        with patch.object(yf.Ticker, "history", side_effect=Exception("Rate limit exceeded")):
-            with pytest.raises(RuntimeError):
-                await feed.fetch_latest_data("AAPL")
+        with (
+            patch.object(yf.Ticker, "history", side_effect=Exception("Rate limit exceeded")),
+            pytest.raises(RuntimeError),
+        ):
+            await feed.fetch_latest_data("AAPL")
 
     def test_invalid_data_format(self):
         """Test handling of invalid data format."""
@@ -464,7 +490,7 @@ class TestErrorHandling:
         large_data = pd.DataFrame({"Close": np.random.randn(10000)})
         feed.price_cache["AAPL"] = large_data
 
-        initial_memory = len(feed.price_cache["AAPL"])
+        len(feed.price_cache["AAPL"])
 
         # Simulate memory cleanup
         feed.clear_cache()
@@ -482,7 +508,13 @@ class TestIntegration:
 
         # Mock data
         mock_data = pd.DataFrame(
-            {"Open": [150.0], "High": [155.0], "Low": [149.0], "Close": [153.0], "Volume": [1000000]},
+            {
+                "Open": [150.0],
+                "High": [155.0],
+                "Low": [149.0],
+                "Close": [153.0],
+                "Volume": [1000000],
+            },
             index=[datetime.now()],
         )
 
@@ -515,7 +547,13 @@ class TestIntegration:
 
         # Mock data for all symbols
         mock_data = pd.DataFrame(
-            {"Open": [150.0], "High": [155.0], "Low": [149.0], "Close": [153.0], "Volume": [1000000]},
+            {
+                "Open": [150.0],
+                "High": [155.0],
+                "Low": [149.0],
+                "Close": [153.0],
+                "Volume": [1000000],
+            },
             index=[datetime.now()],
         )
 

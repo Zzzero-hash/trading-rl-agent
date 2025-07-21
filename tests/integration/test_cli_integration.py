@@ -102,7 +102,14 @@ class TestEndToEndWorkflows:
 
         result = self.runner.invoke(
             main_app,
-            ["data", "process", "--output-dir", str(self.workflow_dir / "processed"), "--force-rebuild", "--parallel"],
+            [
+                "data",
+                "process",
+                "--output-dir",
+                str(self.workflow_dir / "processed"),
+                "--force-rebuild",
+                "--parallel",
+            ],
         )
         assert result.exit_code == 0
         mock_process.assert_called_once()
@@ -262,7 +269,13 @@ class TestEndToEndWorkflows:
     @patch("trading_rl_agent.cli.compare_models")
     @patch("trading_rl_agent.cli.generate_report")
     def test_research_workflow(
-        self, mock_report, mock_compare, mock_walk_forward, mock_train, mock_process, mock_download
+        self,
+        mock_report,
+        mock_compare,
+        mock_walk_forward,
+        mock_train,
+        mock_process,
+        mock_download,
     ):
         """Test research workflow with walk-forward analysis."""
         # Setup mocks
@@ -290,13 +303,27 @@ class TestEndToEndWorkflows:
         assert result.exit_code == 0
 
         result = self.runner.invoke(
-            main_app, ["data", "process", "--output-dir", str(self.workflow_dir / "research_processed")]
+            main_app,
+            [
+                "data",
+                "process",
+                "--output-dir",
+                str(self.workflow_dir / "research_processed"),
+            ],
         )
         assert result.exit_code == 0
 
         # Model training
         result = self.runner.invoke(
-            main_app, ["train", "cnn-lstm", "--epochs", "3", "--output-dir", str(self.workflow_dir / "research_models")]
+            main_app,
+            [
+                "train",
+                "cnn-lstm",
+                "--epochs",
+                "3",
+                "--output-dir",
+                str(self.workflow_dir / "research_models"),
+            ],
         )
         assert result.exit_code == 0
 
@@ -488,7 +515,14 @@ class TestDataPipelineIntegration:
 
         # Process updated data
         result = self.runner.invoke(
-            main_app, ["data", "process", "--output-dir", str(self.data_dir / "processed"), "--force-rebuild"]
+            main_app,
+            [
+                "data",
+                "process",
+                "--output-dir",
+                str(self.data_dir / "processed"),
+                "--force-rebuild",
+            ],
         )
         assert result.exit_code == 0
 
@@ -674,7 +708,15 @@ class TestModelTrainingIntegration:
 
         # Hyperparameter optimization
         result = self.runner.invoke(
-            main_app, ["train", "hyperopt", "--n-trials", "10", "--output-dir", str(self.models_dir / "optimization")]
+            main_app,
+            [
+                "train",
+                "hyperopt",
+                "--n-trials",
+                "10",
+                "--output-dir",
+                str(self.models_dir / "optimization"),
+            ],
         )
         assert result.exit_code == 0
 
@@ -807,13 +849,17 @@ class TestTradingSessionIntegration:
 
         # Start paper trading
         result = self.runner.invoke(
-            main_app, ["trade", "paper", "--symbols", "AAPL,GOOGL,MSFT,TSLA", "--duration", "1d"]
+            main_app,
+            ["trade", "paper", "--symbols", "AAPL,GOOGL,MSFT,TSLA", "--duration", "1d"],
         )
         assert result.exit_code == 0
 
         # Test different durations
         for duration in ["1h", "4h", "1d", "1w"]:
-            result = self.runner.invoke(main_app, ["trade", "paper", "--symbols", "AAPL", "--duration", duration])
+            result = self.runner.invoke(
+                main_app,
+                ["trade", "paper", "--symbols", "AAPL", "--duration", duration],
+            )
             assert result.exit_code == 0
 
 
@@ -1054,13 +1100,27 @@ class TestHealthMonitoringIntegration:
 
         # Generate health report
         result = self.runner.invoke(
-            health_app, ["report", "--output", str(self.health_dir / "health_report.html"), "--format", "html"]
+            health_app,
+            [
+                "report",
+                "--output",
+                str(self.health_dir / "health_report.html"),
+                "--format",
+                "html",
+            ],
         )
         assert result.exit_code == 0
 
         # Generate JSON report
         result = self.runner.invoke(
-            health_app, ["report", "--output", str(self.health_dir / "health_report.json"), "--format", "json"]
+            health_app,
+            [
+                "report",
+                "--output",
+                str(self.health_dir / "health_report.json"),
+                "--format",
+                "json",
+            ],
         )
         assert result.exit_code == 0
 
@@ -1123,7 +1183,17 @@ class TestPerformanceUnderLoad:
 
         start_time = time.time()
         result = self.runner.invoke(
-            main_app, ["train", "cnn-lstm", "--epochs", "10", "--batch-size", "64", "--output-dir", str(self.temp_dir)]
+            main_app,
+            [
+                "train",
+                "cnn-lstm",
+                "--epochs",
+                "10",
+                "--batch-size",
+                "64",
+                "--output-dir",
+                str(self.temp_dir),
+            ],
         )
         end_time = time.time()
 
@@ -1227,13 +1297,29 @@ class TestErrorRecoveryScenarios:
 
         # First attempt fails
         result = self.runner.invoke(
-            main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-12-31"]
+            main_app,
+            [
+                "data",
+                "download-all",
+                "--start-date",
+                "2023-01-01",
+                "--end-date",
+                "2023-12-31",
+            ],
         )
         assert result.exit_code != 0
 
         # Second attempt succeeds
         result = self.runner.invoke(
-            main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-12-31"]
+            main_app,
+            [
+                "data",
+                "download-all",
+                "--start-date",
+                "2023-01-01",
+                "--end-date",
+                "2023-12-31",
+            ],
         )
         assert result.exit_code == 0
 
@@ -1259,7 +1345,15 @@ class TestErrorRecoveryScenarios:
 
         # Backtesting should still work
         result = self.runner.invoke(
-            main_app, ["backtest", "strategy", "--data-path", str(self.temp_dir), "--model-path", str(self.temp_dir)]
+            main_app,
+            [
+                "backtest",
+                "strategy",
+                "--data-path",
+                str(self.temp_dir),
+                "--model-path",
+                str(self.temp_dir),
+            ],
         )
         assert result.exit_code == 0
 

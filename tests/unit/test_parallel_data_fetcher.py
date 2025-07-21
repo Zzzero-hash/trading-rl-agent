@@ -44,7 +44,7 @@ def ray_init():
 class TestParallelDataFetcher:
     """Test Ray remote ParallelDataFetcher class."""
 
-    def test_fetcher_initialization(self, ray_init, tmp_path):
+    def test_fetcher_initialization(self, tmp_path):
         """Test ParallelDataFetcher initialization."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -53,7 +53,7 @@ class TestParallelDataFetcher:
         assert cache_dir.exists()
         assert cache_dir.is_dir()
 
-    def test_fetch_symbol_data_success(self, ray_init, tmp_path):
+    def test_fetch_symbol_data_success(self, tmp_path):
         """Test successful data fetching."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -83,7 +83,7 @@ class TestParallelDataFetcher:
         assert isinstance(result["data"], pd.DataFrame)
         assert len(result["data"]) == 3
 
-    def test_fetch_symbol_data_cache_hit(self, ray_init, tmp_path):
+    def test_fetch_symbol_data_cache_hit(self, tmp_path):
         """Test cache hit scenario."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -111,7 +111,7 @@ class TestParallelDataFetcher:
         assert result["source"] == "cache"
         assert len(result["data"]) == 3
 
-    def test_fetch_symbol_data_cache_expired(self, ray_init, tmp_path):
+    def test_fetch_symbol_data_cache_expired(self, tmp_path):
         """Test cache expiration scenario."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=1)
@@ -158,7 +158,7 @@ class TestParallelDataFetcher:
         assert result["success"] is True
         assert result["source"] == "api"  # Should fetch fresh data
 
-    def test_fetch_symbol_data_retry_logic(self, ray_init, tmp_path):
+    def test_fetch_symbol_data_retry_logic(self, tmp_path):
         """Test retry logic for failed requests."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -170,7 +170,13 @@ class TestParallelDataFetcher:
                 Exception("Network error"),
                 Exception("Timeout"),
                 pd.DataFrame(
-                    {"Open": [100.0], "High": [102.0], "Low": [99.0], "Close": [101.0], "Volume": [1000000]},
+                    {
+                        "Open": [100.0],
+                        "High": [102.0],
+                        "Low": [99.0],
+                        "Close": [101.0],
+                        "Volume": [1000000],
+                    },
                     index=pd.date_range("2024-01-01", periods=1),
                 ),
             ]
@@ -181,7 +187,7 @@ class TestParallelDataFetcher:
         assert result["success"] is True
         assert result["source"] == "api"
 
-    def test_fetch_symbol_data_max_retries_exceeded(self, ray_init, tmp_path):
+    def test_fetch_symbol_data_max_retries_exceeded(self, tmp_path):
         """Test behavior when max retries are exceeded."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -197,7 +203,7 @@ class TestParallelDataFetcher:
         assert result["source"] == "api"
         assert "error" in result
 
-    def test_fetch_symbol_data_empty_response(self, ray_init, tmp_path):
+    def test_fetch_symbol_data_empty_response(self, tmp_path):
         """Test handling of empty data response."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -212,13 +218,19 @@ class TestParallelDataFetcher:
         assert result["success"] is False
         assert result["error"] == "Empty data returned"
 
-    def test_fetch_symbol_data_interval_mapping(self, ray_init, tmp_path):
+    def test_fetch_symbol_data_interval_mapping(self, tmp_path):
         """Test interval mapping for different timeframes."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
 
         mock_data = pd.DataFrame(
-            {"Open": [100.0], "High": [102.0], "Low": [99.0], "Close": [101.0], "Volume": [1000000]},
+            {
+                "Open": [100.0],
+                "High": [102.0],
+                "Low": [99.0],
+                "Close": [101.0],
+                "Volume": [1000000],
+            },
             index=pd.date_range("2024-01-01", periods=1),
         )
 
@@ -422,7 +434,7 @@ class TestMemoryMappedDataset:
 class TestParallelDataManager:
     """Test ParallelDataManager functionality."""
 
-    def test_manager_initialization(self, ray_init):
+    def test_manager_initialization(self):
         """Test ParallelDataManager initialization."""
         manager = ParallelDataManager(cache_dir="test_cache", ttl_hours=24, max_workers=4)
 
@@ -430,7 +442,7 @@ class TestParallelDataManager:
         assert manager.ttl == 24 * 3600
         assert manager.max_workers == 4
 
-    def test_fetch_multiple_symbols(self, ray_init, tmp_path):
+    def test_fetch_multiple_symbols(self, tmp_path):
         """Test fetching data for multiple symbols."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=2)
@@ -462,7 +474,7 @@ class TestParallelDataManager:
             assert isinstance(results[symbol], pd.DataFrame)
             assert len(results[symbol]) == 3
 
-    def test_fetch_with_retry(self, ray_init, tmp_path):
+    def test_fetch_with_retry(self, tmp_path):
         """Test fetching with retry logic."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=2)
@@ -493,7 +505,7 @@ class TestParallelDataManager:
             assert symbol in results
             assert isinstance(results[symbol], pd.DataFrame)
 
-    def test_create_memory_mapped_dataset(self, ray_init, tmp_path):
+    def test_create_memory_mapped_dataset(self, tmp_path):
         """Test creating memory-mapped dataset."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=2)
@@ -528,7 +540,7 @@ class TestParallelDataManager:
         assert isinstance(dataset, MemoryMappedDataset)
         assert output_path.exists()
 
-    def test_get_cache_stats(self, ray_init, tmp_path):
+    def test_get_cache_stats(self, tmp_path):
         """Test getting cache statistics."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=2)
@@ -541,7 +553,7 @@ class TestParallelDataManager:
         assert "total" in stats
         assert "hit_rate" in stats
 
-    def test_clear_cache(self, ray_init, tmp_path):
+    def test_clear_cache(self, tmp_path):
         """Test clearing cache."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=2)
@@ -566,7 +578,7 @@ class TestParallelDataManager:
 class TestUtilityFunctions:
     """Test utility functions."""
 
-    def test_fetch_data_parallel(self, ray_init, tmp_path):
+    def test_fetch_data_parallel(self, tmp_path):
         """Test fetch_data_parallel function."""
         symbols = ["AAPL", "GOOGL"]
 
@@ -588,7 +600,12 @@ class TestUtilityFunctions:
             mock_ticker.return_value = mock_ticker_instance
 
             results = fetch_data_parallel(
-                symbols, "2024-01-01", "2024-01-03", "1d", cache_dir=str(tmp_path), max_workers=2
+                symbols,
+                "2024-01-01",
+                "2024-01-03",
+                "1d",
+                cache_dir=str(tmp_path),
+                max_workers=2,
             )
 
         assert len(results) == 2
@@ -596,7 +613,7 @@ class TestUtilityFunctions:
             assert symbol in results
             assert isinstance(results[symbol], pd.DataFrame)
 
-    def test_fetch_data_with_retry(self, ray_init, tmp_path):
+    def test_fetch_data_with_retry(self, tmp_path):
         """Test fetch_data_with_retry function."""
         symbols = ["AAPL", "GOOGL"]
 
@@ -618,7 +635,12 @@ class TestUtilityFunctions:
             mock_ticker.return_value = mock_ticker_instance
 
             results = fetch_data_with_retry(
-                symbols, "2024-01-01", "2024-01-03", "1d", cache_dir=str(tmp_path), max_retries=3
+                symbols,
+                "2024-01-01",
+                "2024-01-03",
+                "1d",
+                cache_dir=str(tmp_path),
+                max_retries=3,
             )
 
         assert len(results) == 2
@@ -630,7 +652,7 @@ class TestUtilityFunctions:
 class TestParallelDataFetcherEdgeCases:
     """Test edge cases and error scenarios."""
 
-    def test_missing_yfinance(self, ray_init, tmp_path):
+    def test_missing_yfinance(self, tmp_path):
         """Test handling when yfinance is not available."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -641,7 +663,7 @@ class TestParallelDataFetcherEdgeCases:
         assert result["success"] is False
         assert "ImportError" in result["error"]
 
-    def test_network_failures(self, ray_init, tmp_path):
+    def test_network_failures(self, tmp_path):
         """Test handling of network failures."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -660,7 +682,7 @@ class TestParallelDataFetcherEdgeCases:
         assert result["success"] is False
         assert "error" in result
 
-    def test_invalid_symbols(self, ray_init, tmp_path):
+    def test_invalid_symbols(self, tmp_path):
         """Test handling of invalid symbols."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -675,7 +697,7 @@ class TestParallelDataFetcherEdgeCases:
         assert result["success"] is False
         assert result["error"] == "Empty data returned"
 
-    def test_malformed_data(self, ray_init, tmp_path):
+    def test_malformed_data(self, tmp_path):
         """Test handling of malformed data."""
         cache_dir = tmp_path / "cache"
         fetcher = ParallelDataFetcher.remote(str(cache_dir), ttl_hours=24)
@@ -701,7 +723,7 @@ class TestParallelDataFetcherEdgeCases:
         assert result["success"] is True
         assert isinstance(result["data"], pd.DataFrame)
 
-    def test_memory_optimization(self, ray_init, tmp_path):
+    def test_memory_optimization(self, tmp_path):
         """Test memory optimization for large datasets."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=2)
@@ -727,7 +749,7 @@ class TestParallelDataFetcherEdgeCases:
         assert isinstance(dataset, MemoryMappedDataset)
         assert len(dataset) == 10000
 
-    def test_concurrent_access(self, ray_init, tmp_path):
+    def test_concurrent_access(self, tmp_path):
         """Test concurrent access to parallel data fetcher."""
         import threading
 
@@ -779,7 +801,7 @@ class TestParallelDataFetcherEdgeCases:
 class TestParallelDataFetcherIntegration:
     """Integration tests for parallel data fetcher."""
 
-    def test_end_to_end_workflow(self, ray_init, tmp_path):
+    def test_end_to_end_workflow(self, tmp_path):
         """Test complete end-to-end workflow."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=2)
@@ -820,7 +842,7 @@ class TestParallelDataFetcherIntegration:
             assert isinstance(dataset, MemoryMappedDataset)
             assert output_path.exists()
 
-    def test_caching_workflow(self, ray_init, tmp_path):
+    def test_caching_workflow(self, tmp_path):
         """Test complete caching workflow."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=2)
@@ -858,7 +880,7 @@ class TestParallelDataFetcherIntegration:
                 pd.testing.assert_frame_equal(results1[symbol], results2[symbol])
 
     @pytest.mark.benchmark
-    def test_parallel_performance(self, benchmark, ray_init, tmp_path):
+    def test_parallel_performance(self, benchmark, tmp_path):
         """Benchmark parallel data fetching performance."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=4)
@@ -885,7 +907,7 @@ class TestParallelDataFetcherIntegration:
             benchmark(lambda: manager.fetch_multiple_symbols(symbols, "2024-01-01", "2024-12-31", "1d"))
 
     @pytest.mark.benchmark
-    def test_memory_mapped_performance(self, benchmark, ray_init, tmp_path):
+    def test_memory_mapped_performance(self, benchmark, tmp_path):
         """Benchmark memory-mapped dataset performance."""
         cache_dir = tmp_path / "cache"
         manager = ParallelDataManager(str(cache_dir), ttl_hours=24, max_workers=2)

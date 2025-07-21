@@ -35,7 +35,7 @@ except ImportError:
     PLOTLY_AVAILABLE = False
     go = None
     make_subplots = None
-from ..core.logging import get_logger
+from src.trading_rl_agent.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -94,7 +94,9 @@ class FactorModel:
 
         # Create factor DataFrame
         self.factors = pd.DataFrame(
-            factors, index=returns.columns, columns=[f"Factor_{i + 1}" for i in range(factors.shape[1])]
+            factors,
+            index=returns.columns,
+            columns=[f"Factor_{i + 1}" for i in range(factors.shape[1])],
         )
 
         # Add market factor
@@ -242,7 +244,10 @@ class BrinsonAttributor:
         }
 
     def calculate_sector_attribution(
-        self, portfolio_data: pd.DataFrame, benchmark_data: pd.DataFrame, returns_data: pd.DataFrame
+        self,
+        portfolio_data: pd.DataFrame,
+        benchmark_data: pd.DataFrame,
+        returns_data: pd.DataFrame,
     ) -> dict[str, Any]:
         """
         Calculate sector-level attribution.
@@ -308,7 +313,10 @@ class RiskAdjustedAttributor:
         }
 
     def calculate_risk_adjusted_attribution(
-        self, portfolio_returns: pd.Series, benchmark_returns: pd.Series, factor_returns: pd.DataFrame
+        self,
+        portfolio_returns: pd.Series,
+        benchmark_returns: pd.Series,
+        factor_returns: pd.DataFrame,
     ) -> dict[str, Any]:
         """
         Calculate risk-adjusted attribution metrics.
@@ -360,7 +368,10 @@ class AttributionVisualizer:
         self.use_plotly = config.use_plotly and PLOTLY_AVAILABLE
 
     def create_attribution_dashboard(
-        self, attribution_results: dict[str, Any], portfolio_returns: pd.Series, benchmark_returns: pd.Series
+        self,
+        attribution_results: dict[str, Any],
+        portfolio_returns: pd.Series,
+        benchmark_returns: pd.Series,
     ) -> Any:
         """Create comprehensive attribution dashboard."""
         if self.use_plotly:
@@ -368,7 +379,10 @@ class AttributionVisualizer:
         return self._create_matplotlib_dashboard(attribution_results, portfolio_returns, benchmark_returns)
 
     def _create_plotly_dashboard(
-        self, attribution_results: dict[str, Any], portfolio_returns: pd.Series, benchmark_returns: pd.Series
+        self,
+        attribution_results: dict[str, Any],
+        portfolio_returns: pd.Series,
+        benchmark_returns: pd.Series,
     ) -> Any:
         """Create interactive Plotly dashboard."""
         # Create subplots
@@ -396,14 +410,20 @@ class AttributionVisualizer:
 
         fig.add_trace(
             go.Scatter(
-                x=cumulative_portfolio.index, y=cumulative_portfolio.values, name="Portfolio", line=dict(color="blue")
+                x=cumulative_portfolio.index,
+                y=cumulative_portfolio.values,
+                name="Portfolio",
+                line={"color": "blue"},
             ),
             row=1,
             col=1,
         )
         fig.add_trace(
             go.Scatter(
-                x=cumulative_benchmark.index, y=cumulative_benchmark.values, name="Benchmark", line=dict(color="red")
+                x=cumulative_benchmark.index,
+                y=cumulative_benchmark.values,
+                name="Benchmark",
+                line={"color": "red"},
             ),
             row=1,
             col=1,
@@ -413,7 +433,11 @@ class AttributionVisualizer:
         if "factor_attribution" in attribution_results:
             factor_contrib = attribution_results["factor_attribution"]
             fig.add_trace(
-                go.Bar(x=list(factor_contrib.keys()), y=list(factor_contrib.values()), name="Factor Contributions"),
+                go.Bar(
+                    x=list(factor_contrib.keys()),
+                    y=list(factor_contrib.values()),
+                    name="Factor Contributions",
+                ),
                 row=1,
                 col=2,
             )
@@ -422,21 +446,38 @@ class AttributionVisualizer:
         if "risk_metrics" in attribution_results:
             risk_metrics = attribution_results["risk_metrics"]
             fig.add_trace(
-                go.Bar(x=list(risk_metrics.keys()), y=list(risk_metrics.values()), name="Risk Metrics"), row=2, col=1
+                go.Bar(
+                    x=list(risk_metrics.keys()),
+                    y=list(risk_metrics.values()),
+                    name="Risk Metrics",
+                ),
+                row=2,
+                col=1,
             )
 
         # 4. Factor loadings
         if "factor_loadings" in attribution_results:
             loadings = attribution_results["factor_loadings"]
             fig.add_trace(
-                go.Scatter(x=loadings.index, y=loadings.values, mode="markers", name="Factor Loadings"), row=2, col=2
+                go.Scatter(
+                    x=loadings.index,
+                    y=loadings.values,
+                    mode="markers",
+                    name="Factor Loadings",
+                ),
+                row=2,
+                col=2,
             )
 
         # 5. Sector attribution
         if "sector_attribution" in attribution_results:
             sector_attrib = attribution_results["sector_attribution"]
             fig.add_trace(
-                go.Bar(x=list(sector_attrib.keys()), y=list(sector_attrib.values()), name="Sector Attribution"),
+                go.Bar(
+                    x=list(sector_attrib.keys()),
+                    y=list(sector_attrib.values()),
+                    name="Sector Attribution",
+                ),
                 row=3,
                 col=1,
             )
@@ -445,7 +486,13 @@ class AttributionVisualizer:
         if "risk_adjusted" in attribution_results:
             risk_adj = attribution_results["risk_adjusted"]
             fig.add_trace(
-                go.Bar(x=list(risk_adj.keys()), y=list(risk_adj.values()), name="Risk-Adjusted Metrics"), row=3, col=2
+                go.Bar(
+                    x=list(risk_adj.keys()),
+                    y=list(risk_adj.values()),
+                    name="Risk-Adjusted Metrics",
+                ),
+                row=3,
+                col=2,
             )
 
         fig.update_layout(title="Performance Attribution Dashboard", height=1200, showlegend=True)
@@ -453,7 +500,10 @@ class AttributionVisualizer:
         return fig
 
     def _create_matplotlib_dashboard(
-        self, attribution_results: dict[str, Any], portfolio_returns: pd.Series, benchmark_returns: pd.Series
+        self,
+        attribution_results: dict[str, Any],
+        portfolio_returns: pd.Series,
+        benchmark_returns: pd.Series,
     ) -> plt.Figure:
         """Create matplotlib dashboard."""
         fig, axes = plt.subplots(3, 2, figsize=self.config.figure_size)
@@ -569,7 +619,9 @@ class PerformanceAttributor:
         # 3. Factor attribution
         self.logger.info("Calculating factor attribution...")
         factor_attribution = self._calculate_factor_attribution(
-            portfolio_weights, self.factor_model.factor_loadings, self.factor_model.factors
+            portfolio_weights,
+            self.factor_model.factor_loadings,
+            self.factor_model.factors,
         )
 
         # 4. Brinson attribution
@@ -601,7 +653,10 @@ class PerformanceAttributor:
         return self.attribution_results
 
     def _calculate_factor_attribution(
-        self, portfolio_weights: pd.DataFrame, factor_loadings: pd.DataFrame, factor_returns: pd.DataFrame
+        self,
+        portfolio_weights: pd.DataFrame,
+        factor_loadings: pd.DataFrame,
+        factor_returns: pd.DataFrame,
     ) -> dict[str, float]:
         """Calculate factor contribution to portfolio performance."""
         factor_contrib = {}
@@ -617,7 +672,7 @@ class PerformanceAttributor:
                     common_assets = weights.index.intersection(factor_loadings.index)
                     if len(common_assets) == 0:
                         continue
-                    weights_subset = weights[common_assets]
+                    weights[common_assets]
                     loadings = factor_loadings.loc[common_assets]
                     factor_ret = factor_returns.loc[date, factor]
 

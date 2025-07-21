@@ -133,7 +133,15 @@ class TestCLISmokeData:
         mock_download.return_value = None
 
         result = self.runner.invoke(
-            main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-01-31"]
+            main_app,
+            [
+                "data",
+                "download-all",
+                "--start-date",
+                "2023-01-01",
+                "--end-date",
+                "2023-01-31",
+            ],
         )
         assert result.exit_code == 0
 
@@ -478,7 +486,15 @@ class TestCLISmokeErrorHandling:
         mock_download.side_effect = Exception("Network error")
 
         result = self.runner.invoke(
-            main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-01-31"]
+            main_app,
+            [
+                "data",
+                "download-all",
+                "--start-date",
+                "2023-01-01",
+                "--end-date",
+                "2023-01-31",
+            ],
         )
         assert result.exit_code != 0
 
@@ -603,7 +619,15 @@ class TestCLISmokePerformance:
 
         start_time = time.time()
         result = self.runner.invoke(
-            main_app, ["data", "download-all", "--start-date", "2023-01-01", "--end-date", "2023-01-31"]
+            main_app,
+            [
+                "data",
+                "download-all",
+                "--start-date",
+                "2023-01-01",
+                "--end-date",
+                "2023-01-31",
+            ],
         )
         end_time = time.time()
 

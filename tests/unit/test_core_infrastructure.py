@@ -10,38 +10,11 @@ This module provides thorough test coverage for:
 
 import logging
 import sys
-import types
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 import yaml
-
-# Mock dependencies that might not be available
-if "structlog" not in sys.modules:
-    stub = types.SimpleNamespace(
-        BoundLogger=object,
-        stdlib=types.SimpleNamespace(
-            ProcessorFormatter=object,
-            BoundLogger=object,
-            LoggerFactory=lambda: None,
-            filter_by_level=lambda *a, **k: None,
-            add_logger_name=lambda *a, **k: None,
-            add_log_level=lambda *a, **k: None,
-            PositionalArgumentsFormatter=lambda: None,
-            wrap_for_formatter=lambda f: f,
-        ),
-        processors=types.SimpleNamespace(
-            TimeStamper=lambda **_: None,
-            StackInfoRenderer=lambda **_: None,
-            format_exc_info=lambda **_: None,
-            UnicodeDecoder=lambda **_: None,
-        ),
-        dev=types.SimpleNamespace(ConsoleRenderer=lambda **_: None),
-        configure=lambda **_: None,
-        get_logger=lambda name=None: logging.getLogger(name),
-    )
-    sys.modules["structlog"] = stub
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
@@ -81,12 +54,8 @@ from trading_rl_agent.core.unified_config import (
     UnifiedConfig,
     load_config,
 )
-from trading_rl_agent.core.unified_config import (
-    InfrastructureConfig as UnifiedInfrastructureConfig,
-)
-from trading_rl_agent.core.unified_config import (
-    MonitoringConfig as UnifiedMonitoringConfig,
-)
+from trading_rl_agent.core.unified_config import InfrastructureConfig as UnifiedInfrastructureConfig
+from trading_rl_agent.core.unified_config import MonitoringConfig as UnifiedMonitoringConfig
 
 pytestmark = pytest.mark.unit
 
@@ -457,7 +426,7 @@ class TestConfigManager:
     def test_update_config(self):
         """Test updating configuration with new values."""
         manager = ConfigManager()
-        config = manager.get_config()
+        manager.get_config()
 
         # Update top-level values
         updates = {
@@ -473,7 +442,7 @@ class TestConfigManager:
     def test_update_config_nested(self):
         """Test updating nested configuration values."""
         manager = ConfigManager()
-        config = manager.get_config()
+        manager.get_config()
 
         # Update nested values
         updates = {
@@ -888,7 +857,9 @@ class TestUnifiedConfig:
     def test_get_api_credentials(self):
         """Test get_api_credentials method."""
         config = UnifiedConfig(
-            alpaca_api_key="test_key", alpaca_secret_key="test_secret", alpaca_base_url="https://test.alpaca.markets"
+            alpaca_api_key="test_key",
+            alpaca_secret_key="test_secret",
+            alpaca_base_url="https://test.alpaca.markets",
         )
 
         credentials = config.get_api_credentials("alpaca")

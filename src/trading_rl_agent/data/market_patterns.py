@@ -58,7 +58,12 @@ class MarketPatternGenerator:
     Advanced synthetic market data generator with realistic patterns.
     """
 
-    def __init__(self, base_price: float = 100.0, base_volatility: float = 0.02, seed: int | None = None):
+    def __init__(
+        self,
+        base_price: float = 100.0,
+        base_volatility: float = 0.02,
+        seed: int | None = None,
+    ):
         self.base_price = base_price
         self.base_volatility = base_volatility
         self.seed = seed
@@ -233,13 +238,15 @@ class MarketPatternGenerator:
 
         # For integrated models (d > 0), we can't use constant trend
         # Use linear trend instead, or no trend for d > 1
-        if order[1] > 0:  # d > 0
-            trend_param = "t" if order[1] == 1 else None  # linear trend for d=1, no trend for d>1
-        else:
-            trend_param = "c"  # constant trend for d=0
+        trend_param = ("t" if order[1] == 1 else None) if order[1] > 0 else "c"
 
         if seasonal_order:
-            model = SARIMAX(np.zeros(n_periods), order=order, seasonal_order=seasonal_order, trend=trend_param)
+            model = SARIMAX(
+                np.zeros(n_periods),
+                order=order,
+                seasonal_order=seasonal_order,
+                trend=trend_param,
+            )
         else:
             model = ARIMA(np.zeros(n_periods), order=order, trend=trend_param)
 
@@ -389,7 +396,11 @@ class MarketPatternGenerator:
                 # Use a more precise method to avoid floating point issues
                 df[col] = np.round(df[col] / tick_size) * tick_size
                 # Ensure exact alignment by handling floating point precision
-                df[col] = np.where(np.abs(df[col] % tick_size) < 1e-10, df[col] - (df[col] % tick_size), df[col])
+                df[col] = np.where(
+                    np.abs(df[col] % tick_size) < 1e-10,
+                    df[col] - (df[col] % tick_size),
+                    df[col],
+                )
 
         df["spread"] = df["ask"] - df["bid"]
         df["mid_price"] = (df["bid"] + df["ask"]) / 2
@@ -425,7 +436,11 @@ class MarketPatternGenerator:
             "pattern_specific_tests": {},
         }
 
-        if pattern_type in [PatternType.UPTREND.value, PatternType.DOWNTREND.value, PatternType.SIDEWAYS.value]:
+        if pattern_type in [
+            PatternType.UPTREND.value,
+            PatternType.DOWNTREND.value,
+            PatternType.SIDEWAYS.value,
+        ]:
             validation_results["pattern_quality"] = self._validate_trend_pattern(data, pattern_type)
         elif "head_and_shoulders" in pattern_type or "double" in pattern_type:
             validation_results["pattern_quality"] = self._validate_reversal_pattern(data, pattern_type)
@@ -560,7 +575,7 @@ class MarketPatternGenerator:
             "price_positive": (data[["open", "high", "low", "close"]] > 0).all().all(),
         }
 
-    def _validate_trend_pattern(self, data: pd.DataFrame, pattern_type: str) -> dict:
+    def _validate_trend_pattern(self, data: pd.DataFrame, _pattern_type: str) -> dict:
         returns = data["close"].pct_change().dropna()
         return {
             "linear_trend": float(np.polyfit(range(len(returns)), returns, 1)[0]),
@@ -568,7 +583,7 @@ class MarketPatternGenerator:
             "trend_strength": float(abs(returns.mean()) / returns.std()),
         }
 
-    def _validate_reversal_pattern(self, data: pd.DataFrame, pattern_type: str) -> dict:
+    def _validate_reversal_pattern(self, data: pd.DataFrame, _pattern_type: str) -> dict:
         prices = data["close"].values
         return {
             "peak_count": int(self._count_peaks(prices)),
@@ -812,18 +827,14 @@ class MarketPatternGenerator:
 
     # --- Enhanced validation methods ---
 
-    def _validate_triangle_pattern(self, data: pd.DataFrame, pattern_type: str) -> dict:
+    def _validate_triangle_pattern(self, data: pd.DataFrame, _pattern_type: str) -> dict:
         """Validate triangle pattern quality."""
         prices = data["close"].values
         highs = data["high"].values
         lows = data["low"].values
 
         # Calculate trend lines
-        mid_point = len(prices) // 2
-        first_half_highs = highs[:mid_point]
-        second_half_highs = highs[mid_point:]
-        first_half_lows = lows[:mid_point]
-        second_half_lows = lows[mid_point:]
+        len(prices) // 2
 
         # Fit trend lines
         high_trend = np.polyfit(range(len(highs)), highs, 1)[0]
@@ -836,7 +847,7 @@ class MarketPatternGenerator:
             "pattern_symmetry": float(self._calculate_pattern_symmetry(prices)),
         }
 
-    def _validate_continuation_pattern(self, data: pd.DataFrame, pattern_type: str) -> dict:
+    def _validate_continuation_pattern(self, data: pd.DataFrame, _pattern_type: str) -> dict:
         """Validate continuation pattern quality."""
         prices = data["close"].values
 

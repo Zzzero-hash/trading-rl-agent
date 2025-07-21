@@ -50,7 +50,11 @@ class PerformanceTestRunner:
         }
 
     def run_tests(
-        self, test_type: str, benchmark: bool = False, load_level: str | None = None, parallel: bool = False
+        self,
+        test_type: str,
+        benchmark: bool = False,
+        load_level: str | None = None,
+        parallel: bool = False,
     ) -> dict:
         """Run performance tests based on configuration."""
         console.print(f"[bold blue]Running {test_type} performance tests...[/bold blue]")
@@ -81,7 +85,9 @@ class PerformanceTestRunner:
 
         # Run tests
         with Progress(
-            SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
         ) as progress:
             task = progress.add_task("Running performance tests...", total=None)
 
@@ -416,20 +422,34 @@ def main():
     parser.add_argument("--benchmark", action="store_true", help="Run benchmark tests")
 
     parser.add_argument(
-        "--load-level", choices=["light", "medium", "heavy", "stress"], help="Load level for stress/load testing"
+        "--load-level",
+        choices=["light", "medium", "heavy", "stress"],
+        help="Load level for stress/load testing",
     )
 
     parser.add_argument("--parallel", action="store_true", help="Run tests in parallel")
 
-    parser.add_argument("--benchmark-suite", action="store_true", help="Run comprehensive benchmark suite")
+    parser.add_argument(
+        "--benchmark-suite",
+        action="store_true",
+        help="Run comprehensive benchmark suite",
+    )
 
-    parser.add_argument("--stress-suite", action="store_true", help="Run comprehensive stress testing suite")
+    parser.add_argument(
+        "--stress-suite",
+        action="store_true",
+        help="Run comprehensive stress testing suite",
+    )
 
     parser.add_argument("--load-suite", action="store_true", help="Run comprehensive load testing suite")
 
     parser.add_argument("--generate-report", action="store_true", help="Generate performance report")
 
-    parser.add_argument("--output-dir", default="performance_results", help="Output directory for results")
+    parser.add_argument(
+        "--output-dir",
+        default="performance_results",
+        help="Output directory for results",
+    )
 
     parser.add_argument("--cleanup", action="store_true", help="Clean up temporary files after testing")
 
@@ -455,7 +475,10 @@ def main():
         else:
             # Run specific test type
             runner.run_tests(
-                test_type=args.test_type, benchmark=args.benchmark, load_level=args.load_level, parallel=args.parallel
+                test_type=args.test_type,
+                benchmark=args.benchmark,
+                load_level=args.load_level,
+                parallel=args.parallel,
             )
 
         # Generate report if requested

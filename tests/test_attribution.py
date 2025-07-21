@@ -40,16 +40,22 @@ def sample_data(random_seed=42):
     # Generate sample returns
     np.random.seed(random_seed)
     asset_returns = pd.DataFrame(
-        np.random.normal(0.001, 0.02, (len(symbols), len(dates))), index=symbols, columns=dates
+        np.random.normal(0.001, 0.02, (len(symbols), len(dates))),
+        index=symbols,
+        columns=dates,
     )
 
     # Generate sample weights
     portfolio_weights = pd.DataFrame(
-        np.random.dirichlet(np.ones(len(symbols)), len(dates)).T, index=symbols, columns=dates
+        np.random.dirichlet(np.ones(len(symbols)), len(dates)).T,
+        index=symbols,
+        columns=dates,
     )
 
     benchmark_weights = pd.DataFrame(
-        np.random.dirichlet(np.ones(len(symbols)) * 2, len(dates)).T, index=symbols, columns=dates
+        np.random.dirichlet(np.ones(len(symbols)) * 2, len(dates)).T,
+        index=symbols,
+        columns=dates,
     )
 
     # Calculate portfolio and benchmark returns
@@ -62,7 +68,16 @@ def sample_data(random_seed=42):
 
     # Create sector data
     sector_data = pd.DataFrame(
-        {"sector": ["Technology", "Technology", "Technology", "Consumer", "Technology"]}, index=symbols
+        {
+            "sector": [
+                "Technology",
+                "Technology",
+                "Technology",
+                "Consumer",
+                "Technology",
+            ]
+        },
+        index=symbols,
     )
 
     return {
@@ -103,7 +118,11 @@ class TestAttributionConfig:
     def test_custom_config(self):
         """Test custom configuration values."""
         config = AttributionConfig(
-            risk_free_rate=0.03, confidence_level=0.99, lookback_period=500, use_plotly=False, max_factors=5
+            risk_free_rate=0.03,
+            confidence_level=0.99,
+            lookback_period=500,
+            use_plotly=False,
+            max_factors=5,
         )
         assert config.risk_free_rate == 0.03
         assert config.confidence_level == 0.99
@@ -159,7 +178,9 @@ class TestFactorModel:
 
         # Create data with insufficient observations
         small_returns = pd.DataFrame(
-            np.random.normal(0, 0.01, (3, 10)), index=["A", "B", "C"], columns=pd.date_range("2023-01-01", periods=10)
+            np.random.normal(0, 0.01, (3, 10)),
+            index=["A", "B", "C"],
+            columns=pd.date_range("2023-01-01", periods=10),
         )
         small_benchmark = pd.Series(np.random.normal(0, 0.01, 10), index=pd.date_range("2023-01-01", periods=10))
 
@@ -261,7 +282,9 @@ class TestRiskAdjustedAttributor:
         )
 
         result = attributor.calculate_risk_adjusted_attribution(
-            sample_data["portfolio_returns"], sample_data["benchmark_returns"], factor_returns
+            sample_data["portfolio_returns"],
+            sample_data["benchmark_returns"],
+            factor_returns,
         )
 
         assert "portfolio_risk" in result
@@ -293,7 +316,9 @@ class TestAttributionVisualizer:
         }
 
         fig = visualizer.create_attribution_dashboard(
-            attribution_results, sample_data["portfolio_returns"], sample_data["benchmark_returns"]
+            attribution_results,
+            sample_data["portfolio_returns"],
+            sample_data["benchmark_returns"],
         )
 
         assert fig is not None

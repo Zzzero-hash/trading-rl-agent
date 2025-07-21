@@ -107,7 +107,11 @@ class TestLoadTesting:
 
         # Simulate medium load
         def simulate_medium_load():
-            results = {"feature_engineering": [], "data_fetching": [], "risk_calculations": []}
+            results = {
+                "feature_engineering": [],
+                "data_fetching": [],
+                "risk_calculations": [],
+            }
 
             # Simulate concurrent users with different operations
             with concurrent.futures.ThreadPoolExecutor(max_workers=scenario["concurrent_users"]) as executor:
@@ -266,7 +270,7 @@ class TestLoadTesting:
                 # Portfolio management requests
                 for i in range(scenario["concurrent_users"] // 6):
                     weights = np.random.dirichlet(np.ones(len(returns_df.columns)))
-                    portfolio_weights = dict(zip(returns_df.columns, weights))
+                    portfolio_weights = dict(zip(returns_df.columns, weights, strict=False))
                     future = executor.submit(var_calculator.monte_carlo_var, portfolio_weights)
                     futures.append(("portfolio", future))
 
@@ -396,7 +400,7 @@ class TestLoadTesting:
                 # Portfolio management requests (10% of load)
                 for i in range(int(scenario["concurrent_users"] * 0.1)):
                     weights = np.random.dirichlet(np.ones(len(returns_df.columns)))
-                    portfolio_weights = dict(zip(returns_df.columns, weights))
+                    portfolio_weights = dict(zip(returns_df.columns, weights, strict=False))
                     future = executor.submit(var_calculator.monte_carlo_var, portfolio_weights)
                     futures.append(("portfolio", future))
 
@@ -556,10 +560,22 @@ class TestLoadTesting:
 
         # Simulate different user types
         user_types = {
-            "data_analyst": {"weight": 0.3, "operations": ["feature_engineering", "data_fetching"]},
-            "risk_manager": {"weight": 0.2, "operations": ["risk_calculation", "portfolio_management"]},
-            "trader": {"weight": 0.4, "operations": ["feature_engineering", "risk_calculation"]},
-            "researcher": {"weight": 0.1, "operations": ["data_fetching", "feature_engineering"]},
+            "data_analyst": {
+                "weight": 0.3,
+                "operations": ["feature_engineering", "data_fetching"],
+            },
+            "risk_manager": {
+                "weight": 0.2,
+                "operations": ["risk_calculation", "portfolio_management"],
+            },
+            "trader": {
+                "weight": 0.4,
+                "operations": ["feature_engineering", "risk_calculation"],
+            },
+            "researcher": {
+                "weight": 0.1,
+                "operations": ["data_fetching", "feature_engineering"],
+            },
         }
 
         performance_monitor.start_monitoring()
@@ -589,7 +605,11 @@ class TestLoadTesting:
                 for user_type, count in user_distribution.items():
                     for i in range(count):
                         future = executor.submit(
-                            self._simulate_user_session, user_type, test_data, feature_engineer, data_manager
+                            self._simulate_user_session,
+                            user_type,
+                            test_data,
+                            feature_engineer,
+                            data_manager,
                         )
                         futures.append((user_type, future))
 
@@ -643,6 +663,7 @@ class TestLoadTesting:
         print(f"  CPU usage: {metrics['average_cpu_percent']:.1f}%")
 
         # Log user type distribution
+        user_distribution = {}
         for user_type, count in user_distribution.items():
             user_sessions = [s for s in result["user_sessions"] if s.get("user_type") == user_type]
             user_success_rate = len([s for s in user_sessions if "error" not in s]) / len(user_sessions)
@@ -659,7 +680,7 @@ class TestLoadTesting:
                 "volatility": returns.std(),
                 "var_95": np.percentile(returns, 5),
                 "max_drawdown": (returns.cumsum() - returns.cumsum().expanding().max()).min(),
-                "sharpe_ratio": returns.mean() / returns.std() if returns.std() > 0 else 0,
+                "sharpe_ratio": (returns.mean() / returns.std() if returns.std() > 0 else 0),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -677,7 +698,11 @@ class TestLoadTesting:
 
                 symbols = test_data["symbol"].unique()[:5]
                 fetch_result = data_manager.fetch_multiple_symbols(
-                    symbols=symbols, start_date="2020-01-01", end_date="2023-01-01", interval="1d", show_progress=False
+                    symbols=symbols,
+                    start_date="2020-01-01",
+                    end_date="2023-01-01",
+                    interval="1d",
+                    show_progress=False,
                 )
                 operations["data_fetching"] = len(fetch_result)
 
@@ -702,7 +727,11 @@ class TestLoadTesting:
                 # Researchers need extensive data and feature analysis
                 symbols = test_data["symbol"].unique()[:10]
                 fetch_result = data_manager.fetch_multiple_symbols(
-                    symbols=symbols, start_date="2020-01-01", end_date="2023-01-01", interval="1d", show_progress=False
+                    symbols=symbols,
+                    start_date="2020-01-01",
+                    end_date="2023-01-01",
+                    interval="1d",
+                    show_progress=False,
                 )
                 operations["data_fetching"] = len(fetch_result)
 

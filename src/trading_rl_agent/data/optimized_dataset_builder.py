@@ -34,7 +34,8 @@ import psutil
 from sklearn.preprocessing import RobustScaler
 from tqdm import tqdm
 
-from ..features.alternative_data import AlternativeDataConfig, AlternativeDataFeatures
+from src.trading_rl_agent.features.alternative_data import AlternativeDataConfig, AlternativeDataFeatures
+
 from .csv_utils import save_csv_chunked
 from .data_standardizer import DataStandardizer
 from .features import generate_features
@@ -199,7 +200,10 @@ class OptimizedDatasetBuilder:
         # Add synthetic data if needed
         for symbol in self.config.symbols:
             if symbol not in real_data or len(real_data[symbol]) < self.config.min_samples_per_symbol:
-                samples_needed = max(0, self.config.min_samples_per_symbol - len(real_data.get(symbol, pd.DataFrame())))
+                samples_needed = max(
+                    0,
+                    self.config.min_samples_per_symbol - len(real_data.get(symbol, pd.DataFrame())),
+                )
 
                 if samples_needed > 0 or self.config.real_data_ratio < 1.0:
                     synthetic_samples = int(samples_needed / (1 - max(0.1, self.config.real_data_ratio)))
@@ -279,8 +283,8 @@ class OptimizedDatasetBuilder:
                 Q1 = df[col].quantile(0.25)
                 Q3 = df[col].quantile(0.75)
                 IQR = Q3 - Q1
-                lower_bound = Q1 - 1.5 * IQR
-                upper_bound = Q3 + 1.5 * IQR
+                Q1 - 1.5 * IQR
+                Q3 + 1.5 * IQR
 
                 # Only remove very extreme outliers (beyond 5*IQR) to be more conservative
                 extreme_lower = Q1 - 5 * IQR
@@ -533,7 +537,7 @@ class OptimizedDatasetBuilder:
             "prediction_horizon": self.config.prediction_horizon,
             "overlap_ratio": self.config.overlap_ratio,
             "total_sequences": len(sequences_array),
-            "features_per_timestep": sequences_array.shape[2] if len(sequences_array.shape) == 3 else 0,
+            "features_per_timestep": (sequences_array.shape[2] if len(sequences_array.shape) == 3 else 0),
         }
 
         logger.info(f"  ✓ Created {len(sequences_array)} sequences of shape {sequences_array.shape}")
@@ -625,7 +629,7 @@ class OptimizedDatasetBuilder:
         # Create memory-mapped dataset if enabled
         if self.config.use_memory_mapping:
             mmap_path = self.output_dir / "sequences.mmap"
-            mmap_dataset = self.data_manager.create_memory_mapped_dataset(
+            self.data_manager.create_memory_mapped_dataset(
                 {"sequences": pd.DataFrame(sequences.reshape(-1, sequences.shape[-1]))},
                 str(mmap_path),
             )
@@ -643,7 +647,7 @@ class OptimizedDatasetBuilder:
                 "targets_csv": str(targets_csv_path),
                 "features": str(features_path),
                 "metadata": str(self.output_dir / "metadata.json"),
-                "standardizer": str(self.output_dir / "standardizer.pkl") if hasattr(self, "standardizer") else None,
+                "standardizer": (str(self.output_dir / "standardizer.pkl") if hasattr(self, "standardizer") else None),
             },
         }
 

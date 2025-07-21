@@ -19,11 +19,11 @@ from typing import Any
 import pandas as pd
 import torch
 
-from ..agents.hybrid import HybridAgent
-from ..data.live_feed import LiveDataFeed
-from ..models.cnn_lstm import CNNLSTMModel
-from ..risk.manager import RiskLimits, RiskManager
-from ..utils.metrics import calculate_sharpe_ratio
+from src.trading_rl_agent.agents.hybrid import HybridAgent
+from src.trading_rl_agent.data.live_feed import LiveDataFeed
+from src.trading_rl_agent.models.cnn_lstm import CNNLSTMModel
+from src.trading_rl_agent.risk.manager import RiskLimits, RiskManager
+from src.trading_rl_agent.utils.metrics import calculate_sharpe_ratio
 
 
 @dataclass
@@ -124,7 +124,7 @@ class TradingSession:
             if self.config.cnn_lstm_path and Path(self.config.cnn_lstm_path).exists():
                 # Create model with default input dimension (will be overridden by state dict)
                 self.cnn_lstm_model = CNNLSTMModel(input_dim=50)  # Default input dimension
-                self.cnn_lstm_model.load_state_dict(torch.load(self.config.cnn_lstm_path))
+                self.cnn_lstm_model.load_state_dict(torch.load(self.config.cnn_lstm_path))  # nosec
                 self.logger.info(f"Loaded CNN+LSTM model from {self.config.cnn_lstm_path}")
 
             # Load RL agent based on type
@@ -230,7 +230,7 @@ class TradingSession:
 
             # Calculate position size
             position_size = self.risk_manager.calculate_kelly_position_size(
-                expected_return=0.02,  # Placeholder
+                _expected_return=0.02,  # Placeholder
                 win_rate=0.55,  # Placeholder
                 avg_win=0.05,  # Placeholder
                 avg_loss=0.03,  # Placeholder
