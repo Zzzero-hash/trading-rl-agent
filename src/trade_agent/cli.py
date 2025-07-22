@@ -329,16 +329,15 @@ def info() -> None:
 
 @data_app.command()
 def download_all(
-    start_date: str | None = DEFAULT_START_DATE,
-    end_date: str | None = DEFAULT_END_DATE,
-    output_dir: Path | None = DEFAULT_OUTPUT_DIR_NONE,
+    start_date: str | None = None,
+    end_date: str | None = None,
     source: str | None = DEFAULT_SOURCE,
-    timeframe: str | None = DEFAULT_TIMEFRAME,
+    timeframe: str | None = "1d",
     parallel: bool = DEFAULT_PARALLEL,
     _force: bool = DEFAULT_FORCE,
 ) -> None:
     """
-    Download all available market data from yfinance.
+    Download all available market data from yfinance with intelligent auto-switching.
 
     Downloads comprehensive market data including:
     - Major US stocks (S&P 500 top components)
@@ -348,7 +347,14 @@ def download_all(
     - Market indices
     - Commodities
 
-    Defaults to last 10 years of daily data unless specified otherwise.
+    Auto-switching behavior based on Yahoo Finance limitations:
+    - 1m data: last 7 days
+    - 5m/15m/30m data: last 60 days
+    - 1h data: last 730 days (2 years)
+    - 1d data: unlimited (default for long periods)
+
+    The system automatically adjusts timeframe and date range to work within
+    Yahoo Finance's free tier limitations while maximizing data quality.
     Data is automatically organized in the standard data directory structure.
     """
     try:
@@ -359,7 +365,7 @@ def download_all(
         source = source or settings.data.primary_source
         timeframe = timeframe or settings.data.timeframe
 
-        # Set default date range to last 10 years if not specified
+        # Set default date range to last 10 years
         from datetime import datetime, timedelta
 
         if not start_date:
@@ -370,9 +376,102 @@ def download_all(
         if not end_date:
             end_date = datetime.now().strftime("%Y-%m-%d")
 
+        # Auto-adjust timeframe and date range based on Yahoo Finance limitations
+        def get_optimal_timeframe_and_dates(requested_timeframe: str, start_date: str, end_date: str) -> tuple[str, str, str]:
+            """
+            Auto-adjust timeframe and date range based on Yahoo Finance limitations.
+
+            Yahoo Finance limits:
+            - 1m: last 7 days
+            - 5m: last 60 days
+            - 15m: last 60 days
+            - 30m: last 60 days
+            - 1h: last 730 days (2 years)
+            - 1d: unlimited
+            """
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            date_range_days = (end_dt - start_dt).days
+
+            # Define timeframe limitations
+            timeframe_limits = {
+                "1m": 7,
+                "2m": 60,
+                "5m": 60,
+                "15m": 60,
+                "30m": 60,
+                "60m": 730,
+                "1h": 730,
+                "90m": 730,
+                "1d": float("inf"),  # No limit
+                "5d": float("inf"),
+                "1wk": float("inf"),
+                "1mo": float("inf"),
+                "3mo": float("inf")
+            }
+
+            # Check if requested timeframe is supported for the date range
+            if requested_timeframe in timeframe_limits:
+                max_days = timeframe_limits[requested_timeframe]
+
+                if date_range_days <= max_days:
+                    # Requested timeframe works for the date range
+                    return requested_timeframe, start_date, end_date
+                else:
+                    # Need to adjust - try to find the best alternative
+                    console.print(f"[yellow]⚠️  Requested {requested_timeframe} data for {date_range_days} days exceeds Yahoo Finance limit of {max_days} days[/yellow]")
+
+                    # For long periods, default to daily data
+                    if date_range_days > 730:
+                        console.print("[blue]🔄 Auto-switching to daily (1d) data for long-term analysis[/blue]")
+                        return "1d", start_date, end_date
+
+                    # For medium periods, try hourly
+                    elif date_range_days > 60:
+                        console.print("[blue]🔄 Auto-switching to hourly (1h) data for medium-term analysis[/blue]")
+                        # Adjust start date to fit within 730 days
+                        new_start_dt = end_dt - timedelta(days=730)
+                        new_start_date = new_start_dt.strftime("%Y-%m-%d")
+                        return "1h", new_start_date, end_date
+
+                    # For short periods, try 30m
+                    elif date_range_days > 7:
+                        console.print("[blue]🔄 Auto-switching to 30-minute data for short-term analysis[/blue]")
+                        # Adjust start date to fit within 60 days
+                        new_start_dt = end_dt - timedelta(days=60)
+                        new_start_date = new_start_dt.strftime("%Y-%m-%d")
+                        return "30m", new_start_date, end_date
+
+                    # For very short periods, try 5m
+                    else:
+                        console.print("[blue]🔄 Auto-switching to 5-minute data for intraday analysis[/blue]")
+                        # Adjust start date to fit within 60 days
+                        new_start_dt = end_dt - timedelta(days=60)
+                        new_start_date = new_start_dt.strftime("%Y-%m-%d")
+                        return "5m", new_start_date, end_date
+            else:
+                # Unknown timeframe, default to daily
+                console.print(f"[yellow]⚠️  Unknown timeframe '{requested_timeframe}', defaulting to daily (1d)[/yellow]")
+                return "1d", start_date, end_date
+
+        # Apply auto-adjustment
+        original_timeframe = timeframe
+        original_start_date = start_date
+        original_end_date = end_date
+
+        timeframe, start_date, end_date = get_optimal_timeframe_and_dates(timeframe, start_date, end_date)
+
+        # Show what we're actually downloading
+        if timeframe != original_timeframe or start_date != original_start_date:
+            console.print("[cyan]📊 Download Strategy:[/cyan]")
+            console.print(f"[cyan]  Requested: {original_timeframe} from {original_start_date} to {original_end_date}[/cyan]")
+            console.print(f"[cyan]  Adjusted:  {timeframe} from {start_date} to {end_date}[/cyan]")
+            console.print("[cyan]  Reason:    Yahoo Finance limitations[/cyan]")
+            console.print()
+
         # Create organized directory structure in the standard data location
         base_data_dir = Path(settings.data.data_path)
-        base_output_dir = output_dir or base_data_dir / "raw" / "comprehensive"
+        base_output_dir = base_data_dir / "raw" / "comprehensive"
 
         # Create organized subdirectories by asset type
         asset_dirs = {
@@ -870,12 +969,36 @@ def refresh(
         source = source or settings.data.primary_source
         timeframe = timeframe or settings.data.timeframe
 
+        # NEW: Validate timeframe consistency
         console.print(f"[green]Checking data freshness and refreshing if older than {days} days[/green]")
         console.print(f"[cyan]Symbols: {', '.join(symbol_list)}[/cyan]")
         console.print(f"[cyan]Cache TTL: {days} days[/cyan]")
         console.print(f"[cyan]Source: {source}[/cyan]")
         console.print(f"[cyan]Timeframe: {timeframe}[/cyan]")
         console.print(f"[cyan]Output: {output_dir}[/cyan]")
+
+        # NEW: Check for existing files with different timeframes
+        existing_files = []
+        for symbol in symbol_list:
+            # Look for any existing files for this symbol
+            pattern = f"{symbol}_*_{timeframe}.parquet"
+            list(output_dir.glob(pattern))
+
+            # Also check for files with different timeframes
+            all_pattern = f"{symbol}_*.parquet"
+            all_files = list(output_dir.glob(all_pattern))
+
+            different_timeframes = [f for f in all_files if f"{timeframe}.parquet" not in str(f)]
+
+            if different_timeframes:
+                console.print(f"[yellow]⚠️  Warning: Found existing files for {symbol} with different timeframes:[/yellow]")
+                for file in different_timeframes:
+                    console.print(f"[yellow]    {file.name}[/yellow]")
+                console.print(f"[yellow]  This refresh will create: {symbol}_{start_date}_{end_date}_{timeframe}.parquet[/yellow]")
+                existing_files.extend(different_timeframes)
+
+        if existing_files:
+            console.print("[yellow]Note: Different timeframe files will be preserved separately[/yellow]")
 
         # Import and use actual download functions with cache checking
         import time
@@ -1138,10 +1261,6 @@ def process(
         method=DEFAULT_STANDARDIZATION_METHOD,
         save_standardizer=True
     )
-
-
-
-
 
 # ============================================================================
 # TRAIN SUB-APP COMMANDS
