@@ -344,7 +344,7 @@ class OptimizedDatasetBuilder:
                         logger.warning(f"  ⚠️ No data for symbol {symbol}, skipping")
                         continue
 
-                    # Generate technical features with timeout protection
+                    # Generate unified features (exactly 78 features)
                     if self.config.technical_indicators:
                         try:
                             symbol_df = generate_features(
@@ -352,7 +352,6 @@ class OptimizedDatasetBuilder:
                                 ma_windows=[5, 10, 20, 50],
                                 rsi_window=14,
                                 vol_window=20,
-                                advanced_candles=True,
                             )
                         except Exception as e:
                             logger.warning(f"  ⚠️ Failed to generate features for {symbol}: {e}")

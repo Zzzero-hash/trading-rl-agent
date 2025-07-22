@@ -401,8 +401,8 @@ def process_csv_in_stream(
 
 def create_standardized_dataset_streaming(
     filepath: str | Path,
-    standardizer_path: str = "outputs/data_standardizer.pkl",
-    output_file: str = "outputs/standardized_dataset.csv",
+    standardizer_path: str = "data/processed/data_standardizer.pkl",
+    output_file: str = "data/processed/standardized_dataset.csv",
     chunk_size: int = 5000,
     show_progress: bool = True,
 ) -> tuple[pd.DataFrame | None, Any]:

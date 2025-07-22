@@ -321,7 +321,9 @@ class AlpacaIntegration:
 
             if all_data:
                 combined_data = pd.concat(all_data, ignore_index=True)
-                combined_data["date"] = pd.to_datetime(combined_data["date"])
+                # Handle timezone-aware datetime conversion consistently using utility function
+                from .utils import normalize_timestamps
+                combined_data = normalize_timestamps(combined_data, timestamp_column="date")
                 return combined_data.sort_values(["symbol", "date"]).reset_index(drop=True)
 
             return pd.DataFrame()
@@ -329,6 +331,20 @@ class AlpacaIntegration:
         except Exception as e:
             logger.exception(f"Historical data retrieval error: {e}")
             raise AlpacaDataError(f"Failed to get historical data: {e}") from e
+
+    def _normalize_timestamp_column(self, timestamp_col: pd.Series, timezone: str = "America/New_York") -> pd.Series:
+        """
+        Normalize timestamp column to consistent timezone format.
+
+        Args:
+            timestamp_col: Series of timestamps
+            timezone: Target timezone for normalization
+
+        Returns:
+            Normalized timestamp series
+        """
+        from .utils import _normalize_timestamp_series
+        return _normalize_timestamp_series(timestamp_col, timezone)
 
     def get_real_time_quotes(self, symbols: list[str]) -> dict[str, Any]:
         """

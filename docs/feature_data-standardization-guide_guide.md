@@ -70,8 +70,8 @@ python train.py build-dataset --forex-focused
 # This will:
 # 1. Build the dataset with all features
 # 2. Create standardized dataset with 78 features
-# 3. Save the standardizer to outputs/data_standardizer.pkl
-# 4. Save standardized dataset to outputs/standardized_dataset.csv
+# 3. Save the standardizer to data/processed/data_standardizer.pkl
+# 4. Save standardized dataset to data/processed/standardized_dataset.csv
 ```
 
 ### 2. Manual Standardization
@@ -82,7 +82,7 @@ from src.trading_rl_agent.data.data_standardizer import create_standardized_data
 # Create standardized dataset
 standardized_df, standardizer = create_standardized_dataset(
     df=your_dataframe,
-    save_path="outputs/data_standardizer.pkl"
+    save_path="data/processed/data_standardizer.pkl"
 )
 
 print(f"Feature count: {standardizer.get_feature_count()}")  # 78
@@ -95,7 +95,7 @@ print(f"Feature names: {standardizer.get_feature_names()}")
 from src.trading_rl_agent.data.data_standardizer import DataStandardizer, LiveDataProcessor
 
 # Load the standardizer
-standardizer = DataStandardizer.load("outputs/data_standardizer.pkl")
+standardizer = DataStandardizer.load("data/processed/data_standardizer.pkl")
 live_processor = LiveDataProcessor(standardizer)
 
 # Process live data (can be missing features, different order, etc.)
@@ -120,7 +120,7 @@ import torch
 from src.trading_rl_agent.models.cnn_lstm import CNNLSTMModel
 
 # Load standardizer
-standardizer = DataStandardizer.load("outputs/data_standardizer.pkl")
+standardizer = DataStandardizer.load("data/processed/data_standardizer.pkl")
 live_processor = LiveDataProcessor(standardizer)
 
 # Create model with correct input dimension

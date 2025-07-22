@@ -28,6 +28,9 @@ from .attribution_integration import (
 
 console = Console()
 
+# Global demo portfolio manager instance for consistent state across CLI commands
+_demo_portfolio_manager_instance: PortfolioManager | None = None
+
 
 @click.group()
 def attribution() -> None:
@@ -346,7 +349,13 @@ def _load_config(config_file: str) -> AttributionConfig:
 
 
 def _create_demo_portfolio_manager() -> PortfolioManager:
-    """Create a demo portfolio manager for testing."""
+    """Create a demo portfolio manager for testing with singleton pattern."""
+    global _demo_portfolio_manager_instance
+
+    # Return existing instance if already created
+    if _demo_portfolio_manager_instance is not None:
+        return _demo_portfolio_manager_instance
+
     import numpy as np
 
     # Create mock configuration
@@ -368,7 +377,16 @@ def _create_demo_portfolio_manager() -> PortfolioManager:
     portfolio_manager = PortfolioManager(config)
     portfolio_manager.performance_history = performance_history
 
+    # Store the instance for reuse
+    _demo_portfolio_manager_instance = portfolio_manager
+
     return portfolio_manager
+
+
+def _reset_demo_portfolio_manager() -> None:
+    """Reset the demo portfolio manager instance (useful for testing)."""
+    global _demo_portfolio_manager_instance
+    _demo_portfolio_manager_instance = None
 
 
 def _display_analysis_summary(results: dict[str, Any], output_path: Path) -> None:

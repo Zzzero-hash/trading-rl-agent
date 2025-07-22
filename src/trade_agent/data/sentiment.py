@@ -29,6 +29,7 @@ from bs4 import BeautifulSoup
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 from trade_agent.core.logging import get_logger
+from trade_agent.data.market_symbols import COMPREHENSIVE_SYMBOLS
 
 # Global sentiment cache for backward compatibility
 sentiment: dict[str, dict[str, Any]] = {}
@@ -106,27 +107,15 @@ class SentimentProvider(ABC):
         """Analyze sentiment of text using VADER."""
         try:
             scores = self.analyzer.polarity_scores(text)
-            return float(scores.get("compound", 0.0))
-        except Exception as e:
-            self.logger.warning(f"Failed to analyze text sentiment: {e}")
-            return 0.0
+            return float(scores["compound"])
+        except Exception:
+            return 0.1
 
     def _calculate_magnitude(self, text: str) -> float:
-        """Calculate sentiment magnitude (confidence) from text."""
+        """Calculate sentiment magnitude (confidence)."""
         try:
-            # Use VADER sentiment analyzer
-            analyzer = SentimentIntensityAnalyzer()
-            scores = analyzer.polarity_scores(text)
-
-            pos = scores["pos"]
-            neg = scores["neg"]
-
-            # Higher magnitude for stronger sentiment
-            if pos > neg:
-                return float(min(pos * 2, 1.0))
-            if neg > pos:
-                return float(min(neg * 2, 1.0))
-            return 0.1  # Low magnitude for neutral
+            scores = self.analyzer.polarity_scores(text)
+            return abs(float(scores["compound"]))
         except Exception:
             return 0.1
 
@@ -138,95 +127,106 @@ class NewsSentimentProvider(SentimentProvider):
         super().__init__(api_key)
         self.api_key = api_key
         self.request_timeout = 30  # 30 seconds timeout
+
+        # Company name mapping for sentiment analysis
+        # This maps symbols to their official company names for news searches
         self.symbol_to_company = {
-            # Major stocks
+            # Major stocks - using official company names
             "AAPL": "Apple Inc",
-            "GOOGL": "Google Alphabet",
-            "MSFT": "Microsoft",
-            "AMZN": "Amazon",
-            "TSLA": "Tesla",
-            "META": "Meta Facebook",
-            "NVDA": "NVIDIA",
-            "NFLX": "Netflix",
-            "JPM": "JPMorgan Chase",
+            "GOOGL": "Alphabet Inc",
+            "GOOG": "Alphabet Inc",
+            "MSFT": "Microsoft Corporation",
+            "AMZN": "Amazon.com Inc",
+            "TSLA": "Tesla Inc",
+            "META": "Meta Platforms Inc",
+            "NVDA": "NVIDIA Corporation",
+            "NFLX": "Netflix Inc",
+            "JPM": "JPMorgan Chase & Co",
             "JNJ": "Johnson & Johnson",
-            "V": "Visa",
-            "PG": "Procter & Gamble",
-            "UNH": "UnitedHealth",
-            "HD": "Home Depot",
-            "MA": "Mastercard",
-            "DIS": "Disney",
-            "PYPL": "PayPal",
-            "ADBE": "Adobe",
-            "CRM": "Salesforce",
-            "NKE": "Nike",
-            # Tech
-            "INTC": "Intel",
-            "AMD": "Advanced Micro Devices",
-            "ORCL": "Oracle",
-            "CSCO": "Cisco",
-            "IBM": "IBM",
-            "QCOM": "Qualcomm",
-            "TXN": "Texas Instruments",
-            "AVGO": "Broadcom",
-            "MU": "Micron Technology",
-            "LRCX": "Lam Research",
-            # Finance
-            "BAC": "Bank of America",
-            "WFC": "Wells Fargo",
-            "GS": "Goldman Sachs",
+            "V": "Visa Inc",
+            "PG": "Procter & Gamble Co",
+            "UNH": "UnitedHealth Group Inc",
+            "HD": "Home Depot Inc",
+            "MA": "Mastercard Inc",
+            "DIS": "Walt Disney Co",
+            "PYPL": "PayPal Holdings Inc",
+            "ADBE": "Adobe Inc",
+            "CRM": "Salesforce Inc",
+            "NKE": "Nike Inc",
+
+            # Tech sector
+            "INTC": "Intel Corporation",
+            "AMD": "Advanced Micro Devices Inc",
+            "ORCL": "Oracle Corporation",
+            "CSCO": "Cisco Systems Inc",
+            "IBM": "International Business Machines Corp",
+            "QCOM": "Qualcomm Inc",
+            "TXN": "Texas Instruments Inc",
+            "AVGO": "Broadcom Inc",
+            "MU": "Micron Technology Inc",
+            "LRCX": "Lam Research Corporation",
+
+            # Financial sector
+            "BAC": "Bank of America Corp",
+            "WFC": "Wells Fargo & Co",
+            "GS": "Goldman Sachs Group Inc",
             "MS": "Morgan Stanley",
-            "C": "Citigroup",
-            "AXP": "American Express",
-            "BLK": "BlackRock",
-            "SCHW": "Charles Schwab",
+            "C": "Citigroup Inc",
+            "AXP": "American Express Co",
+            "BLK": "BlackRock Inc",
+            "SCHW": "Charles Schwab Corp",
             "USB": "U.S. Bancorp",
-            "PNC": "PNC Financial",
-            # Healthcare
-            "PFE": "Pfizer",
-            "ABBV": "AbbVie",
-            "TMO": "Thermo Fisher",
-            "DHR": "Danaher",
-            "BMY": "Bristol-Myers Squibb",
+            "PNC": "PNC Financial Services Group Inc",
+
+            # Healthcare sector
+            "PFE": "Pfizer Inc",
+            "ABBV": "AbbVie Inc",
+            "TMO": "Thermo Fisher Scientific Inc",
+            "DHR": "Danaher Corporation",
+            "BMY": "Bristol-Myers Squibb Co",
             "ABT": "Abbott Laboratories",
-            "LLY": "Eli Lilly",
-            "MRK": "Merck",
-            "AMGN": "Amgen",
-            "GILD": "Gilead Sciences",
-            # Energy
-            "XOM": "ExxonMobil",
-            "CVX": "Chevron",
+            "LLY": "Eli Lilly and Co",
+            "MRK": "Merck & Co Inc",
+            "AMGN": "Amgen Inc",
+            "GILD": "Gilead Sciences Inc",
+
+            # Energy sector
+            "XOM": "Exxon Mobil Corporation",
+            "CVX": "Chevron Corporation",
             "COP": "ConocoPhillips",
-            "EOG": "EOG Resources",
-            "SLB": "Schlumberger",
-            "HAL": "Halliburton",
-            "BKR": "Baker Hughes",
+            "EOG": "EOG Resources Inc",
+            "SLB": "Schlumberger Ltd",
+            "HAL": "Halliburton Co",
+            "BKR": "Baker Hughes Co",
             "PSX": "Phillips 66",
-            "VLO": "Valero Energy",
-            "MPC": "Marathon Petroleum",
-            # Consumer
-            "KO": "Coca-Cola",
-            "PEP": "PepsiCo",
-            "WMT": "Walmart",
-            "COST": "Costco",
-            "TGT": "Target",
-            "LOW": "Lowe's",
-            "SBUX": "Starbucks",
-            "MCD": "McDonald's",
-            "YUM": "Yum Brands",
-            "CMCSA": "Comcast",
-            # Forex (major pairs)
-            "EURUSD": "Euro US Dollar",
-            "GBPUSD": "British Pound US Dollar",
-            "USDJPY": "US Dollar Japanese Yen",
-            "USDCHF": "US Dollar Swiss Franc",
-            "AUDUSD": "Australian Dollar US Dollar",
-            "USDCAD": "US Dollar Canadian Dollar",
-            "NZDUSD": "New Zealand Dollar US Dollar",
-            "EURGBP": "Euro British Pound",
-            "EURJPY": "Euro Japanese Yen",
-            "GBPJPY": "British Pound Japanese Yen",
-            # Crypto
+            "VLO": "Valero Energy Corp",
+            "MPC": "Marathon Petroleum Corp",
+
+            # Consumer sector
+            "KO": "Coca-Cola Co",
+            "PEP": "PepsiCo Inc",
+            "WMT": "Walmart Inc",
+            "COST": "Costco Wholesale Corp",
+            "TGT": "Target Corp",
+            "LOW": "Lowe's Companies Inc",
+            "SBUX": "Starbucks Corp",
+            "MCD": "McDonald's Corp",
+            "YUM": "Yum Brands Inc",
+            "CMCSA": "Comcast Corp",
+
+            # Forex pairs - using currency names
+            "EURUSD=X": "Euro US Dollar",
+            "GBPUSD=X": "British Pound US Dollar",
+            "USDJPY=X": "US Dollar Japanese Yen",
+            "USDCHF=X": "US Dollar Swiss Franc",
+            "AUDUSD=X": "Australian Dollar US Dollar",
+            "USDCAD=X": "US Dollar Canadian Dollar",
+            "NZDUSD=X": "New Zealand Dollar US Dollar",
+            "EURGBP=X": "Euro British Pound",
+            "EURJPY=X": "Euro Japanese Yen",
+            "GBPJPY=X": "British Pound Japanese Yen",
+
+            # Cryptocurrencies
             "BTC-USD": "Bitcoin",
             "ETH-USD": "Ethereum",
             "ADA-USD": "Cardano",
@@ -237,7 +237,8 @@ class NewsSentimentProvider(SentimentProvider):
             "XRP-USD": "Ripple",
             "BNB-USD": "Binance Coin",
             "SOL-USD": "Solana",
-            # Indices
+
+            # Major indices
             "^GSPC": "S&P 500",
             "^DJI": "Dow Jones Industrial Average",
             "^IXIC": "NASDAQ Composite",
@@ -246,8 +247,12 @@ class NewsSentimentProvider(SentimentProvider):
             "^FTSE": "FTSE 100",
             "^GDAXI": "DAX",
             "^N225": "Nikkei 225",
-            "^HSI": "Hang Seng",
+            "^HSI": "Hang Seng Index",
             "^BSESN": "BSE SENSEX",
+            "^AXJO": "S&P/ASX 200",
+            "^TNX": "10-Year Treasury Note",
+            "^TYX": "30-Year Treasury Bond",
+            "^IRX": "13-Week Treasury Bill"
         }
 
     def fetch_sentiment(self, symbol: str, days_back: int = 1) -> list[SentimentData]:
@@ -420,9 +425,45 @@ class NewsSentimentProvider(SentimentProvider):
 
         return sentiment_data
 
+    def _build_company_mapping(self) -> dict[str, str]:
+        """Build company mapping from comprehensive symbols."""
+        mapping = {}
+
+        # Add all symbols from market_symbols with default company names
+        for asset_type, symbols in COMPREHENSIVE_SYMBOLS.items():
+            for symbol in symbols:
+                if symbol not in mapping:
+                    # Use the symbol as default company name if not in our curated list
+                    mapping[symbol] = self.symbol_to_company.get(symbol, symbol)
+
+        return mapping
+
     def _symbol_to_company(self, symbol: str) -> str:
         """Convert symbol to company name."""
-        return self.symbol_to_company.get(symbol, symbol)
+        # First check our curated mapping
+        if symbol in self.symbol_to_company:
+            return self.symbol_to_company[symbol]
+
+        # For symbols not in our curated list, try to generate a reasonable name
+        if symbol.endswith("=X"):
+            # Forex pairs
+            base_currency = symbol[:3]
+            quote_currency = symbol[3:6]
+            return f"{base_currency} {quote_currency} Exchange Rate"
+        elif symbol.endswith("=F"):
+            # Futures
+            return f"{symbol[:-2]} Futures"
+        elif symbol.startswith("^"):
+            # Indices
+            index_name = symbol[1:]
+            return f"{index_name} Index"
+        elif symbol.endswith("-USD"):
+            # Crypto
+            crypto_name = symbol[:-4]
+            return f"{crypto_name} Cryptocurrency"
+        else:
+            # Default to symbol
+            return symbol
 
 
 class SocialSentimentProvider(SentimentProvider):

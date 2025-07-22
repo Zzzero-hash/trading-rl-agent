@@ -1,267 +1,17 @@
+#!/usr/bin/env python3
 """
-Feature generation for financial time series data.
+Unified Feature Engineering for Trading RL Agent
 
-This module provides functions for generating technical indicators and features
-from financial time series data.
+This module provides a single, consistent feature engineering function that ensures
+exactly 78 features are generated, matching the DataStandardizer expectations.
 """
 
-# Monkey patch for pandas_ta numpy compatibility
+
 import numpy as np
-
-if not hasattr(np, "NaN"):
-    np.nan = np.nan
-
 import pandas as pd
 import pandas_ta as ta
 
-
-def add_sentiment(df: pd.DataFrame, sentiment_col: str = "sentiment") -> pd.DataFrame:
-    """
-    Stub for sentiment feature (defaults to zero).
-    """
-    df[sentiment_col] = 0.0
-    return df
-
-
-def compute_ema(
-    df: pd.DataFrame,
-    price_col: str = "close",
-    timeperiod: int = 20,
-) -> pd.DataFrame:
-    """Compute Exponential Moving Average (EMA) using pandas-ta."""
-    df[f"ema_{timeperiod}"] = ta.ema(df[price_col], length=timeperiod)
-    return df
-
-
-def compute_macd(df: pd.DataFrame, price_col: str = "close") -> pd.DataFrame:
-    """Compute MACD line, signal, and histogram using pandas-ta."""
-    macd = ta.macd(df[price_col])
-    df["macd_line"] = macd["MACD_12_26_9"]
-    df["macd_hist"] = macd["MACDh_12_26_9"]
-    df["macd_signal"] = macd["MACDs_12_26_9"]
-    return df
-
-
-def compute_atr(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """Compute Average True Range (ATR) using pandas-ta."""
-    df[f"atr_{timeperiod}"] = ta.atr(
-        high=df["high"],
-        low=df["low"],
-        close=df["close"],
-        length=timeperiod,
-    ).fillna(0.0)
-    return df
-
-
-def compute_bollinger_bands(
-    df: pd.DataFrame,
-    price_col: str = "close",
-    timeperiod: int = 20,
-) -> pd.DataFrame:
-    """Compute Bollinger Bands using pandas-ta."""
-    bb = ta.bbands(df[price_col], length=timeperiod)
-    df[f"bb_lower_{timeperiod}"] = bb.iloc[:, 0]
-    df[f"bb_mavg_{timeperiod}"] = bb.iloc[:, 1]
-    df[f"bb_upper_{timeperiod}"] = bb.iloc[:, 2]
-    return df
-
-
-def compute_stochastic(
-    df: pd.DataFrame,
-    fastk_period: int = 14,
-    slowk_period: int = 3,
-    slowd_period: int = 3,
-) -> pd.DataFrame:
-    """Compute Stochastic Oscillator using pandas-ta."""
-    stoch = ta.stoch(
-        high=df["high"],
-        low=df["low"],
-        close=df["close"],
-        k=fastk_period,
-        d=slowd_period,
-        smooth_k=slowk_period,
-    )
-    df["stoch_k"] = stoch.iloc[:, 0]
-    df["stoch_d"] = stoch.iloc[:, 1]
-    return df
-
-
-def compute_adx(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """Compute Average Directional Index (ADX) using pandas-ta."""
-    adx = ta.adx(high=df["high"], low=df["low"], close=df["close"], length=timeperiod)
-    df[f"adx_{timeperiod}"] = adx.iloc[:, 0].fillna(0.0)
-    return df
-
-
-def compute_williams_r(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
-    """Compute Williams %R using pandas-ta."""
-    df[f"wr_{timeperiod}"] = ta.willr(
-        high=df["high"],
-        low=df["low"],
-        close=df["close"],
-        length=timeperiod,
-    )
-    return df
-
-
-def compute_obv(df: pd.DataFrame) -> pd.DataFrame:
-    """Compute On-Balance Volume (OBV) using pandas-ta."""
-    df["obv"] = ta.obv(close=df["close"], volume=df["volume"])
-    return df
-
-
-def detect_doji(df: pd.DataFrame) -> pd.DataFrame:
-    """Detect Doji candlestick pattern: open ≈ close."""
-    df["doji"] = (np.isclose(df["open"].astype(float), df["close"].astype(float))).astype(int)
-    return df
-
-
-def detect_hammer(df: pd.DataFrame) -> pd.DataFrame:
-    """Detect Hammer candlestick pattern: small body, long lower shadow in downtrend."""
-    # Body size
-    body = (df["close"] - df["open"]).abs().astype(float)
-    # Shadows
-    lower_shadow = (np.minimum(df["open"], df["close"]) - df["low"]).astype(float)
-    # upper_shadow = (df["high"] - np.maximum(df["open"], df["close"])).astype(float)  # Not used currently
-    # Hammer: lower shadow at least twice body
-    df["hammer"] = (lower_shadow >= 2 * body).astype(int)
-    return df
-
-
-def detect_engulfing(df: pd.DataFrame) -> pd.DataFrame:
-    """Detect Bullish and Bearish Engulfing patterns using pandas logic."""
-    df_copy = df.copy()
-
-    # Calculate bullish engulfing pattern
-    # Current candle is bullish (close > open) and completely engulfs previous bearish candle
-    bullish_engulfing = (
-        (df_copy["close"] > df_copy["open"])  # Current is bullish
-        & (df_copy["close"].shift(1) < df_copy["open"].shift(1))  # Previous is bearish
-        & (df_copy["open"] < df_copy["close"].shift(1))  # Current open < previous close
-        & (df_copy["close"] > df_copy["open"].shift(1))  # Current close > previous open
-    )
-
-    # Calculate bearish engulfing pattern
-    # Current candle is bearish (close < open) and completely engulfs previous bullish candle
-    bearish_engulfing = (
-        (df_copy["close"] < df_copy["open"])  # Current is bearish
-        & (df_copy["close"].shift(1) > df_copy["open"].shift(1))  # Previous is bullish
-        & (df_copy["open"] > df_copy["close"].shift(1))  # Current open > previous close
-        & (df_copy["close"] < df_copy["open"].shift(1))  # Current close < previous open
-    )
-
-    df_copy["bullish_engulfing"] = bullish_engulfing.fillna(False).astype(int)
-    df_copy["bearish_engulfing"] = bearish_engulfing.fillna(False).astype(int)
-
-    return df_copy
-
-
-def detect_shooting_star(df: pd.DataFrame) -> pd.DataFrame:
-    """Detect Shooting Star candlestick pattern using pandas logic."""
-    df_copy = df.copy()
-
-    # Shooting star characteristics:
-    # 1. Small real body at lower end of the trading range
-    # 2. Long upper shadow (at least 2x the body size)
-    # 3. Little or no lower shadow
-    # 4. Appears after uptrend (bearish reversal signal)
-
-    body = abs(df_copy["close"] - df_copy["open"])
-    upper_shadow = df_copy["high"] - df_copy[["open", "close"]].max(axis=1)
-    lower_shadow = df_copy[["open", "close"]].min(axis=1) - df_copy["low"]
-
-    shooting_star = (
-        (upper_shadow >= 2 * body)  # Long upper shadow
-        & (lower_shadow <= body * 0.1)  # Very small lower shadow
-        & (body <= (df_copy["high"] - df_copy["low"]) * 0.3)
-    )  # Small body relative to range
-
-    df_copy["shooting_star"] = shooting_star.fillna(False).astype(int)
-    return df_copy
-
-
-def detect_morning_star(df: pd.DataFrame) -> pd.DataFrame:
-    """Detect Morning Star pattern using vectorized operations."""
-    df_copy = df.copy()
-
-    if len(df_copy) < 3:
-        df_copy["morning_star"] = 0
-        return df_copy
-
-    # Morning star is a 3-candle bullish reversal pattern:
-    # 1. First candle: bearish (close < open)
-    # 2. Second candle: small body (star)
-    # 3. Third candle: bullish (close > open), closes above first candle's midpoint
-
-    # Vectorized calculations
-    first_bearish = df_copy["close"].shift(2) < df_copy["open"].shift(2)
-
-    # Second candle is small relative to first candle
-    first_body_size = (df_copy["close"].shift(2) - df_copy["open"].shift(2)).abs()
-    second_body_size = (df_copy["close"].shift(1) - df_copy["open"].shift(1)).abs()
-    second_small = second_body_size < first_body_size * 0.3
-
-    # Third candle is bullish and closes above first candle's midpoint
-    third_bullish = df_copy["close"] > df_copy["open"]
-    first_midpoint = (df_copy["open"].shift(2) + df_copy["close"].shift(2)) / 2
-    third_recovery = df_copy["close"] > first_midpoint
-
-    morning_star = first_bearish & second_small & third_bullish & third_recovery
-    df_copy["morning_star"] = morning_star.fillna(False).astype(int)
-
-    return df_copy
-
-
-def detect_evening_star(df: pd.DataFrame) -> pd.DataFrame:
-    """Detect Evening Star pattern using vectorized operations."""
-    df_copy = df.copy()
-
-    if len(df_copy) < 3:
-        df_copy["evening_star"] = 0
-        return df_copy
-
-    # Evening star is a 3-candle bearish reversal pattern:
-    # 1. First candle: bullish (close > open)
-    # 2. Second candle: small body (star)
-    # 3. Third candle: bearish (close < open), closes below first candle's midpoint
-
-    # Vectorized calculations
-    first_bullish = df_copy["close"].shift(2) > df_copy["open"].shift(2)
-
-    # Second candle is small relative to first candle
-    first_body_size = (df_copy["close"].shift(2) - df_copy["open"].shift(2)).abs()
-    second_body_size = (df_copy["close"].shift(1) - df_copy["open"].shift(1)).abs()
-    second_small = second_body_size < first_body_size * 0.3
-
-    # Third candle is bearish and closes below first candle's midpoint
-    third_bearish = df_copy["close"] < df_copy["open"]
-    first_midpoint = (df_copy["open"].shift(2) + df_copy["close"].shift(2)) / 2
-    third_decline = df_copy["close"] < first_midpoint
-
-    evening_star = first_bullish & second_small & third_bearish & third_decline
-    df_copy["evening_star"] = evening_star.fillna(False).astype(int)
-
-    return df_copy
-
-
-def compute_candle_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute all candlestick pattern features.
-
-    Args:
-        df: DataFrame with OHLC data
-
-    Returns:
-        DataFrame with candlestick pattern columns
-    """
-    # Use basic patterns: assign Doji, then apply other patterns
-    df = df.copy()
-    df = detect_doji(df)
-    df = detect_hammer(df)
-    df = detect_engulfing(df)
-    df = detect_shooting_star(df)
-    df = detect_morning_star(df)
-    return detect_evening_star(df)
+from trade_agent.core.logging import get_logger
 
 
 def generate_features(
@@ -269,590 +19,759 @@ def generate_features(
     ma_windows: list | None = None,
     rsi_window: int = 14,
     vol_window: int = 20,
-    advanced_candles: bool = True,
 ) -> pd.DataFrame:
     """
-    Apply a sequence of feature transformations to the DataFrame.
-    Enhanced to generate all features expected by the DataStandardizer.
+    Generate exactly 78 features as expected by the DataStandardizer.
+
+    This function ensures consistent feature engineering between training and inference.
+
+    Args:
+        df: DataFrame with OHLCV data
+        ma_windows: Moving average windows (default: [5, 10, 20, 50])
+        rsi_window: RSI window (default: 14)
+        vol_window: Volatility window (default: 20)
+        advanced_candles: Whether to include advanced candlestick patterns (default: True)
+
+    Returns:
+        DataFrame with exactly 78 features in the correct order
     """
-    # Robust error handling for missing/empty columns and insufficient data
+    logger = get_logger("UnifiedFeatures")
+
     if ma_windows is None:
-        ma_windows = [5, 10, 20, 50]  # Added 50 for standardizer compatibility
-    required_cols = ["open", "high", "low", "close", "volume"]
+        ma_windows = [5, 10, 20, 50]
+
     df = df.copy()
 
-    # Fill missing columns with zeros if not present
+    # Ensure required columns exist
+    required_cols = ["open", "high", "low", "close", "volume"]
     for col in required_cols:
         if col not in df.columns:
             df[col] = 0.0
 
-    # Fill None/NaN values with forward/backward fill, then zeros
-    df[required_cols] = df[required_cols].ffill().bfill().fillna(0.0)
+    # Clean and validate data
+    df = _clean_input_data(df)
 
-    # Ensure no zero values in price columns for log calculations
+    # Generate all 78 features in the exact order expected by DataStandardizer
+    result_df = pd.DataFrame(index=df.index)
+
+    # 1. Price features (5)
+    result_df["open"] = df["open"]
+    result_df["high"] = df["high"]
+    result_df["low"] = df["low"]
+    result_df["close"] = df["close"]
+    result_df["volume"] = df["volume"]
+
+    # 2. Technical indicators (20)
+    result_df = _add_technical_indicators(result_df, df, ma_windows, rsi_window, vol_window)
+
+    # 3. Candlestick patterns (18)
+    result_df = _add_candlestick_patterns(result_df, df)
+
+    # 4. Candlestick characteristics (9)
+    result_df = _add_candlestick_characteristics(result_df, df)
+
+    # 5. Rolling candlestick features (15)
+    result_df = _add_rolling_candlestick_features(result_df)
+
+    # 6. Sentiment features (2)
+    result_df = _add_sentiment_features(result_df, df)
+
+    # 7. Time features (4)
+    result_df = _add_time_features(result_df, df)
+
+    # 8. Market regime features (5)
+    result_df = _add_market_regime_features(result_df, df)
+
+    # Final validation
+    expected_features = 78
+    actual_features = len([col for col in result_df.columns if col not in ["timestamp", "symbol", "data_source"]])
+
+    if actual_features != expected_features:
+        logger.error(f"Feature count mismatch: expected {expected_features}, got {actual_features}")
+        logger.error(f"Extra features: {[col for col in result_df.columns if col not in _get_expected_feature_names()]}")
+        raise ValueError(f"Feature count mismatch: expected {expected_features}, got {actual_features}")
+
+    # Ensure no NaN or inf values
+    numeric_cols = result_df.select_dtypes(include=[np.number]).columns
+    result_df[numeric_cols] = result_df[numeric_cols].fillna(0.0)
+    result_df[numeric_cols] = result_df[numeric_cols].replace([np.inf, -np.inf], 0.0)
+
+    logger.info(f"Generated {actual_features} features successfully")
+    return result_df
+
+
+def _clean_input_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean and validate input data with robust handling."""
+    logger = get_logger("UnifiedFeatures")
+
+    original_length = len(df)
+
+    # Check for minimum data requirements
+    if len(df) < 5:
+        logger.warning(f"Insufficient data: only {len(df)} rows available (minimum 5 recommended)")
+
+    # Fill missing values with more robust strategies
     price_cols = ["open", "high", "low", "close"]
+
+    # Check for zero or negative prices
     for col in price_cols:
-        df[col] = df[col].replace(0, np.nan).ffill().bfill()
-        # If still NaN, use a small positive value
+        zero_count = (df[col] <= 0).sum()
+        if zero_count > 0:
+            logger.warning(f"Found {zero_count} zero/negative values in {col}")
+
+    # More robust price cleaning
+    for col in price_cols:
+        # Replace zeros and negatives with NaN first
+        df[col] = df[col].replace([0, -np.inf, np.inf], np.nan)
+
+        # Forward fill, then backward fill
+        df[col] = df[col].ffill().bfill()
+
+        # If still NaN, use a reasonable default (1.0 for prices)
         if df[col].isna().any():
+            logger.warning(f"Still have NaN values in {col} after cleaning, using default value 1.0")
             df[col] = df[col].fillna(1.0)
 
-    for col in required_cols:
-        if df[col].isnull().all() or len(df[col].dropna()) == 0:
-            df[col] = 1.0 if col in price_cols else 0.0
+    # Volume cleaning
+    df["volume"] = df["volume"].replace([-np.inf, np.inf], np.nan)
+    df["volume"] = df["volume"].ffill().bfill().fillna(0.0)
 
-    # Calculate minimum required data length
-    min_required_length = max(
-        [*ma_windows, rsi_window, vol_window, 26, 20, 14, 9, 3, 100],
-    )  # Added 100 for long-term features
+    # Ensure price consistency (high >= low, high >= open, high >= close, etc.)
+    df["high"] = df[["high", "open", "close"]].max(axis=1)
+    df["low"] = df[["low", "open", "close"]].min(axis=1)
 
-    if len(df) < min_required_length:
-        import warnings
+    # Log cleaning results
+    cleaned_length = len(df)
+    if cleaned_length != original_length:
+        logger.info(f"Data cleaning: {original_length} -> {cleaned_length} rows")
 
-        warning_msg = (
-            f"Insufficient data for full feature engineering "
-            f"(need at least {min_required_length} rows, got {len(df)}). "
-            f"Some features may be NaN."
-        )
-        warnings.warn(warning_msg, stacklevel=2)
-        if len(df) < 26:
-            ma_windows = [w for w in ma_windows if w <= len(df) // 2]
-            if not ma_windows:
-                ma_windows = [min(3, len(df) - 1)] if len(df) > 1 else []
-            rsi_window = min(rsi_window, len(df) // 2) if len(df) > 2 else 3
-            vol_window = min(vol_window, len(df) // 2) if len(df) > 2 else 3
+    return df
 
-    # Safe log return calculation
+
+def _add_technical_indicators(
+    result_df: pd.DataFrame,
+    df: pd.DataFrame,
+    ma_windows: list,
+    rsi_window: int,
+    vol_window: int
+) -> pd.DataFrame:
+    """Add exactly 20 technical indicators with robust NaN handling."""
+    logger = get_logger("UnifiedFeatures")
+
+    # Log return - more robust calculation
     close_shifted = df["close"].shift(1)
     valid_mask = (df["close"] > 0) & (close_shifted > 0) & (close_shifted.notna())
-    df["log_return"] = np.where(valid_mask, np.log(df["close"] / close_shifted), 0.0)
-    df["log_return"] = df["log_return"].replace([np.inf, -np.inf], 0.0).fillna(0.0)
+    result_df["log_return"] = np.where(valid_mask, np.log(df["close"] / close_shifted), 0.0)
+    result_df["log_return"] = result_df["log_return"].replace([np.inf, -np.inf], 0.0).fillna(0.0)
 
-    # Moving averages with proper NaN handling
+    # Moving averages - ensure minimum periods
     for w in ma_windows:
-        df[f"sma_{w}"] = df["close"].rolling(w, min_periods=1).mean().fillna(0)
+        if len(df) >= w:
+            result_df[f"sma_{w}"] = df["close"].rolling(w, min_periods=1).mean().fillna(df["close"].mean())
+        else:
+            # If not enough data, use available data
+            result_df[f"sma_{w}"] = df["close"].mean()
 
-    # RSI with error handling
+    # RSI - more robust with fallback
     try:
-        df[f"rsi_{rsi_window}"] = ta.rsi(df["close"], length=rsi_window).fillna(50.0)
-    except Exception:
-        df[f"rsi_{rsi_window}"] = 50.0
+        if len(df) >= rsi_window:
+            rsi_result = ta.rsi(df["close"], length=rsi_window)
+            result_df[f"rsi_{rsi_window}"] = rsi_result.fillna(50.0)
+        else:
+            result_df[f"rsi_{rsi_window}"] = 50.0
+    except Exception as e:
+        logger.warning(f"RSI calculation failed: {e}, using default value 50.0")
+        result_df[f"rsi_{rsi_window}"] = 50.0
 
-    # Volatility with proper handling
-    df[f"vol_{vol_window}"] = df["log_return"].rolling(vol_window, min_periods=1).std(ddof=0).fillna(0) * np.sqrt(
-        vol_window,
-    )
+    # Volatility - more robust calculation
+    if len(df) >= vol_window:
+        result_df[f"vol_{vol_window}"] = (
+            result_df["log_return"].rolling(vol_window, min_periods=1).std(ddof=0).fillna(0) * np.sqrt(vol_window)
+        )
+    else:
+        result_df[f"vol_{vol_window}"] = 0.0
 
-    # Add sentiment features
-    df = add_sentiment(df)
-    df["sentiment_magnitude"] = df["sentiment"].abs()  # Add sentiment magnitude
-
-    # Additional technical indicators with robust error handling
+    # EMA 20 - more robust
     try:
-        df = compute_ema(df, price_col="close", timeperiod=12)
-        df = compute_ema(df, price_col="close", timeperiod=26)
-        df = compute_ema(df, price_col="close", timeperiod=20)
-        df = compute_macd(df, price_col="close")
-        df["macd"] = df["macd_line"].fillna(0)
-        df = compute_atr(df, timeperiod=14)
-        df["atr"] = df["atr_14"].fillna(0)
-        df = compute_bollinger_bands(df, price_col="close", timeperiod=20)
-        df["bb_upper"] = df["bb_upper_20"].fillna(df["close"])
-        df["bb_lower"] = df["bb_lower_20"].fillna(df["close"])
-        df = compute_stochastic(df, fastk_period=14, slowk_period=3, slowd_period=3)
-        if len(df) >= 28:
-            df = compute_adx(df, timeperiod=14)
-        df = compute_williams_r(df, timeperiod=14)
-        df = compute_obv(df)
+        if len(df) >= 20:
+            ema_result = ta.ema(df["close"], length=20)
+            result_df["ema_20"] = ema_result.fillna(df["close"])
+        else:
+            result_df["ema_20"] = df["close"]
+    except Exception as e:
+        logger.warning(f"EMA calculation failed: {e}, using close price")
+        result_df["ema_20"] = df["close"]
 
-        # Add additional pandas_ta indicators that might be expected
+    # MACD - more robust with fallbacks
+    try:
+        if len(df) >= 26:  # MACD needs at least 26 periods
+            macd = ta.macd(df["close"])
+            result_df["macd_line"] = macd["MACD_12_26_9"].fillna(0)
+            result_df["macd_signal"] = macd["MACDs_12_26_9"].fillna(0)
+            result_df["macd_hist"] = macd["MACDh_12_26_9"].fillna(0)
+        else:
+            result_df["macd_line"] = 0.0
+            result_df["macd_signal"] = 0.0
+            result_df["macd_hist"] = 0.0
+    except Exception as e:
+        logger.warning(f"MACD calculation failed: {e}, using default values")
+        result_df["macd_line"] = 0.0
+        result_df["macd_signal"] = 0.0
+        result_df["macd_hist"] = 0.0
+
+    # ATR - more robust
+    try:
+        if len(df) >= 14:
+            atr_result = ta.atr(df["high"], df["low"], df["close"], length=14)
+            result_df["atr_14"] = atr_result.fillna(0)
+        else:
+            result_df["atr_14"] = 0.0
+    except Exception as e:
+        logger.warning(f"ATR calculation failed: {e}, using default value 0.0")
+        result_df["atr_14"] = 0.0
+
+    # Bollinger Bands - more robust
+    try:
+        if len(df) >= 20:
+            bb = ta.bbands(df["close"], length=20)
+            result_df["bb_mavg_20"] = bb["BBM_20_2.0"].fillna(df["close"])
+            result_df["bb_upper_20"] = bb["BBU_20_2.0"].fillna(df["close"])
+            result_df["bb_lower_20"] = bb["BBL_20_2.0"].fillna(df["close"])
+        else:
+            result_df["bb_mavg_20"] = df["close"]
+            result_df["bb_upper_20"] = df["close"]
+            result_df["bb_lower_20"] = df["close"]
+    except Exception as e:
+        logger.warning(f"Bollinger Bands calculation failed: {e}, using close price")
+        result_df["bb_mavg_20"] = df["close"]
+        result_df["bb_upper_20"] = df["close"]
+        result_df["bb_lower_20"] = df["close"]
+
+    # Stochastic - more robust
+    try:
+        if len(df) >= 14:
+            stoch = ta.stoch(df["high"], df["low"], df["close"])
+            result_df["stoch_k"] = stoch["STOCHk_14_3_3"].fillna(50.0)
+            result_df["stoch_d"] = stoch["STOCHd_14_3_3"].fillna(50.0)
+        else:
+            result_df["stoch_k"] = 50.0
+            result_df["stoch_d"] = 50.0
+    except Exception as e:
+        logger.warning(f"Stochastic calculation failed: {e}, using default values")
+        result_df["stoch_k"] = 50.0
+        result_df["stoch_d"] = 50.0
+
+    # ADX - more robust
+    try:
+        if len(df) >= 14:
+            adx_result = ta.adx(df["high"], df["low"], df["close"], length=14)
+            # ADX returns a DataFrame, we need to extract the ADX column
+            if isinstance(adx_result, pd.DataFrame) and "ADX_14" in adx_result.columns:
+                result_df["adx_14"] = adx_result["ADX_14"].fillna(25.0)
+            else:
+                result_df["adx_14"] = 25.0
+        else:
+            result_df["adx_14"] = 25.0
+    except Exception as e:
+        logger.warning(f"ADX calculation failed: {e}, using default value 25.0")
+        result_df["adx_14"] = 25.0
+
+    # Williams %R - more robust
+    try:
+        if len(df) >= 14:
+            wr_result = ta.willr(df["high"], df["low"], df["close"], length=14)
+            result_df["wr_14"] = wr_result.fillna(-50.0)
+        else:
+            result_df["wr_14"] = -50.0
+    except Exception as e:
+        logger.warning(f"Williams %R calculation failed: {e}, using default value -50.0")
+        result_df["wr_14"] = -50.0
+
+    # OBV - more robust
+    try:
+        obv_result = ta.obv(df["close"], df["volume"])
+        result_df["obv"] = obv_result.fillna(0)
+    except Exception as e:
+        logger.warning(f"OBV calculation failed: {e}, using default value 0.0")
+        result_df["obv"] = 0.0
+
+    return result_df
+
+
+def _add_candlestick_patterns(result_df: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
+    """Add exactly 18 candlestick patterns."""
+
+    # Basic patterns
+    result_df["doji"] = _detect_doji(df)
+    result_df["hammer"] = _detect_hammer(df)
+    result_df["hanging_man"] = _detect_hanging_man(df)
+    result_df["bullish_engulfing"] = _detect_bullish_engulfing(df)
+    result_df["bearish_engulfing"] = _detect_bearish_engulfing(df)
+    result_df["shooting_star"] = _detect_shooting_star(df)
+    result_df["morning_star"] = _detect_morning_star(df)
+    result_df["evening_star"] = _detect_evening_star(df)
+    result_df["inside_bar"] = _detect_inside_bar(df)
+    result_df["outside_bar"] = _detect_outside_bar(df)
+    result_df["tweezer_top"] = _detect_tweezer_top(df)
+    result_df["tweezer_bottom"] = _detect_tweezer_bottom(df)
+    result_df["three_white_soldiers"] = _detect_three_white_soldiers(df)
+    result_df["three_black_crows"] = _detect_three_black_crows(df)
+    result_df["bullish_harami"] = _detect_bullish_harami(df)
+    result_df["bearish_harami"] = _detect_bearish_harami(df)
+    result_df["dark_cloud_cover"] = _detect_dark_cloud_cover(df)
+    result_df["piercing_line"] = _detect_piercing_line(df)
+
+    return result_df
+
+
+def _add_candlestick_characteristics(result_df: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
+    """Add exactly 9 candlestick characteristics."""
+
+    # Basic characteristics
+    result_df["body_size"] = (df["close"] - df["open"]).abs()
+    result_df["range_size"] = df["high"] - df["low"]
+    result_df["upper_shadow"] = df["high"] - df[["open", "close"]].max(axis=1)
+    result_df["lower_shadow"] = df[["open", "close"]].min(axis=1) - df["low"]
+
+    # Relative characteristics
+    result_df["rel_body_size"] = result_df["body_size"] / result_df["range_size"].replace(0, 1)
+    result_df["rel_upper_shadow"] = result_df["upper_shadow"] / result_df["range_size"].replace(0, 1)
+    result_df["rel_lower_shadow"] = result_df["lower_shadow"] / result_df["range_size"].replace(0, 1)
+
+    # Body position and type
+    result_df["body_position"] = (df["close"] + df["open"]) / 2 / result_df["range_size"].replace(0, 1)
+    result_df["body_type"] = np.where(df["close"] > df["open"], 1, np.where(df["close"] < df["open"], -1, 0))
+
+    # Clean up
+    result_df["rel_body_size"] = result_df["rel_body_size"].fillna(0)
+    result_df["rel_upper_shadow"] = result_df["rel_upper_shadow"].fillna(0)
+    result_df["rel_lower_shadow"] = result_df["rel_lower_shadow"].fillna(0)
+    result_df["body_position"] = result_df["body_position"].fillna(0.5)
+
+    return result_df
+
+
+def _add_rolling_candlestick_features(result_df: pd.DataFrame) -> pd.DataFrame:
+    """Add exactly 15 rolling candlestick features."""
+
+    # Ensure required columns exist
+    required_cols = ["rel_body_size", "upper_shadow", "lower_shadow", "body_position", "body_size"]
+    for col in required_cols:
+        if col not in result_df.columns:
+            result_df[col] = 0.0
+
+    # 5-period averages
+    result_df["avg_rel_body_5"] = result_df["rel_body_size"].rolling(5, min_periods=1).mean().fillna(0)
+    result_df["avg_upper_shadow_5"] = result_df["upper_shadow"].rolling(5, min_periods=1).mean().fillna(0)
+    result_df["avg_lower_shadow_5"] = result_df["lower_shadow"].rolling(5, min_periods=1).mean().fillna(0)
+    result_df["avg_body_pos_5"] = result_df["body_position"].rolling(5, min_periods=1).mean().fillna(0.5)
+    result_df["body_momentum_5"] = result_df["body_size"].diff(5).rolling(5, min_periods=1).mean().fillna(0)
+
+    # 10-period averages
+    result_df["avg_rel_body_10"] = result_df["rel_body_size"].rolling(10, min_periods=1).mean().fillna(0)
+    result_df["avg_upper_shadow_10"] = result_df["upper_shadow"].rolling(10, min_periods=1).mean().fillna(0)
+    result_df["avg_lower_shadow_10"] = result_df["lower_shadow"].rolling(10, min_periods=1).mean().fillna(0)
+    result_df["avg_body_pos_10"] = result_df["body_position"].rolling(10, min_periods=1).mean().fillna(0.5)
+    result_df["body_momentum_10"] = result_df["body_size"].diff(10).rolling(10, min_periods=1).mean().fillna(0)
+
+    # 20-period averages
+    result_df["avg_rel_body_20"] = result_df["rel_body_size"].rolling(20, min_periods=1).mean().fillna(0)
+    result_df["avg_upper_shadow_20"] = result_df["upper_shadow"].rolling(20, min_periods=1).mean().fillna(0)
+    result_df["avg_lower_shadow_20"] = result_df["lower_shadow"].rolling(20, min_periods=1).mean().fillna(0)
+    result_df["avg_body_pos_20"] = result_df["body_position"].rolling(20, min_periods=1).mean().fillna(0.5)
+    result_df["body_momentum_20"] = result_df["body_size"].diff(20).rolling(20, min_periods=1).mean().fillna(0)
+
+    return result_df
+
+
+def _add_sentiment_features(result_df: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
+    """Add exactly 2 sentiment features."""
+
+    # Default sentiment values
+    result_df["sentiment"] = 0.0
+    result_df["sentiment_magnitude"] = 0.0
+
+    # If sentiment column exists, use it
+    if "sentiment" in df.columns:
+        result_df["sentiment"] = df["sentiment"].fillna(0.0)
+        result_df["sentiment_magnitude"] = result_df["sentiment"].abs()
+
+    return result_df
+
+
+def _add_time_features(result_df: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
+    """Add exactly 4 time features."""
+
+    # Default time features
+    result_df["hour"] = 0
+    result_df["day_of_week"] = 0
+    result_df["month"] = 1
+    result_df["quarter"] = 1
+
+    # If timestamp exists, extract time features
+    if "timestamp" in df.columns:
         try:
-            # Parabolic SAR - handle the DataFrame return properly
-            psar_result = ta.psar(df["high"], df["low"], df["close"])
-            if isinstance(psar_result, pd.DataFrame):
-                # Take the first column if it's a DataFrame
-                df["psar"] = psar_result.iloc[:, 0] if len(psar_result.columns) > 0 else 0.0
-            else:
-                df["psar"] = psar_result
+            if not pd.api.types.is_datetime64_any_dtype(df["timestamp"]):
+                df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
 
-            # Commodity Channel Index
-            df["cci"] = ta.cci(df["high"], df["low"], df["close"])
+            result_df["hour"] = df["timestamp"].dt.hour.fillna(0)
+            result_df["day_of_week"] = df["timestamp"].dt.dayofweek.fillna(0)
+            result_df["month"] = df["timestamp"].dt.month.fillna(1)
+            result_df["quarter"] = df["timestamp"].dt.quarter.fillna(1)
+        except Exception:
+            pass  # Keep default values
 
-            # Money Flow Index
-            df["mfi"] = ta.mfi(df["high"], df["low"], df["close"], df["volume"])
-
-            # Rate of Change
-            df["roc"] = ta.roc(df["close"])
-
-            # True Strength Index - handle DataFrame return
-            tsi_result = ta.tsi(df["close"])
-            if isinstance(tsi_result, pd.DataFrame):
-                # Take the first column if it's a DataFrame
-                df["tsi"] = tsi_result.iloc[:, 0] if len(tsi_result.columns) > 0 else 0.0
-            else:
-                df["tsi"] = tsi_result
-
-        except Exception as e:
-            print(f"Warning: Additional pandas_ta indicators failed: {e}")
-            # Set default values for failed indicators
-            df["psar"] = 0.0
-            df["cci"] = 0.0
-            df["mfi"] = 0.0
-            df["roc"] = 0.0
-            df["tsi"] = 0.0
-
-    except Exception as e:
-        print(f"Warning: Error in technical indicators: {e}")
-
-    # Enhanced candlestick patterns - add missing patterns
-    try:
-        df = compute_candle_features(df)
-        # Add missing candlestick patterns that standardizer expects
-        df = add_missing_candlestick_patterns(df)
-    except Exception as e:
-        print(f"Warning: Error in candlestick patterns: {e}")
-
-    # Add candlestick characteristics
-    df = add_candlestick_characteristics(df)
-
-    # Add rolling candlestick features
-    df = add_rolling_candlestick_features(df)
-
-    # Add time-based features
-    df = add_time_features(df)
-
-    # Add market regime features
-    df = add_market_regime_features(df)
-
-    # Final cleanup - fill any remaining NaN values
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
-    df[numeric_cols] = df[numeric_cols].fillna(0.0)
-
-    # Convert to float64 for consistency
-    df[numeric_cols] = df[numeric_cols].astype(np.float64)
-
-    # Ensure no inf/-inf values remain
-    df[numeric_cols] = df[numeric_cols].replace([np.inf, -np.inf], 0.0)
-
-    # Drop initial rows if needed (but keep at least 1 row)
-    windows = [*ma_windows, rsi_window, vol_window, 20, 26, 9, 14, 20, 14, 14, 14, 100]
-    max_pattern_window = 3 if advanced_candles else 2
-    windows.append(max_pattern_window)
-    max_core_window = max(windows) if windows else 0
-
-    if len(df) > max_core_window:
-        rows_to_drop = min(max_core_window, len(df) - 1)
-        df = df.iloc[rows_to_drop:].reset_index(drop=True)
-
-    # Final validation - ensure no NaN or inf values
-    assert not df[numeric_cols].isna().any().any(), "NaN values found after feature engineering"
-    assert not df[numeric_cols].isin([np.inf, -np.inf]).any().any(), "Inf values found after feature engineering"
-
-    return df
+    return result_df
 
 
-def add_missing_candlestick_patterns(df: pd.DataFrame) -> pd.DataFrame:
-    """Add missing candlestick patterns using manual implementation."""
-    df = df.copy()
+def _add_market_regime_features(result_df: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
+    """Add exactly 5 market regime features."""
 
-    # Implement missing patterns manually
-    try:
-        # Hanging Man pattern
-        df["hanging_man"] = detect_hanging_man(df)
+    # Price change percentage
+    result_df["price_change_pct"] = df["close"].pct_change().fillna(0)
 
-        # Inside Bar pattern
-        df["inside_bar"] = detect_inside_bar(df)
+    # High-low percentage
+    result_df["high_low_pct"] = (df["high"] - df["low"]) / df["close"].replace(0, 1)
 
-        # Outside Bar pattern
-        df["outside_bar"] = detect_outside_bar(df)
+    # Volume features
+    result_df["volume_ma_20"] = df["volume"].rolling(20, min_periods=1).mean().fillna(0)
+    result_df["volume_ratio"] = df["volume"] / result_df["volume_ma_20"].replace(0, 1)
+    result_df["volume_change"] = df["volume"].pct_change().fillna(0)
 
-        # Tweezer patterns
-        df["tweezer_top"] = detect_tweezer_top(df)
-        df["tweezer_bottom"] = detect_tweezer_bottom(df)
+    # Clean up
+    result_df["high_low_pct"] = result_df["high_low_pct"].fillna(0)
+    result_df["volume_ratio"] = result_df["volume_ratio"].fillna(1)
 
-        # Three White Soldiers pattern
-        df["three_white_soldiers"] = detect_three_white_soldiers(df)
-
-        # Three Black Crows pattern
-        df["three_black_crows"] = detect_three_black_crows(df)
-
-        # Harami patterns
-        df["bullish_harami"] = detect_bullish_harami(df)
-        df["bearish_harami"] = detect_bearish_harami(df)
-
-        # Dark Cloud Cover pattern
-        df["dark_cloud_cover"] = detect_dark_cloud_cover(df)
-
-        # Piercing Line pattern
-        df["piercing_line"] = detect_piercing_line(df)
-
-    except Exception as e:
-        print(f"Warning: Failed to compute candlestick patterns: {e}")
-        # Set default values for all patterns
-        pattern_names = [
-            "hanging_man",
-            "inside_bar",
-            "outside_bar",
-            "tweezer_top",
-            "tweezer_bottom",
-            "three_white_soldiers",
-            "three_black_crows",
-            "bullish_harami",
-            "bearish_harami",
-            "dark_cloud_cover",
-            "piercing_line",
-        ]
-        for pattern in pattern_names:
-            df[pattern] = 0
-
-    return df
+    return result_df
 
 
-def detect_hanging_man(df: pd.DataFrame) -> pd.Series:
-    """Detect Hanging Man pattern: small body, long lower shadow in uptrend."""
+def _get_expected_feature_names() -> list[str]:
+    """Get the exact list of 78 expected feature names."""
+    return [
+        # Price features (5)
+        "open", "high", "low", "close", "volume",
+
+        # Technical indicators (20)
+        "log_return", "sma_5", "sma_10", "sma_20", "sma_50",
+        "rsi_14", "vol_20", "ema_20", "macd_line", "macd_signal",
+        "macd_hist", "atr_14", "bb_mavg_20", "bb_upper_20", "bb_lower_20",
+        "stoch_k", "stoch_d", "adx_14", "wr_14", "obv",
+
+        # Candlestick patterns (18)
+        "doji", "hammer", "hanging_man", "bullish_engulfing", "bearish_engulfing",
+        "shooting_star", "morning_star", "evening_star", "inside_bar", "outside_bar",
+        "tweezer_top", "tweezer_bottom", "three_white_soldiers", "three_black_crows",
+        "bullish_harami", "bearish_harami", "dark_cloud_cover", "piercing_line",
+
+        # Candlestick characteristics (9)
+        "body_size", "range_size", "rel_body_size", "upper_shadow", "lower_shadow",
+        "rel_upper_shadow", "rel_lower_shadow", "body_position", "body_type",
+
+        # Rolling candlestick features (15)
+        "avg_rel_body_5", "avg_upper_shadow_5", "avg_lower_shadow_5", "avg_body_pos_5", "body_momentum_5",
+        "avg_rel_body_10", "avg_upper_shadow_10", "avg_lower_shadow_10", "avg_body_pos_10", "body_momentum_10",
+        "avg_rel_body_20", "avg_upper_shadow_20", "avg_lower_shadow_20", "avg_body_pos_20", "body_momentum_20",
+
+        # Sentiment features (2)
+        "sentiment", "sentiment_magnitude",
+
+        # Time features (4)
+        "hour", "day_of_week", "month", "quarter",
+
+        # Market regime features (5)
+        "price_change_pct", "high_low_pct", "volume_ma_20", "volume_ratio", "volume_change"
+    ]
+
+
+# Pattern detection functions
+def _detect_doji(df: pd.DataFrame) -> pd.Series:
+    """Detect Doji pattern."""
+    body = (df["close"] - df["open"]).abs()
+    range_size = df["high"] - df["low"]
+    doji = body <= (range_size * 0.1)
+    return doji.fillna(False).astype(int)
+
+
+def _detect_hammer(df: pd.DataFrame) -> pd.Series:
+    """Detect Hammer pattern."""
     body = (df["close"] - df["open"]).abs()
     lower_shadow = np.minimum(df["open"], df["close"]) - df["low"]
     upper_shadow = df["high"] - np.maximum(df["open"], df["close"])
 
-    # Hanging man: small body, long lower shadow, small upper shadow
-    hanging_man = (
-        (lower_shadow >= 2 * body)  # Long lower shadow
-        & (upper_shadow <= body * 0.1)  # Very small upper shadow
-        & (body <= (df["high"] - df["low"]) * 0.3)  # Small body relative to range
+    hammer = (
+        (lower_shadow >= 2 * body) &
+        (upper_shadow <= body * 0.1) &
+        (body <= (df["high"] - df["low"]) * 0.3)
     )
+    return hammer.fillna(False).astype(int)
 
+
+def _detect_hanging_man(df: pd.DataFrame) -> pd.Series:
+    """Detect Hanging Man pattern."""
+    body = (df["close"] - df["open"]).abs()
+    lower_shadow = np.minimum(df["open"], df["close"]) - df["low"]
+    upper_shadow = df["high"] - np.maximum(df["open"], df["close"])
+
+    hanging_man = (
+        (lower_shadow >= 2 * body) &
+        (upper_shadow <= body * 0.1) &
+        (body <= (df["high"] - df["low"]) * 0.3)
+    )
     return hanging_man.fillna(False).astype(int)
 
 
-def detect_inside_bar(df: pd.DataFrame) -> pd.Series:
-    """Detect Inside Bar pattern: current bar completely inside previous bar."""
-    inside_bar = (df["high"] <= df["high"].shift(1)) & (
-        df["low"] >= df["low"].shift(1)
-    )  # Current high <= previous high  # Current low >= previous low
+def _detect_bullish_engulfing(df: pd.DataFrame) -> pd.Series:
+    """Detect Bullish Engulfing pattern."""
+    if len(df) < 2:
+        return pd.Series([0] * len(df), index=df.index)
+
+    prev_open = df["open"].shift(1)
+    prev_close = df["close"].shift(1)
+
+    bullish_engulfing = (
+        (prev_close < prev_open) &  # Previous candle is bearish
+        (df["close"] > df["open"]) &  # Current candle is bullish
+        (df["open"] < prev_close) &  # Current open below previous close
+        (df["close"] > prev_open)  # Current close above previous open
+    )
+    return bullish_engulfing.fillna(False).astype(int)
+
+
+def _detect_bearish_engulfing(df: pd.DataFrame) -> pd.Series:
+    """Detect Bearish Engulfing pattern."""
+    if len(df) < 2:
+        return pd.Series([0] * len(df), index=df.index)
+
+    prev_open = df["open"].shift(1)
+    prev_close = df["close"].shift(1)
+
+    bearish_engulfing = (
+        (prev_close > prev_open) &  # Previous candle is bullish
+        (df["close"] < df["open"]) &  # Current candle is bearish
+        (df["open"] > prev_close) &  # Current open above previous close
+        (df["close"] < prev_open)  # Current close below previous open
+    )
+    return bearish_engulfing.fillna(False).astype(int)
+
+
+def _detect_shooting_star(df: pd.DataFrame) -> pd.Series:
+    """Detect Shooting Star pattern."""
+    body = (df["close"] - df["open"]).abs()
+    upper_shadow = df["high"] - np.maximum(df["open"], df["close"])
+    lower_shadow = np.minimum(df["open"], df["close"]) - df["low"]
+
+    shooting_star = (
+        (upper_shadow >= 2 * body) &
+        (lower_shadow <= body * 0.1) &
+        (body <= (df["high"] - df["low"]) * 0.3)
+    )
+    return shooting_star.fillna(False).astype(int)
+
+
+def _detect_morning_star(df: pd.DataFrame) -> pd.Series:
+    """Detect Morning Star pattern."""
+    if len(df) < 3:
+        return pd.Series([0] * len(df), index=df.index)
+
+    # First day: long bearish candle
+    first_bearish = (df["close"].shift(2) < df["open"].shift(2)) & (
+        (df["close"].shift(2) - df["open"].shift(2)).abs() > (df["high"].shift(2) - df["low"].shift(2)) * 0.6
+    )
+
+    # Second day: small body (doji-like)
+    second_small = ((df["close"].shift(1) - df["open"].shift(1)).abs() <
+                   (df["high"].shift(1) - df["low"].shift(1)) * 0.3)
+
+    # Third day: bullish candle
+    third_bullish = (df["close"] > df["open"]) & (
+        (df["close"] - df["open"]) > (df["high"] - df["low"]) * 0.6
+    )
+
+    morning_star = first_bearish & second_small & third_bullish
+    return morning_star.fillna(False).astype(int)
+
+
+def _detect_evening_star(df: pd.DataFrame) -> pd.Series:
+    """Detect Evening Star pattern."""
+    if len(df) < 3:
+        return pd.Series([0] * len(df), index=df.index)
+
+    # First day: long bullish candle
+    first_bullish = (df["close"].shift(2) > df["open"].shift(2)) & (
+        (df["close"].shift(2) - df["open"].shift(2)).abs() > (df["high"].shift(2) - df["low"].shift(2)) * 0.6
+    )
+
+    # Second day: small body (doji-like)
+    second_small = ((df["close"].shift(1) - df["open"].shift(1)).abs() <
+                   (df["high"].shift(1) - df["low"].shift(1)) * 0.3)
+
+    # Third day: bearish candle
+    third_bearish = (df["close"] < df["open"]) & (
+        (df["open"] - df["close"]) > (df["high"] - df["low"]) * 0.6
+    )
+
+    evening_star = first_bullish & second_small & third_bearish
+    return evening_star.fillna(False).astype(int)
+
+
+def _detect_inside_bar(df: pd.DataFrame) -> pd.Series:
+    """Detect Inside Bar pattern."""
+    if len(df) < 2:
+        return pd.Series([0] * len(df), index=df.index)
+
+    inside_bar = (df["high"] <= df["high"].shift(1)) & (df["low"] >= df["low"].shift(1))
     return inside_bar.fillna(False).astype(int)
 
 
-def detect_outside_bar(df: pd.DataFrame) -> pd.Series:
-    """Detect Outside Bar pattern: current bar completely engulfs previous bar."""
-    outside_bar = (df["high"] > df["high"].shift(1)) & (
-        df["low"] < df["low"].shift(1)
-    )  # Current high > previous high  # Current low < previous low
+def _detect_outside_bar(df: pd.DataFrame) -> pd.Series:
+    """Detect Outside Bar pattern."""
+    if len(df) < 2:
+        return pd.Series([0] * len(df), index=df.index)
+
+    outside_bar = (df["high"] > df["high"].shift(1)) & (df["low"] < df["low"].shift(1))
     return outside_bar.fillna(False).astype(int)
 
 
-def detect_tweezer_top(df: pd.DataFrame) -> pd.Series:
-    """Detect Tweezer Top pattern: two candles with same high after uptrend."""
+def _detect_tweezer_top(df: pd.DataFrame) -> pd.Series:
+    """Detect Tweezer Top pattern."""
     if len(df) < 2:
-        return pd.Series([False] * len(df), index=df.index).astype(int)
+        return pd.Series([0] * len(df), index=df.index)
 
-    # Vectorized calculation
+    # Two candles with same high after uptrend
     high1 = df["high"].shift(1)
     high2 = df["high"]
     body1 = (df["close"].shift(1) - df["open"].shift(1)).abs()
     body2 = (df["close"] - df["open"]).abs()
 
-    # Similar highs (within 0.1% tolerance)
-    similar_highs = (high1 - high2).abs() / high1 < 0.001
-
-    # Both candles should have small bodies
-    small_bodies = (body1 < high1 * 0.01) & (body2 < high2 * 0.01)
-
-    tweezer_top = similar_highs & small_bodies
+    tweezer_top = (
+        (abs(high1 - high2) <= (high1 * 0.001)) &  # Same high
+        (body1 > (df["high"].shift(1) - df["low"].shift(1)) * 0.3) &  # First candle has body
+        (body2 > (df["high"] - df["low"]) * 0.3)  # Second candle has body
+    )
     return tweezer_top.fillna(False).astype(int)
 
 
-def detect_tweezer_bottom(df: pd.DataFrame) -> pd.Series:
-    """Detect Tweezer Bottom pattern: two candles with same low after downtrend."""
+def _detect_tweezer_bottom(df: pd.DataFrame) -> pd.Series:
+    """Detect Tweezer Bottom pattern."""
     if len(df) < 2:
-        return pd.Series([False] * len(df), index=df.index).astype(int)
+        return pd.Series([0] * len(df), index=df.index)
 
-    # Vectorized calculation
+    # Two candles with same low after downtrend
     low1 = df["low"].shift(1)
     low2 = df["low"]
     body1 = (df["close"].shift(1) - df["open"].shift(1)).abs()
     body2 = (df["close"] - df["open"]).abs()
 
-    # Similar lows (within 0.1% tolerance)
-    similar_lows = (low1 - low2).abs() / low1 < 0.001
-
-    # Both candles should have small bodies
-    small_bodies = (body1 < low1 * 0.01) & (body2 < low2 * 0.01)
-
-    tweezer_bottom = similar_lows & small_bodies
+    tweezer_bottom = (
+        (abs(low1 - low2) <= (low1 * 0.001)) &  # Same low
+        (body1 > (df["high"].shift(1) - df["low"].shift(1)) * 0.3) &  # First candle has body
+        (body2 > (df["high"] - df["low"]) * 0.3)  # Second candle has body
+    )
     return tweezer_bottom.fillna(False).astype(int)
 
 
-def detect_three_white_soldiers(df: pd.DataFrame) -> pd.Series:
-    """Detect Three White Soldiers pattern: three consecutive bullish candles."""
+def _detect_three_white_soldiers(df: pd.DataFrame) -> pd.Series:
+    """Detect Three White Soldiers pattern."""
     if len(df) < 3:
-        return pd.Series([False] * len(df), index=df.index).astype(int)
+        return pd.Series([0] * len(df), index=df.index)
 
-    # Vectorized calculation
-    bullish1 = df["close"].shift(2) > df["open"].shift(2)
-    bullish2 = df["close"].shift(1) > df["open"].shift(1)
-    bullish3 = df["close"] > df["open"]
+    # Three consecutive bullish candles with higher highs
+    first_bullish = (df["close"].shift(2) > df["open"].shift(2))
+    second_bullish = (df["close"].shift(1) > df["open"].shift(1))
+    third_bullish = (df["close"] > df["open"])
 
-    # Each candle should open within previous candle's body
-    open2_in_body1 = (df["open"].shift(1) >= df["open"].shift(2)) & (df["open"].shift(1) <= df["close"].shift(2))
-    open3_in_body2 = (df["open"] >= df["open"].shift(1)) & (df["open"] <= df["close"].shift(1))
+    higher_highs = (df["high"] > df["high"].shift(1)) & (df["high"].shift(1) > df["high"].shift(2))
 
-    three_white_soldiers = bullish1 & bullish2 & bullish3 & open2_in_body1 & open3_in_body2
+    three_white_soldiers = first_bullish & second_bullish & third_bullish & higher_highs
     return three_white_soldiers.fillna(False).astype(int)
 
 
-def detect_three_black_crows(df: pd.DataFrame) -> pd.Series:
-    """Detect Three Black Crows pattern: three consecutive bearish candles."""
+def _detect_three_black_crows(df: pd.DataFrame) -> pd.Series:
+    """Detect Three Black Crows pattern."""
     if len(df) < 3:
-        return pd.Series([False] * len(df), index=df.index).astype(int)
+        return pd.Series([0] * len(df), index=df.index)
 
-    # Vectorized calculation
-    bearish1 = df["close"].shift(2) < df["open"].shift(2)
-    bearish2 = df["close"].shift(1) < df["open"].shift(1)
-    bearish3 = df["close"] < df["open"]
+    # Three consecutive bearish candles with lower lows
+    first_bearish = (df["close"].shift(2) < df["open"].shift(2))
+    second_bearish = (df["close"].shift(1) < df["open"].shift(1))
+    third_bearish = (df["close"] < df["open"])
 
-    # Each candle should open within previous candle's body
-    open2_in_body1 = (df["open"].shift(1) >= df["open"].shift(2)) & (df["open"].shift(1) <= df["close"].shift(2))
-    open3_in_body2 = (df["open"] >= df["open"].shift(1)) & (df["open"] <= df["close"].shift(1))
+    lower_lows = (df["low"] < df["low"].shift(1)) & (df["low"].shift(1) < df["low"].shift(2))
 
-    three_black_crows = bearish1 & bearish2 & bearish3 & open2_in_body1 & open3_in_body2
+    three_black_crows = first_bearish & second_bearish & third_bearish & lower_lows
     return three_black_crows.fillna(False).astype(int)
 
 
-def detect_bullish_harami(df: pd.DataFrame) -> pd.Series:
-    """Detect Bullish Harami pattern: small bullish candle inside large bearish candle."""
-    bullish_harami = (
-        (df["close"].shift(1) < df["open"].shift(1))  # Previous candle is bearish
-        & (df["close"] > df["open"])  # Current candle is bullish
-        & (df["open"] > df["close"].shift(1))  # Current open > previous close
-        & (df["close"] < df["open"].shift(1))  # Current close < previous open
-        & (abs(df["close"] - df["open"]) < abs(df["close"].shift(1) - df["open"].shift(1)) * 0.5)  # Small body
-    )
+def _detect_bullish_harami(df: pd.DataFrame) -> pd.Series:
+    """Detect Bullish Harami pattern."""
+    if len(df) < 2:
+        return pd.Series([0] * len(df), index=df.index)
+
+    # Previous bearish candle, current bullish candle inside previous body
+    prev_bearish = (df["close"].shift(1) < df["open"].shift(1))
+    current_bullish = (df["close"] > df["open"])
+    inside_body = (df["open"] > df["close"].shift(1)) & (df["close"] < df["open"].shift(1))
+
+    bullish_harami = prev_bearish & current_bullish & inside_body
     return bullish_harami.fillna(False).astype(int)
 
 
-def detect_bearish_harami(df: pd.DataFrame) -> pd.Series:
-    """Detect Bearish Harami pattern: small bearish candle inside large bullish candle."""
-    bearish_harami = (
-        (df["close"].shift(1) > df["open"].shift(1))  # Previous candle is bullish
-        & (df["close"] < df["open"])  # Current candle is bearish
-        & (df["open"] < df["close"].shift(1))  # Current open < previous close
-        & (df["close"] > df["open"].shift(1))  # Current close > previous open
-        & (abs(df["close"] - df["open"]) < abs(df["close"].shift(1) - df["open"].shift(1)) * 0.5)  # Small body
-    )
+def _detect_bearish_harami(df: pd.DataFrame) -> pd.Series:
+    """Detect Bearish Harami pattern."""
+    if len(df) < 2:
+        return pd.Series([0] * len(df), index=df.index)
+
+    # Previous bullish candle, current bearish candle inside previous body
+    prev_bullish = (df["close"].shift(1) > df["open"].shift(1))
+    current_bearish = (df["close"] < df["open"])
+    inside_body = (df["close"] > df["close"].shift(1)) & (df["open"] < df["open"].shift(1))
+
+    bearish_harami = prev_bullish & current_bearish & inside_body
     return bearish_harami.fillna(False).astype(int)
 
 
-def detect_dark_cloud_cover(df: pd.DataFrame) -> pd.Series:
-    """Detect Dark Cloud Cover pattern: bearish candle opens above previous high, closes below midpoint."""
-    dark_cloud_cover = (
-        (df["close"].shift(1) > df["open"].shift(1))  # Previous candle is bullish
-        & (df["close"] < df["open"])  # Current candle is bearish
-        & (df["open"] > df["high"].shift(1))  # Current open > previous high
-        & (df["close"] < (df["open"].shift(1) + df["close"].shift(1)) / 2)  # Close below midpoint
-    )
+def _detect_dark_cloud_cover(df: pd.DataFrame) -> pd.Series:
+    """Detect Dark Cloud Cover pattern."""
+    if len(df) < 2:
+        return pd.Series([0] * len(df), index=df.index)
+
+    # Previous bullish candle, current bearish candle opening above previous high
+    prev_bullish = (df["close"].shift(1) > df["open"].shift(1))
+    current_bearish = (df["close"] < df["open"])
+    open_above_high = df["open"] > df["high"].shift(1)
+
+    dark_cloud_cover = prev_bullish & current_bearish & open_above_high
     return dark_cloud_cover.fillna(False).astype(int)
 
 
-def detect_piercing_line(df: pd.DataFrame) -> pd.Series:
-    """Detect Piercing Line pattern: bullish candle opens below previous low, closes above midpoint."""
-    piercing_line = (
-        (df["close"].shift(1) < df["open"].shift(1))  # Previous candle is bearish
-        & (df["close"] > df["open"])  # Current candle is bullish
-        & (df["open"] < df["low"].shift(1))  # Current open < previous low
-        & (df["close"] > (df["open"].shift(1) + df["close"].shift(1)) / 2)  # Close above midpoint
-    )
+def _detect_piercing_line(df: pd.DataFrame) -> pd.Series:
+    """Detect Piercing Line pattern."""
+    if len(df) < 2:
+        return pd.Series([0] * len(df), index=df.index)
+
+    # Previous bearish candle, current bullish candle opening below previous low
+    prev_bearish = (df["close"].shift(1) < df["open"].shift(1))
+    current_bullish = (df["close"] > df["open"])
+    open_below_low = df["open"] < df["low"].shift(1)
+
+    piercing_line = prev_bearish & current_bullish & open_below_low
     return piercing_line.fillna(False).astype(int)
 
 
-def add_candlestick_characteristics(df: pd.DataFrame) -> pd.DataFrame:
-    """Add candlestick characteristic features using manual calculation."""
-    df = df.copy()
-
-    # Manual calculation of candlestick characteristics
-    df["body_size"] = (df["close"] - df["open"]).abs()
-    df["range_size"] = df["high"] - df["low"]
-    df["upper_shadow"] = df["high"] - df[["open", "close"]].max(axis=1)
-    df["lower_shadow"] = df[["open", "close"]].min(axis=1) - df["low"]
-
-    # Relative body size
-    df["rel_body_size"] = df["body_size"] / df["range_size"].replace(0, 1)
-
-    # Relative shadows
-    df["rel_upper_shadow"] = df["upper_shadow"] / df["range_size"].replace(0, 1)
-    df["rel_lower_shadow"] = df["lower_shadow"] / df["range_size"].replace(0, 1)
-
-    # Body position (0 = bottom, 1 = top)
-    df["body_position"] = (df["close"] + df["open"]) / 2 / df["range_size"].replace(0, 1)
-
-    # Handle any remaining NaN values
-    df["rel_body_size"] = df["rel_body_size"].fillna(0)
-    df["rel_upper_shadow"] = df["rel_upper_shadow"].fillna(0)
-    df["rel_lower_shadow"] = df["rel_lower_shadow"].fillna(0)
-    df["body_position"] = df["body_position"].fillna(0.5)
-
-    # Body type (1 = bullish, -1 = bearish, 0 = doji)
-    df["body_type"] = np.where(df["close"] > df["open"], 1, np.where(df["close"] < df["open"], -1, 0))
-
-    return df
-
-
-def add_rolling_candlestick_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Add rolling averages of candlestick features."""
-    df = df.copy()
-
-    # Ensure required columns exist
-    required_cols = [
-        "rel_body_size",
-        "upper_shadow",
-        "lower_shadow",
-        "body_position",
-        "body_size",
-    ]
-    for col in required_cols:
-        if col not in df.columns:
-            df[col] = 0.0
-
-    for window in [5, 10, 20]:
-        # Average relative body size
-        df[f"avg_rel_body_{window}"] = df["rel_body_size"].rolling(window, min_periods=1).mean().fillna(0)
-        # Average upper shadow
-        df[f"avg_upper_shadow_{window}"] = df["upper_shadow"].rolling(window, min_periods=1).mean().fillna(0)
-        # Average lower shadow
-        df[f"avg_lower_shadow_{window}"] = df["lower_shadow"].rolling(window, min_periods=1).mean().fillna(0)
-        # Average body position
-        df[f"avg_body_pos_{window}"] = df["body_position"].rolling(window, min_periods=1).mean().fillna(0.5)
-        # Body momentum (change in body size)
-        df[f"body_momentum_{window}"] = df["body_size"].diff(window).rolling(window, min_periods=1).mean().fillna(0)
-    return df
-
-
-def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Add time-based features."""
-    df = df.copy()
-    if "timestamp" in df.columns:
-        try:
-            # Convert to datetime if not already
-            if not pd.api.types.is_datetime64_any_dtype(df["timestamp"]):
-                df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-
-            # Extract time features with error handling
-            df["hour"] = df["timestamp"].dt.hour.fillna(0)
-            df["day_of_week"] = df["timestamp"].dt.dayofweek.fillna(0)
-            df["month"] = df["timestamp"].dt.month.fillna(1)
-            df["quarter"] = df["timestamp"].dt.quarter.fillna(1)
-        except Exception as e:
-            print(f"Warning: Error processing timestamp features: {e}")
-            # Create dummy time features if timestamp processing fails
-            df["hour"] = 0
-            df["day_of_week"] = 0
-            df["month"] = 1
-            df["quarter"] = 1
-    else:
-        # Create dummy time features if no timestamp
-        df["hour"] = 0
-        df["day_of_week"] = 0
-        df["month"] = 1
-        df["quarter"] = 1
-    return df
-
-
-def add_market_regime_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Add market regime features using manual calculation."""
-    df = df.copy()
-
-    # Ensure required columns exist
-    if "close" not in df.columns:
-        df["close"] = 1.0
-    if "high" not in df.columns:
-        df["high"] = df["close"]
-    if "low" not in df.columns:
-        df["low"] = df["close"]
-    if "volume" not in df.columns:
-        df["volume"] = 0.0
-
-    # Price change percentage
-    df["price_change_pct"] = df["close"].pct_change().fillna(0)
-
-    # High-low percentage
-    df["high_low_pct"] = (df["high"] - df["low"]) / df["close"].replace(0, 1)
-
-    # Volume features using manual calculation
-    df["volume_ma_20"] = df["volume"].rolling(20, min_periods=1).mean().fillna(0)
-    df["volume_ratio"] = df["volume"] / df["volume_ma_20"].replace(0, 1)
-    df["volume_change"] = df["volume"].pct_change().fillna(0)
-
-    # Handle any remaining NaN values
-    df["price_change_pct"] = df["price_change_pct"].fillna(0)
-    df["high_low_pct"] = df["high_low_pct"].fillna(0)
-    df["volume_ratio"] = df["volume_ratio"].fillna(1)
-    df["volume_change"] = df["volume_change"].fillna(0)
-
-    return df
-
-
+# Legacy compatibility - keep the FeatureEngineer class for backward compatibility
 class FeatureEngineer:
     """Feature engineering class for financial time series data."""
 
     def __init__(self, config: dict | None = None):
-        """Initialize the feature engineer.
-
-        Args:
-            config: Configuration dictionary for feature engineering
-        """
+        """Initialize the feature engineer."""
         self.config = config or {}
-        self.ma_windows = self.config.get("ma_windows", [5, 10, 20, 50, 200])
+        self.ma_windows = self.config.get("ma_windows", [5, 10, 20, 50])
         self.rsi_window = self.config.get("rsi_window", 14)
         self.vol_window = self.config.get("vol_window", 20)
         self.advanced_candles = self.config.get("advanced_candles", True)
 
     def calculate_all_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Calculate all available features for the given dataframe.
-
-        Args:
-            df: Input dataframe with OHLCV data
-
-        Returns:
-            DataFrame with all calculated features
-        """
-        if df.empty:
-            return df
-
-        # Make a copy to avoid modifying the original
-        result_df = df.copy()
-
-        # Basic technical indicators
-        result_df = generate_features(
-            result_df,
-            ma_windows=self.ma_windows,
-            rsi_window=self.rsi_window,
-            vol_window=self.vol_window,
-            advanced_candles=self.advanced_candles,
-        )
-
-        # Add candlestick patterns
-        result_df = add_missing_candlestick_patterns(result_df)
-
-        # Add time features
-        result_df = add_time_features(result_df)
-
-        # Add market regime features
-        result_df = add_market_regime_features(result_df)
-
-        # Add rolling candlestick features
-        result_df = add_rolling_candlestick_features(result_df)
-
-        # Add candlestick characteristics
-        return add_candlestick_characteristics(result_df)
-
-    def calculate_basic_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Calculate basic technical indicators only.
-
-        Args:
-            df: Input dataframe with OHLCV data
-
-        Returns:
-            DataFrame with basic features
-        """
+        """Calculate all available features for the given dataframe."""
         if df.empty:
             return df
 
@@ -861,22 +780,43 @@ class FeatureEngineer:
             ma_windows=self.ma_windows,
             rsi_window=self.rsi_window,
             vol_window=self.vol_window,
-            advanced_candles=False,
         )
 
-    def calculate_candlestick_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Calculate candlestick pattern features only.
-
-        Args:
-            df: Input dataframe with OHLCV data
-
-        Returns:
-            DataFrame with candlestick features
-        """
+    def calculate_basic_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate basic technical indicators only."""
         if df.empty:
             return df
 
-        result_df = df.copy()
-        result_df = add_missing_candlestick_patterns(result_df)
-        result_df = add_candlestick_characteristics(result_df)
-        return add_rolling_candlestick_features(result_df)
+        return generate_features(
+            df.copy(),
+            ma_windows=self.ma_windows,
+            rsi_window=self.rsi_window,
+            vol_window=self.vol_window,
+        )
+
+    def calculate_candlestick_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate candlestick pattern features only."""
+        if df.empty:
+            return df
+
+        # For candlestick-only features, we still need the full pipeline
+        # but we can filter the output to only include candlestick features
+        result_df = generate_features(
+            df.copy(),
+            ma_windows=self.ma_windows,
+            rsi_window=self.rsi_window,
+            vol_window=self.vol_window,
+        )
+
+        # Extract only candlestick-related features
+        candlestick_features = [
+            "doji", "hammer", "hanging_man", "bullish_engulfing", "bearish_engulfing",
+            "shooting_star", "morning_star", "evening_star", "inside_bar", "outside_bar",
+            "tweezer_top", "tweezer_bottom", "three_white_soldiers", "three_black_crows",
+            "bullish_harami", "bearish_harami", "dark_cloud_cover", "piercing_line",
+            "body_size", "range_size", "rel_body_size", "upper_shadow", "lower_shadow",
+            "rel_upper_shadow", "rel_lower_shadow", "body_position", "body_type"
+        ]
+
+        available_features = [f for f in candlestick_features if f in result_df.columns]
+        return result_df[available_features]

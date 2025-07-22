@@ -13,6 +13,8 @@ from typing import Any
 
 import pandas as pd
 
+from trade_agent.data.market_calendar import classify_portfolio_assets, get_trading_calendar
+
 try:
     import alpaca_trade_api as tradeapi
 
@@ -194,6 +196,8 @@ class ProfessionalDataProvider:
         end_date: str,
         timeframe: str = "1Day",
         include_features: bool = True,
+        align_mixed_portfolio: bool = True,
+        alignment_strategy: str = "last_known_value",
     ) -> pd.DataFrame:
         """
         Get professional market data with optional feature engineering.
@@ -204,12 +208,17 @@ class ProfessionalDataProvider:
             end_date: End date (YYYY-MM-DD)
             timeframe: Data frequency ('1Min', '5Min', '1Hour', '1Day')
             include_features: Whether to generate technical features
+            align_mixed_portfolio: Whether to align timestamps for mixed crypto/traditional portfolios
+            alignment_strategy: Strategy for crypto alignment ('last_known_value', 'forward_fill', 'interpolate')
 
         Returns:
             DataFrame with OHLCV data and optional technical features
         """
-        # Generate cache key
-        cache_key = f"{'_'.join(sorted(symbols))}_{start_date}_{end_date}_{timeframe}_{self.provider}.parquet"
+        # Generate cache key using hash to avoid filename length issues
+        import hashlib
+        symbols_str = "_".join(sorted(symbols))
+        symbols_hash = hashlib.sha256(symbols_str.encode(), usedforsecurity=False).hexdigest()[:12]  # Use first 12 chars of hash
+        cache_key = f"{symbols_hash}_{start_date}_{end_date}_{timeframe}_{self.provider}.parquet"
         cache_path = self.cache_dir / cache_key
 
         # Check cache
@@ -235,6 +244,11 @@ class ProfessionalDataProvider:
             raise NotImplementedError(
                 f"Data retrieval not implemented for {self.provider}",
             )
+
+        # Handle mixed portfolio timestamp alignment
+        if align_mixed_portfolio and not data.empty:
+            # Auto-detect if crypto is present and apply appropriate strategy
+            data = self._align_mixed_portfolio_timestamps(data, symbols, alignment_strategy)
 
         if include_features and not data.empty:
             logger.info("Generating technical features...")
@@ -294,7 +308,9 @@ class ProfessionalDataProvider:
 
             if all_data:
                 combined_data = pd.concat(all_data, ignore_index=True)
-                combined_data["date"] = pd.to_datetime(combined_data["date"])
+                # Handle timezone-aware datetime conversion consistently using utility function
+                from .utils import normalize_timestamps
+                combined_data = normalize_timestamps(combined_data, timestamp_column="date")
                 return combined_data
             logger.error("No data retrieved from Alpaca")
             return pd.DataFrame()
@@ -302,6 +318,20 @@ class ProfessionalDataProvider:
         except Exception as e:
             logger.exception(f"Alpaca data retrieval error: {e}")
             return pd.DataFrame()
+
+    def _normalize_timestamp_column(self, timestamp_col: pd.Series, timezone: str = "America/New_York") -> pd.Series:
+        """
+        Normalize timestamp column to consistent timezone format.
+
+        Args:
+            timestamp_col: Series of timestamps
+            timezone: Target timezone for normalization
+
+        Returns:
+            Normalized timestamp series
+        """
+        from .utils import _normalize_timestamp_series
+        return _normalize_timestamp_series(timestamp_col, timezone)
 
     def _get_yahoo_data(
         self,
@@ -313,38 +343,66 @@ class ProfessionalDataProvider:
         try:
             all_data = []
 
-            for symbol in symbols:
+            # Add timeout and rate limiting for API calls
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            from concurrent.futures import TimeoutError as FutureTimeoutError
+
+            def fetch_symbol_data(symbol: str) -> tuple[str, pd.DataFrame]:
+                """Fetch data for a single symbol with timeout."""
                 try:
                     ticker = yf.Ticker(symbol)
-                    data = ticker.history(start=start_date, end=end_date)
-
-                    if not data.empty:
-                        data.reset_index(inplace=True)
-                        data["symbol"] = symbol
-                        data.rename(
-                            columns={
-                                "Date": "date",
-                                "Open": "open",
-                                "High": "high",
-                                "Low": "low",
-                                "Close": "close",
-                                "Volume": "volume",
-                            },
-                            inplace=True,
-                        )
-
-                        # Select relevant columns
-                        data = data[["date", "symbol", "open", "high", "low", "close", "volume"]]
-                        all_data.append(data)
-
+                    # Add timeout to prevent hanging
+                    data = ticker.history(start=start_date, end=end_date, timeout=30)
+                    return symbol, data
                 except Exception as e:
                     logger.warning(f"Failed to get data for {symbol}: {e}")
-                    continue
+                    return symbol, pd.DataFrame()
+
+            # Process symbols in parallel with timeout
+            max_workers = min(10, len(symbols))  # Limit concurrent requests
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Submit all tasks
+                future_to_symbol = {
+                    executor.submit(fetch_symbol_data, symbol): symbol
+                    for symbol in symbols
+                }
+
+                # Collect results with timeout
+                for future in as_completed(future_to_symbol, timeout=300):  # 5 minute total timeout
+                    try:
+                        symbol, data = future.result(timeout=60)  # 1 minute per symbol
+                        if not data.empty:
+                            data.reset_index(inplace=True)
+                            data["symbol"] = symbol
+                            data.rename(
+                                columns={
+                                    "Date": "timestamp",
+                                    "Open": "open",
+                                    "High": "high",
+                                    "Low": "low",
+                                    "Close": "close",
+                                    "Volume": "volume",
+                                },
+                                inplace=True,
+                            )
+                            # Select relevant columns
+                            data = data[["timestamp", "symbol", "open", "high", "low", "close", "volume"]]
+                            all_data.append(data)
+                    except (FutureTimeoutError, TimeoutError):
+                        symbol = future_to_symbol[future]
+                        logger.warning(f"Timeout fetching data for {symbol}")
+                        continue
+                    except Exception as e:
+                        symbol = future_to_symbol[future]
+                        logger.warning(f"Error fetching data for {symbol}: {e}")
+                        continue
 
             if all_data:
                 combined_data = pd.concat(all_data, ignore_index=True)
-                combined_data["date"] = pd.to_datetime(combined_data["date"])
-                return combined_data.sort_values(["symbol", "date"]).reset_index(
+                # Handle timezone-aware datetime conversion consistently using utility function
+                from .utils import normalize_timestamps
+                combined_data = normalize_timestamps(combined_data, timestamp_column="timestamp")
+                return combined_data.sort_values(["symbol", "timestamp"]).reset_index(
                     drop=True,
                 )
             return pd.DataFrame()
@@ -402,7 +460,12 @@ class ProfessionalDataProvider:
                 df["symbol"] = symbol
                 df.index.name = "date"
                 df = df.reset_index()
-                df["date"] = pd.to_datetime(df["date"])
+                # Handle timezone-aware datetime conversion
+                try:
+                    df["date"] = pd.to_datetime(df["date"], utc=True)
+                except ValueError:
+                    # If utc=True fails, try without timezone info
+                    df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
 
                 # Filter by date range
                 df = df[(df["date"] >= start_dt) & (df["date"] <= end_dt)]
@@ -471,7 +534,7 @@ class ProfessionalDataProvider:
             for symbol in data["symbol"].unique():
                 symbol_data = data[data["symbol"] == symbol].copy()
 
-                # Generate features using our existing pipeline
+                # Generate unified features (exactly 78 features)
                 symbol_data = generate_features(symbol_data)
                 enhanced_data.append(symbol_data)
 
@@ -554,6 +617,59 @@ class ProfessionalDataProvider:
         except Exception as e:
             logger.exception(f"CCXT real-time error: {e}")
             return {}
+
+    def _align_mixed_portfolio_timestamps(self, data: pd.DataFrame, symbols: list[str], alignment_strategy: str = "last_known_value") -> pd.DataFrame:
+        """
+        Align timestamps for mixed crypto/traditional portfolios.
+
+        This method automatically detects crypto presence and applies appropriate
+        alignment strategy. Uses last_known_value as default for optimal data integrity.
+
+        Args:
+            data: DataFrame with market data
+            symbols: List of symbols in the portfolio
+            alignment_strategy: Strategy for crypto alignment ('last_known_value', 'forward_fill', 'interpolate')
+
+        Returns:
+            DataFrame with aligned timestamps
+        """
+        try:
+            # Get trading calendar
+            calendar = get_trading_calendar()
+
+            # Classify portfolio assets
+            classification = classify_portfolio_assets(symbols)
+
+            if not classification["mixed"]:
+                logger.info("No mixed portfolio detected, skipping timestamp alignment")
+                return data
+
+            logger.info(f"Mixed portfolio detected: {len(classification['crypto'])} crypto, {len(classification['traditional'])} traditional")
+            logger.info(f"Auto-applying alignment strategy: {alignment_strategy}")
+
+            # Ensure we have timestamp and symbol columns
+            if "timestamp" not in data.columns or "symbol" not in data.columns:
+                logger.warning("Missing timestamp or symbol columns, skipping alignment")
+                return data
+
+            # Convert timestamp to datetime if needed
+            if not pd.api.types.is_datetime64_any_dtype(data["timestamp"]):
+                data["timestamp"] = pd.to_datetime(data["timestamp"])
+
+            # Use the calendar's alignment method with specified strategy
+            aligned_data = calendar.align_data_timestamps(data, symbols, alignment_strategy)
+
+            # Add metadata about the alignment
+            if not aligned_data.empty and "alignment_method" in aligned_data.columns:
+                methods_used = aligned_data["alignment_method"].value_counts()
+                logger.info(f"Alignment methods applied: {dict(methods_used)}")
+
+            logger.info(f"Timestamp alignment complete: {len(data)} -> {len(aligned_data)} rows")
+            return aligned_data
+
+        except Exception as e:
+            logger.exception(f"Error aligning mixed portfolio timestamps: {e}")
+            return data
 
     def validate_connection(self) -> bool:
         """Validate connection to data provider."""
