@@ -4,10 +4,10 @@ from setuptools import find_packages, setup
 
 setup(
     name="trade-agent",
-    version="0.1.0",
+    version="0.2.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=Path("requirements.txt").read_text().splitlines(),
     entry_points={
         "console_scripts": [

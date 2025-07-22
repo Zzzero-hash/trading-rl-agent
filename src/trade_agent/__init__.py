@@ -19,8 +19,8 @@ ARCHITECTURE:
     utils/          - Shared utilities and helpers
 """
 
-__version__ = "2.0.0"
-__author__ = "Trading RL Team"
+__version__ = "0.2.0"
+__author__ = "Trade Agent Team"
 
 # Core imports for easy access
 from typing import Any
@@ -65,6 +65,7 @@ _OPTIONAL_IMPORTS = {
     # RL Agents
     "PPOAgent": (".agents.ppo_agent", "PPOAgent"),
     "SACAgent": (".agents.sac_agent", "SACAgent"),
+    "TD3Agent": (".agents.td3_agent", "TD3Agent"),
     # Risk Management
     "RiskManager": (".risk.manager", "RiskManager"),
     "PortfolioManager": (".portfolio.manager", "PortfolioManager"),
