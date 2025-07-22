@@ -22,7 +22,7 @@ class DataConfig(BaseModel):
     backup_source: str = Field(default="yfinance", description="Backup data source")
     real_time_enabled: bool = Field(default=False, description="Enable real-time data feeds")
     update_frequency: int = Field(default=60, description="Data update frequency in seconds")
-    symbols: list[str] = Field(default=["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"], description="Trading symbols")
+    symbols: list[str] = Field(default_factory=lambda: ["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"], description="Trading symbols")
     start_date: str = Field(default="2023-01-01", description="Start date for historical data")
     end_date: str = Field(default="2024-01-01", description="End date for historical data")
     timeframe: str = Field(default="1d", description="Data timeframe")
@@ -31,6 +31,7 @@ class DataConfig(BaseModel):
     sentiment_features: bool = Field(default=True, description="Enable sentiment analysis features")
     data_path: str = Field(default="data/", description="Data storage directory")
     cache_dir: str = Field(default="data/cache", description="Cache directory")
+    processed_dir: str = Field(default="data/processed", description="Processed data directory")  # New field
     cache_ttl_hours: int = Field(default=24, description="Cache time-to-live in hours")
 
 
@@ -116,7 +117,7 @@ class BacktestConfig(BaseModel):
 
     start_date: str = Field(default="2024-01-01", description="Start date for backtesting")
     end_date: str = Field(default="2024-12-31", description="End date for backtesting")
-    symbols: list[str] = Field(default=["AAPL", "GOOGL", "MSFT"], description="Symbols for backtesting")
+    symbols: list[str] = Field(default_factory=lambda: ["AAPL", "GOOGL", "MSFT"], description="Symbols for backtesting")
     initial_capital: float = Field(default=100000.0, description="Initial capital for backtesting")
     commission_rate: float = Field(default=0.001, description="Commission rate for backtesting")
     slippage_rate: float = Field(default=0.0001, description="Slippage rate for backtesting")

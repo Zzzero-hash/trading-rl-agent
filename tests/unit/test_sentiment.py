@@ -80,7 +80,7 @@ class TestSentimentProviders:
         provider = NewsSentimentProvider()
 
         assert provider._symbol_to_company("AAPL") == "Apple Inc"
-        assert provider._symbol_to_company("GOOGL") == "Google Alphabet"
+        assert provider._symbol_to_company("GOOGL") == "Alphabet Inc"
         assert provider._symbol_to_company("UNKNOWN") == "UNKNOWN"
 
     def test_news_provider_text_sentiment(self):

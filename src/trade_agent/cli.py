@@ -51,12 +51,12 @@ except ImportError:
 F = TypeVar("F", bound=Callable[..., Any])
 
 # Module-level constants for typer defaults to fix B008 errors
-DEFAULT_OUTPUT_DIR = Path("outputs/datasets")
+DEFAULT_OUTPUT_DIR = Path("data/processed")
 DEFAULT_FORCE_REBUILD = False
 DEFAULT_PARALLEL = True
-DEFAULT_STANDARDIZED_OUTPUT = Path("data/standardized")
+DEFAULT_STANDARDIZED_OUTPUT = Path("data/processed")
 DEFAULT_STANDARDIZATION_METHOD = "robust"
-DEFAULT_PIPELINE_OUTPUT = Path("data/pipeline")
+DEFAULT_PIPELINE_OUTPUT = Path("data/processed")
 DEFAULT_EPOCHS = 100
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_LEARNING_RATE = 0.001
@@ -143,7 +143,7 @@ def get_config_manager() -> Any:
                     (),
                     {
                         "primary_source": "yfinance",
-                        "symbols": ["AAPL", "GOOGL", "MSFT"],
+                        "symbols": ["AAPL", "GOOGL", "MSFT"],  # Using default symbols
                         "start_date": "2024-01-01",
                         "end_date": "2024-12-31",
                         "timeframe": "1d",
@@ -205,7 +205,6 @@ app.add_typer(train_app, help="Model training operations")
 app.add_typer(backtest_app, help="Backtesting operations")
 app.add_typer(scenario_app, help="Agent scenario evaluation")
 app.add_typer(trade_app, help="Live trading operations")
-
 
 @app.callback()
 def main(
@@ -487,111 +486,54 @@ def download_all(
         for dir_path in asset_dirs.values():
             dir_path.mkdir(parents=True, exist_ok=True)
 
-        # Comprehensive symbol list organized by asset type
-        symbols_by_type = {
-            "stocks": [
-                # Major US Stocks (S&P 500 top components) - Current as of 2024
-                "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "BRK-B", "UNH", "JNJ",
-                "JPM", "V", "PG", "HD", "MA", "DIS", "PYPL", "BAC", "ADBE", "CRM",
-                "NFLX", "KO", "PEP", "ABT", "TMO", "COST", "AVGO", "DHR", "ACN", "LLY",
-                "NKE", "TXN", "QCOM", "HON", "ORCL", "LOW", "UPS", "INTU", "SPGI", "GILD",
-                "AMD", "ISRG", "TGT", "ADI", "PLD", "REGN", "MDLZ", "VRTX", "PANW", "KLAC",
-                # Tech Giants (current symbols)
-                "GOOG", "INTC", "CSCO", "IBM", "MU", "LRCX", "AMAT", "ASML",
-                # Financial Sector
-                "WFC", "GS", "MS", "C", "AXP", "BLK", "SCHW", "USB", "PNC", "COF",
-                "TFC", "KEY", "HBAN", "RF", "ZION", "CMA", "FITB", "MTB",
-                # Healthcare
-                "PFE", "ABBV", "BMY", "ABT", "MRK", "AMGN", "BIIB", "DXCM", "ALGN", "IDXX", "ILMN",
-                # Consumer
-                "WMT", "SBUX", "MCD", "YUM", "CMCSA", "UA", "LULU", "ROST", "TJX", "MAR", "HLT", "BKNG",
-                # Energy (current symbols)
-                "XOM", "CVX", "COP", "EOG", "SLB", "HAL", "BKR", "PSX", "VLO", "MPC",
-                "OXY", "DVN", "FANG", "HES", "APA",
-                # Additional Popular Stocks (current)
-                "UBER", "LYFT", "SNAP", "PINS", "ZM", "ROKU", "SPOT", "BYND", "PLTR", "SNOW",
-                "CRWD", "ZS", "OKTA", "TEAM", "DOCU", "TDOC", "RBLX", "HOOD", "COIN", "RIVN",
-                "LCID", "NIO", "XPEV", "LI", "BIDU", "JD", "BABA", "TCEHY", "PDD", "NTES",
-                "BILI", "XNET", "ZTO", "TME", "VIPS"
-            ],
-            "etfs": [
-                # ETFs (Major categories) - Current symbols
-                "SPY", "QQQ", "IWM", "VTI", "VOO", "VEA", "VWO", "AGG", "BND", "TLT",
-                "GLD", "SLV", "USO", "XLE", "XLF", "XLK", "XLV", "XLI", "XLP", "XLY",
-                "XLB", "XLU", "VNQ", "IEMG", "EFA", "EEM", "ACWI", "VT", "BNDX", "EMB"
-            ],
-            "indices": [
-                # Market Indices - Current symbols
-                "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX", "^FTSE", "^GDAXI", "^FCHI", "^N225", "^HSI",
-                "^BSESN", "^AXJO", "^TNX", "^TYX", "^IRX"
-            ],
-            "forex": [
-                # Forex (Major pairs) - Current symbols
-                "EURUSD=X", "GBPUSD=X", "USDJPY=X", "USDCHF=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X",
-                "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "CADJPY=X", "NZDJPY=X",
-                "EURCHF=X", "GBPCHF=X", "AUDCHF=X", "CADCHF=X", "NZDCHF=X"
-            ],
-            "crypto": [
-                # Cryptocurrencies - Current symbols
-                "BTC-USD", "ETH-USD", "ADA-USD", "DOT-USD", "LINK-USD", "LTC-USD", "BCH-USD",
-                "XRP-USD", "BNB-USD", "SOL-USD", "AVAX-USD", "MATIC-USD", "UNI-USD", "ATOM-USD",
-                "NEAR-USD", "ALGO-USD", "VET-USD", "ICP-USD", "FIL-USD"
-            ],
-            "commodities": [
-                # Commodities - Current symbols
-                "GC=F", "SI=F", "CL=F", "NG=F", "ZC=F", "ZS=F", "ZW=F", "KC=F", "CC=F", "CT=F",
-                "LBS=F", "HE=F", "LE=F", "GF=F"
-            ]
-        }
-
-        # Deduplicate symbols within each category first
-        for category_type in symbols_by_type:
-            seen_in_category = set()
-            deduplicated = []
-            for x in symbols_by_type[category_type]:
-                if x not in seen_in_category:
-                    seen_in_category.add(x)
-                    deduplicated.append(x)
-            symbols_by_type[category_type] = deduplicated
-
-        # Flatten all symbols for downloading
-        all_symbols = []
-        for category_type, symbols in symbols_by_type.items():
-            all_symbols.extend(symbols)
-
-        # Remove duplicates across all categories while preserving order
-        seen = set()
-        unique_symbols = []
-        for x in all_symbols:
-            if x not in seen:
-                seen.add(x)
-                unique_symbols.append(x)
-
-        # Validate symbols before downloading
-        console.print("[yellow]Validating symbols...[/yellow]")
-        valid_symbols = []
-        invalid_symbols = []
-
+        # Get comprehensive symbols with validation
         try:
-            import yfinance as yf
-            for symbol in unique_symbols:
-                try:
-                    ticker = yf.Ticker(symbol)
-                    info = ticker.info
-                    if info and "regularMarketPrice" in info and info["regularMarketPrice"] is not None:
-                        valid_symbols.append(symbol)
-                    else:
-                        invalid_symbols.append(symbol)
-                except Exception:
-                    invalid_symbols.append(symbol)
+            from .data.market_symbols import COMPREHENSIVE_SYMBOLS
+            from .data.symbol_validator import get_popular_symbols, get_symbol_info, validate_symbols
+
+            # Use popular symbols as the base list
+            all_symbols = get_popular_symbols()
+
+            # First validate symbols for data availability
+            valid_symbols, invalid_symbols = validate_symbols(all_symbols, min_data_points=5)
+
+            # Get symbol info for filtering
+            symbol_info = get_symbol_info(valid_symbols)
+
+            # Apply market cap filter only to stocks (not indices, commodities, forex, crypto)
+            filtered_symbols = []
+            for symbol in valid_symbols:
+                info = symbol_info.get(symbol, {})
+                quote_type = info.get("quote_type", "Unknown")
+
+                # Skip market cap filtering for non-equity assets
+                if quote_type in ["INDEX", "FUTURE", "CRYPTOCURRENCY"] or "=X" in symbol or "-USD" in symbol:
+                    filtered_symbols.append(symbol)
+                else:
+                    # Apply market cap filter only to stocks/equities
+                    market_cap = info.get("market_cap", 0)
+                    if market_cap >= 1e9:  # Minimum $1B market cap for stocks
+                        filtered_symbols.append(symbol)
+
+            valid_symbols = filtered_symbols
+
+            # Group symbols by type for organization
+            symbols_by_type = {
+                "stocks": [s for s in valid_symbols if not any(x in s for x in ["=X", "-USD", "^", "=F"])],
+                "forex": [s for s in valid_symbols if "=X" in s],
+                "crypto": [s for s in valid_symbols if "-USD" in s],
+                "indices": [s for s in valid_symbols if s.startswith("^")],
+                "commodities": [s for s in valid_symbols if "=F" in s],
+                "etfs": [s for s in valid_symbols if s in COMPREHENSIVE_SYMBOLS["etfs"]]
+            }
         except ImportError:
-            console.print("[yellow]yfinance not available for validation, proceeding with all symbols[/yellow]")
-            valid_symbols = unique_symbols
-
-        if invalid_symbols:
-            console.print(f"[yellow]Removed {len(invalid_symbols)} invalid symbols: {', '.join(invalid_symbols[:10])}{'...' if len(invalid_symbols) > 10 else ''}[/yellow]")
-
-        console.print(f"[green]Proceeding with {len(valid_symbols)} valid symbols[/green]")
+            # Fallback to symbols from market_symbols if symbol validator is not available
+            console.print("[yellow]Symbol validator not available, using symbols from market_symbols[/yellow]")
+            from .data.market_symbols import COMPREHENSIVE_SYMBOLS
+            valid_symbols = []
+            for symbols in COMPREHENSIVE_SYMBOLS.values():
+                valid_symbols.extend(symbols)
+            symbols_by_type = COMPREHENSIVE_SYMBOLS.copy()
 
         console.print("[green]Starting comprehensive market data download[/green]")
         console.print(f"[cyan]Total symbols: {len(valid_symbols)}[/cyan]")
@@ -762,67 +704,36 @@ def symbols(
         for dir_path in asset_dirs.values():
             dir_path.mkdir(parents=True, exist_ok=True)
 
-        # Define symbol categories for organization
-        symbol_categories = {
-            "stocks": [
-                "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "BRK-B", "UNH", "JNJ",
-                "JPM", "V", "PG", "HD", "MA", "DIS", "PYPL", "BAC", "ADBE", "CRM",
-                "NFLX", "KO", "PEP", "ABT", "TMO", "COST", "AVGO", "DHR", "ACN", "LLY",
-                "NKE", "TXN", "QCOM", "HON", "ORCL", "LOW", "UPS", "INTU", "SPGI", "GILD",
-                "AMD", "ISRG", "TGT", "ADI", "PLD", "REGN", "MDLZ", "VRTX", "PANW", "KLAC",
-                "GOOG", "INTC", "CSCO", "IBM", "MU", "LRCX", "AMAT", "ASML",
-                "WFC", "GS", "MS", "C", "AXP", "BLK", "SCHW", "USB", "PNC", "COF",
-                "PFE", "ABBV", "BMY", "MRK", "AMGN", "BIIB", "DXCM", "ALGN", "IDXX", "ILMN",
-                "WMT", "SBUX", "MCD", "YUM", "CMCSA", "UA", "LULU", "ROST", "TJX", "MAR", "HLT", "BKNG",
-                "XOM", "CVX", "COP", "EOG", "SLB", "HAL", "BKR", "PSX", "VLO", "MPC",
-                "UBER", "LYFT", "SNAP", "PINS", "ZM", "ROKU", "SPOT", "BYND", "PLTR", "SNOW",
-                "CRWD", "ZS", "OKTA", "TEAM", "DOCU", "TDOC", "RBLX", "HOOD", "COIN", "RIVN"
-            ],
-            "etfs": [
-                "SPY", "QQQ", "IWM", "VTI", "VOO", "VEA", "VWO", "AGG", "BND", "TLT",
-                "GLD", "SLV", "USO", "XLE", "XLF", "XLK", "XLV", "XLI", "XLP", "XLY",
-                "XLB", "XLU", "VNQ", "IEMG", "EFA", "EEM", "ACWI", "VT", "BNDX", "EMB"
-            ],
-            "indices": [
-                "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX", "^FTSE", "^GDAXI", "^FCHI", "^N225", "^HSI",
-                "^BSESN", "^AXJO", "^TNX", "^TYX", "^IRX"
-            ],
-            "forex": [
-                "EURUSD=X", "GBPUSD=X", "USDJPY=X", "USDCHF=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X",
-                "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "CADJPY=X", "NZDJPY=X",
-                "EURCHF=X", "GBPCHF=X", "AUDCHF=X", "CADCHF=X", "NZDCHF=X"
-            ],
-            "crypto": [
-                "BTC-USD", "ETH-USD", "ADA-USD", "DOT-USD", "LINK-USD", "LTC-USD", "BCH-USD",
-                "XRP-USD", "BNB-USD", "SOL-USD", "AVAX-USD", "MATIC-USD", "UNI-USD", "ATOM-USD",
-                "NEAR-USD", "ALGO-USD", "VET-USD", "ICP-USD", "FIL-USD"
-            ],
-            "commodities": [
-                "GC=F", "SI=F", "CL=F", "NG=F", "ZC=F", "ZS=F", "ZW=F", "KC=F", "CC=F", "CT=F",
-                "LBS=F", "HE=F", "LE=F", "GF=F"
-            ]
-        }
+        # Use symbol categories from market_symbols
+        from .data.market_symbols import COMPREHENSIVE_SYMBOLS
+        symbol_categories = COMPREHENSIVE_SYMBOLS.copy()
 
         # Validate symbols before downloading
         console.print("[yellow]Validating symbols...[/yellow]")
-        valid_symbols = []
-        invalid_symbols = []
 
         try:
-            import yfinance as yf
-            for symbol in symbol_list:
-                try:
-                    ticker = yf.Ticker(symbol)
-                    info = ticker.info
-                    if info and "regularMarketPrice" in info and info["regularMarketPrice"] is not None:
-                        valid_symbols.append(symbol)
-                    else:
-                        invalid_symbols.append(symbol)
-                except Exception:
-                    invalid_symbols.append(symbol)
+            from .data.symbol_validator import validate_symbols
+            valid_symbols, invalid_symbols = validate_symbols(symbol_list, min_data_points=5)
         except ImportError:
-            console.print("[yellow]yfinance not available for validation, proceeding with all symbols[/yellow]")
-            valid_symbols = symbol_list
+            console.print("[yellow]Symbol validator not available, using basic validation[/yellow]")
+            try:
+                import yfinance as yf
+                valid_symbols = []
+                invalid_symbols = []
+                for symbol in symbol_list:
+                    try:
+                        ticker = yf.Ticker(symbol)
+                        info = ticker.info
+                        if info and "regularMarketPrice" in info and info["regularMarketPrice"] is not None:
+                            valid_symbols.append(symbol)
+                        else:
+                            invalid_symbols.append(symbol)
+                    except Exception:
+                        invalid_symbols.append(symbol)
+            except ImportError:
+                console.print("[yellow]yfinance not available for validation, proceeding with all symbols[/yellow]")
+                valid_symbols = symbol_list
+                invalid_symbols = []
 
         if invalid_symbols:
             console.print(f"[yellow]Removed {len(invalid_symbols)} invalid symbols: {', '.join(invalid_symbols[:10])}{'...' if len(invalid_symbols) > 10 else ''}[/yellow]")
@@ -1068,25 +979,6 @@ def refresh(
         logger.error(f"Refresh failed: {e}", exc_info=True)
         raise typer.Exit(1) from e
 
-
-@data_app.command()
-def download(
-    symbols: str | None = DEFAULT_SYMBOLS_STR,
-    start_date: str | None = DEFAULT_START_DATE,
-    end_date: str | None = DEFAULT_END_DATE,
-    _output_dir: Path | None = DEFAULT_OUTPUT_DIR_NONE,
-    _source: str | None = DEFAULT_SOURCE,
-) -> None:
-    """
-    Download market data for specified symbols.
-
-    Uses the DataPipeline.download_data() function from src/trade_agent/data/pipeline.py
-    to fetch historical market data from various sources.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would download data for {symbols} from {start_date} to {end_date}[/blue]")
-    console.print("[blue]Target module: src/trade_agent/data/pipeline.py - DataPipeline.download_data()[/blue]")
-
-
 @data_app.command()
 def prepare(
     input_path: Path | None = None,
@@ -1203,6 +1095,29 @@ def prepare(
             console.print("  - data_standardizer.json")
         console.print("  - feature_summary.json")
 
+        # Step 4: Cleanup raw data for organization
+        console.print("\n[blue]Step 4: Cleaning up raw data...[/blue]")
+        raw_data_path = Path("data/raw")
+        if raw_data_path.exists() and raw_data_path.is_dir():
+            try:
+                # Count files before deletion for reporting
+                files_to_delete = list(raw_data_path.glob("*"))
+                file_count = len([f for f in files_to_delete if f.is_file()])
+                dir_count = len([f for f in files_to_delete if f.is_dir()])
+
+                # Remove all contents of data/raw
+                import shutil
+                shutil.rmtree(raw_data_path)
+                raw_data_path.mkdir(parents=True, exist_ok=True)  # Recreate empty directory
+
+                console.print(f"[green]✓ Cleaned up {file_count} files and {dir_count} directories from {raw_data_path}[/green]")
+                console.print(f"[cyan]Raw data directory {raw_data_path} is now empty and ready for new downloads[/cyan]")
+            except Exception as cleanup_error:
+                console.print(f"[yellow]⚠️  Warning: Could not clean up raw data directory: {cleanup_error}[/yellow]")
+                console.print("[yellow]You may need to manually clean up the data/raw directory[/yellow]")
+        else:
+            console.print(f"[cyan]Raw data directory {raw_data_path} does not exist or is not a directory[/cyan]")
+
     except Exception as e:
         console.print(f"[red]Error during data preparation: {e}[/red]")
         logger.error(f"Data preparation failed: {e}", exc_info=True)
@@ -1211,426 +1126,185 @@ def prepare(
 
 @data_app.command()
 def pipeline(
+    # Pipeline step options
+    download: bool = typer.Option(False, "--download", "-d", help="Download market data"),
+    process: bool = typer.Option(False, "--process", "-p", help="Process and standardize data"),
+    run: bool = typer.Option(False, "--run", "-r", help="Run complete pipeline end-to-end"),
+
+    # Common parameters
     config_path: Path | None = DEFAULT_CONFIG_FILE,
     output_dir: Path = DEFAULT_PIPELINE_OUTPUT,
-) -> None:
-    """Run complete data pipeline."""
-    try:
-        if config_path is None:
-            config_path = Path("config.yaml")  # Provide a default config path
-
-        console.print(f"[green]Running data pipeline with config: {config_path}[/green]")
-        console.print(f"[cyan]Output directory: {output_dir}[/cyan]")
-
-        # Create output directory
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        console.print("[blue]PLACEHOLDER: Complete data pipeline would run here[/blue]")
-        console.print("[blue]Target module: src/trade_agent/data/pipeline.py[/blue]")
-
-    except Exception as e:
-        console.print(f"[red]Error during pipeline execution: {e}[/red]")
-        logger.error(f"Pipeline failed: {e}", exc_info=True)
-        raise typer.Exit(1) from e
-
-
-@data_app.command(hidden=True)
-def process(
-    config_file: Path | None = DEFAULT_CONFIG_FILE,
-    output_dir: Path = DEFAULT_OUTPUT_DIR,
-    force_rebuild: bool = DEFAULT_FORCE_REBUILD,
+    symbols: str | None = DEFAULT_SYMBOLS_STR,
+    start_date: str | None = DEFAULT_START_DATE,
+    end_date: str | None = DEFAULT_END_DATE,
+    source: str | None = DEFAULT_SOURCE,
+    timeframe: str | None = DEFAULT_TIMEFRAME,
     parallel: bool = DEFAULT_PARALLEL,
+    force: bool = DEFAULT_FORCE,
+    method: str = DEFAULT_STANDARDIZATION_METHOD,
+    save_standardizer: bool = True,
+
+    # Process-specific parameters
+    input_path: Path | None = None,
+    force_rebuild: bool = DEFAULT_FORCE_REBUILD,
 ) -> None:
     """
-    [DEPRECATED] Use 'data prepare' instead.
+    Data pipeline operations with flexible step selection.
 
-    This command is deprecated and will be removed in a future version.
-    Use 'data prepare' which combines processing and standardization.
+    Use options to specify which pipeline steps to run:
+    - --download: Download market data from specified sources
+    - --process: Process and standardize downloaded data
+    - --run: Execute complete pipeline (download → process)
+
+    Note: Dataset building and splitting is handled by individual training commands
+    to ensure proper separation between CNN+LSTM (with targets) and RL (without targets).
+
+    If no --symbols are provided with --download, comprehensive market coverage is used.
+
+    Examples:
+        # Download only (comprehensive coverage if no symbols)
+        python main.py data pipeline --download
+
+        # Download specific symbols
+        python main.py data pipeline --download --symbols "AAPL,GOOGL"
+
+        # Process only
+        python main.py data pipeline --process --input-path data/raw
+
+        # Run complete pipeline
+        python main.py data pipeline --run --symbols "AAPL"
+
+        # Custom combination
+        python main.py data pipeline --download --process --symbols "AAPL"
     """
-    console.print("[yellow]⚠️  DEPRECATED: 'data process' is deprecated.[/yellow]")
-    console.print("[yellow]Use 'data prepare' instead, which combines processing and standardization.[/yellow]")
-    console.print("[yellow]Example: trade-agent data prepare --input-path data/raw --output-dir outputs/datasets[/yellow]")
-
-    # Call the new prepare command with the same parameters
-    prepare(
-        input_path=None,
-        output_dir=output_dir,
-        config_file=config_file,
-        force_rebuild=force_rebuild,
-        parallel=parallel,
-        method=DEFAULT_STANDARDIZATION_METHOD,
-        save_standardizer=True
-    )
-
-# ============================================================================
-# TRAIN SUB-APP COMMANDS
-# ============================================================================
-
-
-@train_app.command(name="cnn_lstm")
-def cnn_lstm(
-    _config_file: Path | None = DEFAULT_CONFIG_FILE,
-    _epochs: int = DEFAULT_EPOCHS,
-    _batch_size: int = DEFAULT_BATCH_SIZE,
-    _learning_rate: float = DEFAULT_LEARNING_RATE,
-    _output_dir: Path = DEFAULT_CNN_LSTM_OUTPUT,
-    _gpu: bool = DEFAULT_GPU,
-    _mixed_precision: bool = DEFAULT_MIXED_PRECISION,
-) -> None:
-    """
-    Train CNN+LSTM models for pattern recognition.
-
-    Uses the OptimizedTrainingManager.train() function from
-    src/trade_agent/training/optimized_trainer.py to train
-    CNN+LSTM models with advanced optimizations.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would train CNN+LSTM model for {_epochs} epochs[/blue]")
-    console.print(
-        "[blue]Target module: src/trade_agent/training/optimized_trainer.py - "
-        "OptimizedTrainingManager.train()[/blue]",
-    )
-
-
-@train_app.command(name="rl")
-def rl(
-    _agent_type: str | None = DEFAULT_AGENT_TYPE,
-    _config_file: Path | None = DEFAULT_CONFIG_FILE,
-    _timesteps: int = DEFAULT_TIMESTEPS,
-    _output_dir: Path = DEFAULT_RL_OUTPUT,
-    _ray_address: str | None = DEFAULT_RAY_ADDRESS,
-    _num_workers: int = DEFAULT_NUM_WORKERS,
-) -> None:
-    """
-    Train reinforcement learning agents.
-
-    Uses the Trainer.train() function from src/trade_agent/agents/trainer.py
-    to train RL agents (PPO, SAC, TD3) using Ray RLlib.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would train {_agent_type} agent for {_timesteps} timesteps[/blue]")
-    console.print("[blue]Target module: src/trade_agent/agents/trainer.py - Trainer.train()[/blue]")
-
-
-@train_app.command(name="hybrid")
-def hybrid(
-    _config_file: Path | None = DEFAULT_CONFIG_FILE,
-    _cnn_lstm_path: Path | None = DEFAULT_CNN_LSTM_PATH,
-    _rl_path: Path | None = DEFAULT_RL_PATH,
-    _output_dir: Path = DEFAULT_HYBRID_OUTPUT,
-) -> None:
-    """
-    Train hybrid models combining CNN+LSTM with RL agents.
-
-    Uses the HybridAgent class from src/trade_agent/agents/hybrid.py
-    to create and train hybrid models that combine supervised and RL components.
-    """
-    console.print("[blue]PLACEHOLDER: Would train hybrid model combining CNN+LSTM and RL[/blue]")
-    console.print("[blue]Target module: src/trade_agent/agents/hybrid.py - HybridAgent[/blue]")
-
-
-@train_app.command(name="hyperopt")
-def hyperopt(
-    _config_file: Path | None = DEFAULT_CONFIG_FILE,
-    _n_trials: int = DEFAULT_N_TRIALS,
-    _output_dir: Path = DEFAULT_OPTIMIZATION_OUTPUT,
-) -> None:
-    """
-    Perform hyperparameter optimization.
-
-    Uses Optuna-based optimization from train.py to find optimal
-    hyperparameters for models and training configurations.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would run hyperparameter optimization with {_n_trials} trials[/blue]")
-    console.print("[blue]Target module: train.py - hyperparameter optimization functions[/blue]")
-
-
-# ============================================================================
-# BACKTEST SUB-APP COMMANDS
-# ============================================================================
-
-
-@backtest_app.command()
-def strategy(
-    _data_path: Path | None = DEFAULT_DATA_PATH,
-    _model_path: Path | None = DEFAULT_MODEL_PATH,
-    _policy: str | None = DEFAULT_POLICY,
-    _initial_capital: float = DEFAULT_INITIAL_CAPITAL,
-    _commission: float = DEFAULT_COMMISSION,
-    _slippage: float = DEFAULT_SLIPPAGE,
-    _output_dir: Path = DEFAULT_BACKTEST_OUTPUT,
-) -> None:
-    """
-    Run backtesting on historical data.
-
-    Uses the TradingSession class from src/trade_agent/core/live_trading.py
-    adapted for backtesting to evaluate trading strategies on historical data.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would backtest strategy on {_data_path} with ${_initial_capital} capital[/blue]")
-    console.print("[blue]Target module: src/trade_agent/core/live_trading.py - TradingSession (adapted)[/blue]")
-
-
-@backtest_app.command()
-def evaluate(
-    model_path: Path | None = DEFAULT_MODEL_PATH,
-    _data_path: Path | None = DEFAULT_DATA_PATH,
-    _output_dir: Path = DEFAULT_EVALUATION_OUTPUT,
-    _initial_capital: float = DEFAULT_INITIAL_CAPITAL,
-) -> None:
-    """
-    Evaluate trained models on test data.
-
-    Uses the OptimizedTrainingManager.evaluate() function from
-    src/trade_agent/training/optimized_trainer.py to evaluate
-    model performance on test datasets.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would evaluate model {model_path} on test data[/blue]")
-    console.print(
-        "[blue]Target module: src/trade_agent/training/optimized_trainer.py - "
-        "OptimizedTrainingManager.evaluate()[/blue]",
-    )
-
-
-@backtest_app.command()
-def walk_forward(
-    _data_path: Path | None = DEFAULT_DATA_PATH,
-    _model_type: str = "cnn_lstm",
-    _train_window_size: int = 252,
-    _validation_window_size: int = 63,
-    _test_window_size: int = 63,
-    _step_size: int = 21,
-    _output_dir: Path = DEFAULT_EVALUATION_OUTPUT,
-    _confidence_level: float = 0.95,
-    _generate_plots: bool = True,
-    _save_results: bool = True,
-) -> None:
-    """
-    Perform walk-forward analysis for robust model evaluation.
-
-    Uses the WalkForwardAnalyzer class from src/trade_agent/eval/walk_forward_analyzer.py
-    to evaluate model performance across multiple time windows.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would perform walk-forward analysis on {_data_path}[/blue]")
-    console.print(
-        "[blue]Target module: src/trade_agent/eval/walk_forward_analyzer.py - WalkForwardAnalyzer[/blue]",
-    )
-
-    # TODO: Implement actual walk-forward analysis
-    # from trade_agent.eval import WalkForwardAnalyzer, WalkForwardConfig
-    #
-    # config = WalkForwardConfig(
-    #     train_window_size=train_window_size,
-    #     validation_window_size=validation_window_size,
-    #     test_window_size=test_window_size,
-    #     step_size=step_size,
-    #     model_type=model_type,
-    #     confidence_level=confidence_level,
-    #     output_dir=str(output_dir),
-    #     generate_plots=generate_plots,
-    #     save_results=save_results,
-    # )
-    #
-    # analyzer = WalkForwardAnalyzer(config)
-    # results = analyzer.analyze(data)
-    # analyzer.print_summary()
-
-
-@backtest_app.command()
-def compare(
-    models: str | None = DEFAULT_MODELS,
-    _data_path: Path | None = DEFAULT_DATA_PATH,
-    _output_dir: Path = DEFAULT_COMPARISON_OUTPUT,
-) -> None:
-    """
-    Compare multiple models on the same dataset.
-
-    Evaluates multiple models using the same evaluation framework
-    and generates comparative performance reports.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would compare models: {models}[/blue]")
-    console.print("[blue]Target module: Multiple evaluation functions[/blue]")
-
-
-@backtest_app.command()
-def report(
-    results_path: Path | None = DEFAULT_RESULTS_PATH,
-    output_format: str = DEFAULT_REPORT_FORMAT,
-    _output_dir: Path = DEFAULT_REPORTS_OUTPUT,
-) -> None:
-    """
-    Generate performance reports from backtest results.
-
-    Creates comprehensive performance reports including metrics,
-    charts, and analysis from backtesting results.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would generate {output_format} report from {results_path}[/blue]")
-    console.print("[blue]Target module: Report generation utilities[/blue]")
-
-
-# ============================================================================
-# TRADE SUB-APP COMMANDS
-# ============================================================================
-
-
-@trade_app.command()
-def start(
-    _config_file: Path | None = DEFAULT_CONFIG_FILE,
-    _symbols: str | None = DEFAULT_SYMBOLS_NONE,
-    _model_path: Path | None = DEFAULT_MODEL_PATH,
-    _paper_trading: bool = DEFAULT_PAPER_TRADING,
-    _initial_capital: float = DEFAULT_TRADING_CAPITAL,
-) -> None:
-    """
-    Start live trading session.
-
-    Uses the LiveTradingEngine.create_session() and TradingSession.start() functions
-    from src/trade_agent/core/live_trading.py to initiate live trading.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would start live trading with ${_initial_capital} capital[/blue]")
-    console.print(
-        "[blue]Target module: src/trade_agent/core/live_trading.py - LiveTradingEngine, TradingSession[/blue]",
-    )
-
-
-@trade_app.command()
-def stop(
-    _session_id: str | None = DEFAULT_SESSION_ID_NONE,
-    _all_sessions: bool = DEFAULT_ALL_SESSIONS_FALSE,
-) -> None:
-    """
-    Stop live trading session(s).
-
-    Uses the LiveTradingEngine.stop_all_sessions() function from
-    src/trade_agent/core/live_trading.py to stop trading sessions.
-    """
-    console.print("[blue]PLACEHOLDER: Would stop trading session(s)[/blue]")
-    console.print(
-        "[blue]Target module: src/trade_agent/core/live_trading.py - LiveTradingEngine.stop_all_sessions()[/blue]",
-    )
-
-
-@trade_app.command()
-def status(
-    _session_id: str | None = DEFAULT_SESSION_ID_NONE,
-    _detailed: bool = DEFAULT_DETAILED_FALSE,
-) -> None:
-    """
-    Show trading session status.
-
-    Displays current status of trading sessions including portfolio value,
-    positions, and performance metrics.
-    """
-    console.print("[blue]PLACEHOLDER: Would show trading session status[/blue]")
-    console.print("[blue]Target module: Trading session monitoring functions[/blue]")
-
-
-@trade_app.command()
-def monitor(
-    _session_id: str | None = DEFAULT_SESSION_ID_NONE,
-    _metrics: str = DEFAULT_METRICS_ALL,
-    _interval: int = DEFAULT_INTERVAL_60,
-) -> None:
-    """
-    Monitor live trading session in real-time.
-
-    Provides real-time monitoring of trading sessions with live updates
-    on portfolio performance, risk metrics, and trading activity.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would monitor trading session with {_interval}s interval[/blue]")
-    console.print("[blue]Target module: Real-time monitoring functions[/blue]")
-
-
-@trade_app.command()
-def paper(
-    _config_file: Path | None = DEFAULT_CONFIG_FILE,
-    symbols: str = DEFAULT_PAPER_SYMBOLS,
-    _duration: str = DEFAULT_PAPER_DURATION,
-) -> None:
-    """
-    Start a paper trading session with simulated trades.
-    """
-    console.print(f"[blue]PLACEHOLDER: Would start paper trading for {symbols} for {_duration}[/blue]")
-    console.print("[blue]Target module: Paper trading utilities[/blue]")
-
-
-# ============================================================================
-# SCENARIO SUB-APP COMMANDS
-# ============================================================================
-
-
-@scenario_app.command()
-def scenario_evaluate(
-    _config_file: Path | None = DEFAULT_CONFIG_FILE,
-    agent_type: str = "moving_average",
-    output_dir: Path = Path("outputs/scenario_evaluation"),
-    seed: int = 42,
-    save_reports: bool = True,
-    save_visualizations: bool = True,
-) -> None:
-    """
-    Evaluate agent performance across synthetic market scenarios.
-
-    Tests agent robustness and adaptation to different market regimes
-    including trend following, mean reversion, volatility breakouts,
-    market crises, and regime changes.
-    """
-    console.print("[bold blue]Evaluating agent across market scenarios...[/bold blue]")
-
     try:
-        from examples.scenario_evaluation_example import (
-            create_mean_reversion_agent,
-            create_momentum_agent,
-            create_simple_moving_average_agent,
-            create_volatility_breakout_agent,
-        )
-        from trade_agent.eval import AgentScenarioEvaluator
+        # Set defaults
+        if config_path is None:
+            config_path = Path("config.yaml")
 
-        # Create output directory
-        output_dir.mkdir(parents=True, exist_ok=True)
+        if start_date is None:
+            from datetime import datetime, timedelta
+            start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
 
-        # Initialize scenario evaluator
-        evaluator = AgentScenarioEvaluator(seed=seed)
+        if end_date is None:
+            from datetime import datetime
+            end_date = datetime.now().strftime("%Y-%m-%d")
 
-        # Create agents based on type
-        agents = {
-            "moving_average": create_simple_moving_average_agent(window=20),
-            "momentum": create_momentum_agent(lookback=10),
-            "mean_reversion": create_mean_reversion_agent(lookback=20),
-            "volatility_breakout": create_volatility_breakout_agent(vol_window=20),
-        }
+        if source is None:
+            source = "yfinance"
 
-        if agent_type not in agents:
-            console.print(f"[red]Unknown agent type: {agent_type}[/red]")
-            console.print(f"Available types: {list(agents.keys())}")
+        if timeframe is None:
+            timeframe = "1d"
+
+        # Determine which steps to run
+        if run:
+            # Run complete pipeline
+            download = True
+            process = True
+
+        if not any([download, process]):
+            # No steps specified, show help
+            console.print("[yellow]No pipeline steps specified. Use --download, --process, or --run[/yellow]")
+            console.print("[yellow]Example: python main.py data pipeline --download --symbols 'AAPL'[/yellow]")
             raise typer.Exit(1)
 
-        agent = agents[agent_type]
+        console.print("[green]🚀 Data Pipeline Operations[/green]")
+        console.print(f"[cyan]Steps: {', '.join(['download' if download else '', 'process' if process else '']).strip(', ')}[/cyan]")
+        console.print(f"[cyan]Output: {output_dir}[/cyan]")
+        console.print(f"[cyan]Parallel: {parallel}[/cyan]")
 
-        # Run evaluation
-        results = evaluator.evaluate_agent(
-            agent=agent,
-            agent_name=agent_type.replace("_", " ").title(),
-        )
+        # Create output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Print summary
-        evaluator.print_evaluation_summary(results)
+        # Step 1: Download (if requested)
+        if download:
+            console.print("\n[blue]Step 1: Downloading data...[/blue]")
 
-        # Save reports and visualizations
-        if save_reports:
-            report_path = output_dir / f"{agent_type}_evaluation_report.md"
-            evaluator.generate_evaluation_report(results, report_path)
-            console.print(f"📄 Report saved: {report_path}")
+                    # Handle symbols - if no symbols provided, use comprehensive market coverage
+        if symbols is None:
+            # Get comprehensive symbols without validation to avoid API calls
+            from .data.market_symbols import get_all_symbols
+            symbol_list = get_all_symbols()
+            symbols = ",".join(symbol_list)
+            console.print("[green]Pipeline Download: Comprehensive Market Coverage[/green]")
+            console.print(f"[cyan]Total symbols: {len(symbol_list)}[/cyan]")
+            console.print("[yellow]Note: Using comprehensive symbol list without validation for speed[/yellow]")
+        else:
+            console.print(f"[green]Pipeline Download: {symbols}[/green]")
 
-        if save_visualizations:
-            viz_path = output_dir / f"{agent_type}_evaluation.png"
-            evaluator.create_visualization(results, viz_path)
-            console.print(f"📊 Visualization saved: {viz_path}")
+            console.print(f"[cyan]Source: {source}[/cyan]")
+            console.print(f"[cyan]Timeframe: {timeframe}[/cyan]")
+            console.print(f"[cyan]Date range: {start_date} to {end_date}[/cyan]")
+            console.print(f"[cyan]Output: {output_dir / 'raw'}[/cyan]")
+            console.print(f"[cyan]Force: {force}[/cyan]")
 
-        console.print("[bold green]✅ Scenario evaluation complete![/bold green]")
-        console.print(f"📁 Results saved to: {output_dir}")
+            # Create raw data directory
+            raw_dir = output_dir / "raw"
+            raw_dir.mkdir(parents=True, exist_ok=True)
+
+            # Import and run download functionality
+            from .data.pipeline import DataPipeline
+
+            pipeline = DataPipeline()
+
+            # Parse symbols
+            symbol_list = [s.strip() for s in symbols.split(",")]
+
+            # Download data
+            downloaded_files = pipeline.download_data(
+                symbols=symbol_list,
+                start_date=start_date,
+                end_date=end_date,
+                output_dir=raw_dir
+            )
+
+            console.print(f"[green]✅ Downloaded {len(downloaded_files)} files[/green]")
+            for file_path in downloaded_files:
+                console.print(f"[cyan]  - {file_path}[/cyan]")
+
+        # Step 2: Process (if requested)
+        if process:
+            console.print("\n[blue]Step 2: Processing data...[/blue]")
+
+            # Determine input path for processing
+            if input_path is None:
+                input_path = output_dir / "raw" if download else Path("data/raw")
+
+            console.print(f"[cyan]Input: {input_path}[/cyan]")
+            console.print(f"[cyan]Output: {output_dir / 'processed'}[/cyan]")
+            console.print(f"[cyan]Method: {method}[/cyan]")
+            console.print(f"[cyan]Force rebuild: {force_rebuild}[/cyan]")
+
+            # Create processed data directory
+            processed_dir = output_dir / "processed"
+            processed_dir.mkdir(parents=True, exist_ok=True)
+
+            # Import and run process functionality
+            from .data.prepare import prepare_data
+
+            prepare_data(
+                input_path=input_path,
+                output_dir=processed_dir,
+                config_path=config_path,
+                method=method,
+                save_standardizer=save_standardizer
+            )
+
+            console.print("[green]✅ Data processing completed[/green]")
+
+        console.print("\n[green]✅ Pipeline operations completed successfully![/green]")
+        console.print(f"[cyan]Output directory: {output_dir}[/cyan]")
+        console.print("[cyan]Pipeline structure:[/cyan]")
+        if download:
+            console.print("  - raw/ (downloaded data)")
+        if process:
+            console.print("  - processed/ (standardized data)")
+        console.print("[cyan]Note: Dataset building and splitting is handled by individual training commands[/cyan]")
 
     except Exception as e:
-        console.print(f"[red]Error during scenario evaluation: {e}[/red]")
-        # Note: verbose_count is not available in this scope, so we'll just exit
-        raise typer.Exit(1) from None
+        console.print(f"[red]Error during pipeline operations: {e}[/red]")
+        logger.error(f"Pipeline operations failed: {e}", exc_info=True)
+        raise typer.Exit(1) from e
 
 
 @scenario_app.command()
@@ -1848,6 +1522,17 @@ def custom(
         console.print(f"[red]Error during custom scenario evaluation: {e}[/red]")
         # Note: verbose_count is not available in this scope, so we'll just exit
         raise typer.Exit(1) from None
+
+
+def _get_comprehensive_market_symbols() -> str:
+    """
+    Get a comprehensive list of market symbols for data download.
+
+    Returns:
+        str: Comma-separated string of valid market symbols
+    """
+    from .data.market_symbols import get_comprehensive_symbols
+    return get_comprehensive_symbols()
 
 
 if __name__ == "__main__":

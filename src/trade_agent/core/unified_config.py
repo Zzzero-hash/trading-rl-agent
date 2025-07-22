@@ -29,7 +29,7 @@ class DataConfig(BaseModel):
 
     # Data collection
     symbols: list[str] = Field(
-        default=["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"],
+        default_factory=lambda: ["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN"],
         description="Trading symbols to collect data for",
     )
     start_date: str = Field(default="2023-01-01", description="Start date for data collection")
@@ -52,6 +52,12 @@ class DataConfig(BaseModel):
     # Data quality
     outlier_threshold: float = Field(default=5.0, description="Outlier detection threshold")
     missing_value_threshold: float = Field(default=0.25, description="Missing value threshold")
+
+    # Market calendar and mixed portfolio handling
+    align_mixed_portfolios: bool = Field(default=True, description="Align timestamps for mixed crypto/traditional portfolios")
+    alignment_strategy: str = Field(default="last_known_value", description="Strategy for crypto alignment ('last_known_value', 'forward_fill', 'interpolate')")
+    market_timezone: str = Field(default="America/New_York", description="Primary market timezone")
+    include_extended_hours: bool = Field(default=False, description="Include extended hours trading data")
 
     # Cache and storage
     cache_dir: str = Field(default="data/cache", description="Cache directory")
@@ -127,7 +133,7 @@ class BacktestConfig(BaseModel):
     end_date: str = Field(default="2024-12-31", description="Backtest end date")
 
     # Instruments
-    symbols: list[str] = Field(default=["AAPL", "GOOGL", "MSFT"], description="Symbols to backtest")
+    symbols: list[str] = Field(default_factory=lambda: ["AAPL", "GOOGL", "MSFT"], description="Symbols to backtest")
 
     # Capital and position sizing
     initial_capital: float = Field(default=100000.0, description="Initial capital")
@@ -162,7 +168,7 @@ class LiveTradingConfig(BaseModel):
     paper_trading: bool = Field(default=True, description="Enable paper trading")
 
     # Trading symbols
-    symbols: list[str] = Field(default=["AAPL", "GOOGL", "MSFT"], description="Trading symbols")
+    symbols: list[str] = Field(default_factory=lambda: ["AAPL", "GOOGL", "MSFT"], description="Trading symbols")
 
     # Execution settings
     order_timeout: int = Field(default=60, description="Order timeout in seconds")

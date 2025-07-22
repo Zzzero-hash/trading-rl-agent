@@ -153,12 +153,27 @@ class ParallelDataFetcher:
         df = df.reset_index()
         df = df.rename(columns={"Date": "timestamp", "Datetime": "timestamp"})
 
-        # Normalize timestamp to remove timezone
-        df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
+        # Normalize timestamp to consistent timezone format using utility function
+        from .utils import normalize_timestamps
+        df = normalize_timestamps(df, timestamp_column="timestamp")
 
         # Keep only OHLCV columns
         required_cols = ["timestamp", "open", "high", "low", "close", "volume"]
         return df[required_cols]
+
+    def _normalize_timestamp_column(self, timestamp_col: pd.Series, timezone: str = "America/New_York") -> pd.Series:
+        """
+        Normalize timestamp column to consistent timezone format.
+
+        Args:
+            timestamp_col: Series of timestamps
+            timezone: Target timezone for normalization
+
+        Returns:
+            Normalized timestamp series
+        """
+        from .utils import _normalize_timestamp_series
+        return _normalize_timestamp_series(timestamp_col, timezone)
 
     def _is_cache_fresh(self, cache_path: Path) -> bool:
         """Check if cached data is still fresh."""

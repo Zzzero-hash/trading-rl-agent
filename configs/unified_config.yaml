@@ -54,7 +54,7 @@ data:
   cache_dir: "data/cache"
   cache_ttl_hours: 24
   data_path: "data/"
-  output_dir: "outputs/datasets"
+  output_dir: "data/processed" # Changed from "outputs/datasets"
 
   # Performance settings
   max_workers: 4

@@ -50,6 +50,8 @@ node_modules/
 
 # Data
 /data/
+/data/raw/
+/data/processed/
 outputs/
 demo_outputs/
 backtest_results/

@@ -151,6 +151,21 @@ class FeatureConfig:
         """Get total number of features."""
         return len(self.get_all_features())
 
+    def get_core_features(self) -> list[str]:
+        """Get core 78 features (excluding time and market regime features)."""
+        core_features = []
+        core_features.extend(self.price_features)
+        core_features.extend(self.technical_indicators)
+        core_features.extend(self.candlestick_patterns)
+        core_features.extend(self.candlestick_features)
+        core_features.extend(self.rolling_candlestick_features)
+        core_features.extend(self.sentiment_features)
+        return core_features
+
+    def get_core_feature_count(self) -> int:
+        """Get total number of core features (78)."""
+        return len(self.get_core_features())
+
 
 @dataclass
 class DataStandardizer:
@@ -367,8 +382,8 @@ class DataStandardizer:
         """Clean invalid values (negative prices, infinite values, etc.)."""
         for feature in df.columns:
             if feature in df.columns:
-                # Handle infinite values
-                df[feature] = df[feature].replace([np.inf, -np.inf], 0)
+                # Handle infinite values - FIXED: Use explicit downcasting
+                df[feature] = df[feature].replace([np.inf, -np.inf], 0).infer_objects(copy=False)
 
                 # Handle negative values in price-related features
                 if any(keyword in feature.lower() for keyword in ["price", "close", "open", "high", "low"]):
@@ -425,10 +440,22 @@ class DataStandardizer:
 
     def _validate_output(self, df: pd.DataFrame) -> None:
         """Validate the output dataframe."""
-        # Check for NaN values
-        nan_count = df.isnull().sum().sum()
-        if nan_count > 0:
-            self.logger.warning(f"Output contains {nan_count} NaN values")
+        # Check for NaN values with detailed reporting
+        nan_counts = df.isnull().sum()
+        nan_features = nan_counts[nan_counts > 0]
+
+        if len(nan_features) > 0:
+            total_nans = nan_counts.sum()
+            self.logger.warning(f"Output contains {total_nans} NaN values across {len(nan_features)} features")
+
+            # Log the top features with NaN values
+            top_nan_features = nan_features.nlargest(10)
+            for feature, count in top_nan_features.items():
+                percentage = (count / len(df)) * 100
+                self.logger.warning(f"  {feature}: {count} NaNs ({percentage:.1f}%)")
+
+            # Provide suggestions based on feature types
+            self._suggest_nan_fixes(nan_features)
 
         # Check for infinite values
         inf_count = np.isinf(df.select_dtypes(include=[np.number])).sum().sum()
@@ -441,6 +468,32 @@ class DataStandardizer:
 
         if actual_features != expected_features:
             self.logger.warning(f"Feature count mismatch: expected {expected_features}, got {actual_features}")
+
+    def _suggest_nan_fixes(self, nan_features: pd.Series) -> None:
+        """Provide suggestions for fixing NaN values based on feature types."""
+        suggestions = []
+
+        for feature in nan_features.index:
+            if feature in self.feature_config.technical_indicators:
+                if "rsi" in feature.lower():
+                    suggestions.append(f"RSI ({feature}) may need more data points - ensure at least 14 periods")
+                elif "macd" in feature.lower():
+                    suggestions.append(f"MACD ({feature}) may need more data points - ensure at least 26 periods")
+                elif "bb_" in feature.lower():
+                    suggestions.append(f"Bollinger Bands ({feature}) may need more data points - ensure at least 20 periods")
+                else:
+                    suggestions.append(f"Technical indicator {feature} may need more historical data")
+            elif feature in self.feature_config.candlestick_patterns:
+                suggestions.append(f"Candlestick pattern {feature} - check if pattern detection is working")
+            elif feature in self.feature_config.sentiment_features:
+                suggestions.append(f"Sentiment feature {feature} - check if sentiment data is available")
+            elif feature in self.feature_config.time_features:
+                suggestions.append(f"Time feature {feature} - check timestamp data")
+
+        if suggestions:
+            self.logger.info("Suggestions to fix NaN values:")
+            for suggestion in suggestions[:5]:  # Limit to top 5 suggestions
+                self.logger.info(f"  - {suggestion}")
 
     def get_feature_names(self) -> list[str]:
         """Get the standardized feature names."""
@@ -592,7 +645,7 @@ def load_standardized_dataset(data_path: str, standardizer_path: str) -> tuple[p
 
 
 def create_live_inference_processor(
-    standardizer_path: str = "outputs/data_standardizer.pkl",
+    standardizer_path: str = "data/processed/data_standardizer.pkl",
 ) -> LiveDataProcessor:
     """Create a live inference processor for real-time trading."""
     try:
@@ -606,7 +659,7 @@ def create_live_inference_processor(
         raise RuntimeError(f"Failed to create live inference processor: {err}") from err
 
 
-def process_live_data(data: dict[str, Any], standardizer_path: str = "outputs/data_standardizer.pkl") -> np.ndarray:
+def process_live_data(data: dict[str, Any], standardizer_path: str = "data/processed/data_standardizer.pkl") -> np.ndarray:
     """Process live data for inference using the trained standardizer."""
     processor = create_live_inference_processor(standardizer_path)
     processed_df = processor.process_single_row(data)

@@ -34,7 +34,8 @@ class DataPipeline:
         provider = ProfessionalDataProvider("yahoo")  # Default to Yahoo Finance
 
         if not symbols:
-            symbols = ["AAPL", "GOOGL", "MSFT"]  # Default symbols
+            from .market_symbols import get_default_symbols_list
+            symbols = get_default_symbols_list()  # Default symbols
 
         if not start_date:
             start_date = "2023-01-01"
@@ -44,13 +45,15 @@ class DataPipeline:
 
             end_date = datetime.now().strftime("%Y-%m-%d")
 
-        # Download data
-        data = provider.get_market_data(
-            symbols=symbols,
-            start_date=start_date,
-            end_date=end_date,
-            include_features=True,
-        )
+        # Download data with mixed portfolio alignment
+            data = provider.get_market_data(
+        symbols=symbols,
+        start_date=start_date,
+        end_date=end_date,
+        include_features=True,
+        align_mixed_portfolio=True,  # Enable timestamp alignment for mixed portfolios
+        alignment_strategy="last_known_value",  # Use last_known_value as default strategy
+    )
 
         # Save to output directory
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -71,14 +74,14 @@ def _fetch_data_remote(fetch_fn: Callable[..., pd.DataFrame], **kwargs: Any) -> 
     return fetch_fn(**kwargs)
 
 
-def load_cached_csvs(directory: str) -> pd.DataFrame:
+def load_cached_csvs(directory: str = "data/processed") -> pd.DataFrame:
     """Load all CSV files from a directory and concatenate them.
 
     Each resulting row gains a ``source`` column derived from the file name.
 
     Parameters
     ----------
-    directory : str
+    directory : str, default="data/processed"
         Folder containing CSV files previously produced by :func:`run_pipeline`.
 
     Returns
@@ -127,6 +130,7 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
     start = cfg.get("start")
     end = cfg.get("end")
     timestep = cfg.get("timestep", "day")
+    timezone = cfg.get("timezone", "America/New_York")  # Get timezone from config
     coinbase_symbols = cfg.get("coinbase_perp_symbols", [])
     oanda_symbols = cfg.get("oanda_fx_symbols", [])
     yfinance_symbols = cfg.get("yfinance_symbols", [])
@@ -155,6 +159,7 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
             start=start,
             end=end,
             timestep=timestep,
+            timezone=timezone,  # Pass timezone to data fetching
         )
 
     for symbol in oanda_symbols:
@@ -165,6 +170,7 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
             start=start,
             end=end,
             timestep=timestep,
+            timezone=timezone,  # Pass timezone to data fetching
         )
 
     for symbol in yfinance_symbols:
@@ -175,6 +181,7 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
             start=start,
             end=end,
             interval=timestep,
+            timezone=timezone,  # Pass timezone to data fetching
         )
 
     for symbol in alphavantage_symbols:
@@ -185,6 +192,7 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
             start=start,
             end=end,
             interval=timestep,
+            timezone=timezone,  # Pass timezone to data fetching
         )
 
     for exch, symbols in ccxt_sources.items():
@@ -197,6 +205,7 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
                 end=end,
                 interval=timestep,
                 exchange=exch,
+                timezone=timezone,  # Pass timezone to data fetching
             )
 
     freq_map = {"day": "D", "hour": "H", "minute": "T"}
