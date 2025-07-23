@@ -44,7 +44,7 @@ A production-grade hybrid reinforcement learning trading system that combines CN
 
    ```bash
    git clone https://github.com/yourusername/trading-rl-agent.git
-   cd trading-rl-agent
+   cd trade-agent
    ```
 
 2. **Set up development environment**
@@ -77,41 +77,41 @@ A production-grade hybrid reinforcement learning trading system that combines CN
 
 ```bash
 # Show version and system info
-python main.py version
-python main.py info
+trade-agent version
+trade-agent info
 
 # Download market data
-python main.py data download --symbols "AAPL,GOOGL,MSFT" --start 2023-01-01
+trade-agent data download --symbols "AAPL,GOOGL,MSFT" --start 2023-01-01
 
 # Process and build datasets
-python main.py data prepare --input-path data/raw --output-dir outputs/datasets
+trade-agent data prepare --input-path data/raw --output-dir outputs/datasets
 
 # Train CNN+LSTM model
-python main.py train cnn-lstm --epochs 100 --gpu --output models/
+trade-agent train cnn-lstm --epochs 100 --gpu --output models/
 
 # Train RL agent
-python main.py train rl --epochs 50 --output models/
+trade-agent train rl --epochs 50 --output models/
 
 # Evaluate models
-python main.py evaluate models/best_model.pth --data data/test_data.csv
+trade-agent evaluate models/best_model.pth --data data/test_data.csv
 
 # Run backtesting
-python main.py backtest data/historical_data.csv --model models/agent.zip
+trade-agent backtest data/historical_data.csv --model models/agent.zip
 
 # Start live trading
-python main.py live start --paper --symbols "AAPL,GOOGL"
+trade-agent live start --paper --symbols "AAPL,GOOGL"
 ```
 
 ### 2. Alternative Entry Points
 
 ```bash
 # Using the installed command
-trading-rl-agent version
-trading-rl-agent data download --symbols "AAPL,GOOGL"
+trade-agent version
+trade-agent data download --symbols "AAPL,GOOGL"
 
 # Using Python module
-python -m trading_rl_agent.cli version
-python -m trading_rl_agent.cli train cnn-lstm
+python -m trade_agent.cli version
+python -m trade_agent.cli train cnn-lstm
 ```
 
 ## 📚 Documentation
