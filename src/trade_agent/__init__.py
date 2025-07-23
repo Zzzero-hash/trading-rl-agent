@@ -23,11 +23,17 @@ __version__ = "0.2.0"
 __author__ = "Trade Agent Team"
 
 # Core imports for easy access
+# Import functions from root config.py
+import sys
+from pathlib import Path
 from typing import Any
 
 from .core.config import ConfigManager, SystemConfig
 from .core.exceptions import DataValidationError, ModelError, TradingSystemError
 from .core.logging import get_logger, setup_logging
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from config import get_settings, load_settings
 
 # Main components are imported lazily to avoid heavy dependencies at import time.
 # These modules rely on ML frameworks such as ``torch`` and ``ray``. Importing
@@ -41,6 +47,8 @@ __all__ = [
     "SystemConfig",
     "TradingSystemError",
     "get_logger",
+    "get_settings",
+    "load_settings",
     "setup_logging",
 ]
 

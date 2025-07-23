@@ -215,6 +215,7 @@ class EnhancedCNNLSTMTrainer:
         sequences: np.ndarray,
         targets: np.ndarray,
         save_path: str | None = None,
+        dataset_config: dict | None = None,
     ) -> dict[str, Any]:
         """
         Train model from dataset.
@@ -232,6 +233,16 @@ class EnhancedCNNLSTMTrainer:
         # Split data
         val_split = self.training_config.get("val_split", 0.2)
         X_train, X_val, y_train, y_val = train_test_split(sequences, targets, test_size=val_split, random_state=42)
+
+        # Apply dataset config if provided
+        if dataset_config is not None:
+            # Log the dataset configuration being used
+            sequence_length = dataset_config.get("sequence_length")
+            prediction_horizon = dataset_config.get("prediction_horizon")
+            if sequence_length is not None:
+                print(f"Using sequence_length: {sequence_length} from dataset_config")
+            if prediction_horizon is not None:
+                print(f"Using prediction_horizon: {prediction_horizon} from dataset_config")
 
         # Create model
         input_dim = sequences.shape[-1]
@@ -554,6 +565,9 @@ class HyperparameterOptimizer:
             "early_stopping_patience": trial.suggest_int("early_stopping_patience", 5, 15),
             "lr_patience": trial.suggest_int("lr_patience", 3, 10),
             "max_grad_norm": trial.suggest_float("max_grad_norm", 0.5, 2.0),
+            # Add sequence length and prediction horizon as hyperparameters
+            "sequence_length": trial.suggest_categorical("sequence_length", [20, 30, 60, 90, 120]),
+            "prediction_horizon": trial.suggest_categorical("prediction_horizon", [1, 3, 5, 10, 20]),
         }
 
     def optimize(self) -> dict[str, Any]:

@@ -16,38 +16,15 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
-try:
-    from alpaca_trade_api.entity import Order
-    from alpaca_trade_api.rest import REST
-    from alpaca_trade_api.stream import Stream
-
-    ALPACA_AVAILABLE = True
-except ImportError:
-    ALPACA_AVAILABLE = False
-    # Define fallback types for type hints
-    Order = type("Order", (), {})
-    REST = type("REST", (), {})
-    Stream = type("Stream", (), {})
-    logging.getLogger(__name__).warning(
-        "Alpaca Trade API not available. Install with: pip install alpaca-trade-api",
-    )
-
-try:
-    from alpaca.data import StockHistoricalDataClient
-    from alpaca.trading.client import TradingClient
-    from alpaca.trading.enums import OrderSide as AlpacaOrderSide
-
-    ALPACA_V2_AVAILABLE = True
-except ImportError:
-    ALPACA_V2_AVAILABLE = False
-    # Define fallback types for type hints
-    StockHistoricalDataClient = type("StockHistoricalDataClient", (), {})
-    TradingClient = type("TradingClient", (), {})
-    AlpacaOrderSide = type("AlpacaOrderSide", (), {})
-    logging.getLogger(__name__).warning(
-        "Alpaca V2 SDK not available. Install with: pip install alpaca-py",
-    )
+from alpaca.common.exceptions import APIError
+from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.data.live import StockDataStream
+from alpaca.trading.client import TradingClient
+from alpaca.trading.enums import OrderSide as AlpacaOrderSide
+from alpaca.trading.enums import OrderType as AlpacaOrderType
+from alpaca.trading.enums import TimeInForce
+from alpaca.trading.models import Order
+from alpaca.trading.requests import GetOrdersRequest
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +152,7 @@ class AlpacaIntegration:
         """
         self.config = config
         self._init_clients()
-        self._stream: Any = None
+        self._stream: StockDataStream | None = None
         self._stream_connected = False
         self._data_callbacks: list[Callable] = []
         self._order_callbacks: list[Callable] = []
@@ -187,23 +164,7 @@ class AlpacaIntegration:
 
     def _init_clients(self) -> None:
         """Initialize Alpaca API clients."""
-        if not ALPACA_AVAILABLE:
-            raise ImportError("Alpaca Trade API required: pip install alpaca-trade-api")
-
-        # Initialize V1 API client (fallback)
         try:
-            self.rest_api = REST(
-                self.config.api_key,
-                self.config.secret_key,
-                self.config.base_url,
-                api_version="v2",
-            )
-        except TypeError:
-            # Handle case where REST is a mock that doesn't accept arguments
-            self.rest_api = REST()
-
-        # Initialize V2 API clients if available
-        if ALPACA_V2_AVAILABLE and self.config.use_v2_api:
             self.trading_client = TradingClient(
                 self.config.api_key,
                 self.config.secret_key,
@@ -211,10 +172,8 @@ class AlpacaIntegration:
             )
             self.data_client = StockHistoricalDataClient(self.config.api_key, self.config.secret_key)
             logger.info("Using Alpaca V2 SDK")
-        else:
-            self.trading_client = None
-            self.data_client = None
-            logger.info("Using Alpaca V1 API")
+        except Exception as e:
+            raise AlpacaConnectionError(f"Failed to initialize Alpaca clients: {e}") from e
 
     def validate_connection(self) -> bool:
         """
@@ -224,10 +183,10 @@ class AlpacaIntegration:
             True if connection is successful, False otherwise
         """
         try:
-            account = self.rest_api.get_account()
+            account = self.trading_client.get_account()
             logger.info(f"Alpaca connection validated. Account: {account.id}")
             return True
-        except Exception as e:
+        except APIError as e:
             logger.exception(f"Alpaca connection validation failed: {e}")
             return False
 
@@ -239,36 +198,9 @@ class AlpacaIntegration:
             Dictionary containing account details
         """
         try:
-            account = self.rest_api.get_account()
-            return {
-                "id": account.id,
-                "account_number": account.account_number,
-                "status": account.status,
-                "currency": account.currency,
-                "buying_power": float(account.buying_power),
-                "regt_buying_power": float(account.regt_buying_power),
-                "daytrading_buying_power": float(account.daytrading_buying_power),
-                "cash": float(account.cash),
-                "portfolio_value": float(account.portfolio_value),
-                "pattern_day_trader": account.pattern_day_trader,
-                "trading_blocked": account.trading_blocked,
-                "transfers_blocked": account.transfers_blocked,
-                "account_blocked": account.account_blocked,
-                "created_at": account.created_at,
-                "trade_suspended_by_user": account.trade_suspended_by_user,
-                "multiplier": account.multiplier,
-                "shorting_enabled": account.shorting_enabled,
-                "equity": float(account.equity),
-                "last_equity": float(account.last_equity),
-                "long_market_value": float(account.long_market_value),
-                "short_market_value": float(account.short_market_value),
-                "initial_margin": float(account.initial_margin),
-                "maintenance_margin": float(account.maintenance_margin),
-                "last_maintenance_margin": float(account.last_maintenance_margin),
-                "sma": float(account.sma),
-                "daytrade_count": account.daytrade_count,
-            }
-        except Exception as e:
+            account = self.trading_client.get_account()
+            return account.dict()  # type: ignore
+        except APIError as e:
             logger.exception(f"Failed to get account info: {e}")
             raise AlpacaConnectionError(f"Failed to get account info: {e}") from e
 
@@ -278,7 +210,6 @@ class AlpacaIntegration:
         start_date: str | datetime,
         end_date: str | datetime,
         timeframe: str = "1Day",
-        adjustment: str = "raw",
     ) -> pd.DataFrame:
         """
         Get historical market data.
@@ -293,42 +224,35 @@ class AlpacaIntegration:
         Returns:
             DataFrame with historical OHLCV data
         """
+        from alpaca.data.requests import StockBarsRequest
+        from alpaca.data.timeframe import TimeFrame
+
+        timeframe_mapping = {
+            "1Min": TimeFrame.Minute,
+            "5Min": TimeFrame.Minute,
+            "1Hour": TimeFrame.Hour,
+            "1Day": TimeFrame.Day,
+        }
         try:
-            all_data = []
-
-            for symbol in symbols:
-                try:
-                    bars = self.rest_api.get_bars(
-                        symbol,
-                        timeframe,
-                        start=start_date,
-                        end=end_date,
-                        adjustment=adjustment,
-                    ).df
-
-                    if not bars.empty:
-                        bars["symbol"] = symbol
-                        bars.reset_index(inplace=True)
-                        bars.rename(
-                            columns={"timestamp": "date", "volume": "volume"},
-                            inplace=True,
-                        )
-                        all_data.append(bars)
-
-                except Exception as e:
-                    logger.warning(f"Failed to get historical data for {symbol}: {e}")
-                    continue
-
-            if all_data:
-                combined_data = pd.concat(all_data, ignore_index=True)
-                # Handle timezone-aware datetime conversion consistently using utility function
+            request_params = StockBarsRequest(
+                symbol_or_symbols=symbols,
+                timeframe=timeframe_mapping.get(timeframe, TimeFrame.Day),
+                start=pd.to_datetime(start_date),
+                end=pd.to_datetime(end_date),
+            )
+            bars = self.data_client.get_stock_bars(request_params).df
+            if not bars.empty:
+                bars.reset_index(inplace=True)
+                bars.rename(
+                    columns={"timestamp": "date", "volume": "volume"},
+                    inplace=True,
+                )
                 from .utils import normalize_timestamps
-                combined_data = normalize_timestamps(combined_data, timestamp_column="date")
-                return combined_data.sort_values(["symbol", "date"]).reset_index(drop=True)
 
+                bars = normalize_timestamps(bars, timestamp_column="date")
+                return bars.sort_values(["symbol", "date"]).reset_index(drop=True)
             return pd.DataFrame()
-
-        except Exception as e:
+        except APIError as e:
             logger.exception(f"Historical data retrieval error: {e}")
             raise AlpacaDataError(f"Failed to get historical data: {e}") from e
 
@@ -357,10 +281,9 @@ class AlpacaIntegration:
             Dictionary with real-time quote data
         """
         try:
-            quotes = {}
-            for symbol in symbols:
-                quote = self.rest_api.get_latest_quote(symbol)
-                quotes[symbol] = {
+            quotes = self.data_client.get_latest_stock_quotes(symbols)
+            return {
+                symbol: {
                     "bid_price": float(quote.bid_price),
                     "ask_price": float(quote.ask_price),
                     "bid_size": int(quote.bid_size),
@@ -369,8 +292,9 @@ class AlpacaIntegration:
                     "spread": float(quote.ask_price - quote.bid_price),
                     "spread_pct": float((quote.ask_price - quote.bid_price) / quote.bid_price * 100),
                 }
-            return quotes
-        except Exception as e:
+                for symbol, quote in quotes.items()
+            }
+        except APIError as e:
             logger.exception(f"Real-time quotes error: {e}")
             raise AlpacaDataError(f"Failed to get real-time quotes: {e}") from e
 
@@ -389,46 +313,26 @@ class AlpacaIntegration:
             order_params = {
                 "symbol": order_request.symbol,
                 "qty": order_request.qty,
-                "side": order_request.side.value,
-                "type": order_request.order_type.value,
-                "time_in_force": order_request.time_in_force,
+                "side": AlpacaOrderSide(order_request.side.value),
+                "type": AlpacaOrderType(order_request.order_type.value),
+                "time_in_force": TimeInForce(order_request.time_in_force),
                 "extended_hours": order_request.extended_hours,
+                "client_order_id": order_request.client_order_id,
             }
-
-            # Add optional parameters
             if order_request.limit_price:
                 order_params["limit_price"] = order_request.limit_price
             if order_request.stop_price:
                 order_params["stop_price"] = order_request.stop_price
-            if order_request.client_order_id:
-                order_params["client_order_id"] = order_request.client_order_id
 
             # Place order with retry logic
             last_exception = None
             for attempt in range(self.config.max_retries):
                 try:
-                    order = self.rest_api.submit_order(**order_params)
-
+                    order = self.trading_client.submit_order(order_data=order_params)
                     # Wait for order to be processed
                     order = self._wait_for_order_fill(order.id)
-
-                    return {
-                        "order_id": order.id,
-                        "client_order_id": order.client_order_id,
-                        "symbol": order.symbol,
-                        "qty": float(order.qty),
-                        "side": order.side,
-                        "type": order.type,
-                        "status": order.status,
-                        "filled_at": order.filled_at,
-                        "filled_avg_price": (float(order.filled_avg_price) if order.filled_avg_price else None),
-                        "filled_qty": float(order.filled_qty),
-                        "submitted_at": order.submitted_at,
-                        "limit_price": (float(order.limit_price) if order.limit_price else None),
-                        "stop_price": (float(order.stop_price) if order.stop_price else None),
-                    }
-
-                except Exception as e:
+                    return order.dict()  # type: ignore
+                except APIError as e:
                     last_exception = e
                     if attempt == self.config.max_retries - 1:
                         raise last_exception from e
@@ -458,11 +362,11 @@ class AlpacaIntegration:
 
         while time.time() - start_time < timeout:
             try:
-                order = self.rest_api.get_order(order_id)
+                order = self.trading_client.get_order_by_id(order_id)
                 if order.status in ["filled", "canceled", "rejected"]:
                     return order
                 time.sleep(1)
-            except Exception as e:
+            except APIError as e:
                 logger.warning(f"Error checking order status: {e}")
                 time.sleep(1)
 
@@ -476,27 +380,22 @@ class AlpacaIntegration:
             List of portfolio positions
         """
         try:
-            positions = self.rest_api.list_positions()
-            portfolio_positions = []
-
-            for position in positions:
-                portfolio_positions.append(
-                    PortfolioPosition(
-                        symbol=position.symbol,
-                        qty=float(position.qty),
-                        avg_entry_price=float(position.avg_entry_price),
-                        current_price=float(position.current_price),
-                        market_value=float(position.market_value),
-                        unrealized_pl=float(position.unrealized_pl),
-                        unrealized_plpc=float(position.unrealized_plpc),
-                        side=position.side,
-                        timestamp=datetime.now(),
-                    )
+            positions = self.trading_client.get_all_positions()
+            return [
+                PortfolioPosition(
+                    symbol=pos.symbol,
+                    qty=float(pos.qty),
+                    avg_entry_price=float(pos.avg_entry_price),
+                    current_price=float(pos.current_price),
+                    market_value=float(pos.market_value),
+                    unrealized_pl=float(pos.unrealized_pl),
+                    unrealized_plpc=float(pos.unrealized_plpc),
+                    side=pos.side,
+                    timestamp=datetime.now(),
                 )
-
-            return portfolio_positions
-
-        except Exception as e:
+                for pos in positions
+            ]
+        except APIError as e:
             logger.exception(f"Failed to get positions: {e}")
             raise AlpacaDataError(f"Failed to get positions: {e}") from e
 
@@ -508,9 +407,8 @@ class AlpacaIntegration:
             Dictionary with portfolio metrics
         """
         try:
-            account = self.rest_api.get_account()
+            account = self.trading_client.get_account()
             positions = self.get_positions()
-
             total_unrealized_pl = sum(pos.unrealized_pl for pos in positions)
             total_market_value = sum(pos.market_value for pos in positions)
 
@@ -527,7 +425,7 @@ class AlpacaIntegration:
                 "position_count": len(positions),
             }
 
-        except Exception as e:
+        except APIError as e:
             logger.exception(f"Failed to get portfolio value: {e}")
             raise AlpacaDataError(f"Failed to get portfolio value: {e}") from e
 
@@ -543,25 +441,20 @@ class AlpacaIntegration:
             self._data_callbacks.append(callback)
 
         try:
-            self._stream = Stream(
-                self.config.api_key,
-                self.config.secret_key,
-                base_url=self.config.base_url,
-                data_feed="iex",  # Use IEX for free data
-            )
+            self._stream = StockDataStream(self.config.api_key, self.config.secret_key)
 
             # Subscribe to trade updates
-            if self._stream is not None:
-                self._stream.subscribe_trade_updates(self._handle_trade_update)
+            async def trade_handler(trade: Any) -> None:
+                await self._handle_trade_update(trade)
 
-                # Subscribe to bar updates
-                for symbol in symbols:
-                    self._stream.subscribe_bars(self._handle_bar_update, symbol)
+            async def bar_handler(bar: Any) -> None:
+                await self._handle_bar_update(bar)
 
-                # Start streaming in a separate thread
-                self._stream.run()
-                self._stream_connected = True
-                logger.info(f"Started data stream for {len(symbols)} symbols")
+            self._stream.subscribe_trades(trade_handler, *symbols)
+            self._stream.subscribe_bars(bar_handler, *symbols)
+            self._stream.run()
+            self._stream_connected = True
+            logger.info(f"Started data stream for {len(symbols)} symbols")
 
         except Exception as e:
             logger.exception(f"Failed to start data stream: {e}")
@@ -577,7 +470,7 @@ class AlpacaIntegration:
             except Exception as e:
                 logger.warning(f"Error stopping data stream: {e}")
 
-    def _handle_trade_update(self, trade: Any) -> None:
+    async def _handle_trade_update(self, trade: Any) -> None:
         """Handle real-time trade updates."""
         try:
             trade_data = {
@@ -599,7 +492,7 @@ class AlpacaIntegration:
         except Exception as e:
             logger.exception(f"Error handling trade update: {e}")
 
-    def _handle_bar_update(self, bar: Any) -> None:
+    async def _handle_bar_update(self, bar: Any) -> None:
         """Handle real-time bar updates."""
         try:
             bar_data = MarketData(
@@ -656,28 +549,10 @@ class AlpacaIntegration:
             List of order dictionaries
         """
         try:
-            orders = self.rest_api.list_orders(status=status, limit=limit, after=after, until=until)
-
-            return [
-                {
-                    "id": order.id,
-                    "client_order_id": order.client_order_id,
-                    "symbol": order.symbol,
-                    "qty": float(order.qty),
-                    "side": order.side,
-                    "type": order.type,
-                    "status": order.status,
-                    "filled_at": order.filled_at,
-                    "filled_avg_price": (float(order.filled_avg_price) if order.filled_avg_price else None),
-                    "filled_qty": float(order.filled_qty),
-                    "submitted_at": order.submitted_at,
-                    "limit_price": (float(order.limit_price) if order.limit_price else None),
-                    "stop_price": float(order.stop_price) if order.stop_price else None,
-                }
-                for order in orders
-            ]
-
-        except Exception as e:
+            request = GetOrdersRequest(status=status, limit=limit, after=after, until=until)
+            orders = self.trading_client.get_orders(filter=request)
+            return [order.dict() for order in orders]
+        except APIError as e:
             logger.exception(f"Failed to get order history: {e}")
             raise AlpacaDataError(f"Failed to get order history: {e}") from e
 
@@ -692,10 +567,10 @@ class AlpacaIntegration:
             True if order was canceled successfully
         """
         try:
-            self.rest_api.cancel_order(order_id)
+            self.trading_client.cancel_order_by_id(order_id)
             logger.info(f"Canceled order {order_id}")
             return True
-        except Exception as e:
+        except APIError as e:
             logger.exception(f"Failed to cancel order {order_id}: {e}")
             raise AlpacaOrderError(f"Failed to cancel order: {e}") from e
 
@@ -707,11 +582,11 @@ class AlpacaIntegration:
             List of canceled order IDs
         """
         try:
-            canceled_orders = self.rest_api.cancel_all_orders()
+            canceled_orders = self.trading_client.cancel_orders()
             order_ids = [order.id for order in canceled_orders]
             logger.info(f"Canceled {len(order_ids)} orders")
             return order_ids
-        except Exception as e:
+        except APIError as e:
             logger.exception(f"Failed to cancel all orders: {e}")
             raise AlpacaOrderError(f"Failed to cancel all orders: {e}") from e
 
@@ -726,24 +601,9 @@ class AlpacaIntegration:
             Dictionary with asset information
         """
         try:
-            asset = self.rest_api.get_asset(symbol)
-            return {
-                "id": asset.id,
-                "class": asset.asset_class,
-                "exchange": asset.exchange,
-                "symbol": asset.symbol,
-                "name": asset.name,
-                "status": asset.status,
-                "tradable": asset.tradable,
-                "marginable": asset.marginable,
-                "shortable": asset.shortable,
-                "easy_to_borrow": asset.easy_to_borrow,
-                "fractionable": asset.fractionable,
-                "min_order_size": (float(asset.min_order_size) if asset.min_order_size else None),
-                "min_trade_increment": (float(asset.min_trade_increment) if asset.min_trade_increment else None),
-                "price_increment": (float(asset.price_increment) if asset.price_increment else None),
-            }
-        except Exception as e:
+            asset = self.trading_client.get_asset(symbol)
+            return asset.dict()  # type: ignore
+        except APIError as e:
             logger.exception(f"Failed to get asset info for {symbol}: {e}")
             raise AlpacaDataError(f"Failed to get asset info: {e}") from e
 

@@ -19,21 +19,32 @@ import datetime
 import os
 import random
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from dataclasses import dataclass
-from datetime import UTC
 from typing import Any
 
 import numpy as np
 import pandas as pd
+import ray
 import requests
 from bs4 import BeautifulSoup
+from rich.console import Console
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+from src.trade_agent.utils.ray_utils import parallel_execute
 from trade_agent.core.logging import get_logger
 from trade_agent.data.market_symbols import COMPREHENSIVE_SYMBOLS
 
 # Global sentiment cache for backward compatibility
-sentiment: dict[str, dict[str, Any]] = {}
+sentiment: dict[str, dict[str, Any]] = defaultdict(
+    lambda: {"score": 0.0, "magnitude": 0.0, "timestamp": datetime.datetime.now(), "source": "default"}
+)
+# Global console for rich output
+console = Console()
+# Setup logger
+logger = get_logger(__name__)
+# Constants
+UTC = datetime.UTC
 
 
 @dataclass
@@ -724,6 +735,31 @@ class SocialSentimentProvider(SentimentProvider):
         return sentiment_data
 
 
+@ray.remote
+def _analyze_symbol_sentiment(
+    symbol: str, days_back: int, config: dict[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    """Analyze sentiment for a single symbol as a Ray remote task."""
+    try:
+        from trade_agent.data.sentiment import SentimentAnalyzer, SentimentConfig
+
+        analyzer = SentimentAnalyzer(SentimentConfig(**config))
+        score = analyzer.get_symbol_sentiment_with_market_fallback(symbol, days_back)
+
+        return symbol, {
+            "score": score,
+            "timestamp": datetime.datetime.now().isoformat(),
+            "status": "success",
+        }
+    except Exception as e:
+        return symbol, {
+            "score": 0.0,
+            "timestamp": datetime.datetime.now().isoformat(),
+            "status": "failed",
+            "error": str(e),
+        }
+
+
 class SentimentAnalyzer:
     """Main sentiment analyzer that aggregates data from multiple providers."""
 
@@ -898,25 +934,21 @@ class SentimentAnalyzer:
 
                 # Calculate sentiment direction with fallback
                 try:
-                    sentiment_direction = np.sign(sentiment_score)
-                    if np.isnan(sentiment_direction):
-                        sentiment_direction = 0
+                    sentiment_direction = 1 if sentiment_score > 0.01 else (-1 if sentiment_score < -0.01 else 0)
                 except Exception:
                     sentiment_direction = 0
 
                 features.append(
                     {
                         "symbol": symbol,
-                        "sentiment_score": float(sentiment_score),
-                        "sentiment_magnitude": float(avg_magnitude),
-                        "sentiment_sources": int(source_count),
-                        "sentiment_direction": int(sentiment_direction),
-                    },
+                        "sentiment_score": sentiment_score,
+                        "sentiment_magnitude": avg_magnitude,
+                        "sentiment_sources": source_count,
+                        "sentiment_direction": sentiment_direction,
+                    }
                 )
-
             except Exception as e:
-                # Complete fallback - if anything fails, use all zeros
-                self.logger.warning(f"Complete sentiment failure for {symbol}, using default values: {e}")
+                self.logger.warning(f"Failed to get sentiment features for {symbol}: {e}")
                 features.append(
                     {
                         "symbol": symbol,
@@ -924,25 +956,39 @@ class SentimentAnalyzer:
                         "sentiment_magnitude": 0.0,
                         "sentiment_sources": 0,
                         "sentiment_direction": 0,
-                    },
+                    }
                 )
 
-        # Create DataFrame with explicit dtypes to ensure consistency
-        df = pd.DataFrame(features)
+        return pd.DataFrame(features)
 
-        # Ensure all numeric columns are properly typed
-        if not df.empty:
-            df["sentiment_score"] = pd.to_numeric(df["sentiment_score"], errors="coerce").fillna(0.0)
-            df["sentiment_magnitude"] = pd.to_numeric(df["sentiment_magnitude"], errors="coerce").fillna(0.0)
-            df["sentiment_sources"] = pd.to_numeric(df["sentiment_sources"], errors="coerce").fillna(0).astype(int)
-            df["sentiment_direction"] = pd.to_numeric(df["sentiment_direction"], errors="coerce").fillna(0).astype(int)
+    def get_sentiment_features_parallel(
+        self,
+        symbols: list[str],
+        days_back: int = 1,
+        max_workers: int = 4
+    ) -> pd.DataFrame:
+        """Get sentiment features for multiple symbols in parallel."""
 
-        return df
+        def _get_features_for_symbol(symbol: str) -> pd.DataFrame:
+            return self.get_sentiment_features([symbol], days_back)
+
+        results = parallel_execute(
+            _get_features_for_symbol,
+            symbols,
+            max_workers=max_workers
+        )
+
+        all_features = [features for features in results if not features.empty]
+
+        if not all_features:
+            return pd.DataFrame()
+
+        return pd.concat(all_features, ignore_index=True)
 
 
 # Global functions for backward compatibility
 def get_sentiment_score(symbol: str) -> float:
-    """Get sentiment score for a symbol (backward compatibility)."""
+    """Get the current sentiment score for a symbol."""
     analyzer = SentimentAnalyzer()
     return analyzer.get_symbol_sentiment(symbol)
 

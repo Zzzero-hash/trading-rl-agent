@@ -128,12 +128,21 @@ class OptimizedDatasetBuilder:
         memory_mb = memory_info.rss / 1024 / 1024
         logger.info(f"💾 Memory usage at {stage}: {memory_mb:.1f} MB")
 
-    def build_dataset(self) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    def build_dataset(self, sequence_length: int | None = None, prediction_horizon: int | None = None) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
         """Build the complete dataset with parallel processing."""
 
         logger.info("🚀 Starting optimized dataset generation...")
         start_time = time.time()
         self._log_memory_usage("start")
+
+        # Override sequence_length and prediction_horizon if provided
+        if sequence_length is not None:
+            self.config.sequence_length = sequence_length
+            logger.info(f"Using provided sequence_length: {sequence_length}")
+
+        if prediction_horizon is not None:
+            self.config.prediction_horizon = prediction_horizon
+            logger.info(f"Using provided prediction_horizon: {prediction_horizon}")
 
         # Step 1: Collect raw data in parallel
         raw_data = self._collect_raw_data_parallel()
@@ -670,7 +679,7 @@ class OptimizedDatasetBuilder:
         return summary
 
     @classmethod
-    def load_or_build(cls, config: OptimizedDatasetConfig) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    def load_or_build(cls, config: OptimizedDatasetConfig, sequence_length: int | None = None, prediction_horizon: int | None = None) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
         """Load existing dataset or build new one."""
 
         base_dir = Path(config.output_dir)
@@ -719,4 +728,4 @@ class OptimizedDatasetBuilder:
         # Build new dataset
         logger.info("🔨 No existing dataset found - building optimized dataset...")
         builder = cls(config)
-        return builder.build_dataset()
+        return builder.build_dataset(sequence_length=sequence_length, prediction_horizon=prediction_horizon)
