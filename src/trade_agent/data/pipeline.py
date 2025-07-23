@@ -1,19 +1,52 @@
 import os
+import sys
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import ray
 import yaml
+
+# Add src to path to resolve imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+
+from trade_agent.utils.ray_utils import parallel_execute
 
 from .csv_utils import save_csv_chunked
 from .features import generate_features
 from .historical import fetch_historical_data
 from .live import fetch_live_data
 from .loaders import load_alphavantage, load_ccxt, load_yfinance
+from .sentiment import SentimentData
 from .synthetic import fetch_synthetic_data
+
+
+@ray.remote
+def _download_symbol_data(
+    symbol: str, start_date: str, end_date: str, provider: str = "yahoo"
+) -> tuple[str, pd.DataFrame]:
+    """Download data for a single symbol as a Ray remote task."""
+    try:
+        from .professional_feeds import ProfessionalDataProvider
+
+        provider_instance = ProfessionalDataProvider(provider)
+
+        data = provider_instance.get_market_data(
+            symbols=[symbol],
+            start_date=start_date,
+            end_date=end_date,
+            include_features=False,  # Defer feature generation
+            align_mixed_portfolio=False,  # Defer alignment
+        )
+
+        return symbol, data
+    except Exception as e:
+        print(f"Failed to download {symbol}: {e}")
+        return symbol, pd.DataFrame()
 
 
 class DataPipeline:
@@ -63,21 +96,70 @@ class DataPipeline:
         # Save to output directory
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        downloaded_files = []
+        downloaded_files: list[str] = []
         for symbol in symbols:
-            symbol_data = data[data["symbol"] == symbol] if "symbol" in data.columns else data
+            # Ensure symbol_data is a DataFrame
+            symbol_data_slice = data[data["symbol"] == symbol] if "symbol" in data.columns else data
+            symbol_data: pd.DataFrame = symbol_data_slice.copy() if isinstance(symbol_data_slice, pd.DataFrame) else pd.DataFrame()
+
 
             # Enhance with historical sentiment if requested
-            if include_sentiment:
+            if include_sentiment and not symbol_data.empty:
                 symbol_data = self._enhance_with_historical_sentiment(
                     symbol_data, symbol, start_date, end_date, sentiment_lookback_days
                 )
 
             file_path = output_dir / f"{symbol}.csv"
-            symbol_data.to_csv(file_path, index=False)
+            if not symbol_data.empty:
+                symbol_data.to_csv(file_path, index=False)
             downloaded_files.append(str(file_path))
 
         return downloaded_files
+
+    def download_data_parallel(
+        self,
+        symbols: list[str],
+        start_date: str,
+        end_date: str,
+        max_workers: int = 8,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """Download data for multiple symbols in parallel."""
+        from .professional_feeds import ProfessionalDataProvider
+
+        provider = ProfessionalDataProvider("yahoo")
+
+        def _download_symbol(symbol: str) -> pd.DataFrame:
+            return provider.get_market_data(
+                symbols=[symbol],
+                start_date=start_date,
+                end_date=end_date,
+                include_features=False,
+                align_mixed_portfolio=False,
+            )
+
+        results: list[pd.DataFrame] = parallel_execute(_download_symbol, symbols, max_workers=max_workers)
+
+        all_data = [data for data in results if not data.empty]
+
+        if not all_data:
+            return pd.DataFrame()
+
+        combined_data = pd.concat(all_data, ignore_index=True)
+
+        if kwargs.get("include_features", True):
+            from .features import generate_features
+            combined_data = generate_features(combined_data)
+
+        if kwargs.get("align_mixed_portfolio", True):
+            from .market_calendar import get_trading_calendar
+            calendar = get_trading_calendar()
+            combined_data = calendar.align_data_timestamps(
+                combined_data, symbols, alignment_strategy=kwargs.get("alignment_strategy", "last_known_value")
+            )
+
+        return combined_data
+
 
     def _enhance_with_historical_sentiment(
         self,
@@ -96,50 +178,50 @@ class DataPipeline:
         # Calculate sentiment collection period
         start_dt = datetime.strptime(start_date, "%Y-%m-%d")
         end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        collection_start_dt = start_dt - timedelta(days=sentiment_lookback_days)
 
-        # Collect sentiment for each day in the period
-        sentiment_records = []
+        # Get historical sentiment
+        sentiment_data = sentiment_provider.fetch_sentiment(
+            symbol,
+            days_back=(end_dt - collection_start_dt).days,
+        )
 
-        current_date = start_dt
-        while current_date <= end_dt:
-            try:
-                # Try to get sentiment for this specific date
-                sentiment_data = sentiment_provider.fetch_sentiment(
-                    symbol, days_back=sentiment_lookback_days
-                )
+        if not sentiment_data:
+            # Fallback to market-derived sentiment
+            derived_sentiment = self._get_market_derived_sentiment(market_data, symbol, end_dt)
+            if derived_sentiment:
+                sentiment_data = [SentimentData(symbol=symbol, **derived_sentiment)]
 
-                if sentiment_data:
-                    # Aggregate sentiment for this date
-                    daily_sentiment = self._aggregate_daily_sentiment(sentiment_data, current_date)
-                    sentiment_records.append(daily_sentiment)
-                else:
-                    # Use market-derived sentiment as fallback
-                    daily_sentiment = self._get_market_derived_sentiment(
-                        market_data, symbol, current_date
-                    )
-                    sentiment_records.append(daily_sentiment)
 
-            except Exception as e:
-                # Fallback to market-derived sentiment
-                daily_sentiment = self._get_market_derived_sentiment(
-                    market_data, symbol, current_date
-                )
-                sentiment_records.append(daily_sentiment)
+        if not sentiment_data:
+            return market_data
 
-            current_date += timedelta(days=1)
+        # Convert to DataFrame
+        sentiment_df = pd.DataFrame([vars(s) for s in sentiment_data])
 
-        if sentiment_records:
-            sentiment_df = pd.DataFrame(sentiment_records)
-            return self._merge_market_sentiment(market_data, sentiment_df)
+        # Ensure 'timestamp' column is present and in the correct format
+        sentiment_df = self._ensure_timestamp_column(sentiment_df)
+        market_data = self._ensure_timestamp_column(market_data)
 
-        return market_data
+
+        # Merge sentiment data with market data
+        return self._merge_market_sentiment(market_data, sentiment_df)
 
     def _aggregate_daily_sentiment(
         self,
-        sentiment_data: list,
+        sentiment_data: list[Any],
         target_date: datetime
-    ) -> dict:
-        """Aggregate sentiment data for a specific date."""
+    ) -> dict[str, Any]:
+        """Aggregate daily sentiment data."""
+        if not sentiment_data:
+            return {
+                "timestamp": target_date,
+                "sentiment_score": 0.0,
+                "sentiment_magnitude": 0.0,
+                "sentiment_sources": 0,
+                "sentiment_direction": 0,
+                "sentiment_source": "no_data"
+            }
 
         # Filter sentiment data for the target date
         daily_sentiments = [
@@ -176,85 +258,41 @@ class DataPipeline:
         market_data: pd.DataFrame,
         _symbol: str,
         target_date: datetime,
-    ) -> dict:
-        """Generate market-derived sentiment as fallback."""
+    ) -> dict[str, Any] | None:
+        """Derive sentiment from market data as a proxy."""
+        if market_data.empty:
+            return None
 
-        # Find market data for the target date
-        market_data_copy = market_data.copy()
-        market_data_copy["date"] = pd.to_datetime(market_data_copy["timestamp"]).dt.date
-        target_date_only = target_date.date()
+        # Ensure target_date is timezone-naive
+        if target_date.tzinfo is not None:
+            target_date = target_date.replace(tzinfo=None)
 
-        # Get data for the target date and surrounding days
-        date_data = market_data_copy[
-            market_data_copy["date"] == target_date_only
-        ]
+        # Set timestamp as index for asof
+        if "timestamp" in market_data.columns:
+            market_data = market_data.set_index("timestamp")
 
-        if date_data.empty:
-            return {
-                "timestamp": target_date,
-                "sentiment_score": 0.0,
-                "sentiment_magnitude": 0.0,
-                "sentiment_sources": 1,
-                "sentiment_direction": 0,
-                "sentiment_source": "market_derived"
-            }
+        # Use asof to find the closest available data point
+        closest_data = market_data.asof(target_date)
 
-        # Calculate market-based sentiment indicators
-        row = date_data.iloc[0]
+        if pd.isna(closest_data).all():
+            return None
 
-        # Price momentum (if we have historical data)
-        if len(market_data_copy) > 1:
-            # Get previous day's data
-            prev_data = market_data_copy[
-                market_data_copy["date"] < target_date_only
-            ].tail(1)
+        # Simple momentum-based sentiment
+        price_change = (closest_data["close"] - closest_data["open"]) / closest_data["open"]
+        volume_change = (closest_data["volume"] - closest_data.get("volume_prev_day", 0)) / closest_data.get(
+            "volume_prev_day", 1
+        )
 
-            if not prev_data.empty:
-                prev_close = prev_data.iloc[0]["close"]
-                current_close = row["close"]
+        # Normalize to score between -1 and 1
+        score = np.tanh(price_change * 10)  # Scale to be more sensitive
+        magnitude = np.tanh(abs(volume_change))  # Volume change affects confidence
 
-                # Calculate price change
-                price_change = (current_close - prev_close) / prev_close
-
-                # Volume analysis
-                volume_ratio = 1.0
-                if "volume" in row and "volume" in prev_data.columns:
-                    avg_volume = market_data_copy["volume"].rolling(20).mean().iloc[-1]
-                    volume_ratio = row["volume"] / avg_volume if avg_volume > 0 else 1.0
-
-                # High-Low spread
-                hl_spread = 0.02  # Default 2%
-                if "high" in row and "low" in row:
-                    hl_spread = (row["high"] - row["low"]) / row["close"]
-
-                # Combine indicators into sentiment score
-                momentum_score = price_change * 10  # Scale price change
-                volume_score = (volume_ratio - 1) * 0.2  # Volume impact
-                spread_score = -hl_spread * 10  # Tighter spreads = more positive
-
-                combined_score = momentum_score + volume_score + spread_score
-                sentiment_score = max(-1.0, min(1.0, combined_score))
-
-                # Calculate confidence based on data quality
-                confidence = 0.5 + 0.3 * (1 - abs(sentiment_score))
-
-                return {
-                    "timestamp": target_date,
-                    "sentiment_score": sentiment_score,
-                    "sentiment_magnitude": confidence,
-                    "sentiment_sources": 1,
-                    "sentiment_direction": 1 if sentiment_score > 0 else (-1 if sentiment_score < 0 else 0),
-                    "sentiment_source": "market_derived"
-                }
-
-        # Fallback to neutral sentiment
         return {
             "timestamp": target_date,
-            "sentiment_score": 0.0,
-            "sentiment_magnitude": 0.5,
-            "sentiment_sources": 1,
-            "sentiment_direction": 0,
-            "sentiment_source": "market_derived"
+            "score": float(score),
+            "magnitude": float(magnitude),
+            "source": "market_derived",
+            "raw_data": {}
         }
 
     def _merge_market_sentiment(
@@ -264,6 +302,9 @@ class DataPipeline:
     ) -> pd.DataFrame:
         """Merge market data with sentiment data."""
 
+        if market_data.empty:
+            return market_data
+
         if sentiment_data.empty:
             # Add default sentiment columns
             market_data["sentiment_score"] = 0.0
@@ -272,6 +313,12 @@ class DataPipeline:
             market_data["sentiment_direction"] = 0
             market_data["sentiment_source"] = "no_data"
             return market_data
+
+        # Ensure market data has a timestamp column
+        market_data = self._ensure_timestamp_column(market_data)
+
+        # Ensure sentiment data has a timestamp column
+        sentiment_data = self._ensure_timestamp_column(sentiment_data)
 
         # Ensure timestamps are compatible
         market_data["date"] = pd.to_datetime(market_data["timestamp"]).dt.date
@@ -298,6 +345,38 @@ class DataPipeline:
         merged = merged.drop("date", axis=1)
 
         return merged
+
+    def _ensure_timestamp_column(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Ensure DataFrame has a timestamp column, creating one if needed."""
+        df_copy = df.copy()
+
+        # Check if timestamp column exists
+        if "timestamp" in df_copy.columns:
+            return df_copy
+
+        # Check if date column exists and rename it
+        if "date" in df_copy.columns:
+            df_copy = df_copy.rename(columns={"date": "timestamp"})
+            return df_copy
+
+        # Check if timestamp is in the index
+        if df_copy.index.name == "timestamp" or isinstance(df_copy.index, pd.DatetimeIndex):
+            df_copy = df_copy.reset_index()
+            if "index" in df_copy.columns:
+                df_copy = df_copy.rename(columns={"index": "timestamp"})
+            return df_copy
+
+        # If no timestamp found, create one from the first available datetime column
+        datetime_columns = [col for col in df_copy.columns if pd.api.types.is_datetime64_any_dtype(df_copy[col])]
+        if datetime_columns:
+            df_copy["timestamp"] = df_copy[datetime_columns[0]]
+            return df_copy
+
+        # Last resort: create a dummy timestamp (this should rarely happen)
+        # logger.warning("No timestamp column found, creating dummy timestamp") # This line was commented out in the original file
+        df_copy["timestamp"] = pd.Timestamp.now()
+
+        return df_copy
 
 
 @ray.remote

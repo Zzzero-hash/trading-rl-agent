@@ -115,6 +115,11 @@ class TradingCalendar:
             # Commodities
             "GC=F": MarketType.COMMODITY, "SI=F": MarketType.COMMODITY,
             "CL=F": MarketType.COMMODITY, "NG=F": MarketType.COMMODITY,
+            "ZC=F": MarketType.COMMODITY, "ZS=F": MarketType.COMMODITY,
+            "ZW=F": MarketType.COMMODITY, "KC=F": MarketType.COMMODITY,
+            "CC=F": MarketType.COMMODITY, "CT=F": MarketType.COMMODITY,
+            "HE=F": MarketType.COMMODITY, "LE=F": MarketType.COMMODITY,
+            "GF=F": MarketType.COMMODITY,
         }
 
     def get_market_type(self, symbol: str) -> MarketType:

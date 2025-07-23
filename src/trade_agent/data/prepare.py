@@ -177,13 +177,20 @@ def prepare_data(
         try:
             # Count files before deletion for reporting
             files_to_delete = list(raw_data_path.glob("*"))
-            len([f for f in files_to_delete if f.is_file()])
-            len([f for f in files_to_delete if f.is_dir()])
+            files_deleted_count = 0
+            dirs_deleted_count = 0
 
-            # Remove all contents of data/raw
-            import shutil
-            shutil.rmtree(raw_data_path)
-            raw_data_path.mkdir(parents=True, exist_ok=True)  # Recreate empty directory
-        except Exception:
+            for item in files_to_delete:
+                if item.is_file():
+                    item.unlink()
+                    files_deleted_count += 1
+                elif item.is_dir():
+                    import shutil
+                    shutil.rmtree(item)
+                    dirs_deleted_count += 1
+
+            console.print(f"Cleaned up {files_deleted_count} files and {dirs_deleted_count} directories from {raw_data_path}")
+
+        except Exception as e:
             # Silently continue if cleanup fails
-            pass
+            console.print(f"Could not clean up {raw_data_path}: {e}")

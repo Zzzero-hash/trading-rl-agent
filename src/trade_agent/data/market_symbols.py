@@ -239,3 +239,53 @@ def get_default_symbols_list() -> list[str]:
         List of default symbols
     """
     return DEFAULT_SYMBOLS.copy()
+
+
+def get_optimized_symbols(
+    max_symbols: int = 50,
+    asset_types: list[str] | None = None,
+    prioritize_liquid: bool = True
+) -> list[str]:
+    """
+    Get optimized symbol list for faster pipeline execution.
+
+    Args:
+        max_symbols: Maximum number of symbols to return
+        asset_types: Asset types to include
+        prioritize_liquid: Prioritize high-volume, liquid symbols
+
+    Returns:
+        Optimized list of symbols
+    """
+    if asset_types is None:
+        asset_types = ["stocks", "etfs"]  # Focus on most relevant types
+
+    symbols_by_type = get_symbols_by_type(asset_types)
+
+    # Prioritize liquid symbols
+    liquid_priorities = {
+        "stocks": ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX"],
+        "etfs": ["SPY", "QQQ", "VTI", "VOO"],
+        "crypto": ["BTC-USD", "ETH-USD"],
+        "forex": ["EURUSD=X", "GBPUSD=X", "USDJPY=X"]
+    }
+
+    optimized_symbols = []
+
+    # Add priority symbols first
+    if prioritize_liquid:
+        for asset_type in asset_types:
+            if asset_type in liquid_priorities:
+                optimized_symbols.extend(liquid_priorities[asset_type])
+
+    # Add remaining symbols up to max_symbols
+    for asset_type in asset_types:
+        if asset_type in symbols_by_type:
+            remaining_symbols = [s for s in symbols_by_type[asset_type]
+                               if s not in optimized_symbols]
+
+            # Ensure we have a fair distribution of symbols per asset type
+            num_to_add = (max_symbols - len(optimized_symbols)) // (len(asset_types) - asset_types.index(asset_type))
+            optimized_symbols.extend(remaining_symbols[:num_to_add])
+
+    return list(dict.fromkeys(optimized_symbols))[:max_symbols]

@@ -12,11 +12,15 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from alpaca.common.exceptions import APIError
+from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.trading.client import TradingClient
 
 from trade_agent.data.market_calendar import classify_portfolio_assets, get_trading_calendar
 
 try:
-    import alpaca_trade_api as tradeapi
+    from alpaca.data.historical import StockHistoricalDataClient
+    from alpaca.trading.client import TradingClient
 
     ALPACA_AVAILABLE = True
 except ImportError:
@@ -121,8 +125,8 @@ class ProfessionalDataProvider:
             raise ValueError(
                 "Alpaca API credentials required. Set ALPACA_API_KEY and ALPACA_SECRET_KEY",
             )
-
-        self.alpaca_api = tradeapi.REST(api_key, secret_key, base_url, api_version="v2")
+        self.trading_client = TradingClient(api_key, secret_key, paper=True)
+        self.market_client = StockHistoricalDataClient(api_key, secret_key)
 
         # Initialize FinRL processor if available
         if FINRL_ALPACA_AVAILABLE:
@@ -227,10 +231,17 @@ class ProfessionalDataProvider:
             if time.time() - mod_time < self.cache_ttl:
                 logger.info(f"Loading from cache: {cache_path}")
                 data = pd.read_parquet(cache_path)
-                if include_features and not data.empty:
-                    logger.info("Generating technical features...")
-                    data = self._add_technical_features(data)
-                return data
+
+                # Ensure 'symbol' and 'timestamp' columns exist. If not, cache is invalid.
+                if "symbol" in data.columns and "timestamp" in data.columns:
+                    if include_features and not data.empty:
+                        logger.info("Generating technical features...")
+                        data = self._add_technical_features(data)
+                    return data
+
+                logger.warning(
+                    f"Cached data at {cache_path} is missing required columns. Refetching."
+                )
 
         if self.provider == "alpaca":
             data = self._get_alpaca_data(symbols, start_date, end_date, timeframe)
@@ -271,7 +282,7 @@ class ProfessionalDataProvider:
         """Get data from Alpaca Markets."""
         try:
             # Use FinRL processor if available (recommended)
-            if FINRL_ALPACA_AVAILABLE:
+            if FINRL_ALPACA_AVAILABLE and hasattr(self, "finrl_processor"):
                 return self.finrl_processor.download_data(
                     ticker_list=symbols,
                     start_date=start_date,
@@ -280,41 +291,38 @@ class ProfessionalDataProvider:
                 )
 
             # Fallback to direct Alpaca API
-            all_data = []
+            from alpaca.data.requests import StockBarsRequest
+            from alpaca.data.timeframe import TimeFrame
 
-            for symbol in symbols:
-                try:
-                    bars = self.alpaca_api.get_bars(
-                        symbol,
-                        timeframe,
-                        start=start_date,
-                        end=end_date,
-                        adjustment="raw",
-                    ).df
-
-                    if not bars.empty:
-                        bars["symbol"] = symbol
-                        bars.reset_index(inplace=True)
-                        bars.rename(
-                            columns={"timestamp": "date", "volume": "volume"},
-                            inplace=True,
-                        )
-
-                        all_data.append(bars)
-
-                except Exception as e:
-                    logger.warning(f"Failed to get data for {symbol}: {e}")
-                    continue
-
-            if all_data:
-                combined_data = pd.concat(all_data, ignore_index=True)
-                # Handle timezone-aware datetime conversion consistently using utility function
+            timeframe_mapping = {
+                "1Min": TimeFrame.Minute,
+                "5Min": TimeFrame.Minute,
+                "1Hour": TimeFrame.Hour,
+                "1Day": TimeFrame.Day,
+            }
+            request_params = StockBarsRequest(
+                symbol_or_symbols=symbols,
+                timeframe=timeframe_mapping.get(timeframe, TimeFrame.Day),
+                start=pd.to_datetime(start_date).tz_localize("America/New_York"),
+                end=pd.to_datetime(end_date).tz_localize("America/New_York"),
+            )
+            bars = self.market_client.get_stock_bars(request_params).df
+            if not bars.empty:
+                bars.reset_index(inplace=True)
+                bars.rename(
+                    columns={"timestamp": "date", "volume": "volume"},
+                    inplace=True,
+                )
                 from .utils import normalize_timestamps
-                combined_data = normalize_timestamps(combined_data, timestamp_column="date")
-                return combined_data
+
+                bars = normalize_timestamps(bars, timestamp_column="date")
+                return bars
             logger.error("No data retrieved from Alpaca")
             return pd.DataFrame()
 
+        except APIError as e:
+            logger.exception(f"Alpaca API error during data retrieval: {e}")
+            return pd.DataFrame()
         except Exception as e:
             logger.exception(f"Alpaca data retrieval error: {e}")
             return pd.DataFrame()
@@ -567,18 +575,20 @@ class ProfessionalDataProvider:
     def _get_alpaca_real_time(self, symbols: list[str]) -> dict[str, Any]:
         """Get real-time data from Alpaca."""
         try:
-            quotes = {}
-            for symbol in symbols:
-                quote = self.alpaca_api.get_latest_quote(symbol)
-                quotes[symbol] = {
+            quotes = self.market_client.get_latest_stock_quotes(symbols)
+            return {
+                symbol: {
                     "bid_price": float(quote.bid_price),
                     "ask_price": float(quote.ask_price),
                     "bid_size": int(quote.bid_size),
                     "ask_size": int(quote.ask_size),
                     "timestamp": quote.timestamp,
                 }
-            return quotes
-
+                for symbol, quote in quotes.items()
+            }
+        except APIError as e:
+            logger.exception(f"Alpaca API error during real-time data retrieval: {e}")
+            return {}
         except Exception as e:
             logger.exception(f"Real-time data error: {e}")
             return {}
@@ -675,7 +685,7 @@ class ProfessionalDataProvider:
         """Validate connection to data provider."""
         try:
             if self.provider == "alpaca":
-                account = self.alpaca_api.get_account()
+                account = self.trading_client.get_account()
                 logger.info(f"Alpaca connection validated. Account: {account.id}")
                 return True
             if self.provider == "yahoo":
