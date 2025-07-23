@@ -124,7 +124,7 @@ class DataPipeline:
         max_workers: int = 8,
         **kwargs: Any,
     ) -> pd.DataFrame:
-        """Download data for multiple symbols in parallel."""
+        """Download and auto-process data for multiple symbols in parallel (no raw storage)."""
         from .professional_feeds import ProfessionalDataProvider
 
         provider = ProfessionalDataProvider("yahoo")
@@ -134,8 +134,8 @@ class DataPipeline:
                 symbols=[symbol],
                 start_date=start_date,
                 end_date=end_date,
-                include_features=False,
-                align_mixed_portfolio=False,
+                include_features=kwargs.get("include_features", True),
+                align_mixed_portfolio=kwargs.get("align_mixed_portfolio", True),
             )
 
         results: list[pd.DataFrame] = parallel_execute(_download_symbol, symbols, max_workers=max_workers)
@@ -147,10 +147,12 @@ class DataPipeline:
 
         combined_data = pd.concat(all_data, ignore_index=True)
 
+        # Auto-processing: apply features if requested
         if kwargs.get("include_features", True):
             from .features import generate_features
             combined_data = generate_features(combined_data)
 
+        # Auto-processing: apply alignment if requested
         if kwargs.get("align_mixed_portfolio", True):
             from .market_calendar import get_trading_calendar
             calendar = get_trading_calendar()
@@ -159,6 +161,139 @@ class DataPipeline:
             )
 
         return combined_data
+
+    def create_dataset(
+        self,
+        symbols: list[str],
+        start_date: str,
+        end_date: str,
+        dataset_name: str,
+        output_dir: Path,
+        processing_method: str = "robust",
+        feature_set: str = "full",
+        include_sentiment: bool = True,
+        sentiment_days: int = 7,
+        max_workers: int = 8,
+        export_formats: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a complete dataset with auto-processing (no raw folder).
+
+        This method implements the new pipeline that:
+        1. Downloads data directly into memory
+        2. Applies sentiment analysis if requested
+        3. Performs feature engineering based on feature_set
+        4. Standardizes data using specified method
+        5. Exports to multiple formats in unique dataset directory
+
+        Returns:
+            Dictionary with dataset metadata and file paths
+        """
+        if export_formats is None:
+            export_formats = ["csv"]
+
+        from datetime import datetime
+
+        from .data_standardizer import create_standardized_dataset
+
+        # Create unique dataset directory
+        dataset_dir = output_dir / dataset_name
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+
+        # Step 1: Download and initial processing
+        raw_data = self.download_data_parallel(
+            symbols=symbols,
+            start_date=start_date,
+            end_date=end_date,
+            max_workers=max_workers,
+            include_features=(feature_set != "basic"),
+            align_mixed_portfolio=True,
+        )
+
+        if raw_data.empty:
+            raise ValueError("No data downloaded for specified symbols")
+
+        # Step 2: Sentiment analysis integration (if enabled)
+        if include_sentiment:
+            try:
+                from .sentiment import SentimentAnalyzer
+                analyzer = SentimentAnalyzer()
+
+                sentiment_features = analyzer.get_sentiment_features_parallel(
+                    symbols=symbols,
+                    days_back=sentiment_days,
+                    max_workers=max_workers,
+                )
+
+                if sentiment_features is not None and not sentiment_features.empty:
+                    # Merge sentiment data
+                    raw_data = raw_data.merge(
+                        sentiment_features,
+                        on="symbol",
+                        how="left",
+                        suffixes=("", "_sentiment")
+                    )
+            except Exception as e:
+                print(f"Warning: Sentiment analysis failed: {e}")
+                print("Proceeding without sentiment features...")
+
+        # Step 3: Advanced feature engineering based on feature_set
+        if feature_set == "full" or feature_set == "technical":
+            from .features import generate_features
+            raw_data = generate_features(raw_data)
+        elif feature_set == "custom":
+            # Custom features could be loaded from config
+            pass
+
+        # Step 4: Data standardization
+        standardized_data, standardizer = create_standardized_dataset(
+            df=raw_data,
+            save_path=str(dataset_dir / "data_standardizer.pkl")
+        )
+
+        # Step 5: Export in multiple formats
+        file_paths = {}
+        for fmt in export_formats:
+            if fmt == "csv":
+                file_path = dataset_dir / "dataset.csv"
+                standardized_data.to_csv(file_path, index=False)
+                file_paths["csv"] = file_path
+            elif fmt == "parquet":
+                file_path = dataset_dir / "dataset.parquet"
+                standardized_data.to_parquet(file_path, index=False)
+                file_paths["parquet"] = file_path
+            elif fmt == "feather":
+                file_path = dataset_dir / "dataset.feather"
+                standardized_data.to_feather(file_path)
+                file_paths["feather"] = file_path
+
+        # Step 6: Save metadata
+        metadata = {
+            "dataset_name": dataset_name,
+            "created_at": datetime.now().isoformat(),
+            "symbols": symbols,
+            "start_date": start_date,
+            "end_date": end_date,
+            "processing_method": processing_method,
+            "feature_set": feature_set,
+            "include_sentiment": include_sentiment,
+            "sentiment_days": sentiment_days if include_sentiment else None,
+            "row_count": len(standardized_data),
+            "column_count": len(standardized_data.columns),
+            "export_formats": export_formats,
+            "file_paths": {k: str(v) for k, v in file_paths.items()},
+        }
+
+        import json
+        with open(dataset_dir / "metadata.json", "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        return {
+            "metadata": metadata,
+            "dataset_dir": dataset_dir,
+            "file_paths": file_paths,
+            "standardized_data": standardized_data,
+        }
 
 
     def _enhance_with_historical_sentiment(

@@ -31,9 +31,9 @@ from bs4 import BeautifulSoup
 from rich.console import Console
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-from src.trade_agent.utils.ray_utils import parallel_execute
 from trade_agent.core.logging import get_logger
 from trade_agent.data.market_symbols import COMPREHENSIVE_SYMBOLS
+from trade_agent.utils.ray_utils import parallel_execute
 
 # Global sentiment cache for backward compatibility
 sentiment: dict[str, dict[str, Any]] = defaultdict(

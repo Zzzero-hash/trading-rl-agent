@@ -12,501 +12,198 @@ import logging
 import pickle
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_bool_dtype, is_numeric_dtype
 from tqdm import tqdm
 
+from config import FeatureConfig
 from trade_agent.core.logging import get_logger
 
-
-@dataclass
-class FeatureConfig:
-    """Configuration for standardized features."""
-
-    # Core price features (always required)
-    price_features: list[str] = field(default_factory=lambda: ["open", "high", "low", "close", "volume"])
-
-    # Technical indicators (standard set)
-    technical_indicators: list[str] = field(
-        default_factory=lambda: [
-            "log_return",
-            "sma_5",
-            "sma_10",
-            "sma_20",
-            "sma_50",
-            "rsi_14",
-            "vol_20",
-            "ema_20",
-            "macd_line",
-            "macd_signal",
-            "macd_hist",
-            "atr_14",
-            "bb_mavg_20",
-            "bb_upper_20",
-            "bb_lower_20",
-            "stoch_k",
-            "stoch_d",
-            "adx_14",
-            "wr_14",
-            "obv",
-        ],
-    )
-
-    # Candlestick patterns (binary features)
-    candlestick_patterns: list[str] = field(
-        default_factory=lambda: [
-            "doji",
-            "hammer",
-            "hanging_man",
-            "bullish_engulfing",
-            "bearish_engulfing",
-            "shooting_star",
-            "morning_star",
-            "evening_star",
-            "inside_bar",
-            "outside_bar",
-            "tweezer_top",
-            "tweezer_bottom",
-            "three_white_soldiers",
-            "three_black_crows",
-            "bullish_harami",
-            "bearish_harami",
-            "dark_cloud_cover",
-            "piercing_line",
-        ],
-    )
-
-    # Candlestick characteristics
-    candlestick_features: list[str] = field(
-        default_factory=lambda: [
-            "body_size",
-            "range_size",
-            "rel_body_size",
-            "upper_shadow",
-            "lower_shadow",
-            "rel_upper_shadow",
-            "rel_lower_shadow",
-            "body_position",
-            "body_type",
-        ],
-    )
-
-    # Rolling averages of candlestick features
-    rolling_candlestick_features: list[str] = field(
-        default_factory=lambda: [
-            "avg_rel_body_5",
-            "avg_upper_shadow_5",
-            "avg_lower_shadow_5",
-            "avg_body_pos_5",
-            "body_momentum_5",
-            "avg_rel_body_10",
-            "avg_upper_shadow_10",
-            "avg_lower_shadow_10",
-            "avg_body_pos_10",
-            "body_momentum_10",
-            "avg_rel_body_20",
-            "avg_upper_shadow_20",
-            "avg_lower_shadow_20",
-            "avg_body_pos_20",
-            "body_momentum_20",
-        ],
-    )
-
-    # Sentiment features
-    sentiment_features: list[str] = field(default_factory=lambda: [
-        "sentiment_score",
-        "sentiment_magnitude",
-        "sentiment_sources",
-        "sentiment_direction"
-    ])
-
-    # Time-based features
-    time_features: list[str] = field(default_factory=lambda: ["hour", "day_of_week", "month", "quarter"])
-
-    # Market regime features
-    market_regime_features: list[str] = field(
-        default_factory=lambda: [
-            "price_change_pct",
-            "high_low_pct",
-            "volume_ma_20",
-            "volume_ratio",
-            "volume_change",
-        ],
-    )
-
-    # Target variable
-    target_feature: str = "target"
-
-    def get_all_features(self) -> list[str]:
-        """Get all feature names in the correct order."""
-        all_features = []
-        all_features.extend(self.price_features)
-        all_features.extend(self.technical_indicators)
-        all_features.extend(self.candlestick_patterns)
-        all_features.extend(self.candlestick_features)
-        all_features.extend(self.rolling_candlestick_features)
-        all_features.extend(self.sentiment_features)
-        all_features.extend(self.time_features)
-        all_features.extend(self.market_regime_features)
-        return all_features
-
-    def get_feature_count(self) -> int:
-        """Get total number of features."""
-        return len(self.get_all_features())
-
-    def get_core_features(self) -> list[str]:
-        """Get core 78 features (excluding time and market regime features)."""
-        core_features = []
-        core_features.extend(self.price_features)
-        core_features.extend(self.technical_indicators)
-        core_features.extend(self.candlestick_patterns)
-        core_features.extend(self.candlestick_features)
-        core_features.extend(self.rolling_candlestick_features)
-        core_features.extend(self.sentiment_features)
-        return core_features
-
-    def get_core_feature_count(self) -> int:
-        """Get total number of core features (78)."""
-        return len(self.get_core_features())
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class DataStandardizer:
-    """Standardizes data processing for consistent training and inference."""
+    """
+    A class to standardize data using different methods, handle missing values,
+    and manage feature configurations.
+    """
 
-    feature_config: FeatureConfig = field(default_factory=FeatureConfig)
-    scaler: Any | None = None
-    feature_stats: dict[str, dict[str, float]] = field(default_factory=dict)
-    missing_value_strategies: dict[str, str] = field(default_factory=dict)
-    logger: logging.Logger = field(default_factory=lambda: get_logger("DataStandardizer"))
+    method: Literal["robust", "standard"] = "robust"
+    features: list[str] | None = None
+    feature_config: FeatureConfig | None = None
+    is_fitted: bool = False
+    stats_: dict[str, dict[str, float]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Initialize default missing value strategies."""
-        if not self.missing_value_strategies:
-            self._set_default_missing_strategies()
-
-    def _set_default_missing_strategies(self) -> None:
-        """Set default strategies for handling missing values."""
-        # Price features - forward fill, then backward fill
-        for feature in self.feature_config.price_features:
-            self.missing_value_strategies[feature] = "forward_backward"
-
-        # Technical indicators - forward fill
-        for feature in self.feature_config.technical_indicators:
-            self.missing_value_strategies[feature] = "forward"
-
-        # Candlestick patterns - fill with 0
-        for feature in self.feature_config.candlestick_patterns:
-            self.missing_value_strategies[feature] = "zero"
-
-        # Candlestick features - forward fill
-        for feature in self.feature_config.candlestick_features:
-            self.missing_value_strategies[feature] = "forward"
-
-        # Rolling features - forward fill
-        for feature in self.feature_config.rolling_candlestick_features:
-            self.missing_value_strategies[feature] = "forward"
-
-        # Sentiment features - fill with 0
-        for feature in self.feature_config.sentiment_features:
-            self.missing_value_strategies[feature] = "zero"
-
-        # Time features - no missing values expected
-        for feature in self.feature_config.time_features:
-            self.missing_value_strategies[feature] = "zero"
-
-        # Market regime features - forward fill
-        for feature in self.feature_config.market_regime_features:
-            self.missing_value_strategies[feature] = "forward"
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        if self.feature_config:
+            self.features = self.feature_config.get_all_features()
 
     def fit(self, df: pd.DataFrame) -> "DataStandardizer":
-        """Fit the standardizer on training data."""
-        self.logger.info("Fitting DataStandardizer...")
+        """
+        Fit the standardizer by calculating the required statistics from the dataframe.
 
-        # Calculate feature statistics
-        self._calculate_feature_stats(df)
+        For 'robust' scaling, it calculates quantiles. For 'standard' scaling,
+        it calculates mean and std deviation.
+        """
+        logger.info("Fitting DataStandardizer...")
 
-        # Fit scaler if needed
-        self._fit_scaler(df)
+        # Create a copy to avoid modifying the original DataFrame
+        df_processed = df.copy()
 
-        self.logger.info(f"DataStandardizer fitted with {len(self.feature_config.get_all_features())} features")
+        if self.features is None:
+            self.features = [
+                col
+                for col in df.columns
+                if col not in ["timestamp", "symbol"]
+            ]
+
+        # Convert boolean columns to integers (0 or 1) for statistical analysis
+        for col in self.features:
+            if col in df_processed.columns:
+                # Check for boolean dtype explicitly
+                if is_bool_dtype(df_processed[col]):
+                    logger.debug(f"Converting boolean column '{col}' to integer.")
+                    df_processed[col] = df_processed[col].astype(int)
+                # Also check if the column contains only boolean values (True/False)
+                elif df_processed[col].dtype == "object":
+                    unique_values = set(df_processed[col].dropna().unique())
+                    if unique_values.issubset({True, False}):
+                        logger.debug(f"Converting object column '{col}' with boolean values to integer.")
+                        df_processed[col] = df_processed[col].astype(int)
+                # Handle boolean values stored as object dtype
+                elif str(df_processed[col].dtype) == "bool":
+                    logger.debug(f"Converting bool dtype column '{col}' to integer.")
+                    df_processed[col] = df_processed[col].astype(int)
+
+        self._calculate_feature_stats(df_processed)
+        self.is_fitted = True
+        logger.info("DataStandardizer fitted successfully.")
         return self
 
     def _calculate_feature_stats(self, df: pd.DataFrame) -> None:
-        """Calculate statistics for each feature."""
-        self.feature_stats = {}
+        """
+        Calculate and store statistics for each feature.
+        """
+        self.stats_ = {}
+        if self.features is None:
+            return
 
-        for feature in self.feature_config.get_all_features():
-            if feature in df.columns:
-                data = df[feature].dropna()
-                if len(data) > 0:
-                    self.feature_stats[feature] = {
-                        "mean": float(data.mean()),
-                        "std": float(data.std()),
-                        "min": float(data.min()),
-                        "max": float(data.max()),
-                        "median": float(data.median()),
-                        "q25": float(data.quantile(0.25)),
-                        "q75": float(data.quantile(0.75)),
-                    }
-                else:
-                    self.feature_stats[feature] = {
-                        "mean": 0.0,
-                        "std": 1.0,
-                        "min": 0.0,
-                        "max": 1.0,
-                        "median": 0.0,
-                        "q25": 0.0,
-                        "q75": 1.0,
-                    }
-            else:
-                # Feature not in dataset, use defaults
-                self.feature_stats[feature] = {
+        for feature in self.features:
+            if feature not in df.columns:
+                logger.warning(f"Feature '{feature}' not found in DataFrame. Skipping.")
+                continue
+
+            # Ensure the column is numeric before processing
+            if not is_numeric_dtype(df[feature]):
+                logger.warning(
+                    f"Feature '{feature}' is not numeric. Skipping stats calculation."
+                )
+                continue
+
+            data = df[feature].dropna()
+
+            if data.empty:
+                logger.warning(f"No data for feature '{feature}' after dropping NaNs. Skipping.")
+                stats = {
+                    "min": 0.0,
+                    "max": 0.0,
                     "mean": 0.0,
                     "std": 1.0,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "median": 0.0,
                     "q25": 0.0,
-                    "q75": 1.0,
+                    "q75": 0.0,
                 }
-
-    def _fit_scaler(self, df: pd.DataFrame) -> None:
-        """Fit scaler for normalization."""
-        try:
-            from sklearn.preprocessing import RobustScaler
-
-            # Get features that exist in the dataset
-            available_features = [f for f in self.feature_config.get_all_features() if f in df.columns]
-
-            if available_features:
-                # Use RobustScaler for outlier-resistant scaling
-                self.scaler = RobustScaler()
-                self.scaler.fit(df[available_features].fillna(0))
-                self.logger.info(f"Scaler fitted on {len(available_features)} features")
             else:
-                self.logger.warning("No features available for scaling")
+                stats = {
+                    "min": float(data.min()),
+                    "max": float(data.max()),
+                    "mean": float(data.mean()),
+                    "std": float(data.std()),
+                    "q25": float(data.quantile(0.25)),
+                    "q75": float(data.quantile(0.75)),
+                }
+            self.stats_[feature] = stats
 
-        except ImportError:
-            self.logger.warning("sklearn not available, skipping scaler fitting")
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transform the dataframe using the fitted statistics.
+        """
+        if not self.is_fitted:
+            raise RuntimeError("Standardizer is not fitted yet. Call 'fit' first.")
 
-    def transform(
-        self,
-        df: pd.DataFrame,
-        is_training: bool = False,
-        chunk_size: int = 5000,
-        show_progress: bool = True,
-    ) -> pd.DataFrame:
-        """Transform data to standardized format, with chunked processing and progress reporting."""
-        self.logger.info(f"Transforming data (training={is_training}) with chunk_size={chunk_size}...")
-        n_rows = len(df)
-        if n_rows <= chunk_size:
-            # Small enough, process all at once
-            return self._transform_chunk(df, is_training)
-        # Process in chunks
-        result_chunks = []
-        iterator = range(0, n_rows, chunk_size)
-        if show_progress:
-            iterator = tqdm(
-                iterator,
-                total=(n_rows + chunk_size - 1) // chunk_size,
-                desc="Standardizing",
-                unit="chunk",
-            )
-        for start in iterator:
-            end = min(start + chunk_size, n_rows)
-            chunk = df.iloc[start:end].copy()
-            chunk_result = self._transform_chunk(chunk, is_training)
-            result_chunks.append(chunk_result)
-        result = pd.concat(result_chunks, axis=0, ignore_index=True)
-        self.logger.info(f"Transformation complete. Output shape: {result.shape}")
-        return result
-
-    def _transform_chunk(self, df: pd.DataFrame, _is_training: bool = False) -> pd.DataFrame:
-        """Transform a single chunk of data (internal use)."""
-        result = df.copy()
-        result = self._ensure_features_exist(result)
-        result = self._handle_missing_values(result)
-        result = self._clean_invalid_values(result)
-        if self.scaler is not None:
-            result = self._apply_scaling(result)
-        result = self._ensure_feature_order(result)
-        self._validate_output(result)
-        return result
-
-    def _ensure_features_exist(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Ensure all required features exist in the dataframe."""
-        required_features = self.feature_config.get_all_features()
-
-        for feature in required_features:
-            if feature not in df.columns:
-                self.logger.warning(f"Missing feature '{feature}', creating with default values")
-
-                if feature in self.feature_config.candlestick_patterns:
-                    # Binary features default to 0
-                    df[feature] = 0
-                elif feature in self.feature_config.sentiment_features:
-                    # Sentiment features default to 0
-                    df[feature] = 0.0
-                elif feature in self.feature_config.time_features:
-                    # Time features default to 0
-                    df[feature] = 0
-                else:
-                    # Other features default to 0
-                    df[feature] = 0.0
-
-        return df
-
-    def _handle_missing_values(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Handle missing values according to strategies."""
-        for feature, strategy in self.missing_value_strategies.items():
-            if feature in df.columns and df[feature].isnull().any():
-                if strategy == "forward":
-                    df[feature] = df[feature].ffill()
-                elif strategy == "backward":
-                    df[feature] = df[feature].bfill()
-                elif strategy == "forward_backward":
-                    df[feature] = df[feature].ffill().bfill()
-                elif strategy == "zero":
-                    df[feature] = df[feature].fillna(0)
-                elif strategy == "mean":
-                    mean_val = self.feature_stats.get(feature, {}).get("mean", 0)
-                    df[feature] = df[feature].fillna(mean_val)
-                elif strategy == "median":
-                    median_val = self.feature_stats.get(feature, {}).get("median", 0)
-                    df[feature] = df[feature].fillna(median_val)
-
-                # Final fallback to 0 if any NaN remains
-                df[feature] = df[feature].fillna(0)
-
-        return df
-
-    def _clean_invalid_values(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Clean invalid values (negative prices, infinite values, etc.)."""
-        for feature in df.columns:
-            if feature in df.columns:
-                # Handle infinite values - FIXED: Use explicit downcasting
-                df[feature] = df[feature].replace([np.inf, -np.inf], 0).infer_objects(copy=False)
-
-                # Handle negative values in price-related features
-                if any(keyword in feature.lower() for keyword in ["price", "close", "open", "high", "low"]):
-                    df[feature] = df[feature].clip(lower=0)
-
-                # Handle negative values in volume
-                if "volume" in feature.lower():
-                    df[feature] = df[feature].clip(lower=0)
-
-                # Handle negative values in technical indicators that should be positive
-                if feature in ["rsi_14", "stoch_k", "stoch_d", "adx_14", "atr_14"]:
-                    df[feature] = df[feature].clip(lower=0)
-
-                # Handle values outside expected ranges for binary features
-                if feature in self.feature_config.candlestick_patterns:
-                    df[feature] = df[feature].clip(0, 1)
-
-        return df
-
-    def _apply_scaling(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Apply scaling to features."""
-        if self.scaler is None:
+        if self.features is None:
             return df
 
-        try:
-            # Get features that the scaler was trained on
-            available_features = [f for f in self.feature_config.get_all_features() if f in df.columns]
+        df_transformed = df.copy()
 
-            if available_features:
-                # Apply scaling
-                scaled_values = self.scaler.transform(df[available_features])
-                df[available_features] = scaled_values
+        # Convert boolean columns to int before transformation
+        for feature in self.features:
+            if feature in df_transformed.columns and is_bool_dtype(
+                df_transformed[feature]
+            ):
+                df_transformed[feature] = df_transformed[feature].astype(int)
 
-        except Exception as e:
-            self.logger.warning(f"Scaling failed: {e}")
+        # Use tqdm for progress tracking if the dataframe is large
+        num_chunks = 100
+        chunk_size = len(df_transformed) // num_chunks + 1
 
-        return df
+        # Process in chunks to handle large datasets
+        for i in tqdm(
+            range(0, len(df_transformed), chunk_size),
+            desc="Standardizing data",
+            leave=False,
+        ):
+            chunk = df_transformed.iloc[i : i + chunk_size].copy()
+            for feature in self.features:
+                if feature not in chunk.columns or feature not in self.stats_:
+                    continue
 
-    def _ensure_feature_order(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Ensure features are in the correct order."""
-        required_features = self.feature_config.get_all_features()
+                stats = self.stats_[feature]
+                col = chunk[feature]
 
-        # Add any missing features with default values
-        for feature in required_features:
-            if feature not in df.columns:
-                df[feature] = 0.0
+                if self.method == "robust":
+                    q25 = stats["q25"]
+                    q75 = stats["q75"]
+                    iqr = q75 - q25
+                    if iqr > 1e-8:
+                        chunk[feature] = (col - q25) / iqr
+                    else:
+                        chunk[feature] = col - col.mean() # Fallback for zero IQR
+                elif self.method == "standard":
+                    mean = stats["mean"]
+                    std = stats["std"]
+                    if std > 1e-8:
+                        chunk[feature] = (col - mean) / std
+                    else:
+                        chunk[feature] = col - mean # Fallback for zero std
 
-        # Reorder columns to match required order
-        existing_features = [f for f in required_features if f in df.columns]
-        other_features = [f for f in df.columns if f not in required_features]
+            df_transformed.iloc[i : i + chunk_size] = chunk
 
-        # Return dataframe with correct column order
-        return df[existing_features + other_features]
+        # Handle missing values after transformation
+        df_transformed.fillna(0, inplace=True)
+        df_transformed.replace([np.inf, -np.inf], 0, inplace=True)
 
-    def _validate_output(self, df: pd.DataFrame) -> None:
-        """Validate the output dataframe."""
-        # Check for NaN values with detailed reporting
-        nan_counts = df.isnull().sum()
-        nan_features = nan_counts[nan_counts > 0]
-
-        if len(nan_features) > 0:
-            total_nans = nan_counts.sum()
-            self.logger.warning(f"Output contains {total_nans} NaN values across {len(nan_features)} features")
-
-            # Log the top features with NaN values
-            top_nan_features = nan_features.nlargest(10)
-            for feature, count in top_nan_features.items():
-                percentage = (count / len(df)) * 100
-                self.logger.warning(f"  {feature}: {count} NaNs ({percentage:.1f}%)")
-
-            # Provide suggestions based on feature types
-            self._suggest_nan_fixes(nan_features)
-
-        # Check for infinite values
-        inf_count = np.isinf(df.select_dtypes(include=[np.number])).sum().sum()
-        if inf_count > 0:
-            self.logger.warning(f"Output contains {inf_count} infinite values")
-
-        # Check feature count
-        expected_features = len(self.feature_config.get_all_features())
-        actual_features = len([f for f in self.feature_config.get_all_features() if f in df.columns])
-
-        if actual_features != expected_features:
-            self.logger.warning(f"Feature count mismatch: expected {expected_features}, got {actual_features}")
-
-    def _suggest_nan_fixes(self, nan_features: pd.Series) -> None:
-        """Provide suggestions for fixing NaN values based on feature types."""
-        suggestions = []
-
-        for feature in nan_features.index:
-            if feature in self.feature_config.technical_indicators:
-                if "rsi" in feature.lower():
-                    suggestions.append(f"RSI ({feature}) may need more data points - ensure at least 14 periods")
-                elif "macd" in feature.lower():
-                    suggestions.append(f"MACD ({feature}) may need more data points - ensure at least 26 periods")
-                elif "bb_" in feature.lower():
-                    suggestions.append(f"Bollinger Bands ({feature}) may need more data points - ensure at least 20 periods")
-                else:
-                    suggestions.append(f"Technical indicator {feature} may need more historical data")
-            elif feature in self.feature_config.candlestick_patterns:
-                suggestions.append(f"Candlestick pattern {feature} - check if pattern detection is working")
-            elif feature in self.feature_config.sentiment_features:
-                suggestions.append(f"Sentiment feature {feature} - check if sentiment data is available")
-            elif feature in self.feature_config.time_features:
-                suggestions.append(f"Time feature {feature} - check timestamp data")
-
-        if suggestions:
-            self.logger.info("Suggestions to fix NaN values:")
-            for suggestion in suggestions[:5]:  # Limit to top 5 suggestions
-                self.logger.info(f"  - {suggestion}")
+        return df_transformed
 
     def get_feature_names(self) -> list[str]:
-        """Get the standardized feature names."""
-        return self.feature_config.get_all_features()
+        """Get the list of feature names."""
+        return self.features if self.features is not None else []
 
     def get_feature_count(self) -> int:
         """Get the number of features."""
-        return self.feature_config.get_feature_count()
+        return len(self.features) if self.features is not None else 0
+
+    def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Fit the standardizer to the data and transform it in one step.
+
+        This is a convenience method that combines 'fit' and 'transform'.
+        """
+        return self.fit(df).transform(df)
 
     def save(self, filepath: str) -> None:
         """Save the standardizer to disk."""
@@ -519,8 +216,11 @@ class DataStandardizer:
 
         # Also save as JSON for inspection
         json_filepath = filepath_path.with_suffix(".json")
-        save_dict = {
-            "feature_config": {
+
+        # Handle case where feature_config might be None
+        feature_config_dict = {}
+        if self.feature_config is not None:
+            feature_config_dict = {
                 "price_features": self.feature_config.price_features,
                 "technical_indicators": self.feature_config.technical_indicators,
                 "candlestick_patterns": self.feature_config.candlestick_patterns,
@@ -530,9 +230,11 @@ class DataStandardizer:
                 "time_features": self.feature_config.time_features,
                 "market_regime_features": self.feature_config.market_regime_features,
                 "target_feature": self.feature_config.target_feature,
-            },
-            "feature_stats": self.feature_stats,
-            "missing_value_strategies": self.missing_value_strategies,
+            }
+
+        save_dict = {
+            "feature_config": feature_config_dict,
+            "feature_stats": self.stats_,
             "feature_count": self.get_feature_count(),
             "all_features": self.get_feature_names(),
         }
@@ -561,20 +263,23 @@ class DataStandardizer:
         template_data = {}
 
         for feature in self.get_feature_names():
-            if feature in self.feature_config.candlestick_patterns:
-                template_data[feature] = [0]  # Binary features
-            elif feature in self.feature_config.sentiment_features:
-                template_data[feature] = [0]  # Sentiment features (use int for consistency)
-            elif feature in self.feature_config.time_features:
-                template_data[feature] = [0]  # Time features
+            if self.feature_config is not None:
+                if feature in self.feature_config.candlestick_patterns:
+                    template_data[feature] = [0]  # Binary features
+                elif feature in self.feature_config.sentiment_features:
+                    template_data[feature] = [0]  # Sentiment features (use int for consistency)
+                elif feature in self.feature_config.time_features:
+                    template_data[feature] = [0]  # Time features
+                else:
+                    template_data[feature] = [0]  # Numeric features (use int for consistency)
             else:
-                template_data[feature] = [0]  # Numeric features (use int for consistency)
+                template_data[feature] = [0]  # Default to numeric features
 
         return pd.DataFrame(template_data)
 
 
 class LiveDataProcessor:
-    """Process live data using the same standardization as training."""
+    """Process live data using the same standardization as trading."""
 
     def __init__(self, standardizer: DataStandardizer):
         self.standardizer = standardizer
@@ -586,11 +291,12 @@ class LiveDataProcessor:
         df = pd.DataFrame([data])
 
         # Apply standardization
-        processed_df = self.standardizer.transform(df, is_training=False)
+        processed_df = self.standardizer.transform(df)
 
         # Return only the features needed for prediction
         feature_names = self.standardizer.get_feature_names()
-        return processed_df[feature_names]
+        # Ensure we always return a DataFrame by selecting columns as a list
+        return processed_df.loc[:, feature_names]
 
     def process_batch(self, data: list[dict[str, Any]]) -> pd.DataFrame:
         """Process a batch of live data."""
@@ -598,11 +304,12 @@ class LiveDataProcessor:
         df = pd.DataFrame(data)
 
         # Apply standardization
-        processed_df = self.standardizer.transform(df, is_training=False)
+        processed_df = self.standardizer.transform(df)
 
         # Return only the features needed for prediction
         feature_names = self.standardizer.get_feature_names()
-        return processed_df[feature_names]
+        # Ensure we always return a DataFrame by selecting columns as a list
+        return processed_df.loc[:, feature_names]
 
     def get_feature_names(self) -> list[str]:
         """Get the feature names for the model."""
@@ -625,7 +332,7 @@ def create_standardized_dataset(
 
     # Fit and transform the data
     standardizer.fit(df)
-    standardized_df = standardizer.transform(df, is_training=True)
+    standardized_df = standardizer.transform(df)
 
     # Save if path provided
     if save_path:
@@ -644,7 +351,7 @@ def load_standardized_dataset(data_path: str, standardizer_path: str) -> tuple[p
     standardizer = DataStandardizer.load(standardizer_path)
 
     # Transform data
-    standardized_df = standardizer.transform(df, is_training=False)
+    standardized_df = standardizer.transform(df)
 
     return standardized_df, standardizer
 

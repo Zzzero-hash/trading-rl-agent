@@ -407,133 +407,156 @@ def info() -> None:
 
 @data_app.command()
 def pipeline(
-    # Pipeline step options
-    download: bool = typer.Option(False, "--download", "-d", help="Download market data"),
-    sentiment: bool = typer.Option(False, "--sentiment", "-s", help="Collect sentiment analysis data"),
-    process: bool = typer.Option(False, "--process", "-p", help="Process and standardize data"),
-    run: bool = typer.Option(False, "--run", "-r", help="Run complete pipeline end-to-end (download → sentiment → process)"),
+    # Core pipeline options
+    run: bool = typer.Option(False, "--run", "-r", help="Run complete auto-processing pipeline (download → sentiment → process → standardize)"),
 
-    # Optimization options
-    max_symbols: int = typer.Option(50, "--max-symbols", help="Maximum symbols to process"),
-    parallel_workers: int = typer.Option(8, "--workers", help="Number of parallel workers"),
-    skip_sentiment: bool = typer.Option(False, "--skip-sentiment", help="Skip sentiment analysis"),
-    use_cache: bool = typer.Option(True, "--use-cache", help="Use intelligent caching"),
+    # Processing configuration
+    dataset_name: str = typer.Option("", "--dataset-name", help="Custom dataset name (default: auto-generated timestamp)"),
+    processing_method: str = typer.Option("robust", "--method", help="Data standardization method (robust, standard, minmax)"),
+    feature_set: str = typer.Option("full", "--features", help="Feature set to generate (basic, technical, full, custom)"),
 
-    # Common parameters
-    config_path: Path | None = DEFAULT_CONFIG_FILE,
-    output_dir: Path = Path("data"),
-    symbols: str | None = DEFAULT_SYMBOLS_STR,
+    # Data source options
+    symbols: str | None = typer.Option(None, "--symbols", help="Comma-separated symbols (e.g., 'AAPL,GOOGL,MSFT')"),
+    max_symbols: int = typer.Option(50, "--max-symbols", help="Maximum symbols to auto-select if none specified"),
     start_date: str | None = DEFAULT_START_DATE,
     end_date: str | None = DEFAULT_END_DATE,
-    method: str = DEFAULT_STANDARDIZATION_METHOD,
-    save_standardizer: bool = True,
-    # Sentiment-specific parameters
+
+    # Processing options
+    include_sentiment: bool = typer.Option(True, "--sentiment/--no-sentiment", help="Include sentiment analysis"),
     sentiment_days: int = typer.Option(7, "--sentiment-days", help="Number of days back for sentiment analysis"),
-    sentiment_sources: str = typer.Option(
-        "news,social", "--sentiment-sources", help="Comma-separated sentiment sources (news,social,scrape)"
-    ),
+    sentiment_sources: str = typer.Option("news,social", "--sentiment-sources", help="Sentiment sources (news,social,scrape)"),
+
+    # Performance options
+    parallel_workers: int = typer.Option(8, "--workers", help="Number of parallel workers"),
+    use_cache: bool = typer.Option(True, "--cache/--no-cache", help="Use intelligent caching"),
+
+    # Output options
+    output_dir: str = typer.Option("data", help="Base output directory"),
+    save_standardizer: bool = typer.Option(True, "--save-standardizer/--no-save-standardizer", help="Save standardizer for later use"),
+    export_formats: str = typer.Option("csv", "--formats", help="Export formats (csv,parquet,feather)"),
+
+    # Legacy options (deprecated)
+    download: bool = typer.Option(False, "--download", "-d", help="[DEPRECATED] Use --run instead", hidden=True),
+    sentiment: bool = typer.Option(False, "--sentiment", "-s", help="[DEPRECATED] Use --run instead", hidden=True),
+    process: bool = typer.Option(False, "--process", "-p", help="[DEPRECATED] Use --run instead", hidden=True),
+    skip_sentiment: bool = typer.Option(False, "--skip-sentiment", help="[DEPRECATED] Use --no-sentiment instead", hidden=True),
+    config_path: Path | None = DEFAULT_CONFIG_FILE,
+    method: str = typer.Option("robust", help="[DEPRECATED] Use --method instead", hidden=True),
 ) -> None:
     """
-    Unified data pipeline operations with sentiment analysis support.
+    Auto-processing data pipeline that eliminates raw data storage.
+
+    Downloads, processes, and standardizes data in one seamless flow, creating
+    ready-to-use datasets directly in organized output directories.
+
+    Examples:
+        # Basic auto-processing pipeline
+        trade-agent data pipeline --run
+
+        # Custom symbols with sentiment analysis
+        trade-agent data pipeline --run --symbols "AAPL,GOOGL,TSLA" --sentiment-days 14
+
+        # Generate technical analysis dataset
+        trade-agent data pipeline --run --features technical --dataset-name "tech_analysis_v1"
+
+        # High-performance batch processing
+        trade-agent data pipeline --run --max-symbols 100 --workers 16 --no-sentiment
     """
     monitor = PerformanceMonitor()
-    with monitor.time_operation("Total Pipeline"):
+    with monitor.time_operation("Auto-Processing Pipeline"):
         try:
+            # Convert output_dir to Path
+            output_path = Path(output_dir)
+
+            # Handle legacy options with deprecation warnings
+            if any([download, sentiment, process, skip_sentiment]):
+                console.print("[yellow]⚠️  Warning: Legacy options are deprecated. Use --run with modern options.[/yellow]")
+                if not run:
+                    console.print("[yellow]Converting legacy options to --run mode...[/yellow]")
+                    run = True
+                    if skip_sentiment:
+                        include_sentiment = False
+                    processing_method = method  # Use legacy method parameter
+
+            # Validate that user wants to run the pipeline
+            if not run:
+                console.print("[red]❌ No pipeline action specified. Use --run to execute the auto-processing pipeline.[/red]")
+                console.print("\n[cyan]💡 Examples:[/cyan]")
+                console.print("  [dim]trade-agent data pipeline --run[/dim]")
+                console.print("  [dim]trade-agent data pipeline --run --symbols 'AAPL,GOOGL' --sentiment-days 14[/dim]")
+                console.print("  [dim]trade-agent data pipeline --run --features technical --dataset-name custom_tech[/dim]")
+                raise typer.Exit(1)
+
             # Initialize cache manager
             cache_manager = CacheManager()
 
-            # Set defaults
-            if config_path is None:
-                config_path = Path("config.yaml")
+            # Generate unique dataset name if not provided
+            if not dataset_name:
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                dataset_name = f"dataset_{timestamp}"
 
+            # Set date defaults
             if start_date is None:
                 from datetime import datetime, timedelta
-
                 start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
 
             if end_date is None:
                 from datetime import datetime
-
                 end_date = datetime.now().strftime("%Y-%m-%d")
 
-            # Optimize symbol selection
+            # Handle symbol selection
             if symbols is None:
-                with monitor.time_operation("Select Symbols"):
-                    # Get comprehensive symbols without validation to avoid API calls
+                with monitor.time_operation("Symbol Selection"):
                     from .data.market_symbols import get_optimized_symbols
                     symbol_list = get_optimized_symbols(max_symbols=max_symbols)
                     symbols = ",".join(symbol_list)
-                    console.print("[green]Pipeline Download: Optimized Market Coverage[/green]")
-                    console.print(f"[cyan]Total symbols: {len(symbol_list)}[/cyan]")
+                    console.print(f"[green]🎯 Auto-selected {len(symbol_list)} optimized symbols[/green]")
             else:
                 symbol_list = [s.strip() for s in symbols.split(",")]
+                console.print(f"[green]🎯 Processing {len(symbol_list)} specified symbols[/green]")
 
-            # Determine which steps to run
-            if run:
-                download = True
-                sentiment = True
-                process = True
+            # Create unique dataset directory (no more raw folder)
+            dataset_dir = output_path / dataset_name
+            dataset_dir.mkdir(parents=True, exist_ok=True)
 
-            if not any([download, sentiment, process]):
-                console.print(
-                    "[yellow]No pipeline steps specified. Use --download, --sentiment, --process, or --run[/yellow]"
-                )
-                console.print("[yellow]Example: python main.py data pipeline --run --symbols 'AAPL'[/yellow]")
-                raise typer.Exit(1)
+            console.print(f"[green]🚀 Auto-Processing Pipeline: {dataset_name}[/green]")
+            console.print(f"[cyan]📁 Dataset Directory: {dataset_dir}[/cyan]")
+            console.print(f"[cyan]📊 Symbols: {len(symbol_list)} | Method: {processing_method} | Features: {feature_set}[/cyan]")
+            console.print(f"[cyan]🧠 Sentiment: {'✓' if include_sentiment else '✗'} | Workers: {parallel_workers} | Cache: {'✓' if use_cache else '✗'}[/cyan]")
 
-            console.print("[green]🚀 Unified Data Pipeline Operations[/green]")
-            steps = []
-            if download:
-                steps.append("download")
-            if sentiment and not skip_sentiment:
-                steps.append("sentiment")
-            if process:
-                steps.append("process")
-            console.print(f"[cyan]Steps: {' → '.join(steps)}[/cyan]")
+            # Initialize sentiment_source_list for metadata
+            sentiment_source_list = [s.strip() for s in sentiment_sources.split(",")]
 
-            # Create output directory structure
-            output_dir.mkdir(parents=True, exist_ok=True)
-            raw_dir = output_dir / "raw"
-            sentiment_dir = output_dir / "sentiment"
-            processed_dir = output_dir / "processed"
-            for dir_path in [raw_dir, sentiment_dir, processed_dir]:
-                dir_path.mkdir(parents=True, exist_ok=True)
+            # Auto-processing pipeline: Download → Process → Standardize (all in memory)
+            with monitor.time_operation("Download & Initial Processing"):
+                cache_key = cache_manager.get_cache_key("auto_download", symbols=symbol_list, start_date=start_date, end_date=end_date)
+                downloaded_data = cache_manager.get_cached_data(cache_key) if use_cache else None
 
-            sentiment_features = None
+                if downloaded_data is None:
+                    pipeline = DataPipeline()
+                    # Download data directly into memory (no file storage)
+                    downloaded_data = pipeline.download_data_parallel(
+                        symbols=symbol_list,
+                        start_date=start_date,
+                        end_date=end_date,
+                        max_workers=parallel_workers,
+                        include_features=(feature_set != "basic"),
+                        align_mixed_portfolio=True,
+                    )
 
-            # Step 1: Download (if requested)
-            if download:
-                with monitor.time_operation("Download Data"):
-                    cache_key = cache_manager.get_cache_key("download", symbols=symbol_list, start_date=start_date, end_date=end_date)
-                    downloaded_files = cache_manager.get_cached_data(cache_key) if use_cache else None
+                    if use_cache:
+                        cache_manager.cache_data(cache_key, downloaded_data)
 
-                    if downloaded_files is None:
-                        pipeline = DataPipeline()
-                        downloaded_files = pipeline.download_data_parallel(
-                            symbols=symbol_list,
-                            start_date=start_date,
-                            end_date=end_date,
-                            max_workers=parallel_workers,
-                        )
-                        if use_cache:
-                            cache_manager.cache_data(cache_key, downloaded_files)
+                console.print(f"[green]✅ Downloaded and processed {len(symbol_list)} symbols in memory[/green]")
 
-                console.print(f"[green]✅ Downloaded {len(downloaded_files)} files with historical sentiment[/green]")
-                for file_path in downloaded_files:
-                    console.print(f"[cyan]  - {file_path}[/cyan]")
+            # Sentiment analysis integration (if enabled)
+            if include_sentiment:
+                with monitor.time_operation("Sentiment Analysis"):
+                    console.print("[blue]🧠 Analyzing market sentiment...[/blue]")
 
-            # Step 2: Sentiment Analysis (if requested)
-            if sentiment and not skip_sentiment:
-                console.print("\n[blue]Step 2: Collecting sentiment analysis data...[/blue]")
-                sentiment_source_list = [s.strip() for s in sentiment_sources.split(",")]
-                console.print(f"[cyan]Sources: {', '.join(sentiment_source_list)}[/cyan]")
-                console.print(f"[cyan]Output: {sentiment_dir}[/cyan]")
-
-                # Import sentiment analyzer with error handling
-                try:
-                    analyzer = SentimentAnalyzer()
-
-                    with monitor.time_operation("Sentiment Analysis"):
+                    try:
+                        analyzer = SentimentAnalyzer()
                         cache_key = cache_manager.get_cache_key("sentiment", symbols=symbol_list, days_back=sentiment_days)
                         sentiment_features = cache_manager.get_cached_data(cache_key) if use_cache else None
 
@@ -546,44 +569,132 @@ def pipeline(
                             if use_cache:
                                 cache_manager.cache_data(cache_key, sentiment_features)
 
-                    # Save sentiment results with error handling
-                    if sentiment_features is not None and not sentiment_features.empty:
-                        sentiment_features.to_csv(sentiment_dir / "sentiment_features.csv", index=False)
-                        console.print(f"[green]✅ Sentiment features saved to {sentiment_dir / 'sentiment_features.csv'}[/green]")
+                        # Integrate sentiment into main dataset
+                        if sentiment_features is not None and not sentiment_features.empty:
+                            console.print(f"[green]✅ Integrated sentiment features from {len(sentiment_source_list)} sources[/green]")
+                            # Merge sentiment data
+                            downloaded_data = downloaded_data.merge(
+                                sentiment_features,
+                                on="symbol",
+                                how="left",
+                                suffixes=("", "_sentiment")
+                            )
+                        else:
+                            console.print("[yellow]⚠️  No sentiment data available, proceeding without sentiment features[/yellow]")
+
+                    except Exception as e:
+                        console.print(f"[yellow]⚠️  Sentiment analysis failed: {e}[/yellow]")
+                        console.print("[yellow]Proceeding without sentiment features...[/yellow]")
+
+                        # Data standardization and feature engineering
+            with monitor.time_operation("Standardization & Feature Engineering"):
+                console.print(f"[blue]⚙️  Standardizing with robust scaling and {feature_set} features...[/blue]")
+
+                from config import FeatureConfig
+
+                from .data.data_standardizer import create_standardized_dataset
+
+                # Apply advanced feature engineering based on feature_set
+                if feature_set == "full" or feature_set == "technical":
+                    from .data.features import generate_features
+                    downloaded_data = generate_features(downloaded_data)
+                elif feature_set == "custom":
+                    # Allow custom feature configuration from config file
+                    if config_path and config_path.exists():
+                        import yaml
+                        with open(config_path) as f:
+                            config = yaml.safe_load(f)
+                            if "features" in config:
+                                from .data.features import generate_features
+                                downloaded_data = generate_features(downloaded_data)
+
+                # Create feature config based on feature_set
+                feature_config = FeatureConfig()
+
+                # Note: processing_method parameter is not used by the current DataStandardizer
+                # The DataStandardizer uses RobustScaler by default for outlier-resistant scaling
+                if processing_method != "robust":
+                    console.print(f"[yellow]⚠️  Processing method '{processing_method}' not supported by DataStandardizer. Using robust scaling.[/yellow]")
+
+                # Create standardized dataset
+                standardized_data, standardizer = create_standardized_dataset(
+                    df=downloaded_data,
+                    save_path=str(dataset_dir / "data_standardizer.pkl") if save_standardizer else None,
+                    feature_config=feature_config
+                )
+
+                console.print(f"[green]✅ Standardized {len(standardized_data)} rows with {len(standardized_data.columns)} features[/green]")
+
+            # Export in multiple formats
+            with monitor.time_operation("Export Dataset"):
+                export_format_list = [f.strip() for f in export_formats.split(",")]
+                console.print(f"[blue]💾 Exporting dataset in {len(export_format_list)} formats...[/blue]")
+
+                for fmt in export_format_list:
+                    if fmt == "csv":
+                        standardized_data.to_csv(dataset_dir / "dataset.csv", index=False)
+                    elif fmt == "parquet":
+                        standardized_data.to_parquet(dataset_dir / "dataset.parquet", index=False)
+                    elif fmt == "feather":
+                        standardized_data.to_feather(dataset_dir / "dataset.feather")
                     else:
-                        console.print("[yellow]No sentiment features data found or cached.[/yellow]")
-                except ImportError as e:
-                    console.print(f"[red]Error importing SentimentAnalyzer: {e}[/red]")
-                    raise typer.Exit(1) from e
-                except Exception as e:
-                    console.print(f"[red]Error during sentiment analysis: {e}[/red]")
-                    logger.error(f"Sentiment analysis failed: {e}", exc_info=True)
-                    raise typer.Exit(1) from e
+                        console.print(f"[yellow]⚠️  Unknown format: {fmt}[/yellow]")
 
-            # Step 3: Process (if requested)
-            if process:
-                with monitor.time_operation("Processing and standardizing data"):
-                    from trade_agent.data.prepare import prepare_data
+                # Save dataset metadata
+                import json
+                from datetime import datetime
+                metadata = {
+                    "dataset_name": dataset_name,
+                    "created_at": datetime.now().isoformat(),
+                    "symbols": symbol_list,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "processing_method": processing_method,
+                    "feature_set": feature_set,
+                    "include_sentiment": include_sentiment,
+                    "sentiment_days": sentiment_days if include_sentiment else None,
+                    "sentiment_sources": sentiment_source_list if include_sentiment else None,
+                    "row_count": len(standardized_data),
+                    "column_count": len(standardized_data.columns),
+                    "export_formats": export_format_list,
+                }
 
-                    prepare_data(
-                        input_path=raw_dir,
-                        output_dir=processed_dir,
-                        config_path=config_path,
-                        method=method,
-                        save_standardizer=save_standardizer,
-                        sentiment_data=sentiment_features,
-                    )
+                import json
+                with open(dataset_dir / "metadata.json", "w") as f:
+                    json.dump(metadata, f, indent=2)
 
-            console.print("\n[green]✅ Pipeline operations completed successfully![/green]")
-            console.print("\n[bold green]Pipeline Performance Summary[/bold green]")
+                console.print(f"[green]✅ Dataset exported to: {dataset_dir}[/green]")
+                for fmt in export_format_list:
+                    file_path = dataset_dir / f"dataset.{fmt}"
+                    if file_path.exists():
+                        file_size = file_path.stat().st_size / (1024 * 1024)  # MB
+                        console.print(f"[cyan]  📄 dataset.{fmt} ({file_size:.2f} MB)[/cyan]")
+
+            console.print("\n[green]🎉 Auto-Processing Pipeline completed successfully![/green]")
+            console.print(f"\n[bold green]📊 Dataset Summary: {dataset_name}[/bold green]")
+            console.print(f"[cyan]📁 Location: {dataset_dir}[/cyan]")
+            console.print(f"[cyan]📊 Data: {len(standardized_data):,} rows x {len(standardized_data.columns)} columns[/cyan]")
+            console.print(f"[cyan]🏷️  Symbols: {len(symbol_list)} ({symbol_list[:3]}{'...' if len(symbol_list) > 3 else ''})[/cyan]")
+            console.print(f"[cyan]📈 Features: {feature_set} set with {processing_method} standardization[/cyan]")
+            console.print(f"[cyan]🧠 Sentiment: {'Included' if include_sentiment else 'Excluded'}[/cyan]")
+
+            # Performance summary
+            console.print("\n[bold green]⚡ Performance Summary[/bold green]")
             summary = monitor.get_summary()
-            console.print(f"Total time: {summary['total_time']:.2f}s")
+            console.print(f"[cyan]⏱️  Total time: {summary['total_time']:.2f}s[/cyan]")
             if summary["slowest_operation"]:
-                console.print(f"Slowest operation: {summary['slowest_operation'][0]} ({summary['slowest_operation'][1]:.2f}s)")
+                console.print(f"[cyan]🐌 Slowest step: {summary['slowest_operation'][0]} ({summary['slowest_operation'][1]:.2f}s)[/cyan]")
+
+            # Usage suggestions
+            console.print("\n[bold blue]💡 Next Steps[/bold blue]")
+            console.print("[dim]# Train a model with this dataset[/dim]")
+            console.print(f"[dim]trade-agent train cnn-lstm --data {dataset_dir}/dataset.csv[/dim]")
+            console.print("[dim]# Run backtesting[/dim]")
+            console.print(f"[dim]trade-agent backtest --data {dataset_dir}/dataset.csv[/dim]")
 
         except Exception as e:
-            console.print(f"[red]Error during pipeline operations: {e}[/red]")
-            logger.error(f"Pipeline operations failed: {e}", exc_info=True)
+            console.print(f"[red]❌ Auto-processing pipeline failed: {e}[/red]")
+            logger.error(f"Auto-processing pipeline failed: {e}", exc_info=True)
             raise typer.Exit(1) from e
 
 
