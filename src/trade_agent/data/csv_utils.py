@@ -442,7 +442,7 @@ def create_standardized_dataset_streaming(
     logger.info(f"Creating standardized dataset from {filepath} using streaming processing")
 
     # Initialize standardizer
-    standardizer = DataStandardizer(FeatureConfig())
+    standardizer = DataStandardizer(feature_config=FeatureConfig())
 
     # First pass: fit the standardizer on a sample
     logger.info("Fitting standardizer on sample data...")
@@ -452,7 +452,7 @@ def create_standardized_dataset_streaming(
     # Second pass: transform all data in streaming fashion and save to file
     def transform_chunk(chunk: pd.DataFrame) -> pd.DataFrame:
         """Transform a chunk of data using the fitted standardizer."""
-        return standardizer.transform(chunk, is_training=False, show_progress=False)
+        return standardizer.transform(chunk)
 
     logger.info("Transforming data in streaming fashion and saving to file...")
     process_csv_in_stream(

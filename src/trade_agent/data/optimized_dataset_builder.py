@@ -413,7 +413,7 @@ class OptimizedDatasetBuilder:
 
         # Standardize the data (fit on first call, transform on subsequent)
         try:
-            standardized_df = self.standardizer.transform(df, is_training=True)
+            standardized_df = self.standardizer.transform(df)
             logger.info(f"  ✓ Standardized {len(standardized_df.columns)} features")
 
             # Save the standardizer for live inference

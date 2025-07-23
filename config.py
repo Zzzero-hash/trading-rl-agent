@@ -5,7 +5,7 @@ This module provides a comprehensive configuration system using Pydantic models
 for type-safe configuration management with support for YAML files, environment
 variables, and .env files.
 """
-
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -128,6 +128,34 @@ class BacktestConfig(BaseModel):
     output_dir: str = Field(default="backtest_results", description="Output directory for backtest results")
     save_trades: bool = Field(default=True, description="Save detailed trade information")
 
+
+@dataclass
+class FeatureConfig:
+    price_features: list[str] = field(default_factory=list)
+    technical_indicators: list[str] = field(default_factory=list)
+    candlestick_patterns: list[str] = field(default_factory=list)
+    candlestick_features: list[str] = field(default_factory=list)
+    rolling_candlestick_features: list[str] = field(default_factory=list)
+    sentiment_features: list[str] = field(default_factory=list)
+    time_features: list[str] = field(default_factory=list)
+    market_regime_features: list[str] = field(default_factory=list)
+    target_feature: str = ""
+
+    def get_all_features(self) -> list[str]:
+        all_features = []
+        all_features.extend(self.price_features)
+        all_features.extend(self.technical_indicators)
+        all_features.extend(self.candlestick_patterns)
+        all_features.extend(self.candlestick_features)
+        all_features.extend(self.rolling_candlestick_features)
+        all_features.extend(self.sentiment_features)
+        all_features.extend(self.time_features)
+        all_features.extend(self.market_regime_features)
+        return all_features
+
+@dataclass
+class UnifiedFeatures:
+    pass
 
 class Settings(BaseSettings):
     """Main settings class for the Trading RL Agent."""

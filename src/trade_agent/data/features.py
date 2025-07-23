@@ -321,6 +321,19 @@ def _add_candlestick_patterns(result_df: pd.DataFrame, df: pd.DataFrame) -> pd.D
     result_df["dark_cloud_cover"] = _detect_dark_cloud_cover(df)
     result_df["piercing_line"] = _detect_piercing_line(df)
 
+    # Ensure all candlestick pattern columns are integers (not boolean)
+    pattern_columns = [
+        "doji", "hammer", "hanging_man", "bullish_engulfing", "bearish_engulfing",
+        "shooting_star", "morning_star", "evening_star", "inside_bar", "outside_bar",
+        "tweezer_top", "tweezer_bottom", "three_white_soldiers", "three_black_crows",
+        "bullish_harami", "bearish_harami", "dark_cloud_cover", "piercing_line"
+    ]
+
+    for col in pattern_columns:
+        if col in result_df.columns and (result_df[col].dtype == bool or result_df[col].dtype == "boolean"):
+            # Convert any boolean dtypes to int to prevent quantile calculation errors
+            result_df[col] = result_df[col].astype(int)
+
     return result_df
 
 

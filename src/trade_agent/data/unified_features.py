@@ -403,11 +403,12 @@ def _detect_doji(df: pd.DataFrame) -> pd.Series:
 
 def detect_hammer(df: pd.DataFrame) -> pd.Series:
     """Detect Hammer candlestick pattern."""
-    return (
+    hammer = (
         (df["high"] - df["low"] > 3 * (df["open"] - df["close"]))
         & ((df["close"] - df["low"]) / (0.001 + df["high"] - df["low"]) > 0.6)
         & ((df["open"] - df["low"]) / (0.001 + df["high"] - df["low"]) > 0.6)
     )
+    return hammer.fillna(False).astype(int)
 
 
 # Add the remaining pattern detection functions...
@@ -466,11 +467,12 @@ def _detect_bearish_engulfing(df: pd.DataFrame) -> pd.Series:
 
 def detect_shooting_star(df: pd.DataFrame) -> pd.Series:
     """Detect Shooting Star candlestick pattern."""
-    return (
+    shooting_star = (
         (df["high"] - df["low"] > 3 * (df["open"] - df["close"]))
         & ((df["high"] - df["close"]) / (0.001 + df["high"] - df["low"]) > 0.6)
         & ((df["high"] - df["open"]) / (0.001 + df["high"] - df["low"]) > 0.6)
     )
+    return shooting_star.fillna(False).astype(int)
 
 
 def detect_morning_star(df: pd.DataFrame) -> pd.Series:
