@@ -55,7 +55,8 @@ class DataConfig(BaseModel):
 
     # Market calendar and mixed portfolio handling
     align_mixed_portfolios: bool = Field(default=True, description="Align timestamps for mixed crypto/traditional portfolios")
-    alignment_strategy: str = Field(default="last_known_value", description="Strategy for crypto alignment ('last_known_value', 'forward_fill', 'interpolate')")
+    alignment_strategy: str = Field(default="last_known_value", description="Strategy for traditional asset alignment ('last_known_value', 'forward_fill', 'interpolate')")
+    retain_all_crypto_data: bool = Field(default=True, description="Retain all crypto candles and fill traditional assets")
     market_timezone: str = Field(default="America/New_York", description="Primary market timezone")
     include_extended_hours: bool = Field(default=False, description="Include extended hours trading data")
 

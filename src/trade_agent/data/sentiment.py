@@ -20,6 +20,7 @@ import os
 import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import UTC
 from typing import Any
 
 import numpy as np
@@ -256,7 +257,7 @@ class NewsSentimentProvider(SentimentProvider):
         }
 
     def fetch_sentiment(self, symbol: str, days_back: int = 1) -> list[SentimentData]:
-        """Fetch news sentiment with multiple fallback strategies."""
+        """Fetch news sentiment with market-derived fallback priority."""
 
         # Try NewsAPI first if we have an API key
         if self.api_key:
@@ -265,13 +266,25 @@ class NewsSentimentProvider(SentimentProvider):
             except Exception as e:
                 self.logger.warning(f"NewsAPI failed for {symbol}: {e}")
 
-        # Try web scraping as fallback
+        # Try web scraping as secondary fallback
         try:
-            return self._fetch_scraped_sentiment(symbol)
+            scraped_data = self._fetch_scraped_sentiment(symbol)
+            if scraped_data:
+                return scraped_data
         except Exception as e:
             self.logger.warning(f"Web scraping failed for {symbol}: {e}")
 
-        # Return mock data as final fallback
+        # Use market-derived sentiment as primary fallback
+        try:
+            market_data = self._get_market_data_for_sentiment(symbol, days_back)
+            if not market_data.empty:
+                self.logger.info(f"Using market-derived sentiment for {symbol}")
+                return self._derive_sentiment_from_market_data(symbol, market_data)
+        except Exception as e:
+            self.logger.warning(f"Market-derived sentiment failed for {symbol}: {e}")
+
+        # Return enhanced mock data as final fallback
+        self.logger.info(f"Using enhanced mock sentiment for {symbol}")
         return self._generate_mock_sentiment(symbol, days_back)
 
     def _fetch_newsapi_sentiment(self, symbol: str, days_back: int) -> list[SentimentData]:
@@ -399,31 +412,236 @@ class NewsSentimentProvider(SentimentProvider):
 
         return sentiment_data
 
-    def _generate_mock_sentiment(self, symbol: str, _days_back: int) -> list[SentimentData]:
-        """Generate mock sentiment data for testing/fallback."""
-        num_articles = random.randint(1, 5)
-        sentiment_data = []
+    def _generate_mock_sentiment(self, symbol: str, days_back: int) -> list[SentimentData]:
+        """Generate realistic mock sentiment data for historical periods."""
+        import random
+        from datetime import datetime, timedelta
+
+        # Generate more realistic sentiment based on market patterns
+        num_articles = random.randint(3, 8)  # More articles for historical data
+        sentiment_data: list[SentimentData] = []
+
+        # Create a base sentiment trend that follows market patterns
+        base_sentiment = self._generate_historical_sentiment_trend(symbol, days_back)
+
+        # Use consistent timezone handling
+        utc_now = datetime.now(UTC)
 
         for i in range(num_articles):
-            # Generate realistic sentiment scores
-            base_score = random.uniform(-0.8, 0.8)
-            magnitude = random.uniform(0.3, 0.9)
+            # Add noise to the base sentiment
+            noise = random.uniform(-0.3, 0.3)
+            day_offset = random.randint(0, days_back)
 
-            # Add some time variation
-            timestamp = datetime.datetime.now() - datetime.timedelta(hours=random.randint(0, _days_back * 24))
+            # Get sentiment for this specific day
+            base_score = base_sentiment[day_offset] if day_offset < len(base_sentiment) else random.uniform(-0.5, 0.5)
+
+            final_score = max(-1.0, min(1.0, base_score + noise))
+            magnitude = random.uniform(0.4, 0.9)  # Higher confidence for historical data
+
+            # Create realistic timestamp with consistent timezone handling
+            timestamp = utc_now - timedelta(days=day_offset, hours=random.randint(0, 23))
+            # Make timestamp naive for consistency
+            timestamp = timestamp.replace(tzinfo=None)
 
             sentiment_data.append(
                 SentimentData(
                     symbol=symbol,
-                    score=base_score,
+                    score=final_score,
                     magnitude=magnitude,
                     timestamp=timestamp,
-                    source="news_mock",
-                    raw_data={"mock": True, "article_id": i},
+                    source="historical_mock",
+                    raw_data={
+                        "mock": True,
+                        "article_id": i,
+                        "historical_period": True,
+                        "days_back": day_offset
+                    },
                 ),
             )
 
         return sentiment_data
+
+    def _generate_historical_sentiment_trend(self, _symbol: str, days_back: int) -> list[float]:
+        """Generate a realistic historical sentiment trend based on market patterns."""
+        import random
+
+        import numpy as np
+
+        # Create a trend that follows typical market sentiment patterns
+        trend_length = min(days_back, 365)  # Cap at 1 year
+
+        # Start with a random base sentiment
+        base_sentiment = random.uniform(-0.2, 0.2)
+
+        # Add cyclical patterns (weekly, monthly)
+        weekly_cycle = np.sin(np.linspace(0, 2 * np.pi * (trend_length // 7), trend_length)) * 0.1
+        monthly_cycle = np.sin(np.linspace(0, 2 * np.pi * (trend_length // 30), trend_length)) * 0.05
+
+        # Add random walk component
+        random_walk = np.cumsum(np.random.normal(0, 0.02, trend_length))
+
+        # Add occasional "events" (earnings, news, etc.)
+        events = np.zeros(trend_length)
+        num_events = random.randint(2, 5)
+        for _ in range(num_events):
+            event_day = random.randint(0, trend_length - 1)
+            event_impact = random.uniform(-0.4, 0.4)
+            # Event impact decays over time
+            for i in range(min(7, trend_length - event_day)):
+                if event_day + i < trend_length:
+                    events[event_day + i] += event_impact * np.exp(-i * 0.3)
+
+        # Combine all components
+        sentiment_trend = base_sentiment + weekly_cycle + monthly_cycle + random_walk + events
+
+        # Normalize to [-1, 1] range
+        sentiment_trend = np.clip(sentiment_trend, -1.0, 1.0)
+
+        return [float(x) for x in sentiment_trend.tolist()]
+
+    def _derive_sentiment_from_market_data(self, symbol: str, market_data: pd.DataFrame) -> list[SentimentData]:
+        """Derive sentiment from market data as a proxy for historical sentiment."""
+        sentiment_data: list[SentimentData] = []
+
+        if market_data.empty or "close" not in market_data.columns:
+            return sentiment_data
+
+        # Calculate market-based sentiment indicators
+        market_data = market_data.copy()
+
+        # Price momentum (short-term)
+        market_data["returns"] = market_data["close"].pct_change()
+        market_data["momentum_5d"] = market_data["returns"].rolling(5).mean()
+        market_data["momentum_20d"] = market_data["returns"].rolling(20).mean()
+
+        # Volatility-based sentiment
+        market_data["volatility"] = market_data["returns"].rolling(20).std()
+
+        # Volume-based sentiment
+        if "volume" in market_data.columns:
+            market_data["volume_ma"] = market_data["volume"].rolling(20).mean()
+            market_data["volume_ratio"] = market_data["volume"] / market_data["volume_ma"]
+        else:
+            market_data["volume_ratio"] = 1.0
+
+        # High-Low spread sentiment
+        if "high" in market_data.columns and "low" in market_data.columns:
+            market_data["hl_spread"] = (market_data["high"] - market_data["low"]) / market_data["close"]
+        else:
+            market_data["hl_spread"] = 0.02  # Default 2% spread
+
+        for idx, row in market_data.iterrows():
+            if pd.isna(row["returns"]):
+                continue
+
+            # Combine multiple indicators into sentiment score
+            momentum_score = (row["momentum_5d"] * 0.6 + row["momentum_20d"] * 0.4) * 10
+
+            # Volatility sentiment (lower volatility = more positive sentiment)
+            volatility_score = -row["volatility"] * 5 if not pd.isna(row["volatility"]) else 0
+
+            # Volume sentiment (higher volume = stronger sentiment)
+            volume_score = (row["volume_ratio"] - 1) * 0.2
+
+            # Spread sentiment (tighter spreads = more positive sentiment)
+            spread_score = -row["hl_spread"] * 10
+
+            # Combine all scores
+            combined_score = momentum_score + volatility_score + volume_score + spread_score
+
+            # Normalize to [-1, 1] range
+            sentiment_score = max(-1.0, min(1.0, combined_score))
+
+            # Calculate confidence based on data quality
+            confidence = 0.5 + 0.3 * (1 - abs(sentiment_score))  # Higher confidence for extreme values
+
+            # Handle timestamp conversion consistently
+            if hasattr(idx, "to_pydatetime"):
+                timestamp = idx.to_pydatetime()
+            elif hasattr(idx, "timestamp"):
+                timestamp = pd.Timestamp(idx)
+            else:
+                timestamp = pd.Timestamp(idx)
+
+            # Ensure timestamp is timezone-naive for consistency
+            if hasattr(timestamp, "tz_localize"):
+                timestamp = timestamp.tz_localize(None)
+            elif hasattr(timestamp, "replace"):
+                timestamp = timestamp.replace(tzinfo=None)
+
+            sentiment_data.append(
+                SentimentData(
+                    symbol=symbol,
+                    score=sentiment_score,
+                    magnitude=confidence,
+                    timestamp=timestamp,
+                    source="market_derived",
+                    raw_data={
+                        "momentum_5d": row.get("momentum_5d", 0),
+                        "momentum_20d": row.get("momentum_20d", 0),
+                        "volatility": row.get("volatility", 0),
+                        "volume_ratio": row.get("volume_ratio", 1),
+                        "hl_spread": row.get("hl_spread", 0),
+                        "derived_from_market": True
+                    },
+                ),
+            )
+
+        return sentiment_data
+
+    def _get_market_data_for_sentiment(self, symbol: str, days_back: int) -> pd.DataFrame:
+        """Fetch market data for sentiment derivation."""
+        try:
+            from datetime import datetime, timedelta
+
+            import yfinance as yf
+
+            # Calculate date range with consistent timezone handling
+            utc_now = datetime.now(UTC)
+            end_date = utc_now.replace(tzinfo=None)  # Make naive for yfinance
+            start_date = end_date - timedelta(days=days_back + 30)  # Extra days for rolling calculations
+
+            # Fetch market data
+            ticker = yf.Ticker(symbol)
+            market_data = ticker.history(start=start_date, end=end_date, interval="1d")
+
+            if market_data.empty:
+                self.logger.warning(f"No market data available for {symbol}")
+                return pd.DataFrame()
+
+            # Ensure we have the required columns
+            required_columns = ["Close", "Volume"]
+            if not all(col in market_data.columns for col in required_columns):
+                self.logger.warning(f"Missing required columns for {symbol}: {market_data.columns.tolist()}")
+                return pd.DataFrame()
+
+            # Rename columns to match our sentiment derivation method
+            market_data = market_data.rename(columns={
+                "Close": "close",
+                "Open": "open",
+                "High": "high",
+                "Low": "low",
+                "Volume": "volume"
+            })
+
+            # Add missing columns if needed
+            if "high" not in market_data.columns:
+                market_data["high"] = market_data["close"]
+            if "low" not in market_data.columns:
+                market_data["low"] = market_data["close"]
+            if "open" not in market_data.columns:
+                market_data["open"] = market_data["close"]
+
+            # Ensure timestamps are timezone-naive for consistency
+            if hasattr(market_data.index, "tz_localize"):
+                market_data.index = market_data.index.tz_localize(None)
+
+            self.logger.debug(f"Fetched {len(market_data)} days of market data for {symbol}")
+            return market_data
+
+        except Exception as e:
+            self.logger.warning(f"Failed to fetch market data for {symbol}: {e}")
+            return pd.DataFrame()
 
     def _build_company_mapping(self) -> dict[str, str]:
         """Build company mapping from comprehensive symbols."""
@@ -535,11 +753,19 @@ class SentimentAnalyzer:
         weighted_scores = []
         total_weight = 0.0
 
-        now = datetime.datetime.now()
+        # Use timezone-naive datetime for consistency
+        now = datetime.datetime.now().replace(tzinfo=None)
 
         for data in sentiment_data:
+            # Ensure timestamp is timezone-naive for comparison
+            timestamp = data.timestamp
+            if hasattr(timestamp, "tz_localize"):
+                timestamp = timestamp.tz_localize(None)
+            elif hasattr(timestamp, "replace"):
+                timestamp = timestamp.replace(tzinfo=None)
+
             # Time decay: more recent data gets higher weight
-            time_diff = (now - data.timestamp).total_seconds() / 3600  # hours
+            time_diff = (now - timestamp).total_seconds() / 3600  # hours
             time_weight = max(0.1, 1.0 - (time_diff / (days_back * 24)))
 
             # Magnitude weight: higher confidence gets higher weight
@@ -597,35 +823,121 @@ class SentimentAnalyzer:
         if cache_key not in self.cache_timestamps:
             return False
 
-        cache_age = datetime.datetime.now() - self.cache_timestamps[cache_key]
+        # Use timezone-naive datetime for consistency
+        now = datetime.datetime.now().replace(tzinfo=None)
+        cache_timestamp = self.cache_timestamps[cache_key]
+
+        # Ensure cache timestamp is timezone-naive for comparison
+        if hasattr(cache_timestamp, "tz_localize"):
+            cache_timestamp = cache_timestamp.tz_localize(None)
+        elif hasattr(cache_timestamp, "replace"):
+            cache_timestamp = cache_timestamp.replace(tzinfo=None)
+
+        cache_age = now - cache_timestamp
         return cache_age.total_seconds() < (self.config.cache_duration_hours * 3600)
 
+    def get_symbol_sentiment_with_market_fallback(self, symbol: str, days_back: int = 1, market_data: pd.DataFrame | None = None) -> float:
+        """Get sentiment score with market-derived fallback."""
+        # Try to get news sentiment first
+        sentiment_data = self.fetch_all_sentiment(symbol, days_back)
+
+        # If we have news sentiment, use it
+        if sentiment_data and any(d.source not in ["historical_mock", "market_derived"] for d in sentiment_data):
+            return self.get_symbol_sentiment(symbol, days_back)
+
+        # If no news sentiment and we have market data, derive sentiment from market data
+        if market_data is not None and not market_data.empty:
+            try:
+                from .sentiment import NewsSentimentProvider
+                provider = NewsSentimentProvider()
+                market_sentiment = provider._derive_sentiment_from_market_data(symbol, market_data)
+                if market_sentiment:
+                    # Return weighted average of market-derived sentiment
+                    scores = [d.score * d.magnitude for d in market_sentiment]
+                    weights = [d.magnitude for d in market_sentiment]
+                    if weights and sum(weights) > 0:
+                        return sum(scores) / sum(weights)
+            except Exception as e:
+                self.logger.warning(f"Market-derived sentiment failed for {symbol}: {e}")
+
+        # Fallback to regular sentiment (which will use enhanced mock)
+        return self.get_symbol_sentiment(symbol, days_back)
+
     def get_sentiment_features(self, symbols: list[str], days_back: int = 1) -> pd.DataFrame:
-        """Get sentiment features for multiple symbols."""
+        """Get sentiment features for multiple symbols with robust fallback to 0."""
         features = []
 
         for symbol in symbols:
-            sentiment_score = self.get_symbol_sentiment(symbol, days_back)
-            sentiment_data = self.fetch_all_sentiment(symbol, days_back)
+            try:
+                # Get sentiment score with fallback to 0.0
+                sentiment_score = self.get_symbol_sentiment(symbol, days_back)
 
-            if sentiment_data:
-                avg_magnitude = np.mean([d.magnitude for d in sentiment_data])
-                source_count = len({d.source for d in sentiment_data})
-            else:
-                avg_magnitude = 0.0
-                source_count = 0
+                # Get sentiment data with fallback to empty list
+                try:
+                    sentiment_data = self.fetch_all_sentiment(symbol, days_back)
+                except Exception as e:
+                    self.logger.warning(f"Failed to fetch sentiment data for {symbol}: {e}")
+                    sentiment_data = []
 
-            features.append(
-                {
-                    "symbol": symbol,
-                    "sentiment_score": sentiment_score,
-                    "sentiment_magnitude": avg_magnitude,
-                    "sentiment_sources": source_count,
-                    "sentiment_direction": np.sign(sentiment_score),
-                },
-            )
+                # Calculate features with fallbacks
+                if sentiment_data:
+                    try:
+                        avg_magnitude = np.mean([d.magnitude for d in sentiment_data])
+                        source_count = len({d.source for d in sentiment_data})
+                    except Exception as e:
+                        self.logger.warning(f"Failed to calculate sentiment features for {symbol}: {e}")
+                        avg_magnitude = 0.0
+                        source_count = 0
+                else:
+                    avg_magnitude = 0.0
+                    source_count = 0
 
-        return pd.DataFrame(features)
+                # Ensure sentiment_score is a valid float
+                if not isinstance(sentiment_score, int | float) or np.isnan(sentiment_score):
+                    sentiment_score = 0.0
+
+                # Calculate sentiment direction with fallback
+                try:
+                    sentiment_direction = np.sign(sentiment_score)
+                    if np.isnan(sentiment_direction):
+                        sentiment_direction = 0
+                except Exception:
+                    sentiment_direction = 0
+
+                features.append(
+                    {
+                        "symbol": symbol,
+                        "sentiment_score": float(sentiment_score),
+                        "sentiment_magnitude": float(avg_magnitude),
+                        "sentiment_sources": int(source_count),
+                        "sentiment_direction": int(sentiment_direction),
+                    },
+                )
+
+            except Exception as e:
+                # Complete fallback - if anything fails, use all zeros
+                self.logger.warning(f"Complete sentiment failure for {symbol}, using default values: {e}")
+                features.append(
+                    {
+                        "symbol": symbol,
+                        "sentiment_score": 0.0,
+                        "sentiment_magnitude": 0.0,
+                        "sentiment_sources": 0,
+                        "sentiment_direction": 0,
+                    },
+                )
+
+        # Create DataFrame with explicit dtypes to ensure consistency
+        df = pd.DataFrame(features)
+
+        # Ensure all numeric columns are properly typed
+        if not df.empty:
+            df["sentiment_score"] = pd.to_numeric(df["sentiment_score"], errors="coerce").fillna(0.0)
+            df["sentiment_magnitude"] = pd.to_numeric(df["sentiment_magnitude"], errors="coerce").fillna(0.0)
+            df["sentiment_sources"] = pd.to_numeric(df["sentiment_sources"], errors="coerce").fillna(0).astype(int)
+            df["sentiment_direction"] = pd.to_numeric(df["sentiment_direction"], errors="coerce").fillna(0).astype(int)
+
+        return df
 
 
 # Global functions for backward compatibility

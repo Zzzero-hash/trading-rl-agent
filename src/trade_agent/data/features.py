@@ -302,14 +302,14 @@ def _add_candlestick_patterns(result_df: pd.DataFrame, df: pd.DataFrame) -> pd.D
     """Add exactly 18 candlestick patterns."""
 
     # Basic patterns
-    result_df["doji"] = _detect_doji(df)
-    result_df["hammer"] = _detect_hammer(df)
+    result_df["doji"] = detect_doji(df)
+    result_df["hammer"] = detect_hammer(df)
     result_df["hanging_man"] = _detect_hanging_man(df)
     result_df["bullish_engulfing"] = _detect_bullish_engulfing(df)
     result_df["bearish_engulfing"] = _detect_bearish_engulfing(df)
-    result_df["shooting_star"] = _detect_shooting_star(df)
-    result_df["morning_star"] = _detect_morning_star(df)
-    result_df["evening_star"] = _detect_evening_star(df)
+    result_df["shooting_star"] = detect_shooting_star(df)
+    result_df["morning_star"] = detect_morning_star(df)
+    result_df["evening_star"] = detect_evening_star(df)
     result_df["inside_bar"] = _detect_inside_bar(df)
     result_df["outside_bar"] = _detect_outside_bar(df)
     result_df["tweezer_top"] = _detect_tweezer_top(df)
@@ -484,26 +484,62 @@ def _get_expected_feature_names() -> list[str]:
 
 
 # Pattern detection functions
-def _detect_doji(df: pd.DataFrame) -> pd.Series:
-    """Detect Doji pattern."""
-    body = (df["close"] - df["open"]).abs()
-    range_size = df["high"] - df["low"]
-    doji = body <= (range_size * 0.1)
-    return doji.fillna(False).astype(int)
+def detect_doji(df: pd.DataFrame) -> pd.Series:
+    """Detect Doji candlestick pattern."""
+    return (df["close"] - df["open"]).abs() <= (df["high"] - df["low"]) * 0.1
 
 
-def _detect_hammer(df: pd.DataFrame) -> pd.Series:
-    """Detect Hammer pattern."""
-    body = (df["close"] - df["open"]).abs()
-    lower_shadow = np.minimum(df["open"], df["close"]) - df["low"]
-    upper_shadow = df["high"] - np.maximum(df["open"], df["close"])
-
-    hammer = (
-        (lower_shadow >= 2 * body) &
-        (upper_shadow <= body * 0.1) &
-        (body <= (df["high"] - df["low"]) * 0.3)
+def detect_engulfing(df: pd.DataFrame) -> pd.Series:
+    """Detect Engulfing candlestick pattern."""
+    return (
+        (df["close"].shift(1) > df["open"].shift(1)) & (df["open"] < df["close"]) & (df["close"] > df["open"].shift(1))
+    ) | (
+        (df["close"].shift(1) < df["open"].shift(1)) & (df["open"] > df["close"]) & (df["close"] < df["open"].shift(1))
     )
-    return hammer.fillna(False).astype(int)
+
+
+def detect_evening_star(df: pd.DataFrame) -> pd.Series:
+    """Detect Evening Star candlestick pattern."""
+    return (
+        (df["close"].shift(2) > df["open"].shift(2))
+        & (df["open"].shift(1) > df["close"].shift(2))
+        & (df["open"] > df["close"])
+        & (df["close"] < df["open"].shift(1))
+    )
+
+
+def detect_hammer(df: pd.DataFrame) -> pd.Series:
+    """Detect Hammer candlestick pattern."""
+    return (
+        (df["high"] - df["low"] > 3 * (df["open"] - df["close"]))
+        & ((df["close"] - df["low"]) / (0.001 + df["high"] - df["low"]) > 0.6)
+        & ((df["open"] - df["low"]) / (0.001 + df["high"] - df["low"]) > 0.6)
+    )
+
+
+def detect_morning_star(df: pd.DataFrame) -> pd.Series:
+    """Detect Morning Star candlestick pattern."""
+    return (
+        (df["close"].shift(2) < df["open"].shift(2))
+        & (df["open"].shift(1) < df["close"].shift(2))
+        & (df["open"] < df["close"])
+        & (df["close"] > df["open"].shift(1))
+    )
+
+
+def detect_shooting_star(df: pd.DataFrame) -> pd.Series:
+    """Detect Shooting Star candlestick pattern."""
+    return (
+        (df["high"] - df["low"] > 3 * (df["open"] - df["close"]))
+        & ((df["high"] - df["close"]) / (0.001 + df["high"] - df["low"]) > 0.6)
+        & ((df["high"] - df["open"]) / (0.001 + df["high"] - df["low"]) > 0.6)
+    )
+
+
+def add_sentiment(df: pd.DataFrame, sentiment_col: str = "sentiment") -> pd.DataFrame:
+    """Add a sentiment column to the dataframe."""
+    df[sentiment_col] = 0.0
+    return df
 
 
 def _detect_hanging_man(df: pd.DataFrame) -> pd.Series:
@@ -552,66 +588,6 @@ def _detect_bearish_engulfing(df: pd.DataFrame) -> pd.Series:
         (df["close"] < prev_open)  # Current close below previous open
     )
     return bearish_engulfing.fillna(False).astype(int)
-
-
-def _detect_shooting_star(df: pd.DataFrame) -> pd.Series:
-    """Detect Shooting Star pattern."""
-    body = (df["close"] - df["open"]).abs()
-    upper_shadow = df["high"] - np.maximum(df["open"], df["close"])
-    lower_shadow = np.minimum(df["open"], df["close"]) - df["low"]
-
-    shooting_star = (
-        (upper_shadow >= 2 * body) &
-        (lower_shadow <= body * 0.1) &
-        (body <= (df["high"] - df["low"]) * 0.3)
-    )
-    return shooting_star.fillna(False).astype(int)
-
-
-def _detect_morning_star(df: pd.DataFrame) -> pd.Series:
-    """Detect Morning Star pattern."""
-    if len(df) < 3:
-        return pd.Series([0] * len(df), index=df.index)
-
-    # First day: long bearish candle
-    first_bearish = (df["close"].shift(2) < df["open"].shift(2)) & (
-        (df["close"].shift(2) - df["open"].shift(2)).abs() > (df["high"].shift(2) - df["low"].shift(2)) * 0.6
-    )
-
-    # Second day: small body (doji-like)
-    second_small = ((df["close"].shift(1) - df["open"].shift(1)).abs() <
-                   (df["high"].shift(1) - df["low"].shift(1)) * 0.3)
-
-    # Third day: bullish candle
-    third_bullish = (df["close"] > df["open"]) & (
-        (df["close"] - df["open"]) > (df["high"] - df["low"]) * 0.6
-    )
-
-    morning_star = first_bearish & second_small & third_bullish
-    return morning_star.fillna(False).astype(int)
-
-
-def _detect_evening_star(df: pd.DataFrame) -> pd.Series:
-    """Detect Evening Star pattern."""
-    if len(df) < 3:
-        return pd.Series([0] * len(df), index=df.index)
-
-    # First day: long bullish candle
-    first_bullish = (df["close"].shift(2) > df["open"].shift(2)) & (
-        (df["close"].shift(2) - df["open"].shift(2)).abs() > (df["high"].shift(2) - df["low"].shift(2)) * 0.6
-    )
-
-    # Second day: small body (doji-like)
-    second_small = ((df["close"].shift(1) - df["open"].shift(1)).abs() <
-                   (df["high"].shift(1) - df["low"].shift(1)) * 0.3)
-
-    # Third day: bearish candle
-    third_bearish = (df["close"] < df["open"]) & (
-        (df["open"] - df["close"]) > (df["high"] - df["low"]) * 0.6
-    )
-
-    evening_star = first_bullish & second_small & third_bearish
-    return evening_star.fillna(False).astype(int)
 
 
 def _detect_inside_bar(df: pd.DataFrame) -> pd.Series:
@@ -756,6 +732,70 @@ def _detect_piercing_line(df: pd.DataFrame) -> pd.Series:
 
     piercing_line = prev_bearish & current_bullish & open_below_low
     return piercing_line.fillna(False).astype(int)
+
+
+def compute_adx(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
+    """Compute the Average Directional Movement Index (ADX)."""
+    df[f"adx_{timeperiod}"] = ta.adx(df["high"], df["low"], df["close"], length=timeperiod)["ADX_14"]
+    return df
+
+
+def compute_macd(df: pd.DataFrame, price_col: str = "close") -> pd.DataFrame:
+    """Compute the Moving Average Convergence Divergence (MACD)."""
+    macd = ta.macd(df[price_col])
+    df["macd_line"] = macd["MACD_12_26_9"]
+    df["macd_signal"] = macd["MACDs_12_26_9"]
+    df["macd_hist"] = macd["MACDh_12_26_9"]
+    return df
+
+
+def compute_obv(df: pd.DataFrame) -> pd.DataFrame:
+    """Compute the On-Balance Volume (OBV)."""
+    df["obv"] = ta.obv(df["close"], df["volume"])
+    return df
+
+
+def compute_stochastic(
+    df: pd.DataFrame, fastk_period: int = 14, slowk_period: int = 3, slowd_period: int = 3
+) -> pd.DataFrame:
+    """Compute the Stochastic Oscillator."""
+    stoch = ta.stoch(
+        df["high"],
+        df["low"],
+        df["close"],
+        k=fastk_period,
+        d=slowd_period,
+        smooth_k=slowk_period,
+    )
+    df["stoch_k"] = stoch[f"STOCHk_{fastk_period}_{slowd_period}_{slowk_period}"]
+    df["stoch_d"] = stoch[f"STOCHd_{fastk_period}_{slowd_period}_{slowk_period}"]
+    return df
+
+
+def compute_williams_r(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
+    """Compute the Williams %R."""
+    df[f"wr_{timeperiod}"] = ta.willr(df["high"], df["low"], df["close"], length=timeperiod)
+    return df
+
+
+def compute_bollinger_bands(df: pd.DataFrame, price_col: str = "close", timeperiod: int = 20) -> pd.DataFrame:
+    """Compute Bollinger Bands."""
+    df[[f"bb_lower_{timeperiod}", f"bb_mavg_{timeperiod}", f"bb_upper_{timeperiod}"]] = ta.bbands(
+        df[price_col], length=timeperiod
+    )
+    return df
+
+
+def compute_atr(df: pd.DataFrame, timeperiod: int = 14) -> pd.DataFrame:
+    """Compute the Average True Range (ATR)."""
+    df[f"atr_{timeperiod}"] = ta.atr(df["high"], df["low"], df["close"], length=timeperiod)
+    return df
+
+
+def compute_ema(df: pd.DataFrame, price_col: str = "close", timeperiod: int = 20) -> pd.DataFrame:
+    """Compute the Exponential Moving Average (EMA)."""
+    df[f"ema_{timeperiod}"] = ta.ema(df[price_col], length=timeperiod)
+    return df
 
 
 # Legacy compatibility - keep the FeatureEngineer class for backward compatibility

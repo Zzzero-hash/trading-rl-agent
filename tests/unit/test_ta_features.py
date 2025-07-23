@@ -1,24 +1,18 @@
-import importlib.util
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import pandas_ta as pta
 import pandas_ta as ta
 
-feature_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "features.py"
-spec = importlib.util.spec_from_file_location("features", feature_path)
-features = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(features)
-
-compute_adx = features.compute_adx
-compute_atr = features.compute_atr
-compute_bollinger_bands = features.compute_bollinger_bands
-compute_ema = features.compute_ema
-compute_macd = features.compute_macd
-compute_obv = features.compute_obv
-compute_stochastic = features.compute_stochastic
-compute_williams_r = features.compute_williams_r
+from trade_agent.data.features import (
+    compute_adx,
+    compute_atr,
+    compute_bollinger_bands,
+    compute_ema,
+    compute_macd,
+    compute_obv,
+    compute_stochastic,
+    compute_williams_r,
+)
 
 
 def test_compute_ema_constant():
@@ -43,10 +37,10 @@ def test_compute_macd_constant():
     # MACD line NaN until enough data is available
     assert df_macd["macd_line"][:25].isnull().all()
     valid = df_macd["macd_line"][25:]
-    assert np.allclose(valid.fillna(0), 0.0)
+    assert np.allclose(np.nan_to_num(valid), 0.0)
     # Signal and hist also zero or NaN before converge
-    assert np.allclose(df_macd["macd_signal"][26:].fillna(0), 0.0)
-    assert np.allclose(df_macd["macd_hist"][26:].fillna(0), 0.0)
+    assert np.allclose(np.nan_to_num(df_macd["macd_signal"][26:]), 0.0)
+    assert np.allclose(np.nan_to_num(df_macd["macd_hist"][26:]), 0.0)
 
 
 def test_compute_atr_constant():
