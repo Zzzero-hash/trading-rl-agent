@@ -4,41 +4,18 @@ Unit tests for CLI command functions.
 Tests individual CLI command functions and their logic.
 """
 
-import tempfile
+import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 import typer
+from typer.testing import CliRunner
 
-from trade_agent.cli import (
-    cnn_lstm,
-    compare,
-    custom,
-    download,
-    download_all,
-    evaluate,
-    get_config_manager,
-    hybrid,
-    hyperopt,
-    info,
-    monitor,
-    paper,
-    pipeline,
-    process,
-    refresh,
-    report,
-    rl,
-    scenario_compare,
-    scenario_evaluate,
-    start,
-    status,
-    stop,
-    strategy,
-    symbols,
-    version,
-    walk_forward,
-)
+# Add the project root to the Python path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+runner = CliRunner()
 
 
 class TestCLICommands:

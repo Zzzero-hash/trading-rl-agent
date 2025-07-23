@@ -115,7 +115,12 @@ class FeatureConfig:
     )
 
     # Sentiment features
-    sentiment_features: list[str] = field(default_factory=lambda: ["sentiment", "sentiment_magnitude"])
+    sentiment_features: list[str] = field(default_factory=lambda: [
+        "sentiment_score",
+        "sentiment_magnitude",
+        "sentiment_sources",
+        "sentiment_direction"
+    ])
 
     # Time-based features
     time_features: list[str] = field(default_factory=lambda: ["hour", "day_of_week", "month", "quarter"])

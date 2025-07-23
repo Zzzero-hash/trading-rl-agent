@@ -10,17 +10,17 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-base = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent"
-if "trading_rl_agent" not in sys.modules:
-    pkg = types.ModuleType("trading_rl_agent")
+base = Path(__file__).resolve().parents[2] / "src" / "trade_agent"
+if "trade_agent" not in sys.modules:
+    pkg = types.ModuleType("trade_agent")
     pkg.__path__ = [str(base)]
-    sys.modules["trading_rl_agent"] = pkg
-if "trading_rl_agent.data" not in sys.modules:
-    mod = types.ModuleType("trading_rl_agent.data")
+    sys.modules["trade_agent"] = pkg
+if "trade_agent.data" not in sys.modules:
+    mod = types.ModuleType("trade_agent.data")
     mod.__path__ = [str(base / "data")]
-    sys.modules["trading_rl_agent.data"] = mod
+    sys.modules["trade_agent.data"] = mod
 
-feature_path = Path(__file__).resolve().parents[2] / "src" / "trading_rl_agent" / "data" / "features.py"
+feature_path = Path(__file__).resolve().parents[2] / "src" / "trade_agent" / "data" / "features.py"
 spec = importlib.util.spec_from_file_location("features", feature_path)
 features = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(features)

@@ -8,9 +8,12 @@ for training and inference.
 from pathlib import Path
 
 import pandas as pd
+from rich.console import Console
 
 from .data_standardizer import create_standardized_dataset
 from .pipeline import DataPipeline
+
+console = Console()
 
 
 def prepare_data(
@@ -19,6 +22,7 @@ def prepare_data(
     config_path: Path | None = None,
     method: str = "robust",
     save_standardizer: bool = True,
+    sentiment_data: pd.DataFrame | None = None,
 ) -> None:
     """
     Process and standardize downloaded data in one command.
@@ -34,6 +38,7 @@ def prepare_data(
         parallel: Whether to use parallel processing
         method: Standardization method to use
         save_standardizer: Whether to save the standardizer for later use
+        sentiment_data: Optional sentiment features DataFrame to integrate
     """
     # Set default input path if not provided
     if input_path is None:
@@ -93,6 +98,59 @@ def prepare_data(
         df=df,
         save_path=str(output_dir / "data_standardizer.pkl") if save_standardizer else None
     )
+
+    # Step 2.5: Integrate sentiment data if provided
+    if sentiment_data is not None:
+        console.print("[yellow]Integrating sentiment features into standardized data...[/yellow]")
+
+        try:
+            # Validate sentiment data
+            if sentiment_data.empty:
+                console.print("[yellow]Warning: Sentiment data is empty, skipping integration[/yellow]")
+            elif "symbol" not in sentiment_data.columns:
+                console.print("[yellow]Warning: Sentiment data missing 'symbol' column, skipping integration[/yellow]")
+            elif "symbol" not in standardized_df.columns:
+                console.print("[yellow]Warning: Standardized data missing 'symbol' column, skipping integration[/yellow]")
+            else:
+                # Merge sentiment data with standardized data
+                standardized_df = standardized_df.merge(
+                    sentiment_data,
+                    on="symbol",
+                    how="left",
+                    suffixes=("", "_sentiment")
+                )
+
+                # Fill missing sentiment values with 0
+                sentiment_columns = [col for col in sentiment_data.columns if col != "symbol"]
+                for col in sentiment_columns:
+                    if col in standardized_df.columns:
+                        # Convert to numeric and fill NaN with 0
+                        standardized_df[col] = pd.to_numeric(standardized_df[col], errors="coerce").fillna(0.0)
+
+                console.print(f"[green]Integrated {len(sentiment_columns)} sentiment features[/green]")
+
+                # Log summary of sentiment integration
+                sentiment_summary = {}
+                for col in sentiment_columns:
+                    if col in standardized_df.columns:
+                        non_zero_count = (standardized_df[col] != 0).sum()
+                        total_count = len(standardized_df)
+                        sentiment_summary[col] = f"{non_zero_count}/{total_count} non-zero values"
+
+                if sentiment_summary:
+                    console.print("[cyan]Sentiment feature summary:[/cyan]")
+                    for feature, summary in sentiment_summary.items():
+                        console.print(f"[cyan]  {feature}: {summary}[/cyan]")
+
+        except Exception as e:
+            console.print(f"[red]Error integrating sentiment data: {e}[/red]")
+            console.print("[yellow]Warning: Sentiment integration failed, proceeding without sentiment features[/yellow]")
+
+            # Add default sentiment columns if they don't exist
+            default_sentiment_columns = ["sentiment_score", "sentiment_magnitude", "sentiment_sources", "sentiment_direction"]
+            for col in default_sentiment_columns:
+                if col not in standardized_df.columns:
+                    standardized_df[col] = 0.0
 
     # Step 3: Save processed data
     # Save standardized data

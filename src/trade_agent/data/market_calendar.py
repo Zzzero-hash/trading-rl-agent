@@ -11,9 +11,9 @@ import logging
 from datetime import datetime, time, timedelta
 from enum import Enum
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-import pytz  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +45,8 @@ class TradingCalendar:
         Args:
             timezone: Primary timezone for market operations
         """
-        self.timezone = pytz.timezone(timezone)
-        self.ny_timezone = pytz.timezone("America/New_York")
+        self.timezone = ZoneInfo(timezone)
+        self.ny_timezone = ZoneInfo("America/New_York")
 
         # Market hours for traditional markets (NYSE/NASDAQ)
         self.market_open = time(9, 30)  # 9:30 AM ET
@@ -266,16 +266,16 @@ class TradingCalendar:
         """
         Align data timestamps for mixed portfolios.
 
-        This is the key function that handles the crypto vs traditional market
-        timestamp alignment issue.
+        NEW BEHAVIOR: Retain all crypto candles and fill in traditional assets
+        with last known values during weekends/holidays.
 
         Args:
             df: DataFrame with timestamp and symbol columns
             symbols: List of symbols in the portfolio
-            alignment_strategy: Strategy for crypto alignment ('last_known_value', 'forward_fill', 'interpolate')
+            alignment_strategy: Strategy for traditional asset alignment ('last_known_value', 'forward_fill', 'interpolate')
 
         Returns:
-            DataFrame with aligned timestamps
+            DataFrame with aligned timestamps - all crypto data retained, traditional assets filled
         """
         if df.empty or "timestamp" not in df.columns or "symbol" not in df.columns:
             return df
@@ -290,21 +290,34 @@ class TradingCalendar:
 
         logger.info(f"Aligning timestamps for mixed portfolio: {len(crypto_symbols)} crypto, {len(traditional_symbols)} traditional")
         logger.info(f"Using alignment strategy: {alignment_strategy}")
+        logger.info("NEW BEHAVIOR: Retaining all crypto candles, filling traditional assets")
 
-        # Strategy: Use traditional market hours as the base, align crypto data
+        # NEW STRATEGY: Use crypto timestamps as base, fill traditional assets
         aligned_data = []
+
+        # Get all unique timestamps from crypto data (these will be our base)
+        crypto_data = df[df["symbol"].isin(crypto_symbols)].copy()
+        crypto_data["timestamp"] = pd.to_datetime(crypto_data["timestamp"])
+        all_timestamps = crypto_data["timestamp"].unique()
+        all_timestamps = sorted(all_timestamps)
+
+        logger.info(f"Using {len(all_timestamps)} crypto timestamps as base for alignment")
 
         for symbol in symbols:
             symbol_data = df[df["symbol"] == symbol].copy()
+            symbol_data["timestamp"] = pd.to_datetime(symbol_data["timestamp"])
 
             if self.get_market_type(symbol) == MarketType.CRYPTO:
-                # For crypto, align to traditional market hours using specified strategy
-                symbol_data = self._align_crypto_to_traditional_market(symbol_data, alignment_strategy)
+                # For crypto, keep all original data points
+                symbol_data["data_source"] = "crypto_original"
+                symbol_data["alignment_method"] = "none"
+                aligned_data.append(symbol_data)
             else:
-                # For traditional assets, filter to market hours only
-                symbol_data = self._filter_to_market_hours(symbol_data)
-
-            aligned_data.append(symbol_data)
+                # For traditional assets, fill in missing timestamps with last known values
+                symbol_data = self._fill_traditional_asset_to_crypto_timestamps(
+                    symbol_data, all_timestamps, alignment_strategy
+                )
+                aligned_data.append(symbol_data)
 
         # Combine all aligned data
         result = pd.concat(aligned_data, ignore_index=True)
@@ -518,6 +531,104 @@ class TradingCalendar:
         filtered_df["data_source"] = "traditional_market"
 
         return filtered_df
+
+    def _fill_traditional_asset_to_crypto_timestamps(
+        self,
+        traditional_df: pd.DataFrame,
+        crypto_timestamps: list[datetime],
+        strategy: str = "last_known_value"
+    ) -> pd.DataFrame:
+        """
+        Fill traditional asset data to match crypto timestamps using last known values.
+
+        This method ensures traditional assets have values for all crypto timestamps,
+        including weekends and holidays, using the last known market values.
+
+        Args:
+            traditional_df: DataFrame with traditional asset data
+            crypto_timestamps: List of all crypto timestamps to align to
+            strategy: Strategy for filling missing values ('last_known_value', 'forward_fill', 'interpolate')
+
+        Returns:
+            DataFrame with traditional asset data filled to crypto timestamps
+        """
+        if traditional_df.empty:
+            return traditional_df
+
+        # Sort traditional data by timestamp
+        traditional_df = traditional_df.sort_values("timestamp").reset_index(drop=True)
+
+        filled_data = []
+        last_known_values = None
+
+        # Sort traditional data by timestamp for efficient lookup
+        traditional_df_sorted = traditional_df.sort_values("timestamp")
+
+        # Set to keep track of symbols for which data is not found
+        no_data_warning_issued = False
+
+        for crypto_timestamp in crypto_timestamps:
+            # Find the last known traditional data point at or before the crypto timestamp
+            relevant_data = traditional_df_sorted[traditional_df_sorted["timestamp"] <= crypto_timestamp]
+
+            if not relevant_data.empty:
+                last_known_values = relevant_data.iloc[-1]
+
+                if last_known_values["timestamp"] == crypto_timestamp:
+                    # Exact match, use this data directly
+                    matched_row = last_known_values.copy()
+                    matched_row["data_source"] = "traditional_aligned"
+                    matched_row["alignment_method"] = strategy
+                    matched_row["original_timestamp"] = matched_row["timestamp"]
+                    filled_data.append(matched_row)
+                else:
+                    # Traditional data exists but not at this exact timestamp
+                    # Use last known values (forward fill)
+                    if last_known_values is not None:
+                        filled_row = last_known_values.copy()
+                        filled_row["timestamp"] = crypto_timestamp
+                        filled_row["data_source"] = "traditional_filled"
+                        filled_row["alignment_method"] = strategy
+                        filled_row["original_timestamp"] = last_known_values["timestamp"]
+                        filled_data.append(filled_row)
+                    else:
+                        # No previous data available
+                        if not no_data_warning_issued:
+                            logger.warning(
+                                f"No previous data available for {traditional_df['symbol'].iloc[0]} at {crypto_timestamp}"
+                            )
+                            no_data_warning_issued = True
+            else:
+                # No traditional data available at or before this timestamp
+                if last_known_values is not None:
+                    # Use last known values
+                    filled_row = last_known_values.copy()
+                    filled_row["timestamp"] = crypto_timestamp
+                    filled_row["data_source"] = "traditional_filled"
+                    filled_row["alignment_method"] = strategy
+                    filled_row["original_timestamp"] = last_known_values["timestamp"]
+                    filled_data.append(filled_row)
+                else:
+                    # No data available at all
+                    if not no_data_warning_issued:
+                        logger.warning(f"No data available for {traditional_df['symbol'].iloc[0]} at {crypto_timestamp}")
+                        no_data_warning_issued = True
+
+        filled_df = pd.DataFrame(filled_data)
+
+        # Add metadata about the filling process
+        if not filled_df.empty:
+            original_count = len(traditional_df)
+            filled_count = len(filled_df)
+            filled_df["original_data_points"] = original_count
+            filled_df["crypto_alignment_points"] = len(crypto_timestamps)
+            filled_df["filling_ratio"] = filled_count / len(crypto_timestamps)
+
+            logger.info(f"Traditional asset {traditional_df['symbol'].iloc[0]}: "
+                       f"{original_count} original -> {filled_count} aligned points "
+                       f"({filled_count/len(crypto_timestamps)*100:.1f}% coverage)")
+
+        return filled_df
 
     def _create_market_calendar(self, start_date: datetime, end_date: datetime) -> pd.DatetimeIndex:
         """Create a traditional market calendar for the given date range."""

@@ -41,18 +41,27 @@ def _normalize_timestamp_series(
     timezone: str = "America/New_York"
 ) -> pd.Series | pd.DatetimeIndex:
     """
-    Normalize timestamp series to consistent timezone format.
+    Normalize timestamp series to target timezone.
 
     Args:
         timestamps: Series or DatetimeIndex of timestamps
-        timezone: Target timezone for normalization
+        timezone: Target timezone
 
     Returns:
         Normalized timestamp series
     """
     try:
-        # Convert to datetime if not already
-        timestamps = pd.to_datetime(timestamps)
+        # Convert to datetime if not already, handling timezone-aware data
+        if hasattr(timestamps, "iloc") and len(timestamps) > 0:
+            # Check if any timestamps are timezone-aware
+            sample_timestamp = timestamps.iloc[0]
+            if hasattr(sample_timestamp, "tz") and sample_timestamp.tz is not None:
+                # Use utc=True for timezone-aware data
+                timestamps = pd.to_datetime(timestamps, utc=True)
+            else:
+                timestamps = pd.to_datetime(timestamps)
+        else:
+            timestamps = pd.to_datetime(timestamps)
 
         # Check if timezone-aware
         if hasattr(timestamps, "tz") and timestamps.tz is not None:
@@ -70,11 +79,12 @@ def _normalize_timestamp_series(
     except (AttributeError, TypeError, ValueError):
         # Fallback: try to localize to UTC first, then convert
         try:
-            timestamps = pd.to_datetime(timestamps)
+            # Try with utc=True for timezone-aware data
+            timestamps = pd.to_datetime(timestamps, utc=True)
             if hasattr(timestamps, "tz_localize"):
-                return timestamps.tz_localize("UTC").tz_convert(timezone)
+                return timestamps.tz_convert(timezone)
             else:
-                return timestamps.dt.tz_localize("UTC").dt.tz_convert(timezone)
+                return timestamps.dt.tz_convert(timezone)
         except (AttributeError, TypeError, ValueError):
             # Last resort: create naive timestamps in target timezone
             timestamps = pd.to_datetime(timestamps)

@@ -61,6 +61,13 @@ data:
   chunk_size: 1000
   use_memory_mapping: true
 
+  # Market calendar and mixed portfolio handling
+  align_mixed_portfolios: true
+  alignment_strategy: "last_known_value" # Strategy for filling traditional assets
+  retain_all_crypto_data: true # NEW: Retain all crypto candles
+  market_timezone: "America/New_York"
+  include_extended_hours: false
+
 # ============================================================================
 # MODEL CONFIGURATION
 # ============================================================================

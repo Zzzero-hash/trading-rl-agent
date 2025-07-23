@@ -15,10 +15,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from trade_agent.data.data_manager import DataManager
-from trade_agent.portfolio.portfolio_manager import PortfolioManager
-from trade_agent.risk.risk_manager import RiskManager
-from trade_agent.trading.trading_engine import TradingEngine
+from trade_agent.core.live_trading import LiveTradingEngine
+from trade_agent.data.parallel_data_fetcher import ParallelDataManager
+from trade_agent.portfolio.manager import PortfolioManager
+from trade_agent.risk.manager import RiskManager
 
 
 class TestNetworkFailureResilience:
@@ -28,7 +28,7 @@ class TestNetworkFailureResilience:
     @pytest.mark.asyncio
     async def test_data_feed_interruption(self):
         """Test system behavior when data feed is interrupted."""
-        data_manager = DataManager()
+        data_manager = ParallelDataManager()
 
         # Start data collection
         data_task = asyncio.create_task(data_manager.start_data_collection())
@@ -201,12 +201,20 @@ class TestDataQualityResilience:
 
 
 class TestTradingEngineResilience:
-    """Test trading engine resilience to various failures."""
+    """Test the resilience of the TradingEngine."""
+
+    @patch("trade_agent.core.live_trading.LiveTradingEngine.connect_broker")
+    def test_broker_connection_failure(self, mock_connect_broker):
+        """Test system behavior when broker connection fails."""
+        mock_connect_broker.side_effect = ConnectionError("Failed to connect to broker")
+        trading_engine = LiveTradingEngine()
+        with pytest.raises(ConnectionError):
+            trading_engine.start()
 
     @pytest.mark.chaos
     def test_order_execution_failure(self):
         """Test system behavior when order execution fails."""
-        trading_engine = TradingEngine()
+        trading_engine = LiveTradingEngine()
 
         with patch.object(
             trading_engine,
@@ -284,7 +292,7 @@ class TestConcurrentOperationResilience:
     @pytest.mark.chaos
     def test_concurrent_data_access(self):
         """Test system behavior under concurrent data access."""
-        data_manager = DataManager()
+        data_manager = ParallelDataManager()
 
         def access_data():
             for i in range(100):
