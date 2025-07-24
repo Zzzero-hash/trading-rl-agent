@@ -9,7 +9,6 @@ This module implements state-of-the-art policy optimization algorithms:
 - Multi-objective optimization for risk-adjusted returns
 """
 
-from __future__ import annotations
 
 import logging
 import math

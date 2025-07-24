@@ -21,6 +21,7 @@ Welcome to the Trading RL Agent documentation! This project implements a reinfor
    :maxdepth: 2
    :caption: Features
 
+   feature_enhanced-training-system_guide
    feature_reinforcement-learning_guide
    feature_backtesting_guide
    feature_ensemble-system_guide
@@ -64,24 +65,21 @@ Welcome to the Trading RL Agent documentation! This project implements a reinfor
    :maxdepth: 2
    :caption: API Reference
 
-   src
-   src.trade_agent
-   src.trade_agent.core
-   src.trade_agent.agents
-   src.trade_agent.models
-   src.trade_agent.features
-   src.trade_agent.data
-   src.trade_agent.portfolio
-   src.trade_agent.risk
-   src.trade_agent.monitoring
-   src.trade_agent.execution
-   src.training
-   src.backtesting
-   src.optimization
-   src.configs
-   src.messaging
-   src.nlp
-   src.portfolio
+   trade_agent
+   trade_agent.core
+   trade_agent.agents
+   trade_agent.models
+   trade_agent.features
+   trade_agent.data
+   trade_agent.portfolio
+   trade_agent.risk
+   trade_agent.monitoring
+   trade_agent.training
+   trade_agent.envs
+   trade_agent.eval
+   trade_agent.nlp
+   trade_agent.supervised_model
+   trade_agent.utils
 
 .. toctree::
    :maxdepth: 2

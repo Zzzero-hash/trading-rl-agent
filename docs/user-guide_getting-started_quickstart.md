@@ -1,6 +1,6 @@
 # Getting Started with Trading RL Agent
 
-This guide will help you get up and running with the Trading RL Agent, a production-grade hybrid reinforcement learning trading system.
+This guide will help you get up and running with the Trading RL Agent, a production-grade hybrid reinforcement learning trading system with enhanced hierarchical training capabilities.
 
 ## 🚀 Quick Installation
 
@@ -101,25 +101,53 @@ python main.py data pipeline
 
 ### 3. Train Your First Model
 
-#### CNN+LSTM Model
+#### Option A: Enhanced Training System (Recommended)
+
+The new hierarchical training system provides enterprise-grade features:
+
+```bash
+# Stage 1: Train CNN-LSTM model for feature extraction
+trade-agent train cnn-lstm-enhanced data/your_dataset.csv \
+    --optimize \
+    --n-trials 50
+
+# Stage 2: Train RL agent using CNN-LSTM features
+trade-agent train ppo data/your_dataset.csv \
+    --cnn-lstm-model cnn_lstm_v1.0.0_grade_A \
+    --optimize
+
+# Stage 3: Create hybrid model combining both
+trade-agent train hybrid data/your_dataset.csv \
+    --cnn-lstm-model cnn_lstm_v1.0.0_grade_A \
+    --rl-model ppo_v1.0.0_grade_B+
+
+# Stage 4: Build ensemble from multiple hybrids
+trade-agent train ensemble data/your_dataset.csv \
+    --models hybrid_v1.0.0_grade_A,hybrid_v1.1.0_grade_A-
+```
+
+**Enhanced System Features:**
+
+- 🎯 **Interactive Model Selection**: Choose from existing models or train new
+- 📊 **Performance Grading**: Automatic model grading (S, A+, A, A-, B+, B, B-, C, D, F)
+- 🔄 **Preprocessing Integration**: Versioned preprocessing saved with models
+- 💫 **Distributed Training**: Multi-GPU support for faster training
+- 📈 **Progress Tracking**: Rich progress visualization and monitoring
+
+#### Option B: Legacy CNN+LSTM Training
+
+For backward compatibility:
 
 ```bash
 # Basic training
-python main.py train cnn-lstm --epochs 100 --output models/cnn_lstm
+trade-agent train cnn-lstm data/your_dataset.csv --epochs 100
 
-# With GPU acceleration
-python main.py train cnn-lstm \
+# With GPU acceleration and optimization
+trade-agent train cnn-lstm data/your_dataset.csv \
     --epochs 100 \
     --gpu \
-    --mixed-precision \
-    --output models/cnn_lstm_gpu
-
-# With custom parameters
-python main.py train cnn-lstm \
-    --epochs 200 \
-    --batch-size 64 \
-    --learning-rate 0.001 \
-    --output models/cnn_lstm_custom
+    --optimize-hyperparams \
+    --n-trials 50
 ```
 
 #### Reinforcement Learning Agent

@@ -5,11 +5,10 @@ This module extends the basic trainer with advanced policy optimization algorith
 and provides a unified interface for training RL agents with different optimization methods.
 """
 
-from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 import torch
@@ -25,9 +24,7 @@ from .advanced_policy_optimization import (
     PolicyOptimizationComparison,
     TRPOConfig,
 )
-
-if TYPE_CHECKING:
-    from .configs import MultiObjectiveConfig
+from .configs import MultiObjectiveConfig
 
 logger = logging.getLogger(__name__)
 

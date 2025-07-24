@@ -3,7 +3,6 @@ Centralized logging configuration for the trading system.
 """
 
 import logging
-import logging.config
 from pathlib import Path
 from typing import Any, cast
 
@@ -108,6 +107,8 @@ def setup_logging(
                 handler_config["filename"] = str(log_dir / Path(filename).name)
 
     # Configure standard logging
+    # Apply configuration
+    import logging.config
     logging.config.dictConfig(config)
 
     # Configure structured logging if requested

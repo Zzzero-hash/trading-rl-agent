@@ -1,8 +1,8 @@
 """Feature pipeline composing multiple feature generators."""
 
-from __future__ import annotations
 
-from typing import TYPE_CHECKING
+
+import pandas as pd
 
 from trade_agent.core.logging import get_logger
 
@@ -11,9 +11,6 @@ from .cross_asset import CrossAssetFeatures
 from .market_microstructure import MarketMicrostructure
 from .normalization import FeatureNormalizer, NormalizationConfig
 from .technical_indicators import TechnicalIndicators
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 
 class FeaturePipeline:

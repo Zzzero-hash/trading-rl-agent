@@ -1,31 +1,39 @@
-# Enhanced CNN+LSTM Training Pipeline Guide
+# CNN+LSTM Training Guide
 
-This guide covers the production-ready CNN+LSTM training pipeline with comprehensive monitoring, hyperparameter optimization, and evaluation capabilities.
+This guide covers CNN+LSTM model training using both the legacy system and the new Enhanced Training System.
 
 ## 🎯 Overview
 
-The enhanced training pipeline addresses all the TODO items from the original training script:
+CNN+LSTM models serve as the foundation (Stage 1) of the hierarchical training pipeline, providing feature extraction and pattern recognition capabilities for market data.
 
-- ✅ **MLflow/TensorBoard Integration** - Complete experiment tracking and visualization
-- ✅ **Model Checkpointing and Early Stopping** - Robust model saving and training control
-- ✅ **Hyperparameter Optimization Framework** - Automated hyperparameter tuning with Optuna
-- ✅ **Comprehensive Training Validation Metrics** - Extensive metrics and evaluation
-- ✅ **Training CLI with Argument Parsing** - Flexible command-line interface
-- ✅ **Training Progress Visualization** - Advanced plotting and monitoring
+## 🚀 Training Options
 
-## 🚀 Quick Start
+### Option 1: Enhanced Training System (Recommended)
 
-### Installation
+The new Enhanced Training System provides enterprise-grade features:
 
 ```bash
-# Install enhanced training dependencies
-pip install -r requirements_enhanced_training.txt
-
-# Or install specific components
-pip install mlflow tensorboard optuna torch torchvision
+# Enhanced CNN-LSTM training with full features
+trade-agent train cnn-lstm-enhanced data/dataset.csv \
+    --optimize \
+    --n-trials 50 \
+    --distributed \
+    --epochs 100
 ```
 
-### Basic Training
+**Features:**
+
+- ✅ **Model Registry Integration** - Automatic versioning and performance grading
+- ✅ **Preprocessing Pipeline Management** - Versioned preprocessing saved with models
+- ✅ **Interactive Model Selection** - Choose from existing models or train new
+- ✅ **Distributed Training Support** - Multi-GPU training coordination
+- ✅ **Hyperparameter Optimization** - Automated tuning with Optuna
+- ✅ **Comprehensive Monitoring** - Progress tracking and visualization
+- ✅ **Error Handling & Recovery** - Robust training with automatic recovery
+
+### Option 2: Legacy Training System
+
+The original training system for backward compatibility:
 
 ```bash
 # Train with default settings

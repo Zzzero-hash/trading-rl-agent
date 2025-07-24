@@ -1,6 +1,5 @@
 """Utilities for fetching live market data."""
 
-from __future__ import annotations
 
 import contextlib
 

@@ -5,17 +5,13 @@ This module provides comprehensive benchmarking capabilities for comparing
 different policy optimization algorithms with standardized metrics and visualizations.
 """
 
-from __future__ import annotations
 
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 from typing import Any
 
 import matplotlib.pyplot as plt
