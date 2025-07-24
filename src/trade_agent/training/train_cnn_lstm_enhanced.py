@@ -8,18 +8,160 @@ hyperparameter optimization, comprehensive metrics, and experiment tracking.
 import logging
 import time
 import warnings
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import optuna
+import pandas as pd
 import torch
 from optuna.trial import Trial
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
+
+try:
+    import ray
+except ImportError:
+    ray = None
+from sklearn.preprocessing import StandardScaler
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
 
 from trade_agent.models.cnn_lstm import CNNLSTMModel
+
+
+def init_ray_cluster() -> None:
+    """Initialize or join Ray cluster."""
+    if ray is None:
+        warnings.warn("Ray is not installed. Skipping Ray cluster initialization.", stacklevel=2)
+        return
+
+    if not ray.is_initialized():
+        try:
+            # Try to connect to existing cluster first
+            ray.init(address="auto", ignore_reinit_error=True)
+            logging.info("Connected to existing Ray cluster")
+        except Exception:
+            # If no cluster exists, start a new one
+            try:
+                ray.init(ignore_reinit_error=True)
+                logging.info("Started new Ray cluster")
+            except Exception as e:
+                warnings.warn(f"Failed to initialize Ray cluster: {e}", stacklevel=2)
+    else:
+        logging.info("Ray cluster is already initialized")
+
+
+def load_and_preprocess_csv_data(
+    csv_path: Path,
+    sequence_length: int = 60,
+    prediction_horizon: int = 1,
+    target_column: str = "close",
+    feature_columns: list[str] | None = None,
+    scaler_type: str = "standard",
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Load and preprocess CSV data specifically for CNN+LSTM training.
+
+    This function handles:
+    - Loading CSV data
+    - Feature selection and engineering
+    - Sequence creation for time series modeling
+    - Data scaling/normalization
+    - Target preparation for prediction horizon
+
+    Args:
+        csv_path: Path to the CSV dataset file
+        sequence_length: Length of input sequences (lookback window)
+        prediction_horizon: Number of steps ahead to predict
+        target_column: Name of the target column to predict
+        feature_columns: List of feature columns to use (None = auto-select numeric columns)
+        scaler_type: Type of scaler to use ('standard', 'minmax', 'robust')
+
+    Returns:
+        Tuple of (sequences, targets) as numpy arrays ready for CNN+LSTM training
+    """
+    # Load data
+    print(f"Loading data from {csv_path}...")
+    df = pd.read_csv(csv_path)
+
+    print(f"Dataset shape: {df.shape}")
+    print(f"Columns: {list(df.columns)}")
+
+    # Handle datetime index if present
+    if "timestamp" in df.columns:
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df = df.set_index("timestamp").sort_index()
+    elif "date" in df.columns:
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.set_index("date").sort_index()
+
+    # Auto-select numeric columns if not specified
+    if feature_columns is None:
+        numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
+        # Remove target column from features if it's in the list
+        if target_column in numeric_columns:
+            feature_columns = [col for col in numeric_columns if col != target_column]
+        else:
+            feature_columns = numeric_columns
+
+    print(f"Using features: {feature_columns}")
+    print(f"Target column: {target_column}")
+
+    # Ensure target column exists
+    if target_column not in df.columns:
+        raise ValueError(f"Target column '{target_column}' not found in dataset")
+
+    # Extract features and target
+    X = df[feature_columns].copy()
+    y = df[target_column].copy()
+
+    # Handle missing values
+    if X.isnull().any().any():
+        print("Warning: Found missing values in features, forward-filling...")
+        X = X.fillna(method="ffill").fillna(method="bfill")
+
+    if y.isnull().any():
+        print("Warning: Found missing values in target, forward-filling...")
+        y = y.fillna(method="ffill").fillna(method="bfill")
+
+    # Scale features
+    if scaler_type == "standard":
+        scaler = StandardScaler()
+    elif scaler_type == "minmax":
+        from sklearn.preprocessing import MinMaxScaler
+        scaler = MinMaxScaler()
+    elif scaler_type == "robust":
+        from sklearn.preprocessing import RobustScaler
+        scaler = RobustScaler()
+    else:
+        raise ValueError(f"Unknown scaler type: {scaler_type}")
+
+    X_scaled = scaler.fit_transform(X)
+
+    # Create sequences
+    print(f"Creating sequences with length {sequence_length} and prediction horizon {prediction_horizon}...")
+    sequences = []
+    targets = []
+
+    for i in range(len(X_scaled) - sequence_length - prediction_horizon + 1):
+        # Input sequence
+        seq = X_scaled[i:i + sequence_length]
+        sequences.append(seq)
+
+        # Target (future value)
+        target_idx = i + sequence_length + prediction_horizon - 1
+        target = y.iloc[target_idx]
+        targets.append(target)
+
+    sequences = np.array(sequences, dtype=np.float32)
+    targets = np.array(targets, dtype=np.float32)
+
+    print(f"Created {len(sequences)} sequences")
+    print(f"Sequence shape: {sequences.shape}")
+    print(f"Targets shape: {targets.shape}")
+
+    return sequences, targets
 
 
 class EnhancedCNNLSTMTrainer:
@@ -126,13 +268,24 @@ class EnhancedCNNLSTMTrainer:
 
     def _create_model(self, input_dim: int) -> CNNLSTMModel:
         """Create CNN-LSTM model from configuration."""
-        # Merge input_dim into config dict
-        config = dict(self.model_config)
-        config["input_dim"] = input_dim
+        config = self.model_config
+        print(f"DEBUG: Creating CNNLSTMModel with input_dim={input_dim}")
+        print(f"DEBUG: config keys: {list(config.keys())}")
+
         return CNNLSTMModel(
             input_dim=input_dim,
-            config=config,
+            cnn_filters=config.get("cnn_filters", [64, 128, 256]),
+            cnn_kernel_sizes=config.get("cnn_kernel_sizes", [3, 3, 3]),
+            lstm_units=config.get("lstm_units", 256),
+            lstm_num_layers=config.get("lstm_layers", 2),
+            lstm_dropout=config.get("dropout_rate", 0.2),
+            cnn_dropout=config.get("dropout_rate", 0.2),
+            output_dim=config.get("output_dim", 1),
             use_attention=config.get("use_attention", False),
+            use_residual=config.get("use_residual", False),
+            attention_heads=config.get("attention_heads", 8),
+            layer_norm=config.get("layer_norm", True),
+            batch_norm=config.get("batch_norm", True),
         )
 
     def _create_optimizer(self) -> optim.Optimizer:
@@ -169,16 +322,20 @@ class EnhancedCNNLSTMTrainer:
     def create_model(self, model_config: dict[str, Any] | None = None) -> CNNLSTMModel:
         cfg = model_config if model_config is not None else self.model_config
         input_dim = cfg.get("input_dim", 5)
-        config = {
-            "cnn_filters": cfg.get("cnn_filters", [64, 128, 256]),
-            "cnn_kernel_sizes": cfg.get("cnn_kernel_sizes", [3, 3, 3]),
-            "lstm_units": cfg.get("lstm_units", 256),
-            "dropout": cfg.get("dropout_rate", 0.2),
-        }
         self.model = CNNLSTMModel(
             input_dim=input_dim,
-            config=config,
+            cnn_filters=cfg.get("cnn_filters", [64, 128, 256]),
+            cnn_kernel_sizes=cfg.get("cnn_kernel_sizes", [3, 3, 3]),
+            lstm_units=cfg.get("lstm_units", 256),
+            lstm_num_layers=cfg.get("lstm_layers", 2),
+            lstm_dropout=cfg.get("dropout_rate", 0.2),
+            cnn_dropout=cfg.get("dropout_rate", 0.2),
+            output_dim=cfg.get("output_dim", 1),
             use_attention=cfg.get("use_attention", False),
+            use_residual=cfg.get("use_residual", False),
+            attention_heads=cfg.get("attention_heads", 8),
+            layer_norm=cfg.get("layer_norm", True),
+            batch_norm=cfg.get("batch_norm", True),
         )
         return self.model
 
@@ -540,16 +697,40 @@ class HyperparameterOptimizer:
 
     def _suggest_model_config(self, trial: Trial) -> dict[str, Any]:
         """Suggest model configuration."""
+        use_attention = trial.suggest_categorical("use_attention", [True, False])
+
+        # Suggest attention heads only if attention is enabled
+        attention_heads = 1
+        if use_attention:
+            # Suggest number of attention heads that are common divisors
+            attention_heads = trial.suggest_categorical("attention_heads", [1, 2, 4, 8, 16])
+
+        # Define filter options with string keys to avoid list serialization issues
+        filter_configs = {
+            "small": [32, 64],
+            "medium": [64, 128],
+            "large": [32, 64, 128],
+            "extra_large": [64, 128, 256]
+        }
+        filter_choice = trial.suggest_categorical("cnn_filters", ["small", "medium", "large", "extra_large"])
+
+        # Define kernel size options with string keys
+        kernel_configs = {
+            "3x3": [3, 3],
+            "5x5": [5, 5],
+            "3x5": [3, 5],
+            "3x3x3": [3, 3, 3]
+        }
+        kernel_choice = trial.suggest_categorical("cnn_kernel_sizes", ["3x3", "5x5", "3x5", "3x3x3"])
+
         return {
-            "cnn_filters": trial.suggest_categorical(
-                "cnn_filters",
-                [[32, 64], [64, 128], [32, 64, 128], [64, 128, 256]],
-            ),
-            "cnn_kernel_sizes": trial.suggest_categorical("cnn_kernel_sizes", [[3, 3], [5, 5], [3, 5], [3, 3, 3]]),
+            "cnn_filters": filter_configs[filter_choice],
+            "cnn_kernel_sizes": kernel_configs[kernel_choice],
             "lstm_units": trial.suggest_int("lstm_units", 32, 512),
             "lstm_layers": trial.suggest_int("lstm_layers", 1, 3),
             "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.5),
-            "use_attention": trial.suggest_categorical("use_attention", [True, False]),
+            "use_attention": use_attention,
+            "attention_heads": attention_heads,
             "use_residual": trial.suggest_categorical("use_residual", [True, False]),
             "output_size": 1,
         }

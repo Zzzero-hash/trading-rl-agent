@@ -13,7 +13,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Annotated, Any, TypeVar
 
-import numpy as np
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -187,7 +186,7 @@ app.add_typer(trade_app, help="Live trading operations")
 
 @train_app.command()
 def cnn_lstm(
-    data_path: Annotated[Path, typer.Argument(..., help="Path to processed training data")],
+    data_path: Annotated[Path, typer.Argument(..., help="Path to CSV dataset file or directory containing dataset.csv")],
     output_dir: Path = DEFAULT_CNN_LSTM_OUTPUT,
     epochs: int = DEFAULT_EPOCHS,
     batch_size: int = DEFAULT_BATCH_SIZE,
@@ -206,32 +205,47 @@ def cnn_lstm(
             HyperparameterOptimizer,
             create_enhanced_model_config,
             create_enhanced_training_config,
+            init_ray_cluster,
+            load_and_preprocess_csv_data,
         )
 
-        # Load data
-        data = np.load(data_path)
-        sequences = data["sequences"]
-        targets = data["targets"]
+        # Initialize Ray cluster first
+        console.print("[cyan]Initializing Ray cluster...[/cyan]")
+        init_ray_cluster()
+
+        # Determine actual CSV file path
+        csv_path = data_path / "dataset.csv" if data_path.is_dir() else data_path
+
+        if not csv_path.exists():
+            console.print(f"[red]❌ Dataset file not found: {csv_path}[/red]")
+            raise typer.Exit(1)
+
+        console.print(f"[cyan]Loading data from: {csv_path}[/cyan]")
+
+        # Load and preprocess data specifically for CNN+LSTM
+        sequences, targets = load_and_preprocess_csv_data(
+            csv_path=csv_path,
+            sequence_length=sequence_length,
+            prediction_horizon=prediction_horizon,
+        )
 
         # Check if we should run hyperparameter optimization
         if optimize_hyperparams:
             console.print("[yellow]Running hyperparameter optimization...[/yellow]")
+            # For now, we'll optimize only training hyperparameters, not data preprocessing parameters
+            # to avoid reloading data multiple times
             optimizer = HyperparameterOptimizer(sequences, targets, n_trials=n_trials)
             result = optimizer.optimize()
             best_params = result.get("best_params", {})
             console.print(f"[green]Best parameters found: {best_params}[/green]")
 
-            # Extract optimized parameters
-            if "sequence_length" in best_params:
-                sequence_length = best_params["sequence_length"]
-            if "prediction_horizon" in best_params:
-                prediction_horizon = best_params["prediction_horizon"]
+            # Extract optimized training parameters (not data preprocessing parameters)
             if "learning_rate" in best_params:
                 learning_rate = best_params["learning_rate"]
             if "batch_size" in best_params:
                 batch_size = best_params["batch_size"]
 
-            console.print(f"[cyan]Using optimized sequence_length={sequence_length}, prediction_horizon={prediction_horizon}[/cyan]")
+            console.print(f"[cyan]Using optimized learning_rate={learning_rate}, batch_size={batch_size}[/cyan]")
 
         # Create model and training configs
         model_config = create_enhanced_model_config(input_dim=sequences.shape[-1])
