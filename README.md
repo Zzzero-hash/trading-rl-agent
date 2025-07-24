@@ -60,13 +60,29 @@ A production-grade hybrid reinforcement learning trading system that combines CN
    ./setup-env.sh full
    ```
 
-3. **Install pre-commit hooks**
+3. **Configure environment variables**
+
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+
+   # Edit .env with your actual API keys
+   # ⚠️  NEVER commit .env files with real API keys!
+   nano .env
+   ```
+
+   Required environment variables:
+   - `QWEN_API_KEY`: Your Qwen API key from OpenRouter
+   - `ALPACA_API_KEY`: Your Alpaca Markets API key
+   - `ALPACA_SECRET_KEY`: Your Alpaca Markets secret key
+
+4. **Install pre-commit hooks**
 
    ```bash
    pre-commit install
    ```
 
-4. **Verify installation**
+5. **Verify installation**
    ```bash
    python -c "import trading_rl_agent; print('✅ Package imported successfully')"
    ```
