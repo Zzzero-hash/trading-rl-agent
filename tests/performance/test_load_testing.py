@@ -11,7 +11,6 @@ Tests include:
 - System throughput testing
 """
 
-import concurrent.futures
 import time
 
 import numpy as np

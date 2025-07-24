@@ -1,6 +1,5 @@
 """Position sizing utilities."""
 
-from __future__ import annotations
 
 
 def kelly_position_size(

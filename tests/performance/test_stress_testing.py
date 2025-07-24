@@ -12,7 +12,6 @@ Tests include:
 - Rapid state changes stress
 """
 
-import concurrent.futures
 import gc
 import time
 

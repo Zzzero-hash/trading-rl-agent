@@ -59,9 +59,21 @@ autodoc_typehints = "description"
 autodoc_typehints_description_target = "documented"
 autodoc_typehints_format = "short"
 
-# Mock imports for unimplemented modules
+# Mock imports for optional dependencies and unimplemented modules
 autodoc_mock_imports = [
     "nats",
+    "optuna",
+    "mlflow",
+    "tensorboard",
+    "ray",
+    "gymnasium",
+    "torch",
+    "torchvision",
+    "sklearn",
+    "pandas",
+    "numpy",
+    "yfinance",
+    "alpaca_trade_api",
     "src.trade_agent.execution",
     "src.portfolio",
     "src.messaging",
@@ -140,7 +152,7 @@ def linkcode_resolve(domain, info):
         return None
 
     filename = info["module"].replace(".", "/")
-    return f"https://github.com/Zzzero-hash/trade-agent/blob/main/src/{filename}.py"
+    return f"https://github.com/Zzzero-hash/trading-rl-agent/blob/master/src/{filename}.py"
 
 
 # -- MyST parser configuration -----------------------------------------------

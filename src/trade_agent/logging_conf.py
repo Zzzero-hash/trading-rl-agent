@@ -10,7 +10,6 @@ Integrates with Typer callback for automatic setup.
 """
 
 import logging
-import logging.config
 from pathlib import Path
 from typing import Any
 
@@ -280,6 +279,7 @@ def setup_logging_from_verbose(verbose_level: int = 0, log_dir: Path | None = No
     config = get_logging_config(verbose_level, log_dir)
 
     # Apply configuration
+    import logging.config
     logging.config.dictConfig(config)
 
     # Setup structured logging if requested

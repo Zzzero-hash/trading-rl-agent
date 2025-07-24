@@ -286,7 +286,6 @@ class TestDataProcessingPerformance:
     @pytest.mark.benchmark
     def test_concurrent_data_operations(self, benchmark_data, performance_monitor):
         """Test performance with concurrent data operations."""
-        import concurrent.futures
 
         # Prepare test data
         test_data = benchmark_data.copy()

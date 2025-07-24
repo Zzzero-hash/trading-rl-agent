@@ -111,8 +111,7 @@ class DependencyValidator:
             # Check RLlib availability
             try:
                 # Test RLlib availability without importing specific algorithms
-                import ray.rllib
-
+                importlib.import_module("ray.rllib")
                 self.log_success("RAY", "RLlib available")
             except ImportError:
                 self.log_issue("RAY", "RLlib not available")

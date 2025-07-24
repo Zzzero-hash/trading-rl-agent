@@ -355,7 +355,6 @@ class TestRiskCalculationPerformance:
     @pytest.mark.benchmark
     def test_concurrent_risk_calculations(self, portfolio_data, performance_monitor):
         """Test performance with concurrent risk calculations."""
-        import concurrent.futures
 
         # Prepare multiple portfolios
         portfolios = []

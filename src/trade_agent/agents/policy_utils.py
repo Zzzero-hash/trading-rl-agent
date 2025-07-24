@@ -1,18 +1,13 @@
-from __future__ import annotations
-
 import logging
 import random
 from collections import deque
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
+from gymnasium import spaces
 from ray.rllib.policy.policy import Policy
 from ray.rllib.policy.policy_map import PolicyMap
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from gymnasium import spaces
 
 
 class CallablePolicy(Policy):
