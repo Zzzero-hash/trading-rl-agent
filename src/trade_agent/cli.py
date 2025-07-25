@@ -119,7 +119,7 @@ def get_config_manager() -> Any:
                     "Data",
                     (),
                     {
-                        "primary_source": "yfinance",
+                        "sources": type("Sources", (), {"primary": "yfinance", "backup": "yfinance"})(),
                         "symbols": ["AAPL", "GOOGL", "MSFT"],  # Using default symbols
                         "start_date": "2024-01-01",
                         "end_date": "2024-12-31",
@@ -127,9 +127,8 @@ def get_config_manager() -> Any:
                         "data_path": "data/",
                     },
                 )()
-                agent = type("Agent", (), {"agent_type": "ppo"})()
-                risk = type("Risk", (), {"max_position_size": 0.1})()
-                execution = type("Execution", (), {"broker": "alpaca", "paper_trading": True})()
+                model = type("Model", (), {"algorithm": "ppo"})()
+                live = type("Live", (), {"max_position_size": 0.1, "exchange": "alpaca", "paper_trading": True})()
                 infrastructure = type("Infrastructure", (), {"max_workers": 4})()
 
             _settings = MinimalSettings()
@@ -390,15 +389,15 @@ def info() -> None:
 
     table.add_row("Environment", settings.environment)
     table.add_row("Debug Mode", str(settings.debug))
-    table.add_row("Data Source", settings.data.primary_source)
+    table.add_row("Data Source", settings.data.sources.primary)
     table.add_row("Symbols", ", ".join(settings.data.symbols))
-    table.add_row("Agent Type", settings.agent.agent_type)
+    table.add_row("Agent Type", settings.model.algorithm)
     table.add_row(
         "Risk Management",
-        "Enabled" if settings.risk.max_position_size > 0 else "Disabled",
+        "Enabled" if settings.live.max_position_size > 0 else "Disabled",
     )
-    table.add_row("Execution Broker", settings.execution.broker)
-    table.add_row("Paper Trading", str(settings.execution.paper_trading))
+    table.add_row("Execution Broker", settings.live.exchange)
+    table.add_row("Paper Trading", str(settings.live.paper_trading))
 
     console.print(table)
 

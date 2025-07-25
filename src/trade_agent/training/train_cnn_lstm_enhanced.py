@@ -234,6 +234,38 @@ class EnhancedCNNLSTMTrainer:
         if enable_tensorboard:
             self._setup_tensorboard()
 
+    def _validate_config(self, model_config: dict[str, Any], training_config: dict[str, Any]) -> None:
+        """Validate model and training configuration."""
+        # Check model config
+        required_model_keys = ["cnn_filters", "cnn_kernel_sizes", "lstm_units", "dropout_rate"]
+        for key in required_model_keys:
+            if key not in model_config:
+                raise ValueError(f"Missing required model config key: {key}")
+
+        # Check that CNN filters and kernel sizes have matching lengths
+        filters = model_config["cnn_filters"]
+        kernels = model_config["cnn_kernel_sizes"]
+
+        if not isinstance(filters, list) or not isinstance(kernels, list):
+            raise ValueError("cnn_filters and cnn_kernel_sizes must be lists")
+
+        if len(filters) != len(kernels):
+            raise ValueError(f"Mismatch: {len(filters)} CNN filters but {len(kernels)} kernel sizes")
+
+        # Check training config
+        required_training_keys = ["learning_rate", "batch_size", "epochs"]
+        for key in required_training_keys:
+            if key not in training_config:
+                raise ValueError(f"Missing required training config key: {key}")
+
+        # Validate ranges
+        if training_config["learning_rate"] <= 0:
+            raise ValueError("Learning rate must be positive")
+        if training_config["batch_size"] <= 0:
+            raise ValueError("Batch size must be positive")
+        if training_config["epochs"] <= 0:
+            raise ValueError("Epochs must be positive")
+
     def _setup_mlflow(self) -> None:
         """Setup MLflow tracking."""
         try:
@@ -408,8 +440,8 @@ class EnhancedCNNLSTMTrainer:
         self.scheduler = self._create_scheduler()
 
         # Create data loaders
-        train_dataset = TensorDataset(torch.FloatTensor(X_train), torch.FloatTensor(y_train))
-        val_dataset = TensorDataset(torch.FloatTensor(X_val), torch.FloatTensor(y_val))
+        train_dataset = TensorDataset(torch.FloatTensor(X_train), torch.FloatTensor(y_train).squeeze())
+        val_dataset = TensorDataset(torch.FloatTensor(X_val), torch.FloatTensor(y_val).squeeze())
 
         train_loader = DataLoader(
             train_dataset,
@@ -454,8 +486,15 @@ class EnhancedCNNLSTMTrainer:
                 self.optimizer.step()
 
                 train_losses.append(loss.item())
-                train_predictions.extend(outputs.detach().cpu().numpy())
-                train_targets.extend(batch_y.detach().cpu().numpy())
+                # Handle tensor shape properly
+                outputs_np = outputs.detach().cpu().numpy()
+                batch_y_np = batch_y.detach().cpu().numpy()
+                if outputs_np.ndim == 0:
+                    outputs_np = outputs_np.reshape(1)
+                if batch_y_np.ndim == 0:
+                    batch_y_np = batch_y_np.reshape(1)
+                train_predictions.extend(outputs_np.flatten())
+                train_targets.extend(batch_y_np.flatten())
 
             # Validation phase
             self.model.eval()
@@ -470,8 +509,15 @@ class EnhancedCNNLSTMTrainer:
                     loss = self.criterion(outputs, batch_y)
 
                     val_losses.append(loss.item())
-                    val_predictions.extend(outputs.cpu().numpy())
-                    val_targets.extend(batch_y.cpu().numpy())
+                    # Handle tensor shape properly
+                    outputs_np = outputs.cpu().numpy()
+                    batch_y_np = batch_y.cpu().numpy()
+                    if outputs_np.ndim == 0:
+                        outputs_np = outputs_np.reshape(1)
+                    if batch_y_np.ndim == 0:
+                        batch_y_np = batch_y_np.reshape(1)
+                    val_predictions.extend(outputs_np.flatten())
+                    val_targets.extend(batch_y_np.flatten())
 
             # Calculate metrics
             train_loss = np.mean(train_losses)
@@ -670,11 +716,23 @@ class HyperparameterOptimizer:
 
     def _objective(self, trial: Trial) -> float:
         """Objective function for optimization."""
+        import time
+        start_time = time.time()
+        trial_num = trial.number + 1
+        print(f"\n⚡ Starting Trial {trial_num}...")
+
         # Suggest model configuration
         model_config = self._suggest_model_config(trial)
 
         # Suggest training configuration
         training_config = self._suggest_training_config(trial)
+
+        # Show key parameters for this trial
+        lr = training_config.get("learning_rate", "N/A")
+        lstm_units = model_config.get("lstm_units", "N/A")
+        batch_size = training_config.get("batch_size", "N/A")
+        cnn_arch = trial.params.get("cnn_architecture", "N/A") if hasattr(trial, "params") else "N/A"
+        print(f"   LR: {lr:.2e} | LSTM Units: {lstm_units} | Batch Size: {batch_size} | CNN: {cnn_arch}")
 
         # Create trainer
         trainer = EnhancedCNNLSTMTrainer(
@@ -684,15 +742,44 @@ class HyperparameterOptimizer:
             enable_tensorboard=False,
         )
 
+        # Validate configuration before training
+        try:
+            trainer._validate_config(model_config, training_config)
+        except Exception as e:
+            print(f"   ❌ Trial {trial_num} failed: Invalid configuration - {e}")
+            return float("inf")
+
         # Train model
         try:
+            print("   Training model...")
             result = trainer.train_from_dataset(
                 sequences=self.sequences,
                 targets=self.targets,
             )
-            return float(result["best_val_loss"])
+
+            # Ensure we have a valid result with best_val_loss
+            if "best_val_loss" not in result:
+                print(f"   ❌ Trial {trial_num} failed: Missing best_val_loss in result")
+                return float("inf")
+
+            val_loss = result["best_val_loss"]
+
+            # Check for invalid loss values
+            if val_loss is None or np.isnan(val_loss) or np.isinf(val_loss):
+                print(f"   ❌ Trial {trial_num} failed: Invalid validation loss: {val_loss}")
+                return float("inf")
+
+            val_loss = float(val_loss)
+            elapsed = time.time() - start_time
+            print(f"   ✅ Trial {trial_num} completed in {elapsed:.1f}s with validation loss: {val_loss:.4f}")
+            return val_loss
+
         except Exception as e:
-            print(f"Trial failed: {e}")
+            elapsed = time.time() - start_time
+            print(f"   ❌ Trial {trial_num} failed after {elapsed:.1f}s: {e!s}")
+            # Print more detailed error info for debugging
+            import traceback
+            print(f"   Error details: {traceback.format_exc()}")
             return float("inf")
 
     def _suggest_model_config(self, trial: Trial) -> dict[str, Any]:
@@ -705,27 +792,45 @@ class HyperparameterOptimizer:
             # Suggest number of attention heads that are common divisors
             attention_heads = trial.suggest_categorical("attention_heads", [1, 2, 4, 8, 16])
 
-        # Define filter options with string keys to avoid list serialization issues
-        filter_configs = {
-            "small": [32, 64],
-            "medium": [64, 128],
-            "large": [32, 64, 128],
-            "extra_large": [64, 128, 256]
+        # Define coordinated CNN architectures (filters and kernels must match in length)
+        cnn_architectures = {
+            "small_2layer": {
+                "filters": [32, 64],
+                "kernels": [3, 3]
+            },
+            "medium_2layer": {
+                "filters": [64, 128],
+                "kernels": [3, 3]
+            },
+            "large_2layer": {
+                "filters": [128, 256],
+                "kernels": [3, 3]
+            },
+            "small_3layer": {
+                "filters": [32, 64, 128],
+                "kernels": [3, 3, 3]
+            },
+            "medium_3layer": {
+                "filters": [64, 128, 256],
+                "kernels": [3, 3, 3]
+            },
+            "varied_kernel_2layer": {
+                "filters": [32, 64],
+                "kernels": [3, 5]
+            },
+            "varied_kernel_3layer": {
+                "filters": [32, 64, 128],
+                "kernels": [3, 5, 3]
+            }
         }
-        filter_choice = trial.suggest_categorical("cnn_filters", ["small", "medium", "large", "extra_large"])
 
-        # Define kernel size options with string keys
-        kernel_configs = {
-            "3x3": [3, 3],
-            "5x5": [5, 5],
-            "3x5": [3, 5],
-            "3x3x3": [3, 3, 3]
-        }
-        kernel_choice = trial.suggest_categorical("cnn_kernel_sizes", ["3x3", "5x5", "3x5", "3x3x3"])
+        # Select coordinated architecture
+        arch_choice = trial.suggest_categorical("cnn_architecture", list(cnn_architectures.keys()))
+        selected_arch = cnn_architectures[arch_choice]
 
         return {
-            "cnn_filters": filter_configs[filter_choice],
-            "cnn_kernel_sizes": kernel_configs[kernel_choice],
+            "cnn_filters": selected_arch["filters"],
+            "cnn_kernel_sizes": selected_arch["kernels"],
             "lstm_units": trial.suggest_int("lstm_units", 32, 512),
             "lstm_layers": trial.suggest_int("lstm_layers", 1, 3),
             "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.5),
@@ -751,14 +856,80 @@ class HyperparameterOptimizer:
             "prediction_horizon": trial.suggest_categorical("prediction_horizon", [1, 3, 5, 10, 20]),
         }
 
+    def _create_progress_callback(self) -> Any:
+        """Create a callback to display optimization progress."""
+        start_time = time.time()
+
+        def callback(study: Any, trial: Any) -> None:
+            trial_number = trial.number + 1
+            current_value = trial.value if trial.value is not None else float("inf")
+            best_value = study.best_value if study.best_value is not None else float("inf")
+
+            # Calculate timing
+            elapsed_time = time.time() - start_time
+            avg_time_per_trial = elapsed_time / trial_number
+            remaining_trials = self.n_trials - trial_number
+            estimated_remaining = avg_time_per_trial * remaining_trials
+
+            # Display progress information
+            print(f"\n🔍 Trial {trial_number}/{self.n_trials} completed")
+            print(f"   Current trial score: {current_value:.4f}")
+            print(f"   Best score so far: {best_value:.4f}")
+            print(f"   Time: {elapsed_time:.1f}s elapsed, ~{estimated_remaining:.1f}s remaining")
+
+            # Show key hyperparameters from this trial
+            if trial.params:
+                key_params = {}
+                if "learning_rate" in trial.params:
+                    key_params["LR"] = f"{trial.params['learning_rate']:.2e}"
+                if "lstm_units" in trial.params:
+                    key_params["LSTM"] = trial.params["lstm_units"]
+                if "batch_size" in trial.params:
+                    key_params["Batch"] = trial.params["batch_size"]
+                if "cnn_architecture" in trial.params:
+                    key_params["CNN"] = trial.params["cnn_architecture"]
+
+                if key_params:
+                    param_str = " | ".join([f"{k}: {v}" for k, v in key_params.items()])
+                    print(f"   Key params: {param_str}")
+
+            # Progress bar
+            progress = trial_number / self.n_trials
+            bar_length = 30
+            filled = int(progress * bar_length)
+            bar = "█" * filled + "░" * (bar_length - filled)
+            print(f"   Progress: [{bar}] {progress*100:.1f}%")
+
+            if trial.value is not None and trial.value == best_value:
+                print("   🌟 New best score!")
+
+            print("-" * 60)
+
+        return callback
+
     def optimize(self) -> dict[str, Any]:
         """Run hyperparameter optimization."""
+        print("\n🚀 Starting Optuna hyperparameter optimization")
+        print(f"   Trials: {self.n_trials}")
+        print(f"   Timeout: {self.timeout}s" if self.timeout else "   Timeout: None")
+        print("=" * 60)
+
         study = optuna.create_study(direction="minimize")
+
+        # Add progress callback
+        progress_callback = self._create_progress_callback()
+
         study.optimize(
             self._objective,
             n_trials=self.n_trials,
             timeout=self.timeout,
+            callbacks=[progress_callback],
         )
+
+        print("\n🎯 Optimization completed!")
+        print(f"   Best score: {study.best_value:.4f}")
+        print(f"   Total trials: {len(study.trials)}")
+        print("=" * 60)
 
         return {
             "best_params": study.best_params,

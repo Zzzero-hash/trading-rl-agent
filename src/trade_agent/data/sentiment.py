@@ -472,8 +472,8 @@ class NewsSentimentProvider(SentimentProvider):
 
         return sentiment_data
 
-    def _generate_historical_sentiment_trend(self, _symbol: str, days_back: int) -> list[float]:
-        """Generate a realistic historical sentiment trend based on market patterns."""
+    def _generate_historical_sentiment_trend(self, symbol: str, days_back: int) -> list[float]:
+        """Generate a realistic historical sentiment trend based on market patterns and asset type."""
         import random
 
         import numpy as np
@@ -481,32 +481,72 @@ class NewsSentimentProvider(SentimentProvider):
         # Create a trend that follows typical market sentiment patterns
         trend_length = min(days_back, 365)  # Cap at 1 year
 
-        # Start with a random base sentiment
-        base_sentiment = random.uniform(-0.2, 0.2)
+        # Asset-specific sentiment characteristics
+        if symbol.startswith("BTC") or symbol.endswith("-USD"):
+            # Crypto: More volatile sentiment
+            base_sentiment = random.uniform(-0.4, 0.4)
+            volatility_factor = 2.0
+        elif "USD" in symbol and "=" in symbol:
+            # Forex: More stable sentiment
+            base_sentiment = random.uniform(-0.1, 0.1)
+            volatility_factor = 0.5
+        elif symbol.startswith("^"):
+            # Indices: Moderate sentiment aligned with broad market
+            base_sentiment = random.uniform(-0.15, 0.15)
+            volatility_factor = 0.8
+        else:
+            # Stocks: Standard sentiment patterns
+            base_sentiment = random.uniform(-0.2, 0.2)
+            volatility_factor = 1.0
 
-        # Add cyclical patterns (weekly, monthly)
-        weekly_cycle = np.sin(np.linspace(0, 2 * np.pi * (trend_length // 7), trend_length)) * 0.1
-        monthly_cycle = np.sin(np.linspace(0, 2 * np.pi * (trend_length // 30), trend_length)) * 0.05
+        # Add cyclical patterns (weekly, monthly) with asset-specific adjustments
+        weekly_cycle = np.sin(np.linspace(0, 2 * np.pi * (trend_length // 7), trend_length)) * 0.1 * volatility_factor
+        monthly_cycle = np.sin(np.linspace(0, 2 * np.pi * (trend_length // 30), trend_length)) * 0.05 * volatility_factor
 
-        # Add random walk component
-        random_walk = np.cumsum(np.random.normal(0, 0.02, trend_length))
+        # Add random walk component with asset-specific volatility
+        random_walk = np.cumsum(np.random.normal(0, 0.02 * volatility_factor, trend_length))
 
-        # Add occasional "events" (earnings, news, etc.)
+        # Add occasional "events" (earnings, news, etc.) with realistic frequency
         events = np.zeros(trend_length)
-        num_events = random.randint(2, 5)
+        # More events for crypto, fewer for stable assets
+        event_frequency = {
+            "crypto": random.randint(5, 10),
+            "forex": random.randint(1, 3),
+            "index": random.randint(2, 4),
+            "stock": random.randint(3, 6)
+        }
+
+        if symbol.startswith("BTC") or symbol.endswith("-USD"):
+            num_events = event_frequency["crypto"]
+        elif "USD" in symbol and "=" in symbol:
+            num_events = event_frequency["forex"]
+        elif symbol.startswith("^"):
+            num_events = event_frequency["index"]
+        else:
+            num_events = event_frequency["stock"]
+
         for _ in range(num_events):
             event_day = random.randint(0, trend_length - 1)
-            event_impact = random.uniform(-0.4, 0.4)
-            # Event impact decays over time
+            event_impact = random.uniform(-0.4, 0.4) * volatility_factor
+            # Event impact decays over time with asset-specific decay rates
+            decay_rate = 0.5 if symbol.startswith("BTC") else 0.3  # Crypto events decay faster
             for i in range(min(7, trend_length - event_day)):
                 if event_day + i < trend_length:
-                    events[event_day + i] += event_impact * np.exp(-i * 0.3)
+                    events[event_day + i] += event_impact * np.exp(-i * decay_rate)
 
         # Combine all components
         sentiment_trend = base_sentiment + weekly_cycle + monthly_cycle + random_walk + events
 
-        # Normalize to [-1, 1] range
-        sentiment_trend = np.clip(sentiment_trend, -1.0, 1.0)
+        # Apply asset-specific sentiment bounds
+        if symbol.startswith("BTC") or symbol.endswith("-USD"):
+            # Crypto can have extreme sentiment
+            sentiment_trend = np.clip(sentiment_trend, -1.0, 1.0)
+        elif "USD" in symbol and "=" in symbol:
+            # Forex sentiment is more constrained
+            sentiment_trend = np.clip(sentiment_trend, -0.6, 0.6)
+        else:
+            # Standard bounds for stocks and indices
+            sentiment_trend = np.clip(sentiment_trend, -0.8, 0.8)
 
         return [float(x) for x in sentiment_trend.tolist()]
 
@@ -517,54 +557,135 @@ class NewsSentimentProvider(SentimentProvider):
         if market_data.empty or "close" not in market_data.columns:
             return sentiment_data
 
-        # Calculate market-based sentiment indicators
+        # Calculate market-based sentiment indicators with enhanced sophistication
         market_data = market_data.copy()
 
-        # Price momentum (short-term)
+        # Price momentum (multiple timeframes for robustness)
         market_data["returns"] = market_data["close"].pct_change()
-        market_data["momentum_5d"] = market_data["returns"].rolling(5).mean()
-        market_data["momentum_20d"] = market_data["returns"].rolling(20).mean()
+        market_data["momentum_3d"] = market_data["returns"].rolling(3, min_periods=1).mean()
+        market_data["momentum_5d"] = market_data["returns"].rolling(5, min_periods=1).mean()
+        market_data["momentum_10d"] = market_data["returns"].rolling(10, min_periods=1).mean()
+        market_data["momentum_20d"] = market_data["returns"].rolling(20, min_periods=1).mean()
 
-        # Volatility-based sentiment
-        market_data["volatility"] = market_data["returns"].rolling(20).std()
+        # Volatility-based sentiment (normalized and adjusted)
+        market_data["volatility"] = market_data["returns"].rolling(20, min_periods=1).std()
+        market_data["volatility_norm"] = market_data["volatility"] / market_data["volatility"].rolling(60, min_periods=1).mean()
 
-        # Volume-based sentiment
+        # Volume-based sentiment with enhanced analysis
         if "volume" in market_data.columns:
-            market_data["volume_ma"] = market_data["volume"].rolling(20).mean()
-            market_data["volume_ratio"] = market_data["volume"] / market_data["volume_ma"]
+            market_data["volume_ma_10"] = market_data["volume"].rolling(10, min_periods=1).mean()
+            market_data["volume_ma_30"] = market_data["volume"].rolling(30, min_periods=1).mean()
+            market_data["volume_ratio"] = market_data["volume"] / market_data["volume_ma_10"]
+            market_data["volume_trend"] = market_data["volume_ma_10"] / market_data["volume_ma_30"]
         else:
             market_data["volume_ratio"] = 1.0
+            market_data["volume_trend"] = 1.0
 
-        # High-Low spread sentiment
+        # High-Low spread sentiment with asset-specific normalization
         if "high" in market_data.columns and "low" in market_data.columns:
             market_data["hl_spread"] = (market_data["high"] - market_data["low"]) / market_data["close"]
+            market_data["hl_spread_norm"] = market_data["hl_spread"] / market_data["hl_spread"].rolling(30, min_periods=1).mean()
         else:
-            market_data["hl_spread"] = 0.02  # Default 2% spread
+            # Asset-specific default spreads
+            if symbol.startswith("BTC") or symbol.endswith("-USD"):
+                market_data["hl_spread"] = 0.05  # 5% for crypto
+            elif "USD" in symbol and "=" in symbol:
+                market_data["hl_spread"] = 0.005  # 0.5% for forex
+            else:
+                market_data["hl_spread"] = 0.02  # 2% for stocks
+            market_data["hl_spread_norm"] = 1.0
+
+        # Price level sentiment (support/resistance analysis)
+        market_data["price_position"] = (market_data["close"] - market_data["close"].rolling(20, min_periods=1).min()) / (
+            market_data["close"].rolling(20, min_periods=1).max() - market_data["close"].rolling(20, min_periods=1).min()
+        )
+
+        # Moving average sentiment (trend following)
+        market_data["ma_5"] = market_data["close"].rolling(5, min_periods=1).mean()
+        market_data["ma_20"] = market_data["close"].rolling(20, min_periods=1).mean()
+        market_data["ma_sentiment"] = (market_data["close"] - market_data["ma_20"]) / market_data["ma_20"]
 
         for idx, row in market_data.iterrows():
             if pd.isna(row["returns"]):
                 continue
 
-            # Combine multiple indicators into sentiment score
-            momentum_score = (row["momentum_5d"] * 0.6 + row["momentum_20d"] * 0.4) * 10
+            # Enhanced multi-timeframe momentum scoring with asset-specific weights
+            momentum_3d = row.get("momentum_3d", 0) * 10
+            momentum_5d = row.get("momentum_5d", 0) * 10
+            momentum_10d = row.get("momentum_10d", 0) * 10
+            momentum_20d = row.get("momentum_20d", 0) * 10
 
-            # Volatility sentiment (lower volatility = more positive sentiment)
-            volatility_score = -row["volatility"] * 5 if not pd.isna(row["volatility"]) else 0
+            # Asset-specific momentum weighting
+            if symbol.startswith("BTC") or symbol.endswith("-USD"):
+                # Crypto: Favor shorter timeframes (more reactive)
+                momentum_score = momentum_3d * 0.4 + momentum_5d * 0.3 + momentum_10d * 0.2 + momentum_20d * 0.1
+            elif "USD" in symbol and "=" in symbol:
+                # Forex: Favor longer timeframes (more stable)
+                momentum_score = momentum_3d * 0.1 + momentum_5d * 0.2 + momentum_10d * 0.3 + momentum_20d * 0.4
+            else:
+                # Stocks: Balanced approach
+                momentum_score = momentum_3d * 0.2 + momentum_5d * 0.3 + momentum_10d * 0.3 + momentum_20d * 0.2
 
-            # Volume sentiment (higher volume = stronger sentiment)
-            volume_score = (row["volume_ratio"] - 1) * 0.2
+            # Enhanced volatility sentiment with normalization
+            volatility_raw = row.get("volatility", 0)
+            volatility_norm = row.get("volatility_norm", 1)
+            # High normalized volatility = negative sentiment
+            volatility_score = -volatility_norm * 0.3 if not pd.isna(volatility_raw) and volatility_norm != 0 else 0
 
-            # Spread sentiment (tighter spreads = more positive sentiment)
-            spread_score = -row["hl_spread"] * 10
+            # Enhanced volume sentiment with trend analysis
+            volume_ratio = row.get("volume_ratio", 1)
+            volume_trend = row.get("volume_trend", 1)
+            volume_score = (volume_ratio - 1) * 0.15 + (volume_trend - 1) * 0.1
 
-            # Combine all scores
-            combined_score = momentum_score + volatility_score + volume_score + spread_score
+            # Enhanced spread sentiment with normalization
+            hl_spread_norm = row.get("hl_spread_norm", 1)
+            # High normalized spread = negative sentiment
+            spread_score = -(hl_spread_norm - 1) * 0.2 if not pd.isna(hl_spread_norm) else 0
 
-            # Normalize to [-1, 1] range
-            sentiment_score = max(-1.0, min(1.0, combined_score))
+            # Price position sentiment (technical analysis)
+            price_position = row.get("price_position", 0.5)
+            # Price near 20-day highs = positive sentiment
+            position_score = (price_position - 0.5) * 0.4 if not pd.isna(price_position) else 0
 
-            # Calculate confidence based on data quality
-            confidence = 0.5 + 0.3 * (1 - abs(sentiment_score))  # Higher confidence for extreme values
+            # Moving average sentiment (trend following)
+            ma_sentiment = row.get("ma_sentiment", 0)
+            # Price above MA = positive sentiment
+            ma_score = ma_sentiment * 2 if not pd.isna(ma_sentiment) else 0
+
+            # Combine all scores with weighted approach
+            combined_score = (
+                momentum_score * 0.35 +  # Primary driver
+                volatility_score * 0.15 +  # Risk factor
+                volume_score * 0.15 +  # Conviction factor
+                spread_score * 0.1 +  # Market structure
+                position_score * 0.15 +  # Technical position
+                ma_score * 0.1  # Trend confirmation
+            )
+
+            # Asset-specific normalization bounds
+            if symbol.startswith("BTC") or symbol.endswith("-USD"):
+                # Crypto: Allow more extreme sentiment
+                sentiment_score = max(-1.0, min(1.0, combined_score))
+            elif "USD" in symbol and "=" in symbol:
+                # Forex: More constrained sentiment
+                sentiment_score = max(-0.7, min(0.7, combined_score))
+            else:
+                # Stocks: Standard normalization
+                sentiment_score = max(-0.8, min(0.8, combined_score))
+
+            # Enhanced confidence calculation based on multiple factors
+            data_quality = 1.0
+            if pd.isna(volatility_raw):
+                data_quality *= 0.8
+            if volume_ratio == 1.0:  # No volume data
+                data_quality *= 0.7
+            if pd.isna(price_position):
+                data_quality *= 0.9
+
+            # Base confidence on data quality and sentiment strength
+            base_confidence = 0.4 + 0.4 * data_quality
+            strength_bonus = 0.2 * abs(sentiment_score)  # Stronger signals = higher confidence
+            confidence = min(0.9, base_confidence + strength_bonus)
 
             # Handle timestamp conversion consistently
             if hasattr(idx, "to_pydatetime"):

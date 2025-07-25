@@ -14,7 +14,7 @@ import pandas_ta as ta
 from trade_agent.core.logging import get_logger
 
 
-def generate_features(
+def generate_unified_features(
     df: pd.DataFrame,
     ma_windows: list | None = None,
     rsi_window: int = 14,
@@ -828,7 +828,7 @@ class FeatureEngineer:
         if df.empty:
             return df
 
-        return generate_features(
+        return generate_unified_features(
             df.copy(),
             ma_windows=self.ma_windows,
             rsi_window=self.rsi_window,
@@ -840,7 +840,7 @@ class FeatureEngineer:
         if df.empty:
             return df
 
-        return generate_features(
+        return generate_unified_features(
             df.copy(),
             ma_windows=self.ma_windows,
             rsi_window=self.rsi_window,
@@ -873,3 +873,7 @@ class FeatureEngineer:
 
         available_features = [f for f in candlestick_features if f in result_df.columns]
         return result_df[available_features]
+
+
+# Legacy compatibility aliases
+generate_features = generate_unified_features

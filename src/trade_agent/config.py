@@ -1,18 +1,46 @@
 """
-Configuration module for trade_agent package.
-Re-exports configuration functions from their actual locations.
+Unified Configuration System for Trading RL Agent.
+
+This module provides a single, consolidated configuration system that supersedes
+all other configuration modules in the codebase.
 """
 
-import sys
-from pathlib import Path
+# Re-export the unified configuration system
+from .core.unified_config import UnifiedConfig, load_config
 
-# Add the project root to the path to import from root config.py
-project_root = Path(__file__).parent.parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-
-from config import get_settings, load_settings
+# Import legacy configurations for backward compatibility
+try:
+    LEGACY_CONFIG_AVAILABLE = True
+except ImportError:
+    LEGACY_CONFIG_AVAILABLE = False
 
 from .core.logging import get_logger
 
-__all__ = ["get_logger", "get_settings", "load_settings"]
+# Global configuration instance
+_global_config: UnifiedConfig | None = None
+
+def get_unified_config() -> UnifiedConfig:
+    """Get the global unified configuration instance."""
+    global _global_config
+    if _global_config is None:
+        _global_config = load_config()
+    return _global_config
+
+def reset_config() -> None:
+    """Reset the global configuration (useful for testing)."""
+    global _global_config
+    _global_config = None
+
+# Backward compatibility aliases
+get_settings = get_unified_config
+load_settings = load_config
+
+__all__ = [
+    "UnifiedConfig",
+    "get_logger",
+    "get_settings",
+    "get_unified_config",
+    "load_config",
+    "load_settings",
+    "reset_config"
+]

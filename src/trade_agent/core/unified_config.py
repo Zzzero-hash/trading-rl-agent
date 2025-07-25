@@ -436,8 +436,92 @@ class UnifiedConfig(BaseSettings):
 
 
 # Convenience function to load configuration
-def load_config(config_path: str | Path | None = None) -> UnifiedConfig:
+def load_config(config_path: str | Path | None = None, env_file: str | Path | None = None) -> UnifiedConfig:
     """Load unified configuration from file or environment."""
+    if env_file:
+        # Load environment variables from custom env file first
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(env_file)
+        except ImportError:
+            # If python-dotenv is not available, continue without loading
+            pass
+
     if config_path:
         return UnifiedConfig.from_yaml(config_path)
     return UnifiedConfig()
+
+def migrate_legacy_config(legacy_config: dict[str, Any] | None = None) -> UnifiedConfig:
+    """
+    Migrate from legacy configuration systems to UnifiedConfig.
+
+    This function helps transition from old configuration formats to the new unified system.
+    """
+    if legacy_config is None:
+        return UnifiedConfig()
+
+    # Map legacy configuration keys to new structure
+    mapping = {
+        # Data configuration
+        "data_sources": "data.sources",
+        "symbols": "data.symbols",
+        "start_date": "data.start_date",
+        "end_date": "data.end_date",
+        "timeframe": "data.timeframe",
+        "data_path": "data.data_path",
+        "cache_dir": "data.cache_dir",
+
+        # Model configuration
+        "model_type": "model.type",
+        "algorithm": "model.algorithm",
+        "batch_size": "model.batch_size",
+        "learning_rate": "model.learning_rate",
+        "epochs": "model.epochs",
+        "model_save_path": "model.model_save_path",
+
+        # Agent configuration
+        "agent_type": "model.algorithm",
+        "total_timesteps": "model.total_timesteps",
+        "eval_frequency": "model.eval_frequency",
+
+        # Risk configuration
+        "max_position_size": "live.max_position_size",
+        "max_leverage": "live.max_leverage",
+        "max_drawdown": "live.max_drawdown",
+
+        # Execution configuration
+        "broker": "live.exchange",
+        "paper_trading": "live.paper_trading",
+        "commission_rate": "live.commission_rate",
+
+        # Infrastructure
+        "distributed": "infrastructure.distributed",
+        "num_workers": "infrastructure.num_workers",
+        "gpu_enabled": "infrastructure.gpu_enabled",
+    }
+
+    # Build new configuration structure
+    config_dict: dict[str, Any] = {}
+
+    for legacy_key, new_path in mapping.items():
+        if legacy_key in legacy_config:
+            # Navigate to the nested structure
+            keys = new_path.split(".")
+            current = config_dict
+
+            # Create nested dictionaries as needed
+            for key in keys[:-1]:
+                if key not in current:
+                    current[key] = {}
+                current = current[key]
+
+            # Set the final value
+            current[keys[-1]] = legacy_config[legacy_key]
+
+    # Handle any remaining unmapped keys
+    for key, value in legacy_config.items():
+        if key not in mapping:
+            # Place unmapped keys at the root level
+            config_dict[key] = value
+
+    return UnifiedConfig(**config_dict)
