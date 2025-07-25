@@ -10,6 +10,9 @@ import pandas as pd
 import ray
 import yaml
 
+from trade_agent.utils.cluster import validate_cluster_health
+from trade_agent.utils.ray_utils import cleanup_ray, robust_ray_init
+
 # Add src to path to resolve imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -587,13 +590,26 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
+    # Initialize Ray with robust error handling
     started_ray = False
     if not ray.is_initialized():
-        ray.init(
-            address=cfg.get("ray_address", os.getenv("RAY_ADDRESS")),
-            log_to_driver=False,
+        ray_address = cfg.get("ray_address", os.getenv("RAY_ADDRESS"))
+        success, info = robust_ray_init(
+            address=ray_address,
+            show_cluster_info=False
         )
+        if not success:
+            print(f"⚠️  Failed to initialize Ray for data pipeline: {info.get('error', 'Unknown error')}")
+            print("⚠️  Falling back to sequential data processing")
+            # Sequential fallback not implemented yet - return empty result
+            print("⚠️  Sequential fallback not implemented, returning empty result")
+            return {"data": {}, "errors": []}
         started_ray = True
+
+        # Validate cluster for data processing workload
+        health = validate_cluster_health()
+        if not health["healthy"]:
+            print(f"⚠️  Running data pipeline on degraded cluster: {health['reason']}")
 
     tasks = {}
 
@@ -693,8 +709,9 @@ def run_pipeline(config_path: str) -> dict[str, pd.DataFrame]:
             # Use chunked CSV saving for better efficiency
             save_csv_chunked(df, csv_path, chunk_size=10000, show_progress=True)
 
+    # Cleanup Ray if we started it
     if started_ray:
-        ray.shutdown()
+        cleanup_ray()
 
     return results
 

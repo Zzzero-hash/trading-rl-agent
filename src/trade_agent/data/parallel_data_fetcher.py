@@ -24,6 +24,8 @@ import pandas as pd
 import ray
 from tqdm import tqdm
 
+from trade_agent.utils.ray_utils import robust_ray_init
+
 logger = logging.getLogger(__name__)
 
 # Type: ignore for yfinance import issues
@@ -272,9 +274,17 @@ class ParallelDataManager:
         self.ttl_hours = ttl_hours
         self.max_workers = max_workers
 
-        # Initialize Ray if not already initialized
+        # Initialize Ray with robust error handling
         if not ray.is_initialized():
-            ray.init(ignore_reinit_error=True)
+            success, info = robust_ray_init(show_cluster_info=False)
+            if not success:
+                logger.warning(f"Failed to initialize Ray for parallel data fetching: {info.get('error', 'Unknown error')}")
+                logger.info("Falling back to sequential data fetching")
+                self.use_ray = False
+            else:
+                self.use_ray = True
+        else:
+            self.use_ray = True
 
         # Create parallel fetcher
         self.fetcher = ParallelDataFetcher.remote(cache_dir, ttl_hours)  # type: ignore

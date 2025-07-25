@@ -2,7 +2,8 @@
 Enhanced CNN-LSTM Training Module.
 
 This module provides advanced training capabilities for CNN-LSTM models including
-hyperparameter optimization, comprehensive metrics, and experiment tracking.
+hyperparameter optimization, comprehensive metrics, experiment tracking, and
+real-time visual monitoring.
 """
 
 import logging
@@ -21,6 +22,9 @@ from sklearn.model_selection import train_test_split
 
 try:
     import ray
+
+    from trade_agent.utils.cluster import get_optimal_worker_count, validate_cluster_health
+    from trade_agent.utils.ray_utils import robust_ray_init
 except ImportError:
     ray = None
 from sklearn.preprocessing import StandardScaler
@@ -28,28 +32,51 @@ from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
 
 from trade_agent.models.cnn_lstm import CNNLSTMModel
+from trade_agent.training.visual_monitor import TrainingVisualMonitor, auto_monitor_optuna, auto_monitor_training
 
 
-def init_ray_cluster() -> None:
-    """Initialize or join Ray cluster."""
+def init_ray_cluster(show_info: bool = True, max_workers: int | None = None) -> bool:
+    """Initialize or join Ray cluster with robust error handling.
+
+    Args:
+        show_info: Whether to display cluster information after initialization
+        max_workers: Maximum number of workers (auto-detected if None)
+
+    Returns:
+        True if initialization was successful, False otherwise
+    """
     if ray is None:
         warnings.warn("Ray is not installed. Skipping Ray cluster initialization.", stacklevel=2)
-        return
+        return False
 
-    if not ray.is_initialized():
-        try:
-            # Try to connect to existing cluster first
-            ray.init(address="auto", ignore_reinit_error=True)
-            logging.info("Connected to existing Ray cluster")
-        except Exception:
-            # If no cluster exists, start a new one
-            try:
-                ray.init(ignore_reinit_error=True)
-                logging.info("Started new Ray cluster")
-            except Exception as e:
-                warnings.warn(f"Failed to initialize Ray cluster: {e}", stacklevel=2)
-    else:
-        logging.info("Ray cluster is already initialized")
+    logger = logging.getLogger(__name__)
+
+    try:
+        success, info = robust_ray_init(
+            max_workers=max_workers,
+            show_cluster_info=show_info
+        )
+
+        if success:
+            if show_info:
+                # Print additional training-specific recommendations
+                worker_rec = get_optimal_worker_count()
+                print("\n🧠 Training Recommendations:")
+                print(f"   • Use batch sizes that are multiples of {worker_rec['total_workers']} for optimal distribution")
+                print(f"   • Consider {worker_rec['cpu_workers']} parallel hyperparameter trials")
+                if worker_rec["gpu_workers"] > 0:
+                    print(f"   • GPU training available on {worker_rec['gpu_workers']} workers")
+                print()
+
+            logger.info(f"✅ Ray cluster initialized successfully: {info['status']}")
+            return True
+        else:
+            logger.error(f"❌ Failed to initialize Ray cluster: {info.get('error', 'Unknown error')}")
+            return False
+
+    except Exception as e:
+        logger.error(f"❌ Unexpected error during Ray initialization: {e}")
+        return False
 
 
 def load_and_preprocess_csv_data(
@@ -182,6 +209,7 @@ class EnhancedCNNLSTMTrainer:
         training_config: dict[str, Any],
         enable_mlflow: bool = False,
         enable_tensorboard: bool = False,
+        enable_visual_monitor: bool = True,
         device: str | None = None,
     ):
         """
@@ -192,12 +220,14 @@ class EnhancedCNNLSTMTrainer:
             training_config: Training configuration dictionary
             enable_mlflow: Whether to enable MLflow tracking
             enable_tensorboard: Whether to enable TensorBoard logging
+            enable_visual_monitor: Whether to enable real-time visual monitoring
             device: Device to use for training ('cpu', 'cuda', or None for auto)
         """
         self.model_config = model_config
         self.training_config = training_config
         self.enable_mlflow = enable_mlflow
         self.enable_tensorboard = enable_tensorboard
+        self.enable_visual_monitor = enable_visual_monitor
 
         # Set device
         if device is None:
@@ -208,6 +238,12 @@ class EnhancedCNNLSTMTrainer:
             except RuntimeError:
                 # Fallback to CPU if invalid device is provided
                 self.device = torch.device("cpu")
+
+        # Print device information for debugging
+        device_info = f"🔧 Device: {self.device}"
+        if self.device.type == "cuda" and torch.cuda.is_available():
+            device_info += f" ({torch.cuda.get_device_name(self.device)})"
+        print(device_info)
 
         # Initialize components
         self.model: CNNLSTMModel | None = None
@@ -228,11 +264,16 @@ class EnhancedCNNLSTMTrainer:
         self.logger = logging.getLogger("EnhancedCNNLSTMTrainer")
         self.metrics_history: dict[str, list[float]] = {}  # Placeholder, can be replaced with actual metrics
 
+        # Visual monitoring
+        self.visual_monitor: TrainingVisualMonitor | None = None
+
         # Setup experiment tracking
         if enable_mlflow:
             self._setup_mlflow()
         if enable_tensorboard:
             self._setup_tensorboard()
+        if enable_visual_monitor:
+            self._setup_visual_monitor()
 
     def _validate_config(self, model_config: dict[str, Any], training_config: dict[str, Any]) -> None:
         """Validate model and training configuration."""
@@ -298,11 +339,18 @@ class EnhancedCNNLSTMTrainer:
             warnings.warn(f"TensorBoard setup failed: {e}", stacklevel=2)
             self.enable_tensorboard = False
 
+    def _setup_visual_monitor(self) -> None:
+        """Setup visual monitoring."""
+        try:
+            self.visual_monitor = auto_monitor_training(self)
+            print("✅ Visual monitoring enabled")
+        except Exception as e:
+            warnings.warn(f"Visual monitoring setup failed: {e}", stacklevel=2)
+            self.enable_visual_monitor = False
+
     def _create_model(self, input_dim: int) -> CNNLSTMModel:
         """Create CNN-LSTM model from configuration."""
         config = self.model_config
-        print(f"DEBUG: Creating CNNLSTMModel with input_dim={input_dim}")
-        print(f"DEBUG: config keys: {list(config.keys())}")
 
         return CNNLSTMModel(
             input_dim=input_dim,
@@ -433,6 +481,24 @@ class EnhancedCNNLSTMTrainer:
             if prediction_horizon is not None:
                 print(f"Using prediction_horizon: {prediction_horizon} from dataset_config")
 
+        # Optimize batch size based on available resources if Ray is available
+        original_batch_size = self.training_config["batch_size"]
+        if ray is not None and ray.is_initialized():
+            try:
+                worker_info = get_optimal_worker_count()
+                # Adjust batch size to be optimal for distributed processing
+                total_workers = worker_info["total_workers"]
+                if total_workers > 1:
+                    # Make batch size divisible by number of workers for optimal distribution
+                    optimal_batch_size = ((original_batch_size + total_workers - 1) // total_workers) * total_workers
+                    optimal_batch_size = min(optimal_batch_size, len(X_train) // 4)  # Don't exceed 1/4 of training data
+
+                    if optimal_batch_size != original_batch_size:
+                        print(f"🔧 Optimized batch size from {original_batch_size} to {optimal_batch_size} for {total_workers} workers")
+                        self.training_config["batch_size"] = optimal_batch_size
+            except Exception as e:
+                logging.warning(f"Failed to optimize batch size: {e}, using original size {original_batch_size}")
+
         # Create model
         input_dim = sequences.shape[-1]
         self.model = self._create_model(input_dim).to(self.device)
@@ -459,6 +525,9 @@ class EnhancedCNNLSTMTrainer:
         patience_counter = 0
         early_stopping_patience = self.training_config.get("early_stopping_patience", 10)
         max_grad_norm = self.training_config.get("max_grad_norm", 1.0)
+
+        # Store total epochs for visual monitor
+        self.total_epochs = self.training_config["epochs"]
 
         for epoch in range(self.training_config["epochs"]):
             # Training phase
@@ -573,6 +642,14 @@ class EnhancedCNNLSTMTrainer:
         final_metrics = self._calculate_metrics(np.array(val_targets), np.array(val_predictions))
 
         training_time = time.time() - start_time
+
+        # Save visual monitoring summary
+        if self.visual_monitor:
+            try:
+                self.visual_monitor.save_training_summary(self)
+                self.visual_monitor.stop_monitoring()
+            except Exception as e:
+                warnings.warn(f"Failed to save visual monitoring summary: {e}", stacklevel=2)
 
         return {
             "best_val_loss": best_val_loss,
@@ -691,7 +768,7 @@ class EnhancedCNNLSTMTrainer:
 
 
 class HyperparameterOptimizer:
-    """Hyperparameter optimizer using Optuna."""
+    """Hyperparameter optimizer using Optuna with Ray distributed capabilities."""
 
     def __init__(
         self,
@@ -699,6 +776,10 @@ class HyperparameterOptimizer:
         targets: np.ndarray,
         n_trials: int = 100,
         timeout: int | None = None,
+        enable_visual_monitor: bool = True,
+        use_ray: bool = True,
+        ray_concurrency: int | None = None,
+        epochs: int = 50,
     ):
         """
         Initialize hyperparameter optimizer.
@@ -708,18 +789,60 @@ class HyperparameterOptimizer:
             targets: Target values
             n_trials: Number of optimization trials
             timeout: Timeout in seconds
+            enable_visual_monitor: Whether to enable visual monitoring of trials
+            use_ray: Whether to use Ray for distributed optimization
+            ray_concurrency: Number of concurrent Ray trials (auto-detected if None)
+            epochs: Number of epochs to use for each optimization trial
         """
         self.sequences = sequences
         self.targets = targets
         self.n_trials = n_trials
         self.timeout = timeout
+        self.enable_visual_monitor = enable_visual_monitor
+        self.epochs = epochs
+        self.use_ray = use_ray and ray is not None
+
+        # Initialize Ray if requested and available
+        self.ray_initialized = False
+        if self.use_ray:
+            try:
+                if not ray.is_initialized():
+                    success, _ = robust_ray_init(show_cluster_info=False)
+                    if success:
+                        self.ray_initialized = True
+                        logging.info("🚀 Ray initialized for distributed hyperparameter optimization")
+                    else:
+                        logging.warning("Failed to initialize Ray, falling back to sequential optimization")
+                        self.use_ray = False
+                else:
+                    self.ray_initialized = True
+
+                # Auto-detect concurrency if not specified
+                if ray_concurrency is None and self.use_ray:
+                    worker_info = get_optimal_worker_count()
+                    # Use conservative concurrency to avoid resource exhaustion
+                    ray_concurrency = max(1, min(worker_info["cpu_workers"], 4))
+                    logging.info(f"🔧 Auto-detected Ray concurrency: {ray_concurrency}")
+
+            except Exception as e:
+                logging.warning(f"Ray setup failed, using sequential optimization: {e}")
+                self.use_ray = False
+
+        self.ray_concurrency = ray_concurrency or 1
+
+        # Initialize visual monitor for Optuna if enabled
+        self.visual_monitor: TrainingVisualMonitor | None = None
+        if enable_visual_monitor:
+            try:
+                self.visual_monitor = auto_monitor_optuna("CNN_LSTM_HPO")
+            except Exception as e:
+                warnings.warn(f"Failed to initialize Optuna visual monitor: {e}", stacklevel=2)
 
     def _objective(self, trial: Trial) -> float:
         """Objective function for optimization."""
         import time
         start_time = time.time()
         trial_num = trial.number + 1
-        print(f"\n⚡ Starting Trial {trial_num}...")
 
         # Suggest model configuration
         model_config = self._suggest_model_config(trial)
@@ -727,19 +850,23 @@ class HyperparameterOptimizer:
         # Suggest training configuration
         training_config = self._suggest_training_config(trial)
 
-        # Show key parameters for this trial
+        # Show trial start with key parameters
         lr = training_config.get("learning_rate", "N/A")
         lstm_units = model_config.get("lstm_units", "N/A")
         batch_size = training_config.get("batch_size", "N/A")
         cnn_arch = trial.params.get("cnn_architecture", "N/A") if hasattr(trial, "params") else "N/A"
-        print(f"   LR: {lr:.2e} | LSTM Units: {lstm_units} | Batch Size: {batch_size} | CNN: {cnn_arch}")
 
-        # Create trainer
+        print(f"\n⚡ Trial {trial_num}/{self.n_trials}: LR={lr:.2e} | LSTM={lstm_units} | Batch={batch_size} | CNN={cnn_arch}")
+        print(f"   [{'█' * int(20 * trial_num / self.n_trials)}{'░' * (20 - int(20 * trial_num / self.n_trials))}] {100 * trial_num / self.n_trials:.1f}%")
+
+        # Create trainer (disable visual monitor for individual trials to avoid conflicts)
         trainer = EnhancedCNNLSTMTrainer(
             model_config=model_config,
             training_config=training_config,
             enable_mlflow=False,
             enable_tensorboard=False,
+            enable_visual_monitor=False,  # Disable for individual trials
+            device=None  # Auto-detect CUDA
         )
 
         # Validate configuration before training
@@ -749,9 +876,9 @@ class HyperparameterOptimizer:
             print(f"   ❌ Trial {trial_num} failed: Invalid configuration - {e}")
             return float("inf")
 
-        # Train model
+        # Train model with progress tracking
         try:
-            print("   Training model...")
+            print(f"   🏋️  Training model... (epochs: {training_config.get('epochs', 50)})")
             result = trainer.train_from_dataset(
                 sequences=self.sequences,
                 targets=self.targets,
@@ -771,26 +898,99 @@ class HyperparameterOptimizer:
 
             val_loss = float(val_loss)
             elapsed = time.time() - start_time
-            print(f"   ✅ Trial {trial_num} completed in {elapsed:.1f}s with validation loss: {val_loss:.4f}")
+            epochs_trained = result.get("total_epochs", "N/A")
+            final_metrics = result.get("final_metrics", {})
+            mae = final_metrics.get("mae", "N/A")
+            r2 = final_metrics.get("r2", "N/A")
+
+            print(f"   ✅ Trial {trial_num} completed ({epochs_trained} epochs, {elapsed:.1f}s)")
+            mae_str = f"{mae:.4f}" if mae != "N/A" else "N/A"
+            r2_str = f"{r2:.3f}" if r2 != "N/A" else "N/A"
+            print(f"      📊 Val Loss: {val_loss:.4f} | MAE: {mae_str} | R²: {r2_str}")
+
+            # Update visual monitor with trial results
+            if self.visual_monitor:
+                try:
+                    trial_data = {
+                        "number": trial.number,
+                        "value": val_loss,
+                        "params": dict(trial.params) if hasattr(trial, "params") else {},
+                        "state": "COMPLETE",
+                        "best_value": val_loss  # This will be updated by the monitor
+                    }
+                    self.visual_monitor.update_optuna_trial(trial_data)
+                except Exception as e:
+                    print(f"   Warning: Failed to update visual monitor: {e}")
+
             return val_loss
 
         except Exception as e:
             elapsed = time.time() - start_time
             print(f"   ❌ Trial {trial_num} failed after {elapsed:.1f}s: {e!s}")
-            # Print more detailed error info for debugging
-            import traceback
-            print(f"   Error details: {traceback.format_exc()}")
             return float("inf")
 
+    def _generate_compatible_lstm_attention_pairs(self) -> list[tuple[int, int]]:
+        """
+        Generate compatible (lstm_units, attention_heads) combinations.
+
+        Ensures lstm_units is always divisible by attention_heads for proper
+        multi-head attention operation.
+
+        Returns:
+            List of (lstm_units, attention_heads) tuples that are mathematically compatible
+        """
+        combinations = []
+
+        # Define possible attention head counts (powers of 2 for efficiency)
+        possible_heads = [1, 2, 4, 8, 16]
+
+        for heads in possible_heads:
+            # Find LSTM units in range [32, 512] that are divisible by heads
+            min_units = max(32, heads)  # Ensure minimum viable size
+            max_units = 512
+
+            # Generate units that are multiples of heads within our range
+            current_units = min_units
+            # Round up to nearest multiple of heads
+            if current_units % heads != 0:
+                current_units = ((current_units // heads) + 1) * heads
+
+            while current_units <= max_units:
+                combinations.append((current_units, heads))
+                # Add some good intermediate values (not every multiple)
+                # to keep the search space manageable but well-distributed
+                current_units += heads * max(1, heads // 2)
+
+        # Sort by total parameters (units * heads) to provide logical ordering
+        combinations.sort(key=lambda x: x[0] * x[1])
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_combinations = []
+        for combo in combinations:
+            if combo not in seen:
+                seen.add(combo)
+                unique_combinations.append(combo)
+
+        return unique_combinations
+
     def _suggest_model_config(self, trial: Trial) -> dict[str, Any]:
-        """Suggest model configuration."""
+        """Suggest model configuration with coordinated LSTM units and attention heads."""
         use_attention = trial.suggest_categorical("use_attention", [True, False])
 
-        # Suggest attention heads only if attention is enabled
-        attention_heads = 1
+        # Use coordinated parameter suggestion to ensure compatibility
         if use_attention:
-            # Suggest number of attention heads that are common divisors
-            attention_heads = trial.suggest_categorical("attention_heads", [1, 2, 4, 8, 16])
+            # Generate compatible (lstm_units, attention_heads) combinations
+            compatible_combinations = self._generate_compatible_lstm_attention_pairs()
+            combination_choice = trial.suggest_categorical(
+                "lstm_attention_combination",
+                list(range(len(compatible_combinations)))
+            )
+            lstm_units, attention_heads = compatible_combinations[combination_choice]
+        else:
+            # When no attention, any LSTM units are fine
+            lstm_units = trial.suggest_int("lstm_units", 32, 512)
+            attention_heads = 1
 
         # Define coordinated CNN architectures (filters and kernels must match in length)
         cnn_architectures = {
@@ -831,7 +1031,7 @@ class HyperparameterOptimizer:
         return {
             "cnn_filters": selected_arch["filters"],
             "cnn_kernel_sizes": selected_arch["kernels"],
-            "lstm_units": trial.suggest_int("lstm_units", 32, 512),
+            "lstm_units": lstm_units,
             "lstm_layers": trial.suggest_int("lstm_layers", 1, 3),
             "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.5),
             "use_attention": use_attention,
@@ -845,7 +1045,7 @@ class HyperparameterOptimizer:
         return {
             "learning_rate": trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True),
             "batch_size": trial.suggest_categorical("batch_size", [16, 32, 64, 128]),
-            "epochs": 50,  # Fixed for optimization
+            "epochs": self.epochs,  # Configurable epochs for optimization
             "weight_decay": trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True),
             "val_split": 0.2,
             "early_stopping_patience": trial.suggest_int("early_stopping_patience", 5, 15),
@@ -871,47 +1071,37 @@ class HyperparameterOptimizer:
             remaining_trials = self.n_trials - trial_number
             estimated_remaining = avg_time_per_trial * remaining_trials
 
-            # Display progress information
-            print(f"\n🔍 Trial {trial_number}/{self.n_trials} completed")
-            print(f"   Current trial score: {current_value:.4f}")
-            print(f"   Best score so far: {best_value:.4f}")
-            print(f"   Time: {elapsed_time:.1f}s elapsed, ~{estimated_remaining:.1f}s remaining")
+            # Show if this is a new best score
+            is_best = trial.value is not None and trial.value == best_value
+            status_icon = "🌟" if is_best else "✅"
 
-            # Show key hyperparameters from this trial
-            if trial.params:
-                key_params = {}
-                if "learning_rate" in trial.params:
-                    key_params["LR"] = f"{trial.params['learning_rate']:.2e}"
-                if "lstm_units" in trial.params:
-                    key_params["LSTM"] = trial.params["lstm_units"]
-                if "batch_size" in trial.params:
-                    key_params["Batch"] = trial.params["batch_size"]
-                if "cnn_architecture" in trial.params:
-                    key_params["CNN"] = trial.params["cnn_architecture"]
+            print(f"\n{status_icon} Trial {trial_number}/{self.n_trials}: Score={current_value:.4f} (Best: {best_value:.4f})")
+            print(f"   ⏱️  {elapsed_time:.1f}s elapsed, ~{estimated_remaining:.1f}s remaining")
 
-                if key_params:
-                    param_str = " | ".join([f"{k}: {v}" for k, v in key_params.items()])
-                    print(f"   Key params: {param_str}")
-
-            # Progress bar
+            # Compact progress bar
             progress = trial_number / self.n_trials
-            bar_length = 30
+            bar_length = 40
             filled = int(progress * bar_length)
             bar = "█" * filled + "░" * (bar_length - filled)
-            print(f"   Progress: [{bar}] {progress*100:.1f}%")
-
-            if trial.value is not None and trial.value == best_value:
-                print("   🌟 New best score!")
-
-            print("-" * 60)
+            print(f"   📊 [{bar}] {progress*100:.1f}%")
 
         return callback
 
     def optimize(self) -> dict[str, Any]:
-        """Run hyperparameter optimization."""
-        print("\n🚀 Starting Optuna hyperparameter optimization")
+        """Run hyperparameter optimization with optional Ray parallelization."""
+        optimization_mode = "Distributed (Ray)" if self.use_ray else "Sequential"
+
+        print(f"\n🚀 Starting Optuna hyperparameter optimization ({optimization_mode})")
         print(f"   Trials: {self.n_trials}")
         print(f"   Timeout: {self.timeout}s" if self.timeout else "   Timeout: None")
+        if self.use_ray:
+            print(f"   Ray Concurrency: {self.ray_concurrency}")
+            # Validate cluster health before starting
+            health = validate_cluster_health()
+            if not health["healthy"]:
+                print(f"   ⚠️  Cluster Warning: {health['reason']}")
+                for rec in health["recommendations"][:2]:  # Show top 2 recommendations
+                    print(f"      • {rec}")
         print("=" * 60)
 
         study = optuna.create_study(direction="minimize")
@@ -919,23 +1109,141 @@ class HyperparameterOptimizer:
         # Add progress callback
         progress_callback = self._create_progress_callback()
 
-        study.optimize(
-            self._objective,
-            n_trials=self.n_trials,
-            timeout=self.timeout,
-            callbacks=[progress_callback],
-        )
+        try:
+            if self.use_ray and self.ray_initialized:
+                # Use Ray for distributed optimization
+                print(f"🔧 Using Ray distributed optimization with {self.ray_concurrency} concurrent trials")
 
-        print("\n🎯 Optimization completed!")
-        print(f"   Best score: {study.best_value:.4f}")
-        print(f"   Total trials: {len(study.trials)}")
-        print("=" * 60)
+                # Create a distributed study with Ray
 
-        return {
-            "best_params": study.best_params,
-            "best_score": study.best_value,
-            "study": study,
-        }
+                # Wrap the objective function for Ray
+                @ray.remote
+                def distributed_objective(trial_params: dict[str, Any]) -> float:
+                    # Create a trial-like object for the objective function
+                    class MockTrial:
+                        def __init__(self, params: dict[str, Any]) -> None:
+                            self.params = params
+                            self.number = 0  # This will be set properly by Optuna
+
+                        def suggest_categorical(self, name: str, choices: list[Any]) -> Any:
+                            return self.params.get(name, choices[0])
+
+                        def suggest_int(self, name: str, low: int, _high: int) -> int:
+                            return int(self.params.get(name, low))
+
+                        def suggest_float(self, name: str, low: float, _high: float, _log: bool = False) -> float:
+                            return float(self.params.get(name, low))
+
+                    mock_trial = MockTrial(trial_params)
+                    return self._objective(mock_trial)
+
+                # Use Ray Tune integration if available
+                try:
+                    from ray import tune
+                    from ray.tune.integration.optuna import OptunaSearch
+
+                    search_alg = OptunaSearch(
+                        metric="objective",
+                        mode="min",
+                        points_to_evaluate=None
+                    )
+
+                    # Run distributed optimization
+                    analysis = tune.run(
+                        self._ray_trainable,
+                        search_alg=search_alg,
+                        num_samples=self.n_trials,
+                        resources_per_trial={"cpu": 1, "gpu": 0},
+                        time_budget_s=self.timeout,
+                        progress_reporter=tune.CLIReporter(
+                            metric_columns=["objective", "training_iteration"]
+                        )
+                    )
+
+                    # Extract best result
+                    best_trial = analysis.get_best_trial("objective", "min")
+                    best_config = best_trial.config
+                    best_score = best_trial.last_result["objective"]
+
+                    print("\n🎯 Distributed optimization completed!")
+                    print(f"   Best score: {best_score:.4f}")
+                    print(f"   Total trials: {len(analysis.trials)}")
+
+                    return {
+                        "best_params": best_config,
+                        "best_score": best_score,
+                        "study": analysis,
+                        "optimization_mode": "ray_tune"
+                    }
+
+                except ImportError:
+                    print("⚠️  Ray Tune not available, falling back to standard Ray parallelization")
+                    # Fall back to basic Ray parallelization
+
+            # Standard Optuna optimization (sequential or basic Ray)
+            study.optimize(
+                self._objective,
+                n_trials=self.n_trials,
+                timeout=self.timeout,
+                callbacks=[progress_callback],
+                n_jobs=self.ray_concurrency if self.use_ray else 1,
+            )
+
+            print("\n🎯 Optimization completed!")
+            print(f"   Best score: {study.best_value:.4f}")
+            print(f"   Total trials: {len(study.trials)}")
+            print("=" * 60)
+
+            return {
+                "best_params": study.best_params,
+                "best_score": study.best_value,
+                "study": study,
+                "optimization_mode": optimization_mode.lower().replace(" ", "_")
+            }
+
+        except Exception as e:
+            logging.error(f"❌ Optimization failed: {e}")
+            # Return a fallback result
+            return {
+                "best_params": {},
+                "best_score": float("inf"),
+                "study": None,
+                "error": str(e),
+                "optimization_mode": "failed"
+            }
+
+        finally:
+            # Cleanup visual monitor
+            if self.visual_monitor:
+                try:
+                    self.visual_monitor.stop_monitoring()
+                except Exception as e:
+                    logging.warning(f"Failed to stop visual monitor: {e}")
+
+    def _ray_trainable(self, config: dict[str, Any]) -> float:
+        """Trainable function for Ray Tune integration."""
+        # Create a mock trial object with the config
+        class MockTrial:
+            def __init__(self, params: dict[str, Any]) -> None:
+                self.params = params
+                self.number = 0
+
+            def suggest_categorical(self, name: str, choices: list[Any]) -> Any:
+                return self.params.get(name, choices[0])
+
+            def suggest_int(self, name: str, low: int, _high: int) -> int:
+                return int(self.params.get(name, low))
+
+            def suggest_float(self, name: str, low: float, _high: float, _log: bool = False) -> float:
+                return float(self.params.get(name, low))
+
+        mock_trial = MockTrial(config)
+        objective_value = self._objective(mock_trial)
+
+        # Report the result back to Ray Tune
+        from ray import tune
+        tune.report(objective=objective_value)
+        return objective_value
 
 
 def create_enhanced_model_config(
@@ -948,12 +1256,35 @@ def create_enhanced_model_config(
     use_attention: bool = False,
     use_residual: bool = False,
     cnn_architecture: str = "simple",
+    attention_heads: int = 8,
 ) -> dict[str, Any]:
+    """
+    Create enhanced model configuration with validated attention parameters.
+
+    Ensures that when attention is enabled, lstm_units is divisible by attention_heads.
+    """
     if cnn_filters is None:
         cnn_filters = [64, 128, 256]
     if cnn_kernel_sizes is None:
         cnn_kernel_sizes = [3, 3, 3]
-    """Create enhanced model configuration."""
+
+    # Validate attention configuration
+    if use_attention and lstm_units % attention_heads != 0:
+        # Find the nearest compatible lstm_units value
+        original_units = lstm_units
+        # Try rounding up first
+        lstm_units = ((lstm_units // attention_heads) + 1) * attention_heads
+
+        # If that makes it too large, try rounding down
+        if lstm_units > 512:  # Assuming 512 is our reasonable upper limit
+            lstm_units = (original_units // attention_heads) * attention_heads
+            if lstm_units < 32:  # Ensure minimum viable size
+                lstm_units = attention_heads
+
+        logging.warning(
+            f"Adjusted lstm_units from {original_units} to {lstm_units} "
+            f"for compatibility with {attention_heads} attention heads"
+        )
     return {
         "input_dim": input_dim,
         "cnn_filters": cnn_filters,
@@ -962,6 +1293,7 @@ def create_enhanced_model_config(
         "lstm_num_layers": lstm_layers,
         "dropout_rate": dropout_rate,
         "use_attention": use_attention,
+        "attention_heads": attention_heads,
         "use_residual": use_residual,
         "cnn_architecture": cnn_architecture,
         "output_dim": 1,

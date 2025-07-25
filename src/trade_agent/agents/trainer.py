@@ -13,6 +13,8 @@ from trade_agent.core.exceptions import ConfigurationError
 from trade_agent.data.synthetic import fetch_synthetic_data
 from trade_agent.envs.finrl_trading_env import TradingEnv, register_env
 from trade_agent.risk.riskfolio import RiskfolioConfig, RiskfolioRiskManager
+from trade_agent.utils.cluster import validate_cluster_health
+from trade_agent.utils.ray_utils import robust_ray_init
 
 if TYPE_CHECKING:
     from trade_agent.core.config import SystemConfig
@@ -94,11 +96,21 @@ class Trainer:
             )
         self.num_iterations = self.cfg.agent.total_timesteps  # Simplified for now
 
+        # Initialize Ray with robust error handling
         if not ray.is_initialized():
-            if self.ray_address:
-                ray.init(address=self.ray_address, ignore_reinit_error=True)
-            else:
-                ray.init(ignore_reinit_error=True)
+            success, info = robust_ray_init(
+                address=self.ray_address,
+                show_cluster_info=True
+            )
+            if not success:
+                raise ConfigurationError(f"Failed to initialize Ray cluster: {info.get('error', 'Unknown error')}")
+
+            # Validate cluster health for training workloads
+            health = validate_cluster_health()
+            if not health["healthy"]:
+                print(f"⚠️  Cluster Warning: {health['reason']}")
+                for rec in health["recommendations"][:2]:
+                    print(f"   • {rec}")
 
         # Translate our ModelConfig to the format rllib expects
         model_config = {

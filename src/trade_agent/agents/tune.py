@@ -8,6 +8,8 @@ import yaml
 from ray import tune
 
 from trade_agent.envs.finrl_trading_env import register_env
+from trade_agent.utils.cluster import validate_cluster_health
+from trade_agent.utils.ray_utils import robust_ray_init
 
 
 def _convert_value(value: Any) -> Any:
@@ -65,8 +67,17 @@ def run_tune(config_paths: str | list[str]) -> None:
 
     search_space.setdefault("env", "TraderEnv")
 
+    # Initialize Ray with robust error handling
     if not ray.is_initialized():
-        ray.init()
+        success, info = robust_ray_init(show_cluster_info=False)
+        if not success:
+            raise RuntimeError(f"Failed to initialize Ray for tuning: {info.get('error', 'Unknown error')}")
+
+        # Validate cluster is suitable for hyperparameter tuning
+        health = validate_cluster_health()
+        if not health["healthy"]:
+            print(f"⚠️  Starting tuning on degraded cluster: {health['reason']}")
+
     register_env()
 
     # analysis = tune.run(  # Results not used currently
