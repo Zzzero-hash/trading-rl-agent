@@ -213,7 +213,8 @@ def get_optimal_worker_count() -> dict[str, int]:
 
         # Conservative recommendations to avoid resource contention
         cpu_workers = max(1, int(cpu_count * 0.8))  # Use 80% of available CPUs
-        gpu_workers = max(0, int(gpu_count * 0.9))  # Use 90% of available GPUs
+        # For GPU workers, use at least 1 if any GPU is available
+        gpu_workers = max(0, min(gpu_count, max(1, int(gpu_count * 0.9)) if gpu_count > 0 else 0))
 
         return {
             "cpu_workers": cpu_workers,

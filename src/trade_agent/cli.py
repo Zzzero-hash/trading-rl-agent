@@ -233,7 +233,7 @@ def cnn_lstm(
             console.print("[yellow]Running hyperparameter optimization...[/yellow]")
             # For now, we'll optimize only training hyperparameters, not data preprocessing parameters
             # to avoid reloading data multiple times
-            optimizer = HyperparameterOptimizer(sequences, targets, n_trials=n_trials)
+            optimizer = HyperparameterOptimizer(sequences, targets, n_trials=n_trials, epochs=epochs)
             result = optimizer.optimize()
             best_params = result.get("best_params", {})
             console.print(f"[green]Best parameters found: {best_params}[/green]")
