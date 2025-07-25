@@ -135,6 +135,7 @@ python -m trade_agent.cli train cnn-lstm
 - **[Project Status](PROJECT_STATUS.md)**: Current development status and roadmap
 - **[Development Roadmap](TODO.md)**: Detailed task list and priorities
 - **[Contributing Guidelines](CONTRIBUTING.md)**: How to contribute to the project
+- **[Official Documentation](https://trade-agent.forgeelectronics.uk)**: Full documentation and guides
 
 ## 🏗️ Architecture
 
