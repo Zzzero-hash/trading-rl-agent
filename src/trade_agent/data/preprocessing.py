@@ -1,7 +1,12 @@
 """
 Data preprocessing utilities for trading RL agent.
 Provides functions for data standardization, sequence creation, and normalization.
+Enhanced with comprehensive data pipeline components for production CLI.
 """
+
+import logging
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -9,6 +14,8 @@ import torch
 from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
+
+logger = logging.getLogger(__name__)
 
 
 def validate_data(df: pd.DataFrame) -> None:
@@ -216,3 +223,212 @@ def prepare_data_for_trial(params: dict) -> tuple[DataLoader, DataLoader, int]:
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     return train_loader, val_loader, n_features
+
+
+class DataSplitter:
+    """
+    Intelligent dataset splitting with time-aware and random splitting options.
+
+    Supports proper data leakage prevention for time series data and
+    provides balanced splits for classification tasks.
+    """
+
+    def __init__(
+        self,
+        input_file: Path,
+        output_dir: Path,
+        train_ratio: float = 0.8,
+        validation_ratio: float = 0.1,
+        time_aware: bool = True,
+        date_column: str | None = None,
+        stratify_column: str | None = None,
+    ):
+        self.input_file = Path(input_file)
+        self.output_dir = Path(output_dir)
+        self.train_ratio = train_ratio
+        self.validation_ratio = validation_ratio
+        self.test_ratio = 1.0 - train_ratio - validation_ratio
+        self.time_aware = time_aware
+        self.date_column = date_column
+        self.stratify_column = stratify_column
+
+        # Validation
+        if self.test_ratio < 0:
+            raise ValueError("train_ratio + validation_ratio cannot exceed 1.0")
+
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def split(self) -> dict[str, Path]:
+        """
+        Split the dataset into train/validation/test sets.
+
+        Returns:
+            Dictionary mapping split names to file paths
+        """
+        logger.info(f"Loading dataset from {self.input_file}")
+
+        # Load data
+        if self.input_file.suffix.lower() == ".csv":
+            df = pd.read_csv(self.input_file)
+        elif self.input_file.suffix.lower() in [".parquet", ".pq"]:
+            df = pd.read_parquet(self.input_file)
+        else:
+            raise ValueError(f"Unsupported file format: {self.input_file.suffix}")
+
+        logger.info(f"Dataset shape: {df.shape}")
+
+        # Determine date column if not specified
+        if self.time_aware and self.date_column is None:
+            self.date_column = self._detect_date_column(df)
+
+        # Perform splitting
+        splits = self._time_aware_split(df) if self.time_aware and self.date_column else self._random_split(df)
+
+        # Save splits
+        split_paths = {}
+        for split_name, split_df in splits.items():
+            output_file = self.output_dir / f"{split_name}.{self.input_file.suffix.lstrip('.')}"
+
+            if self.input_file.suffix.lower() == ".csv":
+                split_df.to_csv(output_file, index=False)
+            else:
+                split_df.to_parquet(output_file, index=False)
+
+            split_paths[split_name] = output_file
+            logger.info(f"Saved {split_name} split: {split_df.shape} -> {output_file}")
+
+        return split_paths
+
+    def _detect_date_column(self, df: pd.DataFrame) -> str | None:
+        """Detect the date column in the dataframe."""
+        date_candidates = ["date", "timestamp", "time", "datetime", "Date", "Timestamp"]
+
+        for col in date_candidates:
+            if col in df.columns:
+                return col
+
+        # Check for datetime-like columns
+        for col in df.columns:
+            if df[col].dtype == "datetime64[ns]" or "date" in col.lower():
+                return col
+
+        logger.warning("No date column detected. Using index for time-aware splitting.")
+        return None
+
+    def _time_aware_split(self, df: pd.DataFrame) -> dict[str, pd.DataFrame]:
+        """Split data in chronological order to prevent data leakage."""
+        if self.date_column and self.date_column in df.columns:
+            # Sort by date column
+            df_sorted = df.sort_values(self.date_column).reset_index(drop=True)
+        else:
+            # Assume index is chronological
+            df_sorted = df.reset_index(drop=True)
+
+        n_samples = len(df_sorted)
+
+        # Calculate split indices
+        train_end = int(n_samples * self.train_ratio)
+        val_end = int(n_samples * (self.train_ratio + self.validation_ratio))
+
+        splits = {
+            "train": df_sorted.iloc[:train_end].copy(),
+            "validation": df_sorted.iloc[train_end:val_end].copy(),
+            "test": df_sorted.iloc[val_end:].copy()
+        }
+
+        # Remove empty splits
+        splits = {k: v for k, v in splits.items() if len(v) > 0}
+
+        return splits
+
+    def _random_split(self, df: pd.DataFrame) -> dict[str, pd.DataFrame]:
+        """Split data randomly with optional stratification."""
+        from sklearn.model_selection import train_test_split
+
+        # First split: train vs (val + test)
+        if self.stratify_column and self.stratify_column in df.columns:
+            stratify_data = df[self.stratify_column]
+        else:
+            stratify_data = None
+
+        train_df, temp_df = train_test_split(
+            df,
+            test_size=(1 - self.train_ratio),
+            random_state=42,
+            stratify=stratify_data
+        )
+
+        # Second split: validation vs test
+        if self.validation_ratio > 0:
+            val_test_ratio = self.validation_ratio / (self.validation_ratio + self.test_ratio)
+
+            stratify_temp = temp_df[self.stratify_column] if stratify_data is not None else None
+
+            val_df, test_df = train_test_split(
+                temp_df,
+                test_size=(1 - val_test_ratio),
+                random_state=42,
+                stratify=stratify_temp
+            )
+
+            return {
+                "train": train_df,
+                "validation": val_df,
+                "test": test_df
+            }
+        else:
+            return {
+                "train": train_df,
+                "test": temp_df
+            }
+
+
+class DataValidator:
+    """
+    Data quality validation utilities.
+    """
+
+    @staticmethod
+    def validate_dataset(df: pd.DataFrame) -> dict[str, Any]:
+        """
+        Perform comprehensive data quality validation.
+
+        Args:
+            df: Dataframe to validate
+
+        Returns:
+            Dictionary with validation results
+        """
+        validation_results = {
+            "shape": df.shape,
+            "missing_values": df.isnull().sum().to_dict(),
+            "duplicate_rows": df.duplicated().sum(),
+            "data_types": df.dtypes.to_dict(),
+            "memory_usage": df.memory_usage(deep=True).sum(),
+            "numeric_columns": df.select_dtypes(include=[np.number]).columns.tolist(),
+            "categorical_columns": df.select_dtypes(include=["object", "category"]).columns.tolist(),
+            "datetime_columns": df.select_dtypes(include=["datetime64"]).columns.tolist(),
+        }
+
+        # Check for infinite values in numeric columns
+        numeric_cols = validation_results["numeric_columns"]
+        if numeric_cols:
+            infinite_values = {}
+            for col in numeric_cols:
+                inf_count = np.isinf(df[col]).sum()
+                if inf_count > 0:
+                    infinite_values[col] = inf_count
+            validation_results["infinite_values"] = infinite_values
+
+        # Data quality score (0-100)
+        total_cells = df.shape[0] * df.shape[1]
+        missing_cells = df.isnull().sum().sum()
+        duplicate_cells = validation_results["duplicate_rows"] * df.shape[1]
+        infinite_cells = sum(validation_results.get("infinite_values", {}).values())
+
+        quality_score = max(0, 100 - (
+            (missing_cells + duplicate_cells + infinite_cells) / total_cells * 100
+        ))
+        validation_results["quality_score"] = round(quality_score, 2)
+
+        return validation_results

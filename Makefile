@@ -1,10 +1,16 @@
-# Quality Assurance Makefile for Trading RL Agent
+# Trading RL Platform - Comprehensive Makefile
+# Combines Quality Assurance with Production Deployment Commands
 
-.PHONY: help quality security mutation docs types lint format test clean install property chaos load contract data-quality
+.PHONY: help quality security mutation docs types lint format test clean install property chaos load contract data-quality deploy run-demo
 
 # Default target
 help:
-	@echo "Quality Assurance Commands:"
+	@echo "🚀 Trading RL Platform - Available Commands:"
+	@echo ""
+	@echo "🎯 QUICK START:"
+	@echo "  quickstart       - Complete quickstart setup"
+	@echo "  demo             - Run complete demo"
+	@echo "  run-demo         - Run CLI demo"
 	@echo ""
 	@echo "🔧 TEST ENVIRONMENT SETUP:"
 	@echo "  setup-test-env   - Setup robust test environment"
@@ -180,3 +186,46 @@ clean:
 	rm -rf pact-results/
 	find . -name "*.pyc" -delete
 	find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# =============================================================================
+# PRODUCTION COMMANDS
+# =============================================================================
+
+# Quick Start Commands
+quickstart: setup-test-env install
+	@echo "🎉 Trading RL Platform - Quick Start Setup"
+	@echo "Setting up environment..."
+	mkdir -p data/raw data/processed models logs config
+	cp env.example .env 2>/dev/null || echo "env.example not found, skipping"
+	@echo "✅ Quick start setup complete!"
+	@echo "   1. Edit .env file with your API keys"
+	@echo "   2. Run 'make demo' for a complete demonstration"
+
+demo: run-demo cli-data cli-train
+	@echo "🎉 Complete demo finished!"
+
+run-demo:
+	@echo "🚀 Running Trading CLI Demo..."
+	python trading_cli.py --help
+	python trading_cli.py status
+	python trading_cli.py config --init
+
+cli-data:
+	@echo "📊 Demo: Data Collection and Processing"
+	python trading_cli.py data collect --source yahoo --symbols AAPL,GOOGL --period 6m
+	python trading_cli.py data preprocess --features technical --clean
+	python trading_cli.py data split --train-ratio 0.8 --validation-ratio 0.1
+
+cli-train:
+	@echo "🧠 Demo: Model Training and Evaluation"
+	python trading_cli.py train --algorithm PPO --episodes 1000 --save-best
+	@echo "Note: Training with 1000 episodes for demo purposes"
+
+deploy-docker:
+	@echo "🐳 Building and deploying with Docker..."
+	docker build -t trading-rl:latest -f Dockerfile.production --target production .
+	docker-compose up -d
+
+deploy-production:
+	@echo "🚀 Deploying to production..."
+	docker-compose --profile production up -d

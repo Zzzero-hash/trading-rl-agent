@@ -19,10 +19,40 @@ import pandas as pd
 from pandas.api.types import is_bool_dtype, is_numeric_dtype
 from tqdm import tqdm
 
-from config import FeatureConfig
 from trade_agent.core.logging import get_logger
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class FeatureConfig:
+    """Configuration for feature sets used in data standardization."""
+
+    price_features: list[str] = field(default_factory=lambda: [
+        "open", "high", "low", "close", "volume"
+    ])
+    technical_indicators: list[str] = field(default_factory=lambda: [
+        "log_return", "sma_20", "rsi_14", "macd_line"
+    ])
+    candlestick_patterns: list[str] = field(default_factory=lambda: [
+        "doji", "hammer", "bullish_engulfing"
+    ])
+    sentiment_features: list[str] = field(default_factory=lambda: [
+        "sentiment", "sentiment_magnitude"
+    ])
+    time_features: list[str] = field(default_factory=lambda: [
+        "hour", "day_of_week", "month"
+    ])
+
+    def get_all_features(self) -> list[str]:
+        """Get all feature names as a single list."""
+        return (
+            self.price_features +
+            self.technical_indicators +
+            self.candlestick_patterns +
+            self.sentiment_features +
+            self.time_features
+        )
 
 
 @dataclass
@@ -224,12 +254,8 @@ class DataStandardizer:
                 "price_features": self.feature_config.price_features,
                 "technical_indicators": self.feature_config.technical_indicators,
                 "candlestick_patterns": self.feature_config.candlestick_patterns,
-                "candlestick_features": self.feature_config.candlestick_features,
-                "rolling_candlestick_features": self.feature_config.rolling_candlestick_features,
                 "sentiment_features": self.feature_config.sentiment_features,
                 "time_features": self.feature_config.time_features,
-                "market_regime_features": self.feature_config.market_regime_features,
-                "target_feature": self.feature_config.target_feature,
             }
 
         save_dict = {

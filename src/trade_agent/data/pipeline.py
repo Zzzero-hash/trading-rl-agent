@@ -55,8 +55,166 @@ def _download_symbol_data(
 class DataPipeline:
     """Unified data pipeline for CLI operations."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        input_dir: Path = Path("data/raw"),
+        output_dir: Path = Path("data/processed"),
+        feature_types: list[str] | None = None,
+        clean_data: bool = True,
+        validate_data: bool = True,
+        normalization_method: str = "robust"
+    ) -> None:
         """Initialize the data pipeline."""
+        self.input_dir = Path(input_dir)
+        self.output_dir = Path(output_dir)
+        self.feature_types = feature_types or ["technical"]
+        self.clean_data = clean_data
+        self.validate_data = validate_data
+        self.normalization_method = normalization_method
+
+        # Create output directory
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def process_all(self) -> list[Path]:
+        """
+        Process all files in the input directory.
+
+        Returns:
+            List of processed file paths
+        """
+        from .preprocessing import DataValidator
+
+        if not self.input_dir.exists():
+            raise FileNotFoundError(f"Input directory not found: {self.input_dir}")
+
+        processed_files = []
+
+        # Find all data files
+        data_files = list(self.input_dir.glob("*.csv")) + list(self.input_dir.glob("*.parquet"))
+
+        if not data_files:
+            raise ValueError(f"No data files found in {self.input_dir}")
+
+        for file_path in data_files:
+            try:
+                # Load data
+                df = pd.read_csv(file_path) if file_path.suffix.lower() == ".csv" else pd.read_parquet(file_path)
+
+                # Validate if requested
+                if self.validate_data:
+                    validation_results = DataValidator.validate_dataset(df)
+                    if validation_results["quality_score"] < 50:
+                        print(f"Warning: Low quality score ({validation_results['quality_score']}) for {file_path.name}")
+
+                # Clean data if requested
+                if self.clean_data:
+                    df = self._clean_dataframe(df)
+
+                # Add features
+                df = self._add_features(df)
+
+                # Normalize if requested
+                if self.normalization_method:
+                    df = self._normalize_dataframe(df)
+
+                # Save processed data
+                output_file = self.output_dir / file_path.name
+                if file_path.suffix.lower() == ".csv":
+                    df.to_csv(output_file, index=False)
+                else:
+                    df.to_parquet(output_file, index=False)
+
+                processed_files.append(output_file)
+                print(f"Processed: {file_path.name} -> {output_file.name}")
+
+            except Exception as e:
+                print(f"Error processing {file_path.name}: {e}")
+                continue
+
+        return processed_files
+
+    def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Clean a dataframe."""
+        from .preprocessing import clean_data
+
+        # Use existing clean_data function if timestamp/OHLCV format
+        if all(col in df.columns for col in ["timestamp", "open", "high", "low", "close", "volume"]):
+            return clean_data(df)
+        else:
+            # Generic cleaning
+            df_clean = df.copy()
+
+            # Forward fill missing values
+            df_clean = df_clean.fillna(method="ffill").fillna(method="bfill")
+
+            # Remove duplicates
+            df_clean = df_clean.drop_duplicates()
+
+            # Remove rows with all NaN
+            df_clean = df_clean.dropna(how="all")
+
+            return df_clean
+
+    def _add_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add features based on feature_types."""
+        df_features = df.copy()
+
+        for feature_type in self.feature_types:
+            if feature_type == "technical":
+                # Add technical indicators
+                df_features = self._add_technical_features(df_features)
+            elif feature_type == "fundamental":
+                # Add fundamental features (placeholder)
+                df_features = self._add_fundamental_features(df_features)
+            elif feature_type == "sentiment":
+                # Add sentiment features (placeholder)
+                df_features = self._add_sentiment_features(df_features)
+
+        return df_features
+
+    def _add_technical_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add technical indicators."""
+        try:
+            from .features import generate_features
+            return generate_features(df)
+        except Exception as e:
+            print(f"Warning: Could not add technical features: {e}")
+            return df
+
+    def _add_fundamental_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add fundamental features (placeholder)."""
+        # Placeholder for fundamental analysis features
+        return df
+
+    def _add_sentiment_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add sentiment features (placeholder)."""
+        # Placeholder for sentiment analysis features
+        return df
+
+    def _normalize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Normalize numeric columns."""
+        from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
+
+        df_norm = df.copy()
+        numeric_columns = df_norm.select_dtypes(include=[np.number]).columns
+
+        if len(numeric_columns) == 0:
+            return df_norm
+
+        # Choose normalizer
+        if self.normalization_method == "standard":
+            scaler = StandardScaler()
+        elif self.normalization_method == "robust":
+            scaler = RobustScaler()
+        elif self.normalization_method == "minmax":
+            scaler = MinMaxScaler()
+        else:
+            return df_norm
+
+        # Apply normalization
+        df_norm[numeric_columns] = scaler.fit_transform(df_norm[numeric_columns])
+
+        return df_norm
 
     def download_data(
         self,

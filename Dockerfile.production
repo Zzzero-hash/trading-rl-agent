@@ -1,135 +1,53 @@
-# Multi-stage production Dockerfile for Trading RL Agent
-# Stage 1: Build stage
-ARG CUDA_VARIANT=nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04
-ARG DEBIAN_FRONTEND=noninteractive
-FROM ${CUDA_VARIANT} AS builder
-
-# Install system dependencies for building
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      build-essential \
-      python3.11-dev \
-      python3.11-venv \
-      python3-pip \
-      git \
-      curl \
-      wget \
-      cmake \
-      libssl-dev \
-      libffi-dev \
-      pkg-config && \
-    rm -rf /var/lib/apt/lists/*
-
-# Set Python 3.11 as default
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
-
-# Create virtual environment
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Upgrade pip and install wheel
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-
-# Copy requirements files
-COPY requirements-core.txt requirements-production.txt requirements-ml.txt ./
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements-core.txt && \
-    pip install --no-cache-dir -r requirements-production.txt && \
-    pip install --no-cache-dir -r requirements-ml.txt
-
-# Stage 2: Production stage
-FROM ${CUDA_VARIANT} AS production
-
-# Install runtime dependencies only
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      python3.11 \
-      python3.11-venv \
-      python3-pip \
-      curl \
-      wget \
-      git \
-      vim \
-      htop \
-      nvtop \
-      libgl1 \
-      libglib2.0-0 \
-      libssl3 \
-      ca-certificates && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
-
-# Set Python 3.11 as default
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
-
-# Copy virtual environment from builder
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Create non-root user for security
-RUN groupadd -r trading && useradd -r -g trading trading
-
-# Create application directory
-WORKDIR /app
-
-# Copy source code
-COPY --chown=trading:trading src/ ./src/
-COPY --chown=trading:trading config/ ./config/
-COPY --chown=trading:trading configs/ ./configs/
-COPY --chown=trading:trading setup.py ./
-
-# Copy configuration files
-COPY --chown=trading:trading config.yaml ./
-COPY --chown=trading:trading .env.example ./
-
-# Create necessary directories
-RUN mkdir -p /app/logs /app/data /app/models /app/results && \
-    chown -R trading:trading /app
-
-# Switch to non-root user
-USER trading
+# Production-ready Dockerfile for Trading RL Platform
+FROM python:3.11-slim as base
 
 # Set environment variables
-ENV PYTHONPATH="/app/src:$PYTHONPATH"
-ENV PYTHONUNBUFFERED=1
-ENV RAY_DISABLE_IMPORT_WARNING=1
-ENV TOKENIZERS_PARALLELISM=false
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Health check
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash trader
+WORKDIR /app
+RUN chown trader:trader /app
+
+# Install Python dependencies
+COPY pyproject.toml ./
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -e .
+
+# Copy application code
+COPY --chown=trader:trader . .
+
+# Switch to non-root user
+USER trader
+
+# Production entrypoint
+ENTRYPOINT ["trading-cli"]
+
+# Multi-stage build for different deployment scenarios
+FROM base as development
+# Development dependencies
+RUN pip install pytest pytest-cov black ruff mypy jupyter
+
+FROM base as training
+# GPU support for training
+RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+
+FROM base as production
+# Minimal production image
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import trade_agent; print('Health check passed')" || exit 1
+    CMD trading-cli status || exit 1
 
-# Expose ports
-EXPOSE 8000 8001 8002
-
-# Default command
-CMD ["python", "-m", "trade_agent.cli", "--help"]
-
-# Stage 3: Development stage (optional)
-FROM production AS development
-
-USER root
-
-# Install development dependencies
-COPY requirements-dev.txt ./
-RUN pip install --no-cache-dir -r requirements-dev.txt
-
-# Install additional development tools
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      jupyter \
-      ipython \
-      debugpy \
-      black \
-      flake8 \
-      mypy && \
-    rm -rf /var/lib/apt/lists/*
-
-# Switch back to trading user
-USER trading
-
-# Development command
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
+EXPOSE 8080
+CMD ["status"]

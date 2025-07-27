@@ -6,17 +6,18 @@ build-backend = "setuptools.build_meta"
 name = "trade-agent"
 version = "0.2.0"
 authors = [
-  { name="Author", email="author@example.com" },
+  { name="Trading RL Platform Team", email="contact@trading-rl-platform.org" },
 ]
 description = "A trading agent for reinforcement learning."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    # Core trading and ML dependencies
     "alpaca-py>=0.13.1",
     "numpy<2.0.0,>=1.24.0",
     "pandas>=2.0.0",
@@ -42,11 +43,67 @@ dependencies = [
     "tqdm>=4.66.1",
     "pandas_ta>=0.3.14b0",
     "ccxt>=4.1.0",
+
+    # Scientific computing and analysis
+    "scipy>=1.10.0",
+    "matplotlib>=3.6.0",
+    "statsmodels>=0.14.0",
+    "quantstats>=0.0.59",
+    "psutil>=5.9.0",
+    "optuna>=3.0.0",
+
+    # Web framework and API
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+
+    # Visualization
+    "plotly>=5.0.0",
+
+    # Documentation dependencies
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+    "myst_parser>=2.0.0",
+    "sphinx_autodoc_typehints>=1.24.0",
+
+    # Code quality and formatting
+    "ruff>=0.1.0",
+    "black>=23.3.0",
+    "isort>=5.10.0",
+    "mypy>=1.0.0",
+    "flake8>=6.0.0",
+    "autoflake>=2.0.0",
+    "pydocstyle>=6.3.0",
+    "pyupgrade>=3.10.0",
+    "pre-commit>=3.0.0",
+    "bandit>=1.7.0",
+
+    # Testing dependencies
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "coverage>=7.0.0",
+    "hypothesis>=6.80.0",
+    "locust>=2.15.0",
+    "mutmut>=2.4.0",
+    "interrogate>=1.5.0",
+    "radon>=6.0.1",
+    "pip-audit>=2.6.0",
+
+    # Notebook support
+    "nbqa>=1.7.0",
+
+    # Type stubs
+    "types-PyYAML>=6.0.0",
+    "types-requests>=2.31.0",
+    "types-setuptools>=68.0.0",
+
+    # Core system
+    "pylint>=2.16.0",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/pypa/sampleproject"
-"Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
+"Homepage" = "https://github.com/trading-rl-platform/trading-rl-agent"
+"Bug Tracker" = "https://github.com/trading-rl-platform/trading-rl-agent/issues"
 
 [project.scripts]
 trade-agent = "trade_agent.cli:app"
+trading-cli = "trading_cli:app"
