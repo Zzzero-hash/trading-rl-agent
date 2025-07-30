@@ -24,37 +24,15 @@ dependencies = [
     "scikit-learn>=1.3.0",
     "torch>=2.0.0",
     "gymnasium>=0.29.0",
-    "stable-baselines3>=2.0.0",
     "ray[rllib,tune]>=2.6.0,<3.0.0",
     "yfinance>=0.2.0",
-    "alpha-vantage>=2.3.0",
-    "requests>=2.31.0",
-    "beautifulsoup4>=4.12.0",
-    "websockets==11.0.3",
-    "pyyaml>=6.0",
-    "typer[all]>=0.9.0",
-    "rich~=13.5.2",
-    "pyarrow<21.0.0",
-    "protobuf<5.0",
-    "seaborn>=0.13.0",
-    "vaderSentiment>=3.3.2",
-    "structlog>=23.1.0",
-    "pydantic_settings>=2.0.0",
-    "tqdm>=4.66.1",
-    "pandas_ta>=0.3.14b0",
-    "ccxt>=4.1.0",
+    "stable-baselines3>=2.0.0,<3.0.0",
 
     # Scientific computing and analysis
     "scipy>=1.10.0",
     "matplotlib>=3.6.0",
-    "statsmodels>=0.14.0",
-    "quantstats>=0.0.59",
     "psutil>=5.9.0",
     "optuna>=3.0.0",
-
-    # Web framework and API
-    "fastapi>=0.100.0",
-    "uvicorn[standard]>=0.23.0",
 
     # Visualization
     "plotly>=5.0.0",
