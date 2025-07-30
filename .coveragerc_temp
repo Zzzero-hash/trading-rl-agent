@@ -1,9 +1,0 @@
-[run]
-branch = True
-source = src
-
-[report]
-include =
-    src/agents/trainer.py
-    src/data/pipeline.py
-show_missing = True

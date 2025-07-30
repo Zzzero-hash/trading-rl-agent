@@ -1,7 +1,0 @@
-synthetic:
-  n_days: 200
-  mu: 0.0002
-  sigma: 0.01
-  n_symbols: 1
-tech_indicators: ["macd", "rsi_30"]
-output: data/finrl_synthetic_sample.csv

@@ -1,5 +1,0 @@
-[flake8]
-max-line-length = 120
-extend-ignore = E203, W503, E501, F401, F811, F841, E741, E712, B006, B007, SIM909, SIM910, E265, D105, B028, D402, D209, SIM113, SIM114, B010, SIM904, F821, B004, SIM117, E501
-exclude = .git,__pycache__,docs/source/conf.py,old,build,dist,htmlcov,ray_results,optimization_results,results_archive,models,venv
-per-file-ignores = __init__.py:F401,D104
