@@ -25,15 +25,73 @@
     "gpu": "optional"
   },
   "containerEnv": {
-    "PATH": "/workspace/.local/bin:/workspace/.venv/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    "PATH": "/workspace/.local/bin:/workspace/.venv/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "PYTHONPATH": "/workspaces/trade-agent/src",
+    "WORKSPACE_ROOT": "/workspaces/trade-agent"
   },
+  "postCreateCommand": "bash /workspaces/trade-agent/.devcontainer/setup-mcp.sh",
+  "forwardPorts": [8888, 8000, 3000],
   "customizations": {
     "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.flake8",
+        "ms-python.black-formatter",
+        "ms-toolsai.jupyter",
+        "github.copilot",
+        "github.copilot-chat"
+      ],
+      "settings": {
+        "python.testing.pytestArgs": ["tests"],
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestEnabled": true,
+        "terminal.integrated.env.linux": {
+          "LANG": "C.utf8",
+          "LC_ALL": "C.utf8"
+        },
+        "mcp.servers": {
+          "memory": {
+            "command": "node",
+            "args": ["/usr/local/lib/node_modules/@modelcontextprotocol/server-memory/dist/index.js"]
+          },
+          "filesystem": {
+            "command": "node",
+            "args": ["/usr/local/lib/node_modules/@modelcontextprotocol/server-filesystem/dist/index.js"],
+            "env": {
+              "FILESYSTEM_ALLOWED_PATHS": "/workspaces"
+            }
+          },
+          "git": {
+            "command": "python3",
+            "args": ["-m", "mcp_server_git"],
+            "env": {
+              "GIT_REPOSITORY_PATH": "/workspaces/trade-agent"
+            }
+          },
+          "sqlite": {
+            "command": "python3",
+            "args": ["-m", "mcp_server_sqlite"],
+            "env": {
+              "SQLITE_DATABASE_PATH": "/workspaces/trade-agent/data"
+            }
+          },
+          "trade-agent-custom": {
+            "command": "python3",
+            "args": ["/workspaces/trade-agent/mcp_server.py"]
+          }
+        }
+      },
       "tasks": [
         {
           "label": "Run CLI Help",
           "type": "shell",
           "command": "trade-agent --help",
+          "problemMatcher": []
+        },
+        {
+          "label": "Start MCP Services",
+          "type": "shell",
+          "command": "echo 'MCP services configured in VS Code settings'",
           "problemMatcher": []
         }
       ]
