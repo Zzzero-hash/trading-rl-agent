@@ -32,17 +32,16 @@ symbols: dict[str, list[str]] = {
 
 
 def fetch_data(symbols: list[str], start_date: str, end_date: str, interval: str = '1h') -> pd.DataFrame:
-    """
-    Fetch historical stock data for given symbols.
+    """Fetch historical stock data for given symbols.
 
-    Parameters:
-    - symbols: List of stock symbols to fetch data for.
-    - start_date: Start date for the data in 'YYYY-MM-DD' format.
-    - end_date: End date for the data in 'YYYY-MM-DD' format.
-    - interval: Data interval (default is '1h').
+    Args:
+        symbols: List of stock symbols to fetch data for.
+        start_date: Start date for the data in 'YYYY-MM-DD' format.
+        end_date: End date for the data in 'YYYY-MM-DD' format.
+        interval: Data interval (default is '1h').
 
     Returns:
-    - DataFrame with stock symbols as keys and their historical data as values.
+        DataFrame with stock symbols as keys and their historical data as values.
     """
     df = yf.download(tickers=symbols, start=start_date, end=end_date, interval=interval)  # type: ignore
     df_clean: pd.DataFrame = pd.DataFrame(df).dropna(axis=0, how='all')
